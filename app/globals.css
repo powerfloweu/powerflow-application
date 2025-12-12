@@ -22,14 +22,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-@import url('https://fonts.googleapis.com/css2?family=Saira:wght@300;400;500;600;700;800&display=swap');
-
-:root {
-  --font-saira: 'Saira', sans-serif;
-}
-
-body {
-  font-family: var(--font-saira);
+  font-family: var(--font-saira), Arial, Helvetica, sans-serif;
 }
