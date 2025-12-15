@@ -57,7 +57,7 @@ const copy: Record<Lang, CopyEntry> = {
     heroSubtitle:
       "Unlock your optimal performance with a structured, science-based mental coaching program designed specifically for powerlifters.",
     intro:
-      "For competitive powerlifters and serious lifters who want 1:1 mental preparation, competition mindset work, and long-term development with the PowerFlow method.",
+      "For powerlifters who want to take their mental preparation, competition mindset, and long-term development to the next level with the PowerFlow method.",
     cta: "I want to upgrade my mindset",
     progressLabel: (current: number, total: number) =>
       `Step ${current} of ${total}`,
@@ -72,12 +72,11 @@ const copy: Record<Lang, CopyEntry> = {
       languageHelper: "Choose one language to continue.",
       fullName: "Full name",
       email: "Email address",
-      instagram: "Instagram handle (optional)",
-      countryTimezone: "Country and time zone",
+      instagram: "Instagram handle",
       yearsPowerlifting: "How long have you been powerlifting?",
       bestLifts: "Best lifts (S/B/D – competition or gym)",
-      weightClass: "Weight class / federation",
-      upcomingComps: "Upcoming competitions (date, place)",
+      weightClass: "Weight class",
+      upcomingComps: "Upcoming competition (date)",
       mainBarrier: "Right now, what holds your performance back the most?",
       confidenceBreak: "In which situations does your confidence break?",
       overthinking: "When do you start to overthink or lose focus?",
@@ -129,12 +128,11 @@ const copy: Record<Lang, CopyEntry> = {
       languageHelper: "Wähle eine Sprache, um fortzufahren.",
       fullName: "Vollständiger Name",
       email: "E-Mail-Adresse",
-      instagram: "Instagram-Handle (optional)",
-      countryTimezone: "Land und Zeitzone",
+      instagram: "Instagram-Handle",
       yearsPowerlifting: "Seit wann betreibst du Powerlifting?",
       bestLifts: "Bestleistungen (K/D/B – Wettkampf oder Gym)",
-      weightClass: "Gewichtsklasse / Verband",
-      upcomingComps: "Bevorstehende Wettkämpfe (Datum, Ort)",
+      weightClass: "Gewichtsklasse",
+      upcomingComps: "Bevorstehender Wettkampf (Datum)",
       mainBarrier: "Was bremst deine Leistung aktuell am meisten aus?",
       confidenceBreak: "In welchen Situationen bricht dein Selbstvertrauen?",
       overthinking: "Wann beginnst du zu überanalysieren oder Fokus zu verlieren?",
@@ -187,12 +185,11 @@ const copy: Record<Lang, CopyEntry> = {
       languageHelper: "Válassz egy nyelvet a folytatáshoz.",
       fullName: "Teljes név",
       email: "E-mail cím",
-      instagram: "Instagram (opcionális)",
-      countryTimezone: "Ország és időzóna",
+      instagram: "Instagram",
       yearsPowerlifting: "Mióta erőemelsz?",
       bestLifts: "Legjobb eredmények (Gugg/Fekv/Húz – verseny vagy edzőterem)",
-      weightClass: "Súlycsoport / szövetség",
-      upcomingComps: "Közelgő versenyek (dátum, helyszín)",
+      weightClass: "Súlycsoport",
+      upcomingComps: "Következő verseny (dátum)",
       mainBarrier: "Mi fogja vissza most leginkább a teljesítményedet?",
       confidenceBreak: "Milyen helyzetekben törik meg az önbizalmad?",
       overthinking: "Mikor kezdesz túlgondolni vagy fókuszt veszíteni?",
@@ -226,9 +223,28 @@ const copy: Record<Lang, CopyEntry> = {
   },
 };
 
+function formatCountdown(dateStr: string): string {
+  const target = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(target.getTime())) return "";
+  const now = new Date();
+  const msDiff = target.getTime() - now.getTime();
+  const days = Math.round(msDiff / (1000 * 60 * 60 * 24));
+
+  if (days < 0) return "Competition date has passed.";
+  if (days === 0) return "Competition is today.";
+
+  const weeks = Math.floor(days / 7);
+  const remDays = days % 7;
+  if (weeks === 0) return `${days} day${days === 1 ? "" : "s"} out`;
+  if (remDays === 0) return `${weeks} week${weeks === 1 ? "" : "s"} out`;
+  return `${weeks} week${weeks === 1 ? "" : "s"} + ${remDays} day${remDays === 1 ? "" : "s"} out`;
+}
+
 export default function PowerFlowApplicationPage() {
   const [lang, setLang] = React.useState<Lang>("en");
   const [step, setStep] = React.useState(0);
+  const [nextCompDate, setNextCompDate] = React.useState<string>("");
+  const [submitted, setSubmitted] = React.useState(false);
   const t = copy[lang];
 
   const totalSteps = t.steps.length;
@@ -239,6 +255,7 @@ export default function PowerFlowApplicationPage() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitted(true);
   };
 
   const steps = [
@@ -250,11 +267,6 @@ export default function PowerFlowApplicationPage() {
             <TextField id="fullName" label={t.labels.fullName} required />
             <TextField id="email" label={t.labels.email} type="email" required />
             <TextField id="instagram" label={t.labels.instagram} />
-            <TextField
-              id="countryTimezone"
-              label={t.labels.countryTimezone}
-              required
-            />
           </div>
 
           <div className="mt-6">
@@ -302,10 +314,40 @@ export default function PowerFlowApplicationPage() {
               id="yearsPowerlifting"
               label={t.labels.yearsPowerlifting}
               required
+              hint="Years"
             />
-            <TextField id="bestLifts" label={t.labels.bestLifts} required />
-            <TextField id="weightClass" label={t.labels.weightClass} />
-            <TextField id="upcomingComps" label={t.labels.upcomingComps} />
+            <TextField
+              id="bestLifts"
+              label={t.labels.bestLifts}
+              required
+              hint="In competition — Squat / Bench / Deadlift"
+            />
+            <TextField
+              id="weightClass"
+              label={t.labels.weightClass}
+              hint="e.g., -83 kg"
+            />
+            <TextField
+              id="federation"
+              label="Federation"
+              hint="e.g., IPF, USAPL, GPC"
+            />
+            <div className="space-y-2">
+              <TextField
+                id="upcomingComps"
+                label={t.labels.upcomingComps}
+                type="date"
+                onChange={(e) => setNextCompDate(e.target.value)}
+                value={nextCompDate}
+                hint="Date of next competition"
+                showPickerButton
+              />
+              {nextCompDate && (
+                <p className="pl-1 text-sm font-saira text-purple-300">
+                  {formatCountdown(nextCompDate)}
+                </p>
+              )}
+            </div>
           </div>
         </FormCard>
       ),
@@ -337,7 +379,7 @@ export default function PowerFlowApplicationPage() {
             />
           </FormCard>
 
-          <FormCard title={`${t.labels.selfScaleHint} — 1–10`}>
+          <FormCard title="Self-assessment">
             <p className="font-saira text-xs text-zinc-400">
               {t.labels.selfScaleHint}
             </p>
@@ -421,7 +463,7 @@ export default function PowerFlowApplicationPage() {
         <div className="mx-auto flex max-w-5xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:px-8">
           <div className="flex items-center justify-center">
             <Image
-              src="/fm_powerflow_logo_verziok_02.png"
+              src="/fm_powerflow_logo_verziok_02_negatív.png"
               alt="PowerFlow logo"
               width={240}
               height={240}
@@ -463,59 +505,93 @@ export default function PowerFlowApplicationPage() {
         id="application-form"
         className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8"
       >
-        <div className="mb-6 space-y-2">
-          <p className="font-saira text-xs uppercase tracking-[0.18em] text-purple-200">
-            {t.progressLabel(step + 1, totalSteps)}
-          </p>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
-            <div
-              className="h-2 bg-gradient-to-r from-purple-500 to-fuchsia-500 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="font-saira text-sm text-zinc-300">{t.steps[step]}</p>
-        </div>
-
-        <form className="space-y-8" onSubmit={onSubmit}>
-          <div className="flex justify-center">
-            <Image
-              src="/fm_powerflow_logo_verziok_01.png"
-              alt="PowerFlow crest logo"
-              width={200}
-              height={200}
-              className="h-20 w-20 sm:h-24 sm:w-24"
-            />
-          </div>
-
-          <div key={step}>{steps[step].content}</div>
-
-          <div className="flex justify-between pt-4">
+        {submitted ? (
+          <div className="space-y-6 rounded-3xl border border-purple-500/25 bg-gradient-to-br from-purple-600/20 via-fuchsia-500/10 to-transparent p-8 text-center shadow-[0_30px_120px_rgba(126,34,206,0.25)]">
+            <div className="flex justify-center">
+              <Image
+                src="/fm_powerflow_logo_verziok_01_negatív.png"
+                alt="PowerFlow crest logo"
+                width={200}
+                height={200}
+                className="h-20 w-20 sm:h-24 sm:w-24"
+              />
+            </div>
+            <h2 className="font-saira text-2xl font-bold uppercase tracking-[0.16em] text-white">
+              Application received
+            </h2>
+            <p className="font-saira text-sm text-zinc-200 sm:text-base">
+              A member of the PowerFlow team will contact you to schedule a free
+              15–20 minute intro call to get to know you better and see if we’re a good fit.
+            </p>
             <button
               type="button"
-              onClick={goBack}
-              disabled={step === 0}
-              className="rounded-full border border-purple-500/50 px-6 py-2 font-saira text-xs font-semibold uppercase tracking-[0.18em] text-purple-200 transition hover:border-purple-400 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:text-zinc-600"
+              onClick={() => {
+                setSubmitted(false);
+                setStep(0);
+                setNextCompDate("");
+              }}
+              className="rounded-full border border-purple-500/60 px-8 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-purple-100 transition hover:border-purple-400"
             >
-              {t.labels.back}
+              Back to form
             </button>
-            {step < totalSteps - 1 ? (
-              <button
-                type="button"
-                onClick={goNext}
-                className="rounded-full bg-purple-500 px-8 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-purple-400"
-              >
-                {t.labels.next}
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="rounded-full bg-purple-500 px-8 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-purple-400"
-              >
-                {t.labels.submit}
-              </button>
-            )}
           </div>
-        </form>
+        ) : (
+          <>
+            <div className="mb-6 space-y-2">
+              <p className="font-saira text-xs uppercase tracking-[0.18em] text-purple-200">
+                {t.progressLabel(step + 1, totalSteps)}
+              </p>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+                <div
+                  className="h-2 bg-gradient-to-r from-purple-500 to-fuchsia-500 transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <p className="font-saira text-sm text-zinc-300">{t.steps[step]}</p>
+            </div>
+
+            <form className="space-y-8" onSubmit={onSubmit}>
+              <div className="flex justify-center">
+                <Image
+                  src="/fm_powerflow_logo_verziok_01_negatív.png"
+                  alt="PowerFlow crest logo"
+                  width={200}
+                  height={200}
+                  className="h-20 w-20 sm:h-24 sm:w-24"
+                />
+              </div>
+
+              <div key={step}>{steps[step].content}</div>
+
+              <div className="flex justify-between pt-4">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  disabled={step === 0}
+                  className="rounded-full border border-purple-500/50 px-6 py-2 font-saira text-xs font-semibold uppercase tracking-[0.18em] text-purple-200 transition hover:border-purple-400 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:text-zinc-600"
+                >
+                  {t.labels.back}
+                </button>
+                {step < totalSteps - 1 ? (
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    className="rounded-full bg-purple-500 px-8 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-purple-400"
+                  >
+                    {t.labels.next}
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="rounded-full bg-purple-500 px-8 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-purple-400"
+                  >
+                    {t.labels.submit}
+                  </button>
+                )}
+              </div>
+            </form>
+          </>
+        )}
       </section>
     </div>
   );
@@ -545,6 +621,10 @@ type TextFieldProps = {
   description?: string;
   required?: boolean;
   type?: string;
+  hint?: string;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  value?: string;
+  showPickerButton?: boolean;
 };
 
 function TextField({
@@ -553,17 +633,51 @@ function TextField({
   description,
   required,
   type = "text",
+  hint,
+  onChange,
+  value,
+  showPickerButton,
 }: TextFieldProps) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const handleOpenPicker = () => {
+    if (inputRef.current) {
+      if (typeof inputRef.current.showPicker === "function") {
+        inputRef.current.showPicker();
+      } else {
+        inputRef.current.focus();
+      }
+    }
+  };
+
   return (
     <div className="space-y-2">
-      <FieldLabel label={label} description={description} required={required} />
-      <input
-        id={id}
-        name={id}
-        type={type}
+      <FieldLabel
+        label={label}
+        description={description}
         required={required}
-        className="w-full rounded-xl border border-zinc-700/70 bg-[#0D0F14] px-3 py-2.5 font-saira text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40"
+        hint={hint}
       />
+      <div className="flex items-center gap-3">
+        <input
+          ref={inputRef}
+          id={id}
+          name={id}
+          type={type}
+          required={required}
+          onChange={onChange}
+          value={value}
+          className="w-full rounded-xl border border-zinc-700/70 bg-[#0D0F14] px-3 py-2.5 font-saira text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40"
+        />
+        {type === "date" && showPickerButton && (
+          <button
+            type="button"
+            onClick={handleOpenPicker}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-purple-500/50 bg-[#0D0F14] text-purple-200 transition hover:border-purple-400 hover:text-white"
+          >
+            📅
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -573,12 +687,24 @@ type TextareaFieldProps = {
   label: string;
   description?: string;
   required?: boolean;
+  hint?: string;
 };
 
-function TextareaField({ id, label, description, required }: TextareaFieldProps) {
+function TextareaField({
+  id,
+  label,
+  description,
+  required,
+  hint,
+}: TextareaFieldProps) {
   return (
     <div className="space-y-2">
-      <FieldLabel label={label} description={description} required={required} />
+      <FieldLabel
+        label={label}
+        description={description}
+        required={required}
+        hint={hint}
+      />
       <textarea
         id={id}
         name={id}
@@ -594,19 +720,34 @@ type FieldLabelProps = {
   label: string;
   description?: string;
   required?: boolean;
+  hint?: string;
 };
 
-function FieldLabel({ label, description, required }: FieldLabelProps) {
+function FieldLabel({ label, description, required, hint }: FieldLabelProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="font-saira text-xs font-semibold uppercase tracking-[0.18em] text-zinc-200">
-        {label}
+      <label className="flex items-center gap-2 font-saira text-xs font-semibold uppercase tracking-[0.18em] text-zinc-200">
+        <span>{label}</span>
+        {hint && <Hint text={hint} />}
         {required && <span className="ml-1 text-purple-300">*</span>}
       </label>
       {description && (
         <p className="font-saira text-[11px] text-zinc-500">{description}</p>
       )}
     </div>
+  );
+}
+
+function Hint({ text }: { text: string }) {
+  return (
+    <span className="group relative inline-flex items-center" tabIndex={0}>
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-purple-400/60 bg-white/5 text-[10px] text-purple-200">
+        i
+      </span>
+      <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 hidden w-max max-w-[220px] -translate-x-1/2 rounded-md bg-[#0B0C10] px-3 py-2 text-[11px] text-zinc-100 shadow-lg ring-1 ring-purple-500/50 group-hover:block group-focus-within:block">
+        {text}
+      </span>
+    </span>
   );
 }
 
@@ -676,7 +817,7 @@ function ScaleRow({ name, label, description }: ScaleRowProps) {
         {scale.map((value) => (
           <label
             key={value}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-zinc-700/80 bg-[#0D0F14] text-[11px] font-saira text-zinc-100 transition hover:border-purple-400"
+            className="inline-flex cursor-pointer"
           >
             <input
               type="radio"
@@ -684,7 +825,9 @@ function ScaleRow({ name, label, description }: ScaleRowProps) {
               value={value}
               className="peer sr-only"
             />
-            <span className="peer-checked:text-purple-300">{value}</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700/80 bg-[#0D0F14] text-[11px] font-saira text-zinc-100 transition hover:border-purple-400 peer-checked:scale-110 peer-checked:border-purple-400 peer-checked:bg-purple-500 peer-checked:text-white peer-checked:shadow-[0_0_25px_rgba(168,85,247,0.35)]">
+              {value}
+            </span>
           </label>
         ))}
       </div>
