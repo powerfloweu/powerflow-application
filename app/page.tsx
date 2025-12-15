@@ -244,6 +244,7 @@ export default function PowerFlowApplicationPage() {
   const [step, setStep] = React.useState(0);
   const [nextCompDate, setNextCompDate] = React.useState<string>("");
   const [submitted, setSubmitted] = React.useState(false);
+  const formRef = React.useRef<HTMLFormElement>(null);
   const t = copy[lang];
 
   const totalSteps = t.steps.length;
@@ -252,8 +253,25 @@ export default function PowerFlowApplicationPage() {
   const goNext = () => setStep((s) => Math.min(s + 1, totalSteps - 1));
   const goBack = () => setStep((s) => Math.max(s - 1, 0));
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFinalSubmit = async () => {
+    if (step !== totalSteps - 1) return;
+    if (!formRef.current) return;
+    const formData = new FormData(formRef.current);
+    const payload = {
+      ...Object.fromEntries(formData.entries()),
+      submittedAt: new Date().toISOString(),
+    };
+
+    try {
+      await fetch("https://hook.eu1.make.com/afdi7p5rw9trr6242r4d52cllvzsmksm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.error("Failed to submit to webhook", err);
+    }
+
     setSubmitted(true);
   };
 
@@ -549,7 +567,12 @@ export default function PowerFlowApplicationPage() {
               <p className="font-saira text-sm text-zinc-300">{t.steps[step]}</p>
             </div>
 
-            <form className="space-y-8" onSubmit={onSubmit}>
+            <form
+              ref={formRef}
+              className="space-y-8"
+              onSubmit={(e) => e.preventDefault()}
+              noValidate
+            >
               <div className="flex justify-center">
                 <Image
                   src="/fm_powerflow_logo_verziok_01_negatív.png"
@@ -560,7 +583,14 @@ export default function PowerFlowApplicationPage() {
                 />
               </div>
 
-              <div key={step}>{steps[step].content}</div>
+              {steps.map((item, idx) => (
+                <div
+                  key={item.title}
+                  style={{ display: idx === step ? "block" : "none" }}
+                >
+                  {item.content}
+                </div>
+              ))}
 
               <div className="flex justify-between pt-4">
                 <button
@@ -581,7 +611,8 @@ export default function PowerFlowApplicationPage() {
                   </button>
                 ) : (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleFinalSubmit}
                     className="rounded-full bg-purple-500 px-8 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-purple-400"
                   >
                     {t.labels.submit}
