@@ -20,7 +20,6 @@ type CopyEntry = {
     fullName: string;
     email: string;
     instagram: string;
-    countryTimezone: string;
     yearsPowerlifting: string;
     bestLifts: string;
     weightClass: string;
