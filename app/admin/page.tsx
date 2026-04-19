@@ -748,15 +748,34 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                   <p className="font-saira text-[11px] text-red-400">{f.errorMsg}</p>
                 )}
 
-                {/* Scored result preview */}
-                {f.status === "scored" && f.resultAsRow && (
-                  <div className="mt-2">
+                {/* Scored result preview + view on site */}
+                {(f.status === "scored" || f.status === "saved") && f.resultAsRow && f.report && (
+                  <div className="mt-2 space-y-2">
                     <ResultRow result={f.resultAsRow} />
-                  </div>
-                )}
-                {f.status === "saved" && f.resultAsRow && (
-                  <div className="mt-2">
-                    <ResultRow result={f.resultAsRow} />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const payload = {
+                          report: f.report,
+                          respondent: {
+                            firstName: f.name,
+                            email: f.email || "",
+                            gender: f.gender,
+                            lang: "en",
+                            startedAt: new Date().toISOString(),
+                            submittedAt: new Date().toISOString(),
+                          },
+                        };
+                        try {
+                          localStorage.setItem("powerflow.selfAwareness.lastResult.v1", JSON.stringify(payload));
+                          localStorage.setItem("powerflow.selfAwareness.unlocked.v1", "1");
+                        } catch { /* ignore */ }
+                        window.open("/tests/self-awareness/results", "_blank");
+                      }}
+                      className="rounded-full border border-purple-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-purple-200 transition hover:bg-purple-500/20"
+                    >
+                      View full results →
+                    </button>
                   </div>
                 )}
               </div>
