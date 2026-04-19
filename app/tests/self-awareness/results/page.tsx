@@ -138,14 +138,35 @@ export default function ResultsPage() {
 
   return (
     <div className="relative min-h-screen bg-[#050608] pt-24 pb-20 text-white">
-      <div className="pointer-events-none fixed inset-0 z-0">
+      <div className="pointer-events-none fixed inset-0 z-0 print:hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(168,85,247,0.14),transparent_55%)]" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+
+        {/* ── Print-only branded header ─────────────────────────────────────── */}
+        <div className="hidden print:flex items-center justify-between pb-7 mb-8 border-b border-purple-500/30">
+          {/* Left: logo */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/fm_powerflow_logo_verziok_01_negative.png"
+            alt="PowerFlow"
+            style={{ height: "36px", width: "auto" }}
+          />
+          {/* Right: document identity */}
+          <div className="text-right">
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-purple-300">
+              Self-Assessment Test
+            </p>
+            <p className="mt-1 font-saira text-[11px] text-zinc-400">
+              David Sipos — Sports psychologist
+            </p>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="text-center">
-          <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">
+          <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-300 print:hidden">
             PowerFlow · Self-Awareness Profile
           </p>
           <h1 className="mt-3 font-saira text-3xl font-extrabold uppercase tracking-[0.12em] sm:text-4xl">
@@ -355,67 +376,88 @@ export default function ResultsPage() {
         </div>
       </div>
 
+      {/* Print-only footer watermark */}
+      <div className="hidden print:block fixed bottom-0 left-0 right-0 px-8 py-4 border-t border-purple-500/20">
+        <div className="flex items-center justify-between">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/fm_powerflow_logo_verziok_01_negative.png"
+            alt="PowerFlow"
+            style={{ height: "20px", width: "auto", opacity: 0.6 }}
+          />
+          <p className="font-saira text-[9px] uppercase tracking-[0.22em] text-zinc-500">
+            David Sipos — Sports psychologist · power-flow.eu
+          </p>
+        </div>
+      </div>
+
       <style jsx global>{`
         @media print {
           @page {
-            margin: 18mm;
+            margin: 18mm 16mm 24mm;
             size: A4;
           }
-          html,
-          body {
-            background: #ffffff !important;
-            color: #000000 !important;
+
+          /* Force background colors to print */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
-          header,
-          nav,
-          .print\\:hidden {
+
+          /* Keep the dark theme */
+          html, body {
+            background: #050608 !important;
+            color: #ffffff !important;
+          }
+
+          /* Hide screen-only elements */
+          header, nav, .print\\:hidden {
             display: none !important;
           }
-          /* Drop decorative fixed backgrounds */
-          .pointer-events-none.fixed,
-          .fixed.inset-0 {
+
+          /* Show print-only elements */
+          .hidden.print\\:flex,
+          .hidden.print\\:block {
+            display: flex !important;
+          }
+
+          /* Kill fixed gradient overlay (already hidden via print:hidden class) */
+          .pointer-events-none.fixed {
             display: none !important;
           }
-          /* Flatten dark panels to a printable look */
-          .bg-\\[\\#050608\\],
-          .bg-\\[\\#0F1116\\],
-          .bg-\\[\\#13151A\\] {
-            background: #ffffff !important;
+
+          /* Remove top padding that was for the nav */
+          .pt-24 {
+            padding-top: 0 !important;
           }
-          .text-white,
-          .text-zinc-100,
-          .text-zinc-200,
-          .text-zinc-300,
-          .text-zinc-400,
-          .text-zinc-500 {
-            color: #111111 !important;
+
+          /* Factor cards — dark background kept */
+          .bg-\\[\\#13151A\\], .bg-\\[\\#0F1116\\] {
+            background: #13151A !important;
           }
-          .text-purple-200,
-          .text-purple-300,
-          .text-fuchsia-200,
-          .text-sky-200,
-          .text-amber-100,
-          .text-amber-300 {
-            color: #4b0082 !important;
+          .bg-\\[\\#050608\\] {
+            background: #050608 !important;
           }
-          .border-white\\/5,
-          .border-purple-500\\/25,
-          .border-purple-500\\/30 {
-            border-color: #cccccc !important;
+          .bg-\\[\\#0D0F14\\] {
+            background: #0D0F14 !important;
           }
-          /* Preserve the radar chart colours */
-          svg polygon,
-          svg circle,
-          svg line {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          /* Don't split a factor card across pages if avoidable */
-          main section,
-          .rounded-2xl,
-          .rounded-3xl {
+
+          /* Don't split factor cards across pages */
+          .rounded-2xl, .rounded-3xl {
             break-inside: avoid;
             box-shadow: none !important;
+          }
+
+          /* Keep SVG chart colors */
+          svg polygon, svg circle, svg line, svg text {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Band pills */
+          .rounded-full {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
         }
       `}</style>
