@@ -135,6 +135,12 @@ export default function ResultsPage() {
   }
 
   const { report, respondent } = payload;
+  const lang = respondent.lang ?? "en";
+  // Helper: pick the localised string, fall back to English
+  const t = <T extends { en: string[] }>(obj: T): string[] =>
+    ((obj as Record<string, string[]>)[lang] ?? obj.en);
+  const tStr = <T extends { en: string }>(obj: T): string =>
+    ((obj as Record<string, string>)[lang] ?? obj.en);
 
   return (
     <div className="relative min-h-screen bg-[#050608] pt-24 pb-20 text-white">
@@ -215,7 +221,7 @@ export default function ResultsPage() {
           <>
             {/* Intro */}
             <div className="mt-12 space-y-3 font-saira text-sm text-zinc-300">
-              {INTRO.en.map((p, i) => (
+              {t(INTRO).map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
             </div>
@@ -227,7 +233,7 @@ export default function ResultsPage() {
               </h2>
               {report.factors.map((f) => {
                 const interp = FACTORS[f.factor];
-                const narrative = interp.bands[f.band].en;
+                const narrative = t(interp.bands[f.band]);
                 return (
                   <div
                     key={f.factor}
@@ -246,7 +252,7 @@ export default function ResultsPage() {
                       </div>
                     </div>
                     <p className="mt-3 font-saira text-xs italic text-zinc-400">
-                      {interp.definition.en}
+                      {tStr(interp.definition)}
                     </p>
                     <div className="mt-4 space-y-3 font-saira text-sm text-zinc-200">
                       {narrative.map((p, i) => (
