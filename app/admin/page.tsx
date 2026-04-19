@@ -178,10 +178,10 @@ const parseFile = async (file: File): Promise<{ answers: Record<number, 0 | 1>; 
     if (!itemMatch) continue;
     const num = parseInt(itemMatch[1]);
     if (num < 1 || num > 165) continue;
-    const textVal = String(row[1] ?? "").trim().toLowerCase();
+    const colB = String(row[1] ?? "").trim().toLowerCase();
     let ans: 0 | 1 | null = null;
-    if (["yes", "igen", "ja", "y"].includes(textVal)) ans = 1;
-    else if (["no", "nem", "nein", "n"].includes(textVal)) ans = 0;
+    if (colB === "1" || ["yes", "igen", "ja", "y"].includes(colB)) ans = 1;
+    else if (colB === "0" || ["no", "nem", "nein", "n"].includes(colB)) ans = 0;
     if (ans !== null) answers[num] = ans;
   }
   const parsedCount = Object.keys(answers).length;
