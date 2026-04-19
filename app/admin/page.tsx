@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { score as scoreAnswers } from "../../lib/tests/self-awareness/scoring";
+import type { Answers, ScoreReport } from "../../lib/tests/self-awareness/scoring";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -35,6 +37,20 @@ type Result = {
 };
 
 type GenderFilter = "all" | "male" | "female";
+
+type ImportFile = {
+  id: string;
+  filename: string;
+  name: string;
+  email: string;
+  gender: "male" | "female" | null;
+  answers: Record<number, 0 | 1>;
+  answeredCount: number;
+  status: "pending" | "scored" | "saving" | "saved" | "error";
+  report?: ScoreReport;
+  resultAsRow?: Result;
+  errorMsg?: string;
+};
 
 // ── Norms (hardcoded inline — intentionally not imported from norms.ts) ───────
 
@@ -145,6 +161,82 @@ function computeBandStats(
       p75Diff: Math.abs(p75 - norm.max) > 1,
     };
   });
+}
+
+// ── Parsing helpers ───────────────────────────────────────────────────────────
+
+const parseFile = async (file: File): Promise<{ answers: Record<number, 0 | 1>; parsedCount: number }> => {
+  const XLSX = await import("xlsx");
+  const buffer = await file.arrayBuffer();
+  const wb = XLSX.read(buffer, { type: "array" });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
+  const answers: Record<number, 0 | 1> = {};
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i] as unknown[];
+    const itemMatch = String(row[0] ?? "").match(/^(\d+)/);
+    if (!itemMatch) continue;
+    const num = parseInt(itemMatch[1]);
+    if (num < 1 || num > 165) continue;
+    const textVal = String(row[1] ?? "").trim().toLowerCase();
+    let ans: 0 | 1 | null = null;
+    if (["yes", "igen", "ja", "y"].includes(textVal)) ans = 1;
+    else if (["no", "nem", "nein", "n"].includes(textVal)) ans = 0;
+    if (ans !== null) answers[num] = ans;
+  }
+  const parsedCount = Object.keys(answers).length;
+  // Default any missing items (1–165) to 0 (No)
+  for (let i = 1; i <= 165; i++) {
+    if (!(i in answers)) answers[i] = 0;
+  }
+  return { answers, parsedCount };
+};
+
+function nameFromFilename(filename: string): string {
+  let n = filename.replace(/\.(xlsx?|csv)$/i, "");
+  n = n.replace(/^(ö?it|öit|oit|sat)[-_]/i, "");
+  n = n.replace(/[-_]/g, " ");
+  return n.replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+}
+
+function buildResultFromReport(
+  file: ImportFile,
+  report: ScoreReport,
+): Result {
+  const f = (name: string) =>
+    report.factors.find((x) => x.factor === name)?.rawScore ?? 0;
+  const sf = (name: string) =>
+    report.subfactors.find((x) => x.subfactor === name)?.score ?? 0;
+
+  return {
+    id: file.id,
+    created_at: new Date().toISOString(),
+    first_name: file.name,
+    email: file.email,
+    gender: file.gender!,
+    lang: "en",
+    submitted_at: new Date().toISOString(),
+    paid: false,
+    score_performance: f("Performance"),
+    score_affiliation: f("Affiliation"),
+    score_aggression: f("Aggression"),
+    score_defensiveness: f("Defensiveness"),
+    score_consciousness: f("Consciousness"),
+    score_dominance: f("Dominance"),
+    score_exhibition: f("Exhibition"),
+    score_autonomy: f("Autonomy"),
+    score_caregiving: f("Caregiving"),
+    score_order: f("Order"),
+    score_helplessness: f("Helplessness"),
+    sf_self_confirmation: sf("Self-confirmation"),
+    sf_rational_dominance: sf("Rational dominance"),
+    sf_aggressive_nonconformity: sf("Aggressive nonconformity"),
+    sf_passive_dependence: sf("Passive dependence"),
+    sf_sociability: sf("Sociability"),
+    sf_agreeableness: sf("Agreeableness"),
+    sum_yes: report.validity.sumYes,
+    validity_reliable: report.validity.reliable,
+  };
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -321,7 +413,7 @@ function ResultRow({ result }: { result: Result }) {
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {FACTOR_KEYS.map((key) => {
-                const score = getFactorScore(result, key);
+                const factorScore = getFactorScore(result, key);
                 return (
                   <div
                     key={key}
@@ -331,10 +423,10 @@ function ResultRow({ result }: { result: Result }) {
                       {key}
                     </p>
                     <p className="font-saira text-base font-bold text-zinc-100">
-                      {score}
+                      {factorScore}
                       <span className="text-xs font-normal text-zinc-600">/15</span>
                     </p>
-                    <MiniProgressBar value={score} />
+                    <MiniProgressBar value={factorScore} />
                   </div>
                 );
               })}
@@ -387,6 +479,326 @@ function ResultRow({ result }: { result: Result }) {
   );
 }
 
+// ── Import Tab ────────────────────────────────────────────────────────────────
+
+function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
+  const [files, setFiles] = React.useState<ImportFile[]>([]);
+  const [dragging, setDragging] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const processFiles = async (rawFiles: FileList | File[]) => {
+    const arr = Array.from(rawFiles).filter((f) =>
+      /\.xlsx?$/i.test(f.name),
+    );
+    if (arr.length === 0) return;
+
+    const newEntries: ImportFile[] = await Promise.all(
+      arr.map(async (f) => {
+        const { answers, parsedCount } = await parseFile(f);
+        return {
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          filename: f.name,
+          name: nameFromFilename(f.name),
+          email: "",
+          gender: null,
+          answers,
+          answeredCount: parsedCount,
+          status: "pending" as const,
+        };
+      }),
+    );
+
+    setFiles((prev) => [...prev, ...newEntries]);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(false);
+    processFiles(e.dataTransfer.files);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = () => setDragging(false);
+
+  const handleBrowse = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) processFiles(e.target.files);
+    e.target.value = "";
+  };
+
+  const updateFile = (id: string, patch: Partial<ImportFile>) => {
+    setFiles((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+    );
+  };
+
+  const removeFile = (id: string) => {
+    setFiles((prev) => prev.filter((f) => f.id !== id));
+  };
+
+  const canScoreAll = files.some((f) => f.gender !== null && f.status === "pending");
+
+  const handleScoreAll = () => {
+    setFiles((prev) =>
+      prev.map((f) => {
+        if (f.gender === null || f.status !== "pending") return f;
+        try {
+          const report = scoreAnswers(f.answers as Answers, f.gender);
+          const resultAsRow = buildResultFromReport(f, report);
+          return { ...f, status: "scored" as const, report, resultAsRow };
+        } catch {
+          return {
+            ...f,
+            status: "error" as const,
+            errorMsg: "Scoring failed — check answer count",
+          };
+        }
+      }),
+    );
+  };
+
+  const canSaveAll = files.some((f) => f.status === "scored");
+
+  const handleSaveAll = async () => {
+    const toSave = files.filter((f) => f.status === "scored");
+    for (const f of toSave) {
+      updateFile(f.id, { status: "saving" });
+      try {
+        const resultRef = `pfsa_import_${Date.now()}_${Math.random()
+          .toString(36)
+          .slice(2, 8)}`;
+        const res = await fetch("/api/test/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            respondent: {
+              firstName: f.name,
+              email:
+                f.email ||
+                `${f.name.toLowerCase().replace(/\s+/g, ".")}@imported`,
+              gender: f.gender,
+              lang: "en",
+              startedAt: null,
+              submittedAt: new Date().toISOString(),
+            },
+            report: f.report,
+            resultRef,
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        updateFile(f.id, { status: "saved" });
+      } catch (err) {
+        updateFile(f.id, {
+          status: "error",
+          errorMsg: err instanceof Error ? err.message : "Save failed",
+        });
+      }
+    }
+  };
+
+  const anyJustSaved = files.some((f) => f.status === "saved");
+
+  return (
+    <div className="space-y-6">
+      {/* Upload zone */}
+      <div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={() => fileInputRef.current?.click()}
+        className={`cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition ${
+          dragging
+            ? "border-purple-400 bg-purple-500/10"
+            : "border-zinc-700 hover:border-purple-500/50 hover:bg-white/[0.02]"
+        }`}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          multiple
+          className="hidden"
+          onChange={handleBrowse}
+        />
+        <p className="font-saira text-sm text-zinc-300">
+          Drop <span className="text-purple-300">.xlsx</span> files here, or{" "}
+          <span className="text-purple-300 underline underline-offset-2">browse</span>
+        </p>
+        <p className="font-saira text-[11px] text-zinc-600 mt-1">
+          Multiple files allowed · One person per file
+        </p>
+      </div>
+
+      {/* Staged files table */}
+      {files.length > 0 && (
+        <div className="rounded-2xl border border-white/5 bg-[#13151A] overflow-hidden">
+          <div className="px-5 py-3 border-b border-white/5">
+            <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.22em] text-purple-300">
+              Staged files — {files.length}
+            </p>
+          </div>
+          <div className="divide-y divide-white/5">
+            {files.map((f) => (
+              <div key={f.id} className="p-4 space-y-3">
+                {/* Row header */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="font-saira text-[11px] text-zinc-500 truncate max-w-[180px]">
+                    {f.filename}
+                  </span>
+                  {/* Answer count badge */}
+                  <span
+                    className={`rounded-full border px-2 py-0.5 font-saira text-[10px] font-semibold ${
+                      f.answeredCount >= 160
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                        : "border-amber-500/40 bg-amber-500/10 text-amber-300"
+                    }`}
+                  >
+                    {f.answeredCount}/165
+                  </span>
+                  {/* Status badge */}
+                  {f.status === "scored" && (
+                    <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 font-saira text-[10px] text-purple-300">
+                      Scored
+                    </span>
+                  )}
+                  {f.status === "saving" && (
+                    <span className="rounded-full border border-zinc-500/40 bg-zinc-500/10 px-2 py-0.5 font-saira text-[10px] text-zinc-400">
+                      Saving…
+                    </span>
+                  )}
+                  {f.status === "saved" && (
+                    <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-saira text-[10px] text-emerald-300">
+                      Saved ✓
+                    </span>
+                  )}
+                  {f.status === "error" && (
+                    <span className="rounded-full border border-red-500/40 bg-red-500/10 px-2 py-0.5 font-saira text-[10px] text-red-300">
+                      Error
+                    </span>
+                  )}
+                  {/* Low answer warning */}
+                  {f.answeredCount < 160 && (
+                    <span className="font-saira text-[10px] text-amber-400">
+                      Only {f.answeredCount}/165 answered
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeFile(f.id)}
+                    className="ml-auto font-saira text-xs text-zinc-600 hover:text-red-400 transition"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Inputs row */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Name */}
+                  <input
+                    type="text"
+                    value={f.name}
+                    onChange={(e) => updateFile(f.id, { name: e.target.value })}
+                    placeholder="Full name"
+                    className="rounded-lg border border-zinc-700/70 bg-[#0D0F14] px-3 py-1.5 font-saira text-xs text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/40 w-44"
+                  />
+                  {/* Email */}
+                  <input
+                    type="email"
+                    value={f.email}
+                    onChange={(e) => updateFile(f.id, { email: e.target.value })}
+                    placeholder="Email (optional)"
+                    className="rounded-lg border border-zinc-700/70 bg-[#0D0F14] px-3 py-1.5 font-saira text-xs text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/40 w-48"
+                  />
+                  {/* Gender pills */}
+                  <div className="flex gap-1.5">
+                    {(["male", "female"] as const).map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() =>
+                          updateFile(f.id, {
+                            gender: f.gender === g ? null : g,
+                            // reset scoring if gender changes
+                            status:
+                              f.status === "scored" ? "pending" : f.status,
+                            report: f.gender === g ? undefined : f.report,
+                            resultAsRow:
+                              f.gender === g ? undefined : f.resultAsRow,
+                          })
+                        }
+                        className={`rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.14em] transition ${
+                          f.gender === g
+                            ? g === "male"
+                              ? "border-sky-400 bg-sky-500/20 text-sky-200"
+                              : "border-pink-400 bg-pink-500/20 text-pink-200"
+                            : "border-zinc-700 text-zinc-500 hover:border-zinc-500"
+                        }`}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Error message */}
+                {f.status === "error" && f.errorMsg && (
+                  <p className="font-saira text-[11px] text-red-400">{f.errorMsg}</p>
+                )}
+
+                {/* Scored result preview */}
+                {f.status === "scored" && f.resultAsRow && (
+                  <div className="mt-2">
+                    <ResultRow result={f.resultAsRow} />
+                  </div>
+                )}
+                {f.status === "saved" && f.resultAsRow && (
+                  <div className="mt-2">
+                    <ResultRow result={f.resultAsRow} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      {files.length > 0 && (
+        <div className="flex flex-wrap gap-3 items-center">
+          <button
+            type="button"
+            onClick={handleScoreAll}
+            disabled={!canScoreAll}
+            className="rounded-full bg-purple-500 px-6 py-2 font-saira text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-purple-400 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Score all
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveAll}
+            disabled={!canSaveAll}
+            className="rounded-full border border-purple-500/50 px-6 py-2 font-saira text-xs font-semibold uppercase tracking-[0.18em] text-purple-200 transition hover:bg-purple-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Save all to database
+          </button>
+          {anyJustSaved && (
+            <button
+              type="button"
+              onClick={onSwitchToResults}
+              className="font-saira text-xs text-purple-300 underline underline-offset-2 hover:text-purple-200 transition"
+            >
+              View in Results tab →
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
@@ -396,6 +808,7 @@ export default function AdminPage() {
   const [results, setResults] = React.useState<Result[] | null>(null);
   const [genderFilter, setGenderFilter] = React.useState<GenderFilter>("all");
   const [showBandAnalysis, setShowBandAnalysis] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<"results" | "import">("results");
 
   const handleLogin = React.useCallback(async () => {
     if (!password.trim() || loading) return;
@@ -432,6 +845,25 @@ export default function AdminPage() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleLogin();
   };
+
+  const refreshResults = React.useCallback(async () => {
+    if (!password.trim()) return;
+    try {
+      const res = await fetch(
+        `/api/admin/results?password=${encodeURIComponent(password)}`,
+      );
+      if (!res.ok) return;
+      const data = (await res.json()) as { results?: Result[] };
+      setResults(data.results ?? []);
+    } catch {
+      // silent
+    }
+  }, [password]);
+
+  const handleSwitchToResults = React.useCallback(() => {
+    setActiveTab("results");
+    refreshResults();
+  }, [refreshResults]);
 
   // ── Auth gate ──────────────────────────────────────────────────────────────
 
@@ -503,53 +935,93 @@ export default function AdminPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Gender filter */}
-            <div className="flex gap-2">
-              {(["all", "male", "female"] as GenderFilter[]).map((g) => (
+          {/* Results-tab controls — only shown when results tab is active */}
+          {activeTab === "results" && (
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Gender filter */}
+              <div className="flex gap-2">
+                {(["all", "male", "female"] as GenderFilter[]).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGenderFilter(g)}
+                    className={`rounded-full border px-4 py-1.5 font-saira text-[11px] uppercase tracking-[0.15em] transition ${
+                      genderFilter === g
+                        ? "border-purple-400 bg-purple-500/20 text-white"
+                        : "border-zinc-700 text-zinc-400 hover:border-purple-400"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+
+              {/* Band analysis button */}
+              {results.length >= 10 && (
                 <button
-                  key={g}
                   type="button"
-                  onClick={() => setGenderFilter(g)}
+                  onClick={() => setShowBandAnalysis((v) => !v)}
                   className={`rounded-full border px-4 py-1.5 font-saira text-[11px] uppercase tracking-[0.15em] transition ${
-                    genderFilter === g
+                    showBandAnalysis
                       ? "border-purple-400 bg-purple-500/20 text-white"
                       : "border-zinc-700 text-zinc-400 hover:border-purple-400"
                   }`}
                 >
-                  {g}
+                  {showBandAnalysis ? "Hide band analysis" : "Compute band analysis"}
                 </button>
-              ))}
+              )}
             </div>
-
-            {/* Band analysis button */}
-            {results.length >= 10 && (
-              <button
-                type="button"
-                onClick={() => setShowBandAnalysis((v) => !v)}
-                className={`rounded-full border px-4 py-1.5 font-saira text-[11px] uppercase tracking-[0.15em] transition ${
-                  showBandAnalysis
-                    ? "border-purple-400 bg-purple-500/20 text-white"
-                    : "border-zinc-700 text-zinc-400 hover:border-purple-400"
-                }`}
-              >
-                {showBandAnalysis ? "Hide band analysis" : "Compute band analysis"}
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Band analysis panel */}
-        {showBandAnalysis && <BandAnalysisPanel results={results} />}
+        {/* Tab bar */}
+        <div className="mt-8 flex gap-0 border-b border-white/5">
+          {(
+            [
+              { key: "results", label: "Results" },
+              { key: "import", label: "Import Excel" },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`relative px-5 py-2.5 font-saira text-xs font-semibold uppercase tracking-[0.2em] transition-colors ${
+                activeTab === tab.key
+                  ? "text-white"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {tab.label}
+              {activeTab === tab.key && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-purple-400" />
+              )}
+            </button>
+          ))}
+        </div>
 
-        {/* Results list */}
-        <div className="mt-8 space-y-3">
-          {filtered.length === 0 ? (
-            <p className="font-saira text-sm text-zinc-500 py-8 text-center">
-              No results found.
-            </p>
-          ) : (
-            filtered.map((r) => <ResultRow key={r.id} result={r} />)
+        {/* Tab content */}
+        <div className="mt-6">
+          {activeTab === "results" && (
+            <>
+              {/* Band analysis panel */}
+              {showBandAnalysis && <BandAnalysisPanel results={results} />}
+
+              {/* Results list */}
+              <div className="mt-2 space-y-3">
+                {filtered.length === 0 ? (
+                  <p className="font-saira text-sm text-zinc-500 py-8 text-center">
+                    No results found.
+                  </p>
+                ) : (
+                  filtered.map((r) => <ResultRow key={r.id} result={r} />)
+                )}
+              </div>
+            </>
+          )}
+
+          {activeTab === "import" && (
+            <ImportTab onSwitchToResults={handleSwitchToResults} />
           )}
         </div>
       </div>
