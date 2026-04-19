@@ -164,7 +164,30 @@ export default function SelfAwarenessTestPage() {
   }, [page]);
 
   const setAnswer = (id: number, v: Answer) => {
-    setState((s) => ({ ...s, answers: { ...s.answers, [id]: v } }));
+    setState((s) => {
+      const updated = { ...s.answers, [id]: v };
+      if (reviewMode) {
+        // After a short pause (so the selection registers visually),
+        // jump to the next unanswered item — or back to review if all done.
+        setTimeout(() => {
+          const remaining = unansweredItemIds(updated);
+          if (remaining.length === 0) {
+            setReviewMode(false);
+            setPage(totalSteps - 1);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          } else {
+            const next = remaining[0];
+            const nextPage = Math.floor((next - 1) / ITEMS_PER_PAGE) + 1;
+            setPage(nextPage);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            setTimeout(() => {
+              document.getElementById(`item-${next}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+            }, 60);
+          }
+        }, 350);
+      }
+      return { ...s, answers: updated };
+    });
   };
 
   const canAdvanceFromIntro =
