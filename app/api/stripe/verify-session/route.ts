@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { isConfigured, dbPatch } from "../../../../lib/supabaseAdmin";
 
 // Verifies a Stripe Checkout Session on the server using our secret key.
 // Called by the results page when the browser arrives with ?session_id=cs_...
@@ -38,11 +39,19 @@ export async function GET(req: NextRequest) {
     const paid =
       session.payment_status === "paid" ||
       session.payment_status === "no_payment_required";
+    const clientReferenceId = session.client_reference_id ?? null;
+
+    if (paid && clientReferenceId && isConfigured()) {
+      await dbPatch("sat_results", { result_ref: clientReferenceId }, {
+        paid: true,
+        stripe_session_id: sessionId,
+      });
+    }
 
     return NextResponse.json({
       paid,
       email: session.customer_details?.email ?? null,
-      clientReferenceId: session.client_reference_id ?? null,
+      clientReferenceId,
       amountTotal: session.amount_total,
       currency: session.currency,
     });

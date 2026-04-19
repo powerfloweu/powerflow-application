@@ -8,6 +8,7 @@ import type { Band } from "../../../../lib/tests/self-awareness/norms";
 
 const RESULT_KEY = "powerflow.selfAwareness.lastResult.v1";
 const UNLOCK_KEY = "powerflow.selfAwareness.unlocked.v1";
+const RESULT_REF_KEY = "powerflow.selfAwareness.resultRef.v1";
 
 // Stripe Payment Link for the Self-Awareness full report (€29).
 // Configure the success URL in the Stripe Dashboard to:
@@ -83,15 +84,15 @@ export default function ResultsPage() {
 
   const openCheckout = React.useCallback(() => {
     if (!payload) return;
-    const sessionId =
-      `pfsa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     // Stripe Payment Links accept these query params:
     //   prefilled_email     — pre-fills the email field on the checkout page
     //   client_reference_id — forwarded to Stripe Checkout Session + webhooks
+    let resultRef: string;
+    try { resultRef = localStorage.getItem(RESULT_REF_KEY) ?? `pfsa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`; } catch { resultRef = `pfsa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`; }
     const url = new URL(STRIPE_PAYMENT_LINK);
     if (payload.respondent.email)
       url.searchParams.set("prefilled_email", payload.respondent.email);
-    url.searchParams.set("client_reference_id", sessionId);
+    url.searchParams.set("client_reference_id", resultRef);
     // Same-tab redirect so the Stripe success URL brings the user back here.
     window.location.href = url.toString();
   }, [payload]);

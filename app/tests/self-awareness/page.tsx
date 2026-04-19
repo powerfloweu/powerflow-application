@@ -16,6 +16,7 @@ type Lang = "en" | "hu";
 
 const STORAGE_KEY = "powerflow.selfAwareness.v1";
 const RESULT_KEY = "powerflow.selfAwareness.lastResult.v1";
+const RESULT_REF_KEY = "powerflow.selfAwareness.resultRef.v1";
 const ITEMS_PER_PAGE = 15;
 
 type SavedState = {
@@ -204,18 +205,24 @@ export default function SelfAwarenessTestPage() {
     setSubmitError(null);
     try {
       const report = score(state.answers, state.gender);
-      const payload = {
-        report,
-        respondent: {
-          firstName: state.firstName,
-          email: state.email,
-          gender: state.gender,
-          lang: state.lang,
-          startedAt: state.startedAt,
-          submittedAt: new Date().toISOString(),
-        },
+      const respondent = {
+        firstName: state.firstName,
+        email: state.email,
+        gender: state.gender,
+        lang: state.lang,
+        startedAt: state.startedAt,
+        submittedAt: new Date().toISOString(),
       };
+      const payload = { report, respondent };
       localStorage.setItem(RESULT_KEY, JSON.stringify(payload));
+      // Fire-and-forget: persist to server (test works even if this fails)
+      const resultRef = `pfsa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      try { localStorage.setItem(RESULT_REF_KEY, resultRef); } catch { /* ignore */ }
+      fetch("/api/test/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ respondent, report, resultRef }),
+      }).catch(() => {/* silent */});
       router.push("/tests/self-awareness/results");
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Submission failed");
