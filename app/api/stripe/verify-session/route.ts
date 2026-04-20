@@ -42,7 +42,16 @@ export async function GET(req: NextRequest) {
     const clientReferenceId = session.client_reference_id ?? null;
 
     if (paid && clientReferenceId && isConfigured()) {
-      await dbPatch("sat_results", { result_ref: clientReferenceId }, {
+      // Route to the correct table based on result_ref prefix:
+      //   pfsa_ → sat_results
+      //   pfac_ → acsi_results
+      //   pfcs_ → csai_results
+      const table = clientReferenceId.startsWith("pfac_")
+        ? "acsi_results"
+        : clientReferenceId.startsWith("pfcs_")
+        ? "csai_results"
+        : "sat_results";
+      await dbPatch(table, { result_ref: clientReferenceId }, {
         paid: true,
         stripe_session_id: sessionId,
       });
