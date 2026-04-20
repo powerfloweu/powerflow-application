@@ -11,7 +11,7 @@ const UNLOCK_KEY = "powerflow.acsi.unlocked.v1";
 const RESULT_REF_KEY = "powerflow.acsi.resultRef.v1";
 
 // Stripe Payment Link placeholder for the ACSI full report.
-const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/placeholder";
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/6oUbJ08iH9SA5oEdtXdfG0s";
 
 type Lang = "en" | "hu" | "de";
 

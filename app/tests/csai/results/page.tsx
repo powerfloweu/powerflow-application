@@ -21,7 +21,7 @@ const UNLOCK_KEY = "powerflow.csai.unlocked.v1";
 const RESULT_REF_KEY = "powerflow.csai.resultRef.v1";
 
 // Stripe Payment Link placeholder for the CSAI full report.
-const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/placeholder";
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/eVq5kC0Qf1m404k2PjdfG0r";
 
 type Lang = "en" | "hu" | "de";
 
