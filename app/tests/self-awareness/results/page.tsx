@@ -118,7 +118,11 @@ export default function ResultsPage() {
 
   const downloadPdf = React.useCallback(() => {
     if (typeof window === "undefined") return;
+    // Clear the document title so the browser doesn't print it in the PDF header
+    const prev = document.title;
+    document.title = "";
     window.print();
+    setTimeout(() => { document.title = prev; }, 1500);
   }, []);
 
 
@@ -580,9 +584,19 @@ export default function ResultsPage() {
       </div>
 
       <style jsx global>{`
+        /* Suppress browser auto page headers/footers (Chrome 120+) */
+        @page {
+          @top-left   { content: ""; }
+          @top-center { content: ""; }
+          @top-right  { content: ""; }
+          @bottom-left   { content: ""; }
+          @bottom-center { content: ""; }
+          @bottom-right  { content: ""; }
+        }
+
         @media print {
           @page {
-            margin: 18mm 16mm 24mm;
+            margin: 12mm 16mm 12mm;
             size: A4;
           }
 
