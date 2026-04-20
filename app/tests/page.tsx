@@ -1,10 +1,57 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 export const metadata = {
   title: "PowerFlow — Mental Tests",
   description:
     "Psychology tests by PowerFlow. Take a test and get structured insights into your mental profile.",
 };
+
+// ── Decorative honeycomb: 11 cells, one per factor ────────────────────────────
+
+function HexMap() {
+  const r = 11;
+  const cells: { cx: number; cy: number; o: number }[] = [
+    // row 0 — 3 cells
+    { cx: 21.5, cy: 23,   o: 0.80 },
+    { cx: 40.5, cy: 23,   o: 0.40 },
+    { cx: 59.5, cy: 23,   o: 0.65 },
+    // row 1 — 4 cells (offset left)
+    { cx: 12,   cy: 39.5, o: 0.30 },
+    { cx: 31,   cy: 39.5, o: 0.70 },
+    { cx: 50,   cy: 39.5, o: 0.55 },
+    { cx: 69,   cy: 39.5, o: 0.90 },
+    // row 2 — 4 cells
+    { cx: 21.5, cy: 56,   o: 0.60 },
+    { cx: 40.5, cy: 56,   o: 0.25 },
+    { cx: 59.5, cy: 56,   o: 0.75 },
+    { cx: 78.5, cy: 56,   o: 0.45 },
+  ];
+
+  const hex = (cx: number, cy: number) => {
+    const pts = Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 6; // pointy-top
+      return `${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`;
+    });
+    return `M${pts.join("L")}Z`;
+  };
+
+  return (
+    <svg viewBox="0 0 92 70" className="w-full h-full" aria-hidden>
+      {cells.map((c, i) => (
+        <path
+          key={i}
+          d={hex(c.cx, c.cy)}
+          fill={`rgba(168,85,247,${(c.o * 0.55).toFixed(2)})`}
+          stroke="rgba(168,85,247,0.45)"
+          strokeWidth="0.8"
+        />
+      ))}
+    </svg>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TestsIndexPage() {
   return (
@@ -32,12 +79,13 @@ export default function TestsIndexPage() {
           <TestCard
             slug="self-awareness"
             tier="Free + Paid"
-            duration="~30–45 minutes · 165 items"
+            duration="~30–45 min · 165 items"
             title="Self-Awareness Test"
-            description="Map 11 core motivations (Performance, Affiliation, Aggression, Defensiveness, Consciousness, Dominance, Exhibition, Autonomy, Caregiving, Order, Helplessness) and their composite dynamics. Reveals which drives are pulling you forward and which ones conflict."
+            description="Most athletes know their physical limits. Few know their psychological ones. This test maps 11 core motivations — revealing what drives you to compete, what creates friction under pressure, and where your real growth edge is."
             href="/tests/self-awareness"
-            cta="Start the test"
+            cta="Discover your profile"
             available
+            visual={<HexMap />}
           />
 
           <TestCard
@@ -65,6 +113,8 @@ export default function TestsIndexPage() {
   );
 }
 
+// ── TestCard ──────────────────────────────────────────────────────────────────
+
 function TestCard({
   tier,
   duration,
@@ -73,6 +123,7 @@ function TestCard({
   href,
   cta,
   available,
+  visual,
 }: {
   slug: string;
   tier: string;
@@ -82,6 +133,7 @@ function TestCard({
   href: string;
   cta: string;
   available: boolean;
+  visual?: ReactNode;
 }) {
   const CardBody = (
     <div
@@ -91,6 +143,7 @@ function TestCard({
           : "border-white/5 bg-white/[0.02] opacity-60"
       }`}
     >
+      {/* Top meta row */}
       <div className="flex items-center justify-between">
         <span
           className={`font-saira text-[10px] font-semibold uppercase tracking-[0.28em] ${
@@ -105,10 +158,25 @@ function TestCard({
           </span>
         ) : null}
       </div>
+
+      {/* Title */}
       <h2 className="mt-4 font-saira text-xl font-extrabold uppercase tracking-[0.1em] sm:text-2xl">
         {title}
       </h2>
-      <p className="mt-4 flex-1 font-saira text-sm text-zinc-300">{description}</p>
+
+      {/* Description + hex visual side by side */}
+      <div className="mt-4 flex flex-1 items-start gap-5">
+        <p className="flex-1 font-saira text-sm leading-relaxed text-zinc-300">
+          {description}
+        </p>
+        {visual && (
+          <div className="hidden sm:block flex-shrink-0 w-[88px] h-[68px] opacity-75">
+            {visual}
+          </div>
+        )}
+      </div>
+
+      {/* CTA */}
       <div className="mt-7">
         <span
           className={`inline-flex items-center justify-center rounded-full px-6 py-2.5 font-saira text-[11px] font-semibold uppercase tracking-[0.22em] transition ${
