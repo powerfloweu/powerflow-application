@@ -238,6 +238,8 @@ export default function SelfAwarenessTestPage() {
       };
       const payload = { report, respondent };
       localStorage.setItem(RESULT_KEY, JSON.stringify(payload));
+      // Clear any previous unlock so a new submission always starts locked
+      try { localStorage.removeItem("powerflow.selfAwareness.unlocked.v1"); } catch { /* ignore */ }
       // Fire-and-forget: persist to server (test works even if this fails)
       const resultRef = `pfsa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       try { localStorage.setItem(RESULT_REF_KEY, resultRef); } catch { /* ignore */ }
