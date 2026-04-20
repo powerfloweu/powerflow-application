@@ -2,7 +2,10 @@
 
 import React from "react";
 import { score as scoreAnswers } from "../../lib/tests/self-awareness/scoring";
-import type { Answers, ScoreReport } from "../../lib/tests/self-awareness/scoring";
+import type { Answers, ScoreReport, FactorResult, SubfactorResult, Validity } from "../../lib/tests/self-awareness/scoring";
+import { FACTOR_NORMS, SUBFACTOR_NORMS, classify } from "../../lib/tests/self-awareness/norms";
+import type { SubfactorName } from "../../lib/tests/self-awareness/norms";
+import type { FactorName } from "../../lib/tests/self-awareness/items";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -197,6 +200,73 @@ function nameFromFilename(filename: string): string {
   n = n.replace(/^(ö?it|öit|oit|sat)[-_]/i, "");
   n = n.replace(/[-_]/g, " ");
   return n.replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+}
+
+// ── Reconstruct a ScoreReport from a stored DB Result ────────────────────────
+
+const FACTOR_NAME_MAP: Record<FactorKey, FactorName> = {
+  performance: "Performance",
+  affiliation: "Affiliation",
+  aggression: "Aggression",
+  defensiveness: "Defensiveness",
+  consciousness: "Consciousness",
+  dominance: "Dominance",
+  exhibition: "Exhibition",
+  autonomy: "Autonomy",
+  caregiving: "Caregiving",
+  order: "Order",
+  helplessness: "Helplessness",
+};
+
+function buildReportFromResult(result: Result): ScoreReport {
+  const gender = result.gender as "male" | "female";
+  const norms = FACTOR_NORMS[gender];
+
+  const factors: FactorResult[] = FACTOR_KEYS.map((key) => {
+    const name = FACTOR_NAME_MAP[key];
+    const rawScore = getFactorScore(result, key);
+    const n = norms[name];
+    return {
+      factor: name,
+      rawScore,
+      max: 15,
+      band: classify(rawScore, n.min, n.max),
+      bandMin: n.min,
+      bandMax: n.max,
+      populationAverage: n.average,
+    };
+  });
+
+  const subfactorData: Array<{ subfactor: SubfactorName; score: number }> = [
+    { subfactor: "Self-confirmation", score: result.sf_self_confirmation },
+    { subfactor: "Rational dominance", score: result.sf_rational_dominance },
+    { subfactor: "Aggressive nonconformity", score: result.sf_aggressive_nonconformity },
+    { subfactor: "Passive dependence", score: result.sf_passive_dependence },
+    { subfactor: "Sociability", score: result.sf_sociability },
+    { subfactor: "Agreeableness", score: result.sf_agreeableness },
+  ];
+
+  const subfactors: SubfactorResult[] = subfactorData.map(({ subfactor, score }) => {
+    const n = SUBFACTOR_NORMS[subfactor];
+    return {
+      subfactor,
+      score,
+      band: classify(score, n.min, n.max),
+      bandMin: n.min,
+      bandMax: n.max,
+    };
+  });
+
+  const validityNorm = SUBFACTOR_NORMS["Agreeableness"];
+  const validity: Validity = {
+    sumYes: result.sum_yes,
+    band: classify(result.sum_yes, validityNorm.min, validityNorm.max),
+    bandMin: validityNorm.min,
+    bandMax: validityNorm.max,
+    reliable: result.validity_reliable,
+  };
+
+  return { gender, factors, subfactors, validity };
 }
 
 function buildResultFromReport(
@@ -480,6 +550,36 @@ function ResultRow({
                 </span>
               </span>
             </div>
+          </div>
+
+          {/* View full report */}
+          <div className="pt-2 border-t border-white/5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const report = buildReportFromResult(result);
+                const payload = {
+                  report,
+                  respondent: {
+                    firstName: result.first_name,
+                    email: result.email,
+                    gender: result.gender,
+                    lang: result.lang ?? "en",
+                    startedAt: result.submitted_at,
+                    submittedAt: result.submitted_at,
+                  },
+                };
+                try {
+                  localStorage.setItem("powerflow.selfAwareness.lastResult.v1", JSON.stringify(payload));
+                  localStorage.setItem("powerflow.selfAwareness.unlocked.v1", "1");
+                } catch { /* ignore */ }
+                window.open("/tests/self-awareness/results", "_blank");
+              }}
+              className="rounded-full border border-purple-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-purple-200 transition hover:bg-purple-500/20"
+            >
+              View full report →
+            </button>
           </div>
 
           {/* Admin unlock */}

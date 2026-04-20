@@ -280,18 +280,44 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Header */}
-        <div className="text-center">
-          <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-300 print:hidden">
+        {/* Hero Profile Header */}
+        <div className="relative overflow-hidden rounded-3xl border border-purple-500/25 bg-gradient-to-br from-[#1C0F30] via-[#110B1E] to-[#050608] p-8 sm:p-10">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-purple-600/15 blur-3xl print:hidden" />
+          <div className="pointer-events-none absolute -bottom-12 left-8 h-44 w-44 rounded-full bg-fuchsia-700/10 blur-3xl print:hidden" />
+          <p className="relative font-saira text-[10px] font-semibold uppercase tracking-[0.3em] text-purple-300 print:hidden">
             {c.headerTag}
           </p>
-          <h1 className="mt-3 font-saira text-3xl font-extrabold uppercase tracking-[0.12em] sm:text-4xl">
+          <h1 className="relative mt-2 font-saira text-4xl font-extrabold uppercase tracking-[0.08em] sm:text-5xl">
             {c.profileTitle(respondent.firstName)}
           </h1>
-          <p className="mt-3 font-saira text-xs uppercase tracking-[0.2em] text-zinc-400">
-            {c.refNorms(respondent.gender === "male" ? c.genderMale : c.genderFemale)} ·{" "}
-            {new Date(respondent.submittedAt).toLocaleDateString()}
-          </p>
+          <div className="relative mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <span className="font-saira text-[11px] uppercase tracking-[0.22em] text-zinc-400">
+              {respondent.gender === "male" ? c.genderMale : c.genderFemale}
+            </span>
+            <span className="text-zinc-600">&middot;</span>
+            <span className="font-saira text-[11px] uppercase tracking-[0.22em] text-zinc-400">
+              {new Date(respondent.submittedAt).toLocaleDateString()}
+            </span>
+          </div>
+          <div className="relative mt-6 flex items-center gap-4 border-t border-white/5 pt-5">
+            <div>
+              <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+                {lang === "en" ? "Factors profiled" : "Feltárt tényezők"}
+              </p>
+              <p className="mt-1 font-saira text-2xl font-extrabold tabular-nums text-white">
+                11
+              </p>
+            </div>
+            <div className="h-10 w-px bg-white/5" />
+            <div>
+              <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+                {c.refNorms(respondent.gender === "male" ? c.genderMale : c.genderFemale)}
+              </p>
+              <p className="mt-1 font-saira text-sm font-semibold text-zinc-300">
+                {lang === "en" ? "Sports psychology norms" : lang === "hu" ? "Sportpszichológiai normák" : "Sportpsychologie-Normen"}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Validity banner */}
@@ -344,30 +370,68 @@ export default function ResultsPage() {
               {report.factors.map((f) => {
                 const interp = FACTORS[f.factor];
                 const narrative = t(interp.bands[f.band]);
+                const scorePct = (f.rawScore / f.max) * 100;
+                const accentGradient =
+                  f.band === "high"
+                    ? "from-fuchsia-500 to-fuchsia-400"
+                    : f.band === "low"
+                      ? "from-sky-500 to-sky-400"
+                      : "from-zinc-600 to-zinc-500";
+                const cardBorder =
+                  f.band === "high"
+                    ? "border-fuchsia-500/20"
+                    : f.band === "low"
+                      ? "border-sky-500/20"
+                      : "border-white/5";
+                const cardBg =
+                  f.band === "high"
+                    ? "from-fuchsia-950/25 via-[#0F1116] to-[#0F1116]"
+                    : f.band === "low"
+                      ? "from-sky-950/25 via-[#0F1116] to-[#0F1116]"
+                      : "from-zinc-900/20 via-[#0F1116] to-[#0F1116]";
                 return (
                   <div
                     key={f.factor}
                     id={`factor-${f.factor}`}
-                    className="rounded-2xl border border-white/5 bg-[#13151A] p-6 shadow-[0_18px_50px_rgba(0,0,0,0.4)] sm:p-7"
+                    className={`overflow-hidden rounded-2xl border shadow-[0_18px_50px_rgba(0,0,0,0.4)] bg-gradient-to-br ${cardBorder} ${cardBg}`}
                   >
-                    <div className="flex flex-wrap items-baseline justify-between gap-3">
-                      <h3 className="font-saira text-lg font-extrabold uppercase tracking-[0.1em]">
-                        {factorLabel(f.factor)}
-                      </h3>
-                      <div className="flex items-center gap-3">
-                        <BandPill band={f.band} lang={lang} />
-                        <span className="font-saira text-xs uppercase tracking-[0.18em] text-zinc-400">
-                          {f.rawScore}/{f.max} · {c.typical} {f.bandMin}–{f.bandMax}
-                        </span>
+                    <div className={`h-[3px] w-full bg-gradient-to-r ${accentGradient}`} />
+                    <div className="p-6 sm:p-7">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <h3 className="font-saira text-lg font-extrabold uppercase tracking-[0.1em]">
+                            {factorLabel(f.factor)}
+                          </h3>
+                          <p className="mt-1.5 font-saira text-xs italic text-zinc-400">
+                            {tStr(interp.definition)}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="font-saira text-2xl font-extrabold tabular-nums leading-none text-white">
+                            {f.rawScore}
+                            <span className="text-sm font-normal text-zinc-500">/{f.max}</span>
+                          </div>
+                          <div className="mt-1.5">
+                            <BandPill band={f.band} lang={lang} />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <p className="mt-3 font-saira text-xs italic text-zinc-400">
-                      {tStr(interp.definition)}
-                    </p>
-                    <div className="mt-4 space-y-3 font-saira text-sm text-zinc-200">
-                      {narrative.map((p, i) => (
-                        <p key={i}>{p}</p>
-                      ))}
+                      <div className="mt-4 h-1.5 rounded-full bg-white/[0.06]">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${accentGradient} transition-all duration-700`}
+                          style={{ width: `${scorePct}%` }}
+                        />
+                      </div>
+                      <div className="mt-1 flex justify-between font-saira text-[9px] text-zinc-600">
+                        <span>0</span>
+                        <span>{c.typical} {f.bandMin}–{f.bandMax}</span>
+                        <span>{f.max}</span>
+                      </div>
+                      <div className="mt-5 space-y-3 font-saira text-sm leading-relaxed text-zinc-200">
+                        {narrative.map((p, i) => (
+                          <p key={i}>{p}</p>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );
@@ -386,16 +450,32 @@ export default function ResultsPage() {
                 {report.subfactors.map((s) => (
                   <div
                     key={s.subfactor}
-                    className="rounded-2xl border border-white/5 bg-[#13151A] p-5"
+                    className="rounded-2xl border border-white/5 bg-[#0F1116] p-5 transition hover:border-purple-500/20"
                   >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="font-saira text-xs font-semibold uppercase tracking-[0.18em]">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-saira text-xs font-semibold uppercase tracking-[0.18em] text-zinc-200">
                         {subfactorLabel(s.subfactor)}
                       </span>
                       <BandPill band={s.band} lang={lang} />
                     </div>
+                    <div className="mt-3 h-1.5 rounded-full bg-white/5">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          s.band === "high"
+                            ? "bg-gradient-to-r from-fuchsia-600 to-fuchsia-400"
+                            : s.band === "low"
+                              ? "bg-gradient-to-r from-sky-600 to-sky-400"
+                              : "bg-gradient-to-r from-zinc-600 to-zinc-500"
+                        }`}
+                        style={{
+                          width: `${Math.min(100, Math.max(0, ((s.score - s.bandMin * 0.5) / (s.bandMax * 1.5 - s.bandMin * 0.5)) * 100))}%`
+                        }}
+                      />
+                    </div>
                     <div className="mt-2 font-saira text-xs text-zinc-400">
-                      {c.score} {s.score} · {c.typical} {s.bandMin}–{s.bandMax}
+                      {c.score} <span className="font-semibold text-zinc-200">{s.score}</span>
+                      <span className="text-zinc-600 mx-1">·</span>
+                      <span className="text-zinc-500">{c.typical} {s.bandMin}–{s.bandMax}</span>
                     </div>
                   </div>
                 ))}

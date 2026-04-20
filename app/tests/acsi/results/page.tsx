@@ -58,6 +58,8 @@ const ui = {
     totalScoreLabel: "Total score",
     totalScoreMax: "/ 112",
     popAvg: "Pop. avg",
+    strongest: "Strongest",
+    focusArea: "Focus area",
     introTitle: "Understanding your results",
     subscalesTitle: "Your seven coping skills",
     typical: "typical",
@@ -98,6 +100,8 @@ const ui = {
     totalScoreLabel: "\u00D6sszpontsz\u00E1m",
     totalScoreMax: "/ 112",
     popAvg: "Pop. \u00E1tlag",
+    strongest: "Leger\u0151sebb",
+    focusArea: "Fejleszt\u00E9si ter\u00FClet",
     introTitle: "Az eredm\u00E9nyek \u00E9rtelmez\u00E9se",
     subscalesTitle: "A h\u00E9t megk\u00FCzd\u00E9si k\u00E9szs\u00E9ged",
     typical: "tipikus",
@@ -139,6 +143,8 @@ const ui = {
     totalScoreLabel: "Gesamtpunktzahl",
     totalScoreMax: "/ 112",
     popAvg: "Pop.-Durchschn.",
+    strongest: "St\u00E4rkstes",
+    focusArea: "Entwicklungsbereich",
     introTitle: "Deine Ergebnisse verstehen",
     subscalesTitle: "Deine sieben Bew\u00E4ltigungsf\u00E4higkeiten",
     typical: "typisch",
@@ -334,6 +340,10 @@ export default function AcsiResultsPage() {
     };
   });
 
+  // Quick stats for hero header
+  const highestSub = [...barData].sort((a, b) => b.score / b.max - a.score / a.max)[0];
+  const lowestSub = [...barData].sort((a, b) => a.score / a.max - b.score / b.max)[0];
+
   return (
     <div className="relative min-h-screen bg-[#050608] pt-24 pb-20 text-white">
       <div className="pointer-events-none fixed inset-0 z-0 print:hidden">
@@ -359,83 +369,94 @@ export default function AcsiResultsPage() {
           </div>
         </div>
 
-        {/* Header */}
-        <div className="text-center">
-          <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-300 print:hidden">
+        {/* Hero Profile Header */}
+        <div className="relative overflow-hidden rounded-3xl border border-purple-500/25 bg-gradient-to-br from-[#1C0F30] via-[#110B1E] to-[#050608] p-8 sm:p-10">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-purple-600/15 blur-3xl print:hidden" />
+          <div className="pointer-events-none absolute -bottom-12 left-8 h-44 w-44 rounded-full bg-fuchsia-700/10 blur-3xl print:hidden" />
+          <p className="relative font-saira text-[10px] font-semibold uppercase tracking-[0.3em] text-purple-300 print:hidden">
             {c.headerTag}
           </p>
-          <h1 className="mt-3 font-saira text-3xl font-extrabold uppercase tracking-[0.12em] sm:text-4xl">
+          <h1 className="relative mt-2 font-saira text-4xl font-extrabold uppercase tracking-[0.08em] sm:text-5xl">
             {c.profileTitle(respondent.firstName)}
           </h1>
-          <p className="mt-3 font-saira text-xs uppercase tracking-[0.2em] text-zinc-400">
-            {c.refNorms(
-              respondent.gender === "male" ? c.genderMale : c.genderFemale,
-            )}{" "}
-            &middot;{" "}
-            {new Date(respondent.submittedAt).toLocaleDateString()}
-          </p>
+          <div className="relative mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <span className="font-saira text-[11px] uppercase tracking-[0.22em] text-zinc-400">
+              {respondent.gender === "male" ? c.genderMale : c.genderFemale}
+            </span>
+            <span className="text-zinc-600">&middot;</span>
+            <span className="font-saira text-[11px] uppercase tracking-[0.22em] text-zinc-400">
+              {new Date(respondent.submittedAt).toLocaleDateString()}
+            </span>
+          </div>
+          <div className="relative mt-7 grid grid-cols-3 gap-4 border-t border-white/5 pt-6">
+            <div>
+              <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-500">{c.totalScoreLabel}</p>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="font-saira text-3xl font-extrabold tabular-nums text-white">{report.totalScore}</span>
+                <span className="font-saira text-sm text-zinc-500">{c.totalScoreMax}</span>
+              </div>
+            </div>
+            <div>
+              <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-500">{c.strongest}</p>
+              <p className="mt-1 font-saira text-sm font-bold leading-tight text-emerald-300">{highestSub.label}</p>
+              <p className="mt-0.5 font-saira text-[10px] text-zinc-500">{highestSub.score}/{highestSub.max}</p>
+            </div>
+            <div>
+              <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-500">{c.focusArea}</p>
+              <p className="mt-1 font-saira text-sm font-bold leading-tight text-amber-300">{lowestSub.label}</p>
+              <p className="mt-0.5 font-saira text-[10px] text-zinc-500">{lowestSub.score}/{lowestSub.max}</p>
+            </div>
+          </div>
         </div>
 
         {/* Bar chart -- always visible (free deliverable) */}
-        <div className="mt-10 rounded-3xl border border-white/5 bg-[#0F1116] p-6 sm:p-8">
+        <div className="mt-8 rounded-3xl border border-white/5 bg-[#0B0D12] p-6 sm:p-8">
           <div className="flex items-center justify-between">
             <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
               {c.chartTitle}
             </h2>
-            <span className="flex items-center gap-2 font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-400">
-              <span className="inline-block h-[2px] w-4 bg-zinc-400" /> {c.popAvg}
+            <span className="flex items-center gap-2 font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+              <span className="inline-block h-px w-5 bg-zinc-500" /> {c.popAvg}
             </span>
           </div>
 
-          <div className="mt-6 space-y-4">
+          <div className="mt-7 space-y-5">
             {barData.map((d) => {
               const pct = (d.score / d.max) * 100;
               const avgPct = (d.avg / d.max) * 100;
-              const barColor =
+              const barGradient =
                 d.band === "low"
-                  ? "bg-amber-500"
+                  ? "from-amber-600 to-amber-400"
                   : d.band === "high"
-                    ? "bg-emerald-500"
-                    : "bg-purple-500";
+                    ? "from-emerald-600 to-emerald-400"
+                    : "from-purple-600 to-purple-400";
               return (
-                <div key={d.key} className="flex items-center gap-4">
-                  <div className="w-40 shrink-0 text-right font-saira text-xs text-zinc-200 sm:w-56">
-                    {d.label}
+                <div key={d.key} className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-saira text-sm font-semibold text-zinc-200">{d.label}</span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <BandPill band={d.band} lang={lang} />
+                      <span className="font-saira text-sm font-bold tabular-nums text-white">
+                        {d.score}<span className="font-normal text-zinc-500">/{d.max}</span>
+                      </span>
+                    </div>
                   </div>
-                  <div className="relative flex-1 h-7 rounded-full bg-white/5">
-                    {/* Filled bar */}
+                  <div className="relative h-3 rounded-full bg-white/5">
                     <div
-                      className={`absolute inset-y-0 left-0 rounded-full ${barColor} transition-all duration-500`}
+                      className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${barGradient} transition-all duration-700`}
                       style={{ width: `${pct}%` }}
                     />
-                    {/* Population average tick */}
                     <div
-                      className="absolute top-0 bottom-0 w-[2px] bg-zinc-400"
+                      className="absolute top-0 bottom-0 w-px bg-zinc-500/70"
                       style={{ left: `${avgPct}%` }}
                     />
-                  </div>
-                  <div className="w-16 shrink-0 font-saira text-xs text-zinc-300">
-                    {d.score} / {d.max}
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Total score */}
-          <div className="mt-6 flex items-baseline justify-center gap-3 border-t border-white/5 pt-5">
-            <span className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-zinc-300">
-              {c.totalScoreLabel}
-            </span>
-            <span className="font-saira text-2xl font-extrabold tracking-tight text-white">
-              {report.totalScore}
-            </span>
-            <span className="font-saira text-sm text-zinc-500">
-              {c.totalScoreMax}
-            </span>
-          </div>
-
-          <p className="mt-4 text-center font-saira text-[11px] text-zinc-500">
+          <p className="mt-6 text-center font-saira text-[10px] text-zinc-600">
             {c.chartFootnote}
           </p>
         </div>
@@ -464,31 +485,68 @@ export default function AcsiResultsPage() {
                 const sub = report.subscales.find((s) => s.key === key)!;
                 const interp = SUBSCALE_INTERPRETATIONS[key];
                 const narrative = tParagraphs(interp.bands[sub.band]);
+                const scorePct = (sub.score / sub.max) * 100;
+                const accentGradient =
+                  sub.band === "high"
+                    ? "from-emerald-500 to-emerald-400"
+                    : sub.band === "low"
+                      ? "from-amber-500 to-amber-400"
+                      : "from-purple-500 to-purple-400";
+                const cardBorder =
+                  sub.band === "high"
+                    ? "border-emerald-500/20"
+                    : sub.band === "low"
+                      ? "border-amber-500/20"
+                      : "border-purple-500/15";
+                const cardBg =
+                  sub.band === "high"
+                    ? "from-emerald-950/25 via-[#0F1116] to-[#0F1116]"
+                    : sub.band === "low"
+                      ? "from-amber-950/25 via-[#0F1116] to-[#0F1116]"
+                      : "from-purple-950/20 via-[#0F1116] to-[#0F1116]";
                 return (
                   <div
                     key={key}
                     id={`subscale-${key}`}
-                    className="rounded-2xl border border-white/5 bg-[#13151A] p-6 shadow-[0_18px_50px_rgba(0,0,0,0.4)] sm:p-7"
+                    className={`overflow-hidden rounded-2xl border shadow-[0_18px_50px_rgba(0,0,0,0.4)] bg-gradient-to-br ${cardBorder} ${cardBg}`}
                   >
-                    <div className="flex flex-wrap items-baseline justify-between gap-3">
-                      <h3 className="font-saira text-lg font-extrabold uppercase tracking-[0.1em]">
-                        {tStr(interp.name)}
-                      </h3>
-                      <div className="flex items-center gap-3">
-                        <BandPill band={sub.band} lang={lang} />
-                        <span className="font-saira text-xs uppercase tracking-[0.18em] text-zinc-400">
-                          {sub.score}/{sub.max} &middot; {c.typical}{" "}
-                          {sub.min}&ndash;{sub.max}
-                        </span>
+                    <div className={`h-[3px] w-full bg-gradient-to-r ${accentGradient}`} />
+                    <div className="p-6 sm:p-7">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <h3 className="font-saira text-lg font-extrabold uppercase tracking-[0.1em]">
+                            {tStr(interp.name)}
+                          </h3>
+                          <p className="mt-1.5 font-saira text-xs italic text-zinc-400">
+                            {tStr(interp.definition)}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="font-saira text-2xl font-extrabold tabular-nums leading-none text-white">
+                            {sub.score}
+                            <span className="text-sm font-normal text-zinc-500">/{sub.max}</span>
+                          </div>
+                          <div className="mt-1.5">
+                            <BandPill band={sub.band} lang={lang} />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <p className="mt-3 font-saira text-xs italic text-zinc-400">
-                      {tStr(interp.definition)}
-                    </p>
-                    <div className="mt-4 space-y-3 font-saira text-sm text-zinc-200">
-                      {narrative.map((p, i) => (
-                        <p key={i}>{p}</p>
-                      ))}
+                      <div className="mt-4 h-1.5 rounded-full bg-white/[0.06]">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${accentGradient} transition-all duration-700`}
+                          style={{ width: `${scorePct}%` }}
+                        />
+                      </div>
+                      <div className="mt-1 flex justify-between font-saira text-[9px] text-zinc-600">
+                        <span>0</span>
+                        <span>{c.typical} {sub.min}–{sub.max}</span>
+                        <span>{sub.max}</span>
+                      </div>
+                      <div className="mt-5 space-y-3 font-saira text-sm leading-relaxed text-zinc-300">
+                        {narrative.map((p, i) => (
+                          <p key={i}>{p}</p>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );
