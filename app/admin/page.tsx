@@ -625,13 +625,20 @@ function BandAnalysisPanel({ results }: { results: Result[] }) {
 function ResultRow({
   result,
   onUnlock,
+  onDelete,
 }: {
   result: Result;
   onUnlock?: (id: string) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
 }) {
   const [expanded, setExpanded] = React.useState(false);
   const [unlocking, setUnlocking] = React.useState(false);
   const [localPaid, setLocalPaid] = React.useState(result.paid);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const [deleted, setDeleted] = React.useState(false);
+
+  if (deleted) return null;
 
   const factorScores: number[] = FACTOR_KEYS.map((k) => getFactorScore(result, k));
 
@@ -811,6 +818,47 @@ function ResultRow({
                 </button>
               )
             )}
+
+            {onDelete && (
+              confirmDelete ? (
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="font-saira text-[11px] text-red-300">Delete this result?</span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                    className="rounded-full border border-zinc-600 px-3 py-1 font-saira text-[10px] text-zinc-400 hover:border-zinc-400 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setDeleting(true);
+                      try {
+                        await onDelete(result.id);
+                        setDeleted(true);
+                      } finally {
+                        setDeleting(false);
+                        setConfirmDelete(false);
+                      }
+                    }}
+                    className="rounded-full border border-red-500/50 bg-red-500/10 px-3 py-1 font-saira text-[10px] font-semibold text-red-300 hover:bg-red-500/20 transition disabled:opacity-40"
+                  >
+                    {deleting ? "Deleting…" : "Yes, delete"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-500 hover:border-red-500/50 hover:text-red-400 transition"
+                >
+                  Delete
+                </button>
+              )
+            )}
           </div>
         </div>
       )}
@@ -843,13 +891,20 @@ const ACSI_ORDER: AcsiSubscaleKey[] = [
 function AcsiResultRow({
   result,
   onUnlock,
+  onDelete,
 }: {
   result: AcsiResult;
   onUnlock?: (id: string) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
 }) {
   const [expanded, setExpanded] = React.useState(false);
   const [unlocking, setUnlocking] = React.useState(false);
   const [localPaid, setLocalPaid] = React.useState(result.paid);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const [deleted, setDeleted] = React.useState(false);
+
+  if (deleted) return null;
 
   return (
     <div
@@ -979,6 +1034,47 @@ function AcsiResultRow({
                 </button>
               )
             )}
+
+            {onDelete && (
+              confirmDelete ? (
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="font-saira text-[11px] text-red-300">Delete this result?</span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                    className="rounded-full border border-zinc-600 px-3 py-1 font-saira text-[10px] text-zinc-400 hover:border-zinc-400 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setDeleting(true);
+                      try {
+                        await onDelete(result.id);
+                        setDeleted(true);
+                      } finally {
+                        setDeleting(false);
+                        setConfirmDelete(false);
+                      }
+                    }}
+                    className="rounded-full border border-red-500/50 bg-red-500/10 px-3 py-1 font-saira text-[10px] font-semibold text-red-300 hover:bg-red-500/20 transition disabled:opacity-40"
+                  >
+                    {deleting ? "Deleting…" : "Yes, delete"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-500 hover:border-red-500/50 hover:text-red-400 transition"
+                >
+                  Delete
+                </button>
+              )
+            )}
           </div>
         </div>
       )}
@@ -997,13 +1093,20 @@ const CSAI_LABELS: Record<CsaiSubscaleKey, string> = {
 function CsaiResultRow({
   result,
   onUnlock,
+  onDelete,
 }: {
   result: CsaiResult;
   onUnlock?: (id: string) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
 }) {
   const [expanded, setExpanded] = React.useState(false);
   const [unlocking, setUnlocking] = React.useState(false);
   const [localPaid, setLocalPaid] = React.useState(result.paid);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const [deleted, setDeleted] = React.useState(false);
+
+  if (deleted) return null;
 
   const scores: Record<CsaiSubscaleKey, number> = {
     cognitive:  result.score_cognitive,
@@ -1137,6 +1240,47 @@ function CsaiResultRow({
                 </button>
               )
             )}
+
+            {onDelete && (
+              confirmDelete ? (
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="font-saira text-[11px] text-red-300">Delete this result?</span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                    className="rounded-full border border-zinc-600 px-3 py-1 font-saira text-[10px] text-zinc-400 hover:border-zinc-400 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setDeleting(true);
+                      try {
+                        await onDelete(result.id);
+                        setDeleted(true);
+                      } finally {
+                        setDeleting(false);
+                        setConfirmDelete(false);
+                      }
+                    }}
+                    className="rounded-full border border-red-500/50 bg-red-500/10 px-3 py-1 font-saira text-[10px] font-semibold text-red-300 hover:bg-red-500/20 transition disabled:opacity-40"
+                  >
+                    {deleting ? "Deleting…" : "Yes, delete"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-500 hover:border-red-500/50 hover:text-red-400 transition"
+                >
+                  Delete
+                </button>
+              )
+            )}
           </div>
         </div>
       )}
@@ -1149,9 +1293,11 @@ function CsaiResultRow({
 function AthleteCard({
   profile,
   onUnlock,
+  onDelete,
 }: {
   profile: AthleteProfile;
   onUnlock: (id: string, table: string) => Promise<void>;
+  onDelete: (id: string, table: string) => Promise<void>;
 }) {
   const [expanded, setExpanded] = React.useState(false);
 
@@ -1234,6 +1380,7 @@ function AthleteCard({
                     key={r.id}
                     result={r}
                     onUnlock={(id) => onUnlock(id, "sat_results")}
+                    onDelete={(id) => onDelete(id, "sat_results")}
                   />
                 ))}
               </div>
@@ -1253,6 +1400,7 @@ function AthleteCard({
                     key={r.id}
                     result={r}
                     onUnlock={(id) => onUnlock(id, "acsi_results")}
+                    onDelete={(id) => onDelete(id, "acsi_results")}
                   />
                 ))}
               </div>
@@ -1272,6 +1420,7 @@ function AthleteCard({
                     key={r.id}
                     result={r}
                     onUnlock={(id) => onUnlock(id, "csai_results")}
+                    onDelete={(id) => onDelete(id, "csai_results")}
                   />
                 ))}
               </div>
@@ -1721,6 +1870,17 @@ export default function AdminPage() {
     [password],
   );
 
+  const handleDelete = React.useCallback(
+    async (resultId: string, table: string) => {
+      await fetch("/api/admin/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resultId, password, table }),
+      });
+    },
+    [password],
+  );
+
   // ── Auth gate ──────────────────────────────────────────────────────────────
 
   if (satResults === null) {
@@ -1861,6 +2021,7 @@ export default function AdminPage() {
                       key={profile.email}
                       profile={profile}
                       onUnlock={handleUnlock}
+                      onDelete={handleDelete}
                     />
                   ))
                 )}

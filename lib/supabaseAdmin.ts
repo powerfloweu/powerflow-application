@@ -98,3 +98,31 @@ export async function dbPatch(
     console.error(`[supabaseAdmin] dbPatch ${table} failed ${res.status}`, text);
   }
 }
+
+/**
+ * DELETE rows from `table` where each match entry becomes `key=eq.value`.
+ * Example: dbDelete("sat_results", { id: "uuid-here" })
+ */
+export async function dbDelete(
+  table: string,
+  match: Record<string, string>,
+): Promise<void> {
+  const qs =
+    "?" +
+    Object.entries(match)
+      .map(([k, v]) => `${encodeURIComponent(k)}=eq.${encodeURIComponent(v)}`)
+      .join("&");
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${qs}`, {
+    method: "DELETE",
+    headers: {
+      ...headers(),
+      Prefer: "return=minimal",
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    console.error(`[supabaseAdmin] dbDelete ${table} failed ${res.status}`, text);
+  }
+}
