@@ -80,7 +80,7 @@ const ui = {
     upsellTitle: "Unlock your written report",
     upsellBody: (email: string) =>
       `The chart above is a snapshot \u2014 the report explains what each of your three anxiety dimensions means for you right now, with specific pre-competition strategies tailored to your current state. We'll pre-fill the Stripe checkout with ${email}.`,
-    upsellCta: "Unlock full report \u00B7 \u20AC29",
+    upsellCta: "Unlock full report \u00B7 \u20AC19",
     upsellFine:
       "Secure payment via Stripe. You'll return here with the full narrative unlocked.",
     unlockedTag: "Full report unlocked",
@@ -123,7 +123,7 @@ const ui = {
     upsellTitle: "Oldd fel az \u00EDr\u00E1sos riportot",
     upsellBody: (email: string) =>
       `A fenti \u00E1bra egy pillanatk\u00E9p \u2014 a riport elmagyar\u00E1zza, mit jelent sz\u00E1modra mind a h\u00E1rom szorongási dimenzió éppen most, a jelenlegi állapotodra szabott versenyelőtti stratégiákkal. A Stripe fizet\u00E9st ezzel az e-mail-lel t\u00F6ltj\u00FCk el\u0151: ${email}.`,
-    upsellCta: "Riport felold\u00E1sa \u00B7 \u20AC29",
+    upsellCta: "Riport felold\u00E1sa \u00B7 \u20AC19",
     upsellFine:
       "Biztons\u00E1gos fizet\u00E9s Stripe-on kereszt\u00FCl. A teljes narrat\u00EDv\u00E1val visszat\u00E9rhetsz ide.",
     unlockedTag: "Teljes riport feloldva",
@@ -166,7 +166,7 @@ const ui = {
     upsellTitle: "Vollst\u00E4ndigen Bericht freischalten",
     upsellBody: (email: string) =>
       `Das obige Diagramm ist eine Momentaufnahme \u2014 der Bericht erkl\u00E4rt, was jede deiner drei Angstdimensionen gerade f\u00FCr dich bedeutet, mit spezifischen Vorwettkampfstrategien f\u00FCr deinen aktuellen Zustand. Wir f\u00FCllen die Stripe-Kasse mit ${email} vor.`,
-    upsellCta: "Vollst\u00E4ndigen Bericht freischalten \u00B7 \u20AC29",
+    upsellCta: "Vollst\u00E4ndigen Bericht freischalten \u00B7 \u20AC19",
     upsellFine:
       "Sichere Zahlung \u00FCber Stripe. Du kehrst hierher zur\u00FCck mit dem vollst\u00E4ndigen Bericht.",
     unlockedTag: "Vollst\u00E4ndiger Bericht freigeschaltet",
