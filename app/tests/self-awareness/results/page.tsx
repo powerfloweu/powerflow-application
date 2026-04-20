@@ -142,6 +142,96 @@ export default function ResultsPage() {
   const tStr = <T extends { en: string }>(obj: T): string =>
     ((obj as Record<string, string>)[lang] ?? obj.en);
 
+  const ui = {
+    en: {
+      headerTag: "PowerFlow · Self-Awareness Profile",
+      printDocTitle: "Self-Assessment Test",
+      profileTitle: (name: string) => `${name}'s profile`,
+      refNorms: (g: string) => `Reference norms: ${g}`,
+      genderMale: "Male", genderFemale: "Female",
+      validityNotice: "Response pattern notice",
+      validityBody: (sum: number, min: number, max: number) =>
+        `Your total "yes" count (${sum}) falls outside the typical range of ${min}–${max}. This suggests a tendency to agree (or disagree) with most items, which reduces the accuracy of the composite scores. Consider retaking the test with more discrimination between items, or use this profile as a rough sketch rather than a precise reading.`,
+      radarTitle: "Your profile at a glance",
+      radarYou: "You", radarAvg: "Population avg",
+      radarFootnote: "Each axis shows your raw score out of 15 compared to the population average for your reference group.",
+      drivesTitle: "Your eleven drives",
+      typical: "typical",
+      compositesTitle: "Composite dynamics",
+      compositesBody: "Weighted combinations of the eleven core drives. Useful for spotting interactions between motivations that are not obvious from single scores.",
+      score: "Score",
+      verifying: "Verifying your payment with Stripe…",
+      verifyErrorSuffix: "If you completed payment, please contact",
+      verifyErrorSuffix2: "with your Stripe receipt.",
+      upsellTag: "Your full report",
+      upsellTitle: "Unlock your written report",
+      upsellBody: (email: string) => `The chart above is a snapshot — the report explains what each of your eleven drives means for you, how they combine, and where the tensions are. Includes all eleven factor narratives, the six composite subfactor scores, and a downloadable PDF. We'll pre-fill the Stripe checkout with ${email}.`,
+      upsellCta: "Unlock full report · €29",
+      upsellFine: "Secure payment via Stripe. You'll return here with the full narrative unlocked.",
+      unlockedTag: "Full report unlocked",
+      unlockedTitle: "Thank you",
+      unlockedBody: "All eleven factor narratives are now shown above. Download a PDF copy of this page to keep.",
+      downloadPdf: "Download PDF",
+      downloadFine: `Opens your browser print dialog — choose "Save as PDF" as the destination.`,
+      coaching: "Apply for 1:1 coaching",
+      allTests: "← All tests",
+    },
+    hu: {
+      headerTag: "PowerFlow · Önismereti Profil",
+      printDocTitle: "Önismereti Teszt",
+      profileTitle: (name: string) => `${name} profilja`,
+      refNorms: (g: string) => `Referencianormák: ${g}`,
+      genderMale: "Férfi", genderFemale: "Nő",
+      validityNotice: "Válaszminta megjegyzés",
+      validityBody: (sum: number, min: number, max: number) =>
+        `Az „igen" válaszaid száma (${sum}) kívül esik a tipikus ${min}–${max} tartományon. Ez arra utalhat, hogy a legtöbb állítással hajlamos voltál egyetérteni (vagy egyet nem érteni), ami csökkenti az összesített pontszámok pontosságát. Érdemes lehet megismételni a tesztet körültekintőbb válaszadással, vagy ezt a profilt inkább hozzávetőleges képként kezelni.`,
+      radarTitle: "Profilod egy pillantással",
+      radarYou: "Te", radarAvg: "Populáció átlag",
+      radarFootnote: "Minden tengely a nyers pontszámodat mutatja 15-ből, összehasonlítva a referenciaadat populáció átlagával.",
+      drivesTitle: "Tizenegy hajtóerőd",
+      typical: "tipikus",
+      compositesTitle: "Összetett dinamikák",
+      compositesBody: "A tizenegy alapvető hajtóerő súlyozott kombinációi. Hasznos az egyes pontszámokból nem nyilvánvaló motivációs összefüggések felismeréséhez.",
+      score: "Pontszám",
+      verifying: "Stripe fizetés ellenőrzése…",
+      verifyErrorSuffix: "Ha elvégezted a fizetést, kérjük vedd fel a kapcsolatot a következő e-mail-en:",
+      verifyErrorSuffix2: "a Stripe nyugtáddal.",
+      upsellTag: "Teljes riportod",
+      upsellTitle: "Oldd fel az írásos riportot",
+      upsellBody: (email: string) => `A fenti ábra egy pillanatkép – a riport elmagyarázza, mit jelent számodra mindegyik hajtóerő, hogyan kapcsolódnak egymáshoz, és hol vannak a feszültségpontok. Tartalmazza mind a tizenegy faktor narratíváját, a hat összetett alpontszámot és egy letölthető PDF-et. A Stripe fizetést ezzel az e-mail-lel töltjük elő: ${email}.`,
+      upsellCta: "Riport feloldása · €29",
+      upsellFine: "Biztonságos fizetés Stripe-on keresztül. A teljes narratívával visszatérhetsz ide.",
+      unlockedTag: "Teljes riport feloldva",
+      unlockedTitle: "Köszönjük",
+      unlockedBody: "A tizenegy faktor narratívája most már látható fent. Töltsd le PDF-ként az oldalt.",
+      downloadPdf: "PDF letöltése",
+      downloadFine: `Megnyílik a böngésző nyomtatási ablaka – válaszd a „Mentés PDF-ként" lehetőséget.`,
+      coaching: "1:1 coaching igénylése",
+      allTests: "← Összes teszt",
+    },
+  };
+  const c = lang === "hu" ? ui.hu : ui.en;
+
+  // Factor name localisation
+  const FACTOR_HU: Record<string, string> = {
+    Performance: "Teljesítmény", Affiliation: "Affiliáció", Aggression: "Agresszió",
+    Defensiveness: "Védekezés", Consciousness: "Lelkiismeret", Dominance: "Dominancia",
+    Exhibition: "Exhibíció", Autonomy: "Autonómia", Caregiving: "Gondoskodás",
+    Order: "Rend", Helplessness: "Segítségkérés",
+  };
+  const factorLabel = (name: string) => lang === "hu" ? (FACTOR_HU[name] ?? name) : name;
+
+  // Subfactor name localisation
+  const SUBFACTOR_HU: Record<string, string> = {
+    "Self-confirmation": "Önmegerősítés",
+    "Rational dominance": "Racionális dominancia",
+    "Aggressive nonconformity": "Agresszív nonkonformitás",
+    "Passive dependence": "Passzív dependencia",
+    "Sociability": "Szociabilitás",
+    "Agreeableness": "Megegyezési igény",
+  };
+  const subfactorLabel = (name: string) => lang === "hu" ? (SUBFACTOR_HU[name] ?? name) : name;
+
   return (
     <div className="relative min-h-screen bg-[#050608] pt-24 pb-20 text-white">
       <div className="pointer-events-none fixed inset-0 z-0 print:hidden">
@@ -162,7 +252,7 @@ export default function ResultsPage() {
           {/* Right: document identity */}
           <div className="text-right">
             <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-purple-300">
-              Self-Assessment Test
+              {c.printDocTitle}
             </p>
             <p className="mt-1 font-saira text-[11px] text-zinc-400">
               David Sipos — Sports psychologist
@@ -173,13 +263,13 @@ export default function ResultsPage() {
         {/* Header */}
         <div className="text-center">
           <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-300 print:hidden">
-            PowerFlow · Self-Awareness Profile
+            {c.headerTag}
           </p>
           <h1 className="mt-3 font-saira text-3xl font-extrabold uppercase tracking-[0.12em] sm:text-4xl">
-            {respondent.firstName}&apos;s profile
+            {c.profileTitle(respondent.firstName)}
           </h1>
           <p className="mt-3 font-saira text-xs uppercase tracking-[0.2em] text-zinc-400">
-            Reference norms: {respondent.gender === "male" ? "Male" : "Female"} ·{" "}
+            {c.refNorms(respondent.gender === "male" ? c.genderMale : c.genderFemale)} ·{" "}
             {new Date(respondent.submittedAt).toLocaleDateString()}
           </p>
         </div>
@@ -188,15 +278,10 @@ export default function ResultsPage() {
         {!report.validity.reliable && (
           <div className="mt-10 rounded-2xl border border-amber-500/40 bg-amber-950/20 p-5 sm:p-6">
             <p className="font-saira text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">
-              Response pattern notice
+              {c.validityNotice}
             </p>
             <p className="mt-3 font-saira text-sm text-amber-100">
-              Your total &quot;yes&quot; count ({report.validity.sumYes}) falls outside
-              the typical range of {report.validity.bandMin}–{report.validity.bandMax}.
-              This suggests a tendency to agree (or disagree) with most items,
-              which reduces the accuracy of the composite scores. Consider retaking
-              the test with more discrimination between items, or use this profile
-              as a rough sketch rather than a precise reading.
+              {c.validityBody(report.validity.sumYes, report.validity.bandMin, report.validity.bandMax)}
             </p>
           </div>
         )}
@@ -205,13 +290,18 @@ export default function ResultsPage() {
         <div className="mt-10">
           <RadarChart
             data={report.factors.map((f) => ({
-              label: f.factor,
+              label: factorLabel(f.factor),
+              factorKey: f.factor,
               value: f.rawScore,
               max: f.max,
               average: f.populationAverage,
             }))}
-            onLabelClick={unlocked ? (label) => {
-              document.getElementById(`factor-${label}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+            radarTitle={c.radarTitle}
+            radarYou={c.radarYou}
+            radarAvg={c.radarAvg}
+            radarFootnote={c.radarFootnote}
+            onLabelClick={unlocked ? (factorKey) => {
+              document.getElementById(`factor-${factorKey}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
             } : undefined}
           />
         </div>
@@ -229,7 +319,7 @@ export default function ResultsPage() {
             {/* Factor cards */}
             <div className="mt-12 space-y-5">
               <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
-                Your eleven drives
+                {c.drivesTitle}
               </h2>
               {report.factors.map((f) => {
                 const interp = FACTORS[f.factor];
@@ -242,12 +332,12 @@ export default function ResultsPage() {
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-3">
                       <h3 className="font-saira text-lg font-extrabold uppercase tracking-[0.1em]">
-                        {f.factor}
+                        {factorLabel(f.factor)}
                       </h3>
                       <div className="flex items-center gap-3">
-                        <BandPill band={f.band} />
+                        <BandPill band={f.band} lang={lang} />
                         <span className="font-saira text-xs uppercase tracking-[0.18em] text-zinc-400">
-                          {f.rawScore}/{f.max} · typical {f.bandMin}–{f.bandMax}
+                          {f.rawScore}/{f.max} · {c.typical} {f.bandMin}–{f.bandMax}
                         </span>
                       </div>
                     </div>
@@ -267,11 +357,10 @@ export default function ResultsPage() {
             {/* Subfactors */}
             <div className="mt-12">
               <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
-                Composite dynamics
+                {c.compositesTitle}
               </h2>
               <p className="mt-2 font-saira text-xs text-zinc-400">
-                Weighted combinations of the eleven core drives. Useful for spotting
-                interactions between motivations that are not obvious from single scores.
+                {c.compositesBody}
               </p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 {report.subfactors.map((s) => (
@@ -281,12 +370,12 @@ export default function ResultsPage() {
                   >
                     <div className="flex items-baseline justify-between gap-3">
                       <span className="font-saira text-xs font-semibold uppercase tracking-[0.18em]">
-                        {s.subfactor}
+                        {subfactorLabel(s.subfactor)}
                       </span>
-                      <BandPill band={s.band} />
+                      <BandPill band={s.band} lang={lang} />
                     </div>
                     <div className="mt-2 font-saira text-xs text-zinc-400">
-                      Score {s.score} · typical {s.bandMin}–{s.bandMax}
+                      {c.score} {s.score} · {c.typical} {s.bandMin}–{s.bandMax}
                     </div>
                   </div>
                 ))}
@@ -298,19 +387,19 @@ export default function ResultsPage() {
         {/* Stripe verification state */}
         {verifying && (
           <div className="mt-14 rounded-2xl border border-purple-500/30 bg-purple-950/20 p-5 text-center font-saira text-sm text-purple-100 print:hidden">
-            Verifying your payment with Stripe…
+            {c.verifying}
           </div>
         )}
         {verifyError && !unlocked && (
           <div className="mt-14 rounded-2xl border border-red-500/40 bg-red-950/20 p-5 text-center font-saira text-sm text-red-200 print:hidden">
-            {verifyError} If you completed payment, please contact{" "}
+            {verifyError} {c.verifyErrorSuffix}{" "}
             <a
               href="mailto:david@power-flow.eu"
               className="underline decoration-red-400 hover:text-white"
             >
               david@power-flow.eu
             </a>
-            {" "}with your Stripe receipt.
+            {" "}{c.verifyErrorSuffix2}
           </div>
         )}
 
@@ -318,53 +407,45 @@ export default function ResultsPage() {
         {!unlocked ? (
           <div className="mt-14 rounded-3xl border border-purple-500/30 bg-gradient-to-br from-purple-600/20 via-fuchsia-500/10 to-transparent p-8 text-center shadow-[0_22px_60px_rgba(126,34,206,0.18)] print:hidden">
             <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.28em] text-purple-200/90">
-              Your full report
+              {c.upsellTag}
             </p>
             <h2 className="mt-3 font-saira text-2xl font-extrabold uppercase tracking-[0.1em]">
-              Unlock your written report
+              {c.upsellTitle}
             </h2>
             <p className="mx-auto mt-4 max-w-xl font-saira text-sm text-zinc-300">
-              The chart above is a snapshot — the report explains what each of
-              your eleven drives means for you, how they combine, and where the
-              tensions are. Includes all eleven factor narratives, the six
-              composite subfactor scores, and a downloadable PDF. We&apos;ll
-              pre-fill the Stripe checkout with{" "}
-              <span className="text-zinc-100">{respondent.email}</span>.
+              {c.upsellBody(respondent.email)}
             </p>
             <button
               type="button"
               onClick={openCheckout}
               className="mt-6 inline-flex items-center justify-center rounded-full bg-purple-500 px-8 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-purple-400"
             >
-              Unlock full report · €29
+              {c.upsellCta}
             </button>
             <p className="mt-4 font-saira text-[11px] text-zinc-500">
-              Secure payment via Stripe. You&apos;ll return here with the full
-              narrative unlocked.
+              {c.upsellFine}
             </p>
           </div>
         ) : (
           <div className="mt-14 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-600/20 via-teal-500/10 to-transparent p-8 text-center shadow-[0_22px_60px_rgba(16,185,129,0.18)] print:hidden">
             <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-200/90">
-              Full report unlocked
+              {c.unlockedTag}
             </p>
             <h2 className="mt-3 font-saira text-2xl font-extrabold uppercase tracking-[0.1em]">
-              Thank you
+              {c.unlockedTitle}
             </h2>
             <p className="mx-auto mt-4 max-w-xl font-saira text-sm text-zinc-300">
-              All eleven factor narratives are now shown above. Download a PDF
-              copy of this page to keep.
+              {c.unlockedBody}
             </p>
             <button
               type="button"
               onClick={downloadPdf}
               className="mt-6 inline-flex items-center justify-center rounded-full bg-emerald-500 px-8 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-emerald-400"
             >
-              Download PDF
+              {c.downloadPdf}
             </button>
             <p className="mt-4 font-saira text-[11px] text-zinc-500">
-              Opens your browser print dialog — choose &quot;Save as PDF&quot; as
-              the destination.
+              {c.downloadFine}
             </p>
           </div>
         )}
@@ -374,10 +455,10 @@ export default function ResultsPage() {
             href="/"
             className="rounded-full border border-purple-500/50 px-7 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-purple-200 transition hover:border-purple-400 hover:text-white"
           >
-            Apply for 1:1 coaching
+            {c.coaching}
           </Link>
           <Link href="/tests" className="font-saira text-[11px] text-zinc-500 underline decoration-zinc-600 hover:text-white">
-            ← All tests
+            {c.allTests}
           </Link>
         </div>
       </div>
@@ -471,14 +552,18 @@ export default function ResultsPage() {
   );
 }
 
-function BandPill({ band }: { band: Band }) {
+function BandPill({ band, lang = "en" }: { band: Band; lang?: string }) {
   const color =
     band === "high"
       ? "border-fuchsia-400/60 bg-fuchsia-500/15 text-fuchsia-200"
       : band === "low"
       ? "border-sky-400/60 bg-sky-500/15 text-sky-200"
       : "border-zinc-500/60 bg-zinc-500/10 text-zinc-200";
-  const label = band === "average" ? "AVG" : band.toUpperCase();
+  const labels: Record<string, Record<Band, string>> = {
+    en: { high: "HIGH", average: "AVG", low: "LOW" },
+    hu: { high: "MAGAS", average: "ÁTLAG", low: "ALACSONY" },
+  };
+  const label = (labels[lang] ?? labels.en)[band];
   return (
     <span
       className={`rounded-full border px-3 py-1 font-saira text-[10px] font-semibold uppercase tracking-[0.22em] ${color}`}
@@ -490,9 +575,16 @@ function BandPill({ band }: { band: Band }) {
 
 /* --- Radar chart (inline SVG, no deps) ------------------------------------ */
 
-type RadarDatum = { label: string; value: number; max: number; average: number };
+type RadarDatum = { label: string; factorKey: string; value: number; max: number; average: number };
 
-function RadarChart({ data, onLabelClick }: { data: RadarDatum[]; onLabelClick?: (label: string) => void }) {
+function RadarChart({ data, onLabelClick, radarTitle, radarYou, radarAvg, radarFootnote }: {
+  data: RadarDatum[];
+  onLabelClick?: (factorKey: string) => void;
+  radarTitle: string;
+  radarYou: string;
+  radarAvg: string;
+  radarFootnote: string;
+}) {
   const size = 480;
   const cx = size / 2;
   const cy = size / 2;
@@ -524,14 +616,14 @@ function RadarChart({ data, onLabelClick }: { data: RadarDatum[]; onLabelClick?:
     <div className="rounded-3xl border border-white/5 bg-[#0F1116] p-6 sm:p-8">
       <div className="flex items-center justify-between">
         <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
-          Your profile at a glance
+          {radarTitle}
         </h2>
         <div className="flex items-center gap-4 font-saira text-[11px] uppercase tracking-[0.18em]">
           <span className="inline-flex items-center gap-2 text-purple-200">
-            <span className="inline-block h-2 w-4 rounded-full bg-purple-400" /> You
+            <span className="inline-block h-2 w-4 rounded-full bg-purple-400" /> {radarYou}
           </span>
           <span className="inline-flex items-center gap-2 text-zinc-400">
-            <span className="inline-block h-2 w-4 rounded-full border border-zinc-500" /> Population avg
+            <span className="inline-block h-2 w-4 rounded-full border border-zinc-500" /> {radarAvg}
           </span>
         </div>
       </div>
@@ -619,7 +711,7 @@ function RadarChart({ data, onLabelClick }: { data: RadarDatum[]; onLabelClick?:
                 fontSize={14}
                 fill={clickable ? "rgba(216,180,254,0.95)" : "rgba(228,228,231,0.9)"}
                 style={clickable ? { cursor: "pointer" } : undefined}
-                onClick={clickable ? () => onLabelClick(d.label) : undefined}
+                onClick={clickable ? () => onLabelClick(d.factorKey) : undefined}
               >
                 {parts.length > 1 && d.label.length > 10 ? (
                   <>
@@ -641,9 +733,7 @@ function RadarChart({ data, onLabelClick }: { data: RadarDatum[]; onLabelClick?:
         </svg>
       </div>
       <p className="mt-4 text-center font-saira text-[11px] text-zinc-500">
-        Each axis shows your raw score out of 15 compared to the{" "}
-        {/* show gender note in caller context if desired */}
-        population average for your reference group.
+        {radarFootnote}
       </p>
     </div>
   );
