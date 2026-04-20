@@ -3,10 +3,14 @@ import { dbPatch } from "../../../../lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 
+const ALLOWED_TABLES = ["sat_results", "acsi_results", "csai_results"] as const;
+type AllowedTable = (typeof ALLOWED_TABLES)[number];
+
 export async function POST(req: NextRequest) {
-  const { resultId, password } = (await req.json()) as {
+  const { resultId, password, table } = (await req.json()) as {
     resultId?: string;
     password?: string;
+    table?: string;
   };
 
   const adminPassword = process.env.ADMIN_PASSWORD ?? "";
@@ -18,6 +22,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No resultId" }, { status: 400 });
   }
 
-  await dbPatch("sat_results", { id: resultId }, { paid: true });
+  const targetTable: AllowedTable =
+    ALLOWED_TABLES.includes(table as AllowedTable)
+      ? (table as AllowedTable)
+      : "sat_results";
+
+  await dbPatch(targetTable, { id: resultId }, { paid: true });
   return NextResponse.json({ ok: true });
 }

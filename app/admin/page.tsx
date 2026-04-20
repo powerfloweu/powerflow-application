@@ -2,10 +2,28 @@
 
 import React from "react";
 import { score as scoreAnswers } from "../../lib/tests/self-awareness/scoring";
-import type { Answers, ScoreReport, FactorResult, SubfactorResult, Validity } from "../../lib/tests/self-awareness/scoring";
+import type {
+  Answers,
+  ScoreReport,
+  FactorResult,
+  SubfactorResult,
+  Validity,
+} from "../../lib/tests/self-awareness/scoring";
 import { FACTOR_NORMS, SUBFACTOR_NORMS, classify } from "../../lib/tests/self-awareness/norms";
 import type { SubfactorName } from "../../lib/tests/self-awareness/norms";
 import type { FactorName } from "../../lib/tests/self-awareness/items";
+import type {
+  AcsiReport,
+  AcsiSubscaleResult,
+  AcsiSubscaleKey,
+  Band as AcsiBand,
+} from "../../lib/tests/acsi/scoring";
+import type {
+  CsaiReport,
+  CsaiSubscaleResult,
+  CsaiSubscaleKey,
+  Band as CsaiBand,
+} from "../../lib/tests/csai/scoring";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -39,6 +57,49 @@ type Result = {
   validity_reliable: boolean;
 };
 
+type AcsiResult = {
+  id: string;
+  created_at: string;
+  result_ref?: string;
+  first_name: string;
+  email: string;
+  gender: string;
+  lang: string;
+  submitted_at: string;
+  paid: boolean;
+  score_coping: number;
+  score_peaking: number;
+  score_goal_setting: number;
+  score_concentration: number;
+  score_freedom: number;
+  score_confidence: number;
+  score_coachability: number;
+  total_score: number;
+};
+
+type CsaiResult = {
+  id: string;
+  created_at: string;
+  result_ref?: string;
+  first_name: string;
+  email: string;
+  gender: string;
+  lang: string;
+  submitted_at: string;
+  paid: boolean;
+  score_cognitive: number;
+  score_somatic: number;
+  score_confidence: number;
+};
+
+type AthleteProfile = {
+  email: string;
+  name: string;
+  sat: Result[];
+  acsi: AcsiResult[];
+  csai: CsaiResult[];
+};
+
 type GenderFilter = "all" | "male" | "female";
 
 type ImportFile = {
@@ -54,6 +115,27 @@ type ImportFile = {
   resultAsRow?: Result;
   errorMsg?: string;
 };
+
+// ── ACSI / CSAI band helpers ──────────────────────────────────────────────────
+
+function classifyAcsi(score: number): AcsiBand {
+  if (score <= 8) return "low";
+  if (score <= 12) return "average";
+  return "high";
+}
+
+const CSAI_CUTOFFS: Record<CsaiSubscaleKey, { low: number; avg: number }> = {
+  cognitive:  { low: 15, avg: 22 },
+  somatic:    { low: 13, avg: 20 },
+  confidence: { low: 21, avg: 29 },
+};
+
+function classifyCsai(key: CsaiSubscaleKey, score: number): CsaiBand {
+  const { low, avg } = CSAI_CUTOFFS[key];
+  if (score <= low) return "low";
+  if (score <= avg) return "average";
+  return "high";
+}
 
 // ── Norms (hardcoded inline — intentionally not imported from norms.ts) ───────
 
@@ -168,7 +250,9 @@ function computeBandStats(
 
 // ── Parsing helpers ───────────────────────────────────────────────────────────
 
-const parseFile = async (file: File): Promise<{ answers: Record<number, 0 | 1>; parsedCount: number }> => {
+const parseFile = async (
+  file: File,
+): Promise<{ answers: Record<number, 0 | 1>; parsedCount: number }> => {
   const XLSX = await import("xlsx");
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array" });
@@ -188,7 +272,6 @@ const parseFile = async (file: File): Promise<{ answers: Record<number, 0 | 1>; 
     if (ans !== null) answers[num] = ans;
   }
   const parsedCount = Object.keys(answers).length;
-  // Default any missing items (1–165) to 0 (No)
   for (let i = 1; i <= 165; i++) {
     if (!(i in answers)) answers[i] = 0;
   }
@@ -202,7 +285,7 @@ function nameFromFilename(filename: string): string {
   return n.replace(/\b\w/g, (c) => c.toUpperCase()).trim();
 }
 
-// ── Reconstruct a ScoreReport from a stored DB Result ────────────────────────
+// ── Build report helpers ──────────────────────────────────────────────────────
 
 const FACTOR_NAME_MAP: Record<FactorKey, FactorName> = {
   performance: "Performance",
@@ -269,10 +352,29 @@ function buildReportFromResult(result: Result): ScoreReport {
   return { gender, factors, subfactors, validity };
 }
 
-function buildResultFromReport(
-  file: ImportFile,
-  report: ScoreReport,
-): Result {
+function buildAcsiReport(result: AcsiResult): AcsiReport {
+  const subscales: AcsiSubscaleResult[] = [
+    { key: "coping",        score: result.score_coping,        band: classifyAcsi(result.score_coping),        min: 4, max: 16 },
+    { key: "peaking",       score: result.score_peaking,       band: classifyAcsi(result.score_peaking),       min: 4, max: 16 },
+    { key: "goalSetting",   score: result.score_goal_setting,  band: classifyAcsi(result.score_goal_setting),  min: 4, max: 16 },
+    { key: "concentration", score: result.score_concentration, band: classifyAcsi(result.score_concentration), min: 4, max: 16 },
+    { key: "freedom",       score: result.score_freedom,       band: classifyAcsi(result.score_freedom),       min: 4, max: 16 },
+    { key: "confidence",    score: result.score_confidence,    band: classifyAcsi(result.score_confidence),    min: 4, max: 16 },
+    { key: "coachability",  score: result.score_coachability,  band: classifyAcsi(result.score_coachability),  min: 4, max: 16 },
+  ];
+  return { subscales, totalScore: result.total_score };
+}
+
+function buildCsaiReport(result: CsaiResult): CsaiReport {
+  const subscales: CsaiSubscaleResult[] = [
+    { key: "cognitive",  score: result.score_cognitive,  band: classifyCsai("cognitive",  result.score_cognitive),  min: 9, max: 36 },
+    { key: "somatic",    score: result.score_somatic,    band: classifyCsai("somatic",    result.score_somatic),    min: 9, max: 36 },
+    { key: "confidence", score: result.score_confidence, band: classifyCsai("confidence", result.score_confidence), min: 9, max: 36 },
+  ];
+  return { subscales };
+}
+
+function buildResultFromReport(file: ImportFile, report: ScoreReport): Result {
   const f = (name: string) =>
     report.factors.find((x) => x.factor === name)?.rawScore ?? 0;
   const sf = (name: string) =>
@@ -309,6 +411,39 @@ function buildResultFromReport(
   };
 }
 
+function groupByAthlete(
+  sat: Result[],
+  acsi: AcsiResult[],
+  csai: CsaiResult[],
+): AthleteProfile[] {
+  const map = new Map<string, AthleteProfile>();
+  const getOrCreate = (email: string, name: string) => {
+    const key = email.toLowerCase();
+    if (!map.has(key)) map.set(key, { email: key, name, sat: [], acsi: [], csai: [] });
+    return map.get(key)!;
+  };
+  for (const r of sat)  getOrCreate(r.email, r.first_name).sat.push(r);
+  for (const r of acsi) getOrCreate(r.email, r.first_name).acsi.push(r);
+  for (const r of csai) getOrCreate(r.email, r.first_name).csai.push(r);
+  const ts = (r: { submitted_at: string }) => new Date(r.submitted_at).getTime();
+  return Array.from(map.values()).sort((a, b) => {
+    const aMax = Math.max(...[...a.sat, ...a.acsi, ...a.csai].map(ts), 0);
+    const bMax = Math.max(...[...b.sat, ...b.acsi, ...b.csai].map(ts), 0);
+    return bMax - aMax;
+  });
+}
+
+// ── Shared helpers ─────────────────────────────────────────────────────────────
+
+function fmtDate(iso: string): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function SparkBar({ scores }: { scores: number[] }) {
@@ -327,80 +462,165 @@ function SparkBar({ scores }: { scores: number[] }) {
   );
 }
 
+function AcsiSparkBar({ result }: { result: AcsiResult }) {
+  const scores = [
+    result.score_coping,
+    result.score_peaking,
+    result.score_goal_setting,
+    result.score_concentration,
+    result.score_freedom,
+    result.score_confidence,
+    result.score_coachability,
+  ];
+  return (
+    <div className="flex items-end gap-[2px] h-6">
+      {scores.map((s, i) => (
+        <div
+          key={i}
+          className="w-2 rounded-sm bg-purple-500/70"
+          style={{ height: `${Math.max(4, Math.round((s / 16) * 24))}px` }}
+          title={String(s)}
+        />
+      ))}
+    </div>
+  );
+}
+
 function MiniProgressBar({ value, max = 15 }: { value: number; max?: number }) {
   return (
     <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
       <div
         className="h-full rounded-full bg-purple-500"
-        style={{ width: `${(value / max) * 100}%` }}
+        style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
       />
     </div>
   );
 }
 
+function BandChip({
+  band,
+  inverse = false,
+}: {
+  band: "low" | "average" | "high";
+  inverse?: boolean;
+}) {
+  const effective = inverse
+    ? band === "low"
+      ? "high"
+      : band === "high"
+      ? "low"
+      : "average"
+    : band;
+  const cls =
+    effective === "high"
+      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+      : effective === "low"
+      ? "border-red-500/40 bg-red-500/10 text-red-300"
+      : "border-amber-500/40 bg-amber-500/10 text-amber-300";
+  return (
+    <span
+      className={`rounded-full border px-2 py-0.5 font-saira text-[9px] uppercase tracking-[0.12em] ${cls}`}
+    >
+      {band}
+    </span>
+  );
+}
+
 function BandAnalysisPanel({ results }: { results: Result[] }) {
+  const [genderFilter, setGenderFilter] = React.useState<"male" | "female">("male");
   return (
     <div className="mt-8 rounded-2xl border border-white/5 bg-[#13151A] p-6 space-y-10">
-      <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
-        Band Analysis
-      </h2>
-      <p className="font-saira text-[11px] text-zinc-500 -mt-8">
-        P25 → Low/Avg boundary · P75 → Avg/High boundary · Amber = differs from current norm by more than 1 point
-      </p>
-      {(["male", "female"] as const).map((gender) => {
-        const stats = computeBandStats(results, gender);
-        const validN = results.filter((r) => r.gender === gender && r.validity_reliable).length;
-        return (
-          <div key={gender}>
-            <h3 className="font-saira text-xs font-semibold uppercase tracking-[0.2em] text-zinc-300 mb-1">
-              {gender === "male" ? "Male" : "Female"}
-            </h3>
-            <p className="font-saira text-[11px] text-zinc-500 mb-4">
-              Based on {validN} valid responses
-            </p>
-            <div className="overflow-x-auto">
-              <table className="w-full font-saira text-xs">
-                <thead>
-                  <tr className="text-zinc-500 uppercase tracking-[0.15em]">
-                    <th className="text-left py-2 pr-4 font-semibold">Factor</th>
-                    <th className="text-right py-2 px-2 font-semibold">n</th>
-                    <th className="text-right py-2 px-2 font-semibold">Mean</th>
-                    <th className="text-right py-2 px-2 font-semibold">P25</th>
-                    <th className="text-right py-2 px-2 font-semibold">Median</th>
-                    <th className="text-right py-2 px-2 font-semibold">P75</th>
-                    <th className="text-right py-2 px-2 font-semibold">Norm min–max</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.map((s) => (
-                    <tr
-                      key={s.factor}
-                      className="border-t border-white/5 hover:bg-white/[0.02]"
-                    >
-                      <td className="py-2 pr-4 text-zinc-200 capitalize">{s.factor}</td>
-                      <td className="py-2 px-2 text-right text-zinc-400">{s.n}</td>
-                      <td className="py-2 px-2 text-right text-zinc-300">{s.mean}</td>
-                      <td className={`py-2 px-2 text-right font-semibold ${s.p25Diff ? "text-amber-300" : "text-zinc-300"}`}>
-                        {s.p25}
-                      </td>
-                      <td className="py-2 px-2 text-right text-zinc-300">{s.p50}</td>
-                      <td className={`py-2 px-2 text-right font-semibold ${s.p75Diff ? "text-amber-300" : "text-zinc-300"}`}>
-                        {s.p75}
-                      </td>
-                      <td className="py-2 px-2 text-right text-zinc-500">
-                        {s.normMin}–{s.normMax}
-                      </td>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
+            Band Analysis — SAT
+          </h2>
+          <p className="font-saira text-[11px] text-zinc-500 mt-1">
+            P25 → Low/Avg boundary · P75 → Avg/High boundary · Amber = differs from norm by &gt;1 pt
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {(["male", "female"] as const).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGenderFilter(g)}
+              className={`rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.14em] transition ${
+                genderFilter === g
+                  ? "border-purple-400 bg-purple-500/20 text-white"
+                  : "border-zinc-700 text-zinc-400 hover:border-purple-400"
+              }`}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+      </div>
+      {(["male", "female"] as const)
+        .filter((g) => g === genderFilter)
+        .map((gender) => {
+          const stats = computeBandStats(results, gender);
+          const validN = results.filter(
+            (r) => r.gender === gender && r.validity_reliable,
+          ).length;
+          return (
+            <div key={gender}>
+              <p className="font-saira text-[11px] text-zinc-500 mb-4">
+                Based on {validN} valid responses
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full font-saira text-xs">
+                  <thead>
+                    <tr className="text-zinc-500 uppercase tracking-[0.15em]">
+                      <th className="text-left py-2 pr-4 font-semibold">Factor</th>
+                      <th className="text-right py-2 px-2 font-semibold">n</th>
+                      <th className="text-right py-2 px-2 font-semibold">Mean</th>
+                      <th className="text-right py-2 px-2 font-semibold">P25</th>
+                      <th className="text-right py-2 px-2 font-semibold">Median</th>
+                      <th className="text-right py-2 px-2 font-semibold">P75</th>
+                      <th className="text-right py-2 px-2 font-semibold">Norm min–max</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {stats.map((s) => (
+                      <tr
+                        key={s.factor}
+                        className="border-t border-white/5 hover:bg-white/[0.02]"
+                      >
+                        <td className="py-2 pr-4 text-zinc-200 capitalize">{s.factor}</td>
+                        <td className="py-2 px-2 text-right text-zinc-400">{s.n}</td>
+                        <td className="py-2 px-2 text-right text-zinc-300">{s.mean}</td>
+                        <td
+                          className={`py-2 px-2 text-right font-semibold ${
+                            s.p25Diff ? "text-amber-300" : "text-zinc-300"
+                          }`}
+                        >
+                          {s.p25}
+                        </td>
+                        <td className="py-2 px-2 text-right text-zinc-300">{s.p50}</td>
+                        <td
+                          className={`py-2 px-2 text-right font-semibold ${
+                            s.p75Diff ? "text-amber-300" : "text-zinc-300"
+                          }`}
+                        >
+                          {s.p75}
+                        </td>
+                        <td className="py-2 px-2 text-right text-zinc-500">
+                          {s.normMin}–{s.normMax}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
     </div>
   );
 }
+
+// ── SAT ResultRow ─────────────────────────────────────────────────────────────
 
 function ResultRow({
   result,
@@ -424,14 +644,6 @@ function ResultRow({
     { label: "Agreeableness", score: result.sf_agreeableness },
   ];
 
-  const dateStr = result.submitted_at
-    ? new Date(result.submitted_at).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    : "—";
-
   return (
     <div
       className="rounded-2xl border border-white/5 bg-[#13151A] overflow-hidden cursor-pointer hover:border-purple-500/20 transition"
@@ -444,7 +656,7 @@ function ResultRow({
             {result.first_name}{" "}
             <span className="font-normal text-zinc-400 text-xs">{result.email}</span>
           </p>
-          <p className="font-saira text-[11px] text-zinc-500 mt-0.5">{dateStr}</p>
+          <p className="font-saira text-[11px] text-zinc-500 mt-0.5">{fmtDate(result.submitted_at)}</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -471,10 +683,7 @@ function ResultRow({
           )}
 
           <SparkBar scores={factorScores} />
-
-          <span className="font-saira text-[11px] text-zinc-600 ml-1">
-            {expanded ? "▲" : "▼"}
-          </span>
+          <span className="font-saira text-[11px] text-zinc-600 ml-1">{expanded ? "▲" : "▼"}</span>
         </div>
       </div>
 
@@ -493,10 +702,7 @@ function ResultRow({
               {FACTOR_KEYS.map((key) => {
                 const factorScore = getFactorScore(result, key);
                 return (
-                  <div
-                    key={key}
-                    className="rounded-xl border border-white/5 bg-[#0D0F14] p-3"
-                  >
+                  <div key={key} className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
                     <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1 capitalize">
                       {key}
                     </p>
@@ -518,10 +724,7 @@ function ResultRow({
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {subfactors.map(({ label, score }) => (
-                <div
-                  key={label}
-                  className="rounded-xl border border-white/5 bg-[#0D0F14] p-3"
-                >
+                <div key={label} className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
                   <p className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1">
                     {label}
                   </p>
@@ -544,7 +747,9 @@ function ResultRow({
               <span>
                 <span className="text-zinc-500 text-xs uppercase tracking-[0.15em] mr-2">Reliable</span>
                 <span
-                  className={`font-semibold ${result.validity_reliable ? "text-emerald-300" : "text-amber-300"}`}
+                  className={`font-semibold ${
+                    result.validity_reliable ? "text-emerald-300" : "text-amber-300"
+                  }`}
                 >
                   {result.validity_reliable ? "Yes" : "No"}
                 </span>
@@ -553,7 +758,7 @@ function ResultRow({
           </div>
 
           {/* View full report */}
-          <div className="pt-2 border-t border-white/5">
+          <div className="pt-2 border-t border-white/5 flex flex-wrap gap-3">
             <button
               type="button"
               onClick={(e) => {
@@ -580,20 +785,18 @@ function ResultRow({
             >
               View full report →
             </button>
-          </div>
 
-          {/* Admin unlock */}
-          {onUnlock && (
-            <div className="pt-2 border-t border-white/5">
-              {localPaid ? (
-                <p className="font-saira text-[11px] text-emerald-400">
+            {onUnlock && (
+              localPaid ? (
+                <p className="self-center font-saira text-[11px] text-emerald-400">
                   ✓ Report unlocked for this client
                 </p>
               ) : (
                 <button
                   type="button"
                   disabled={unlocking}
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    e.stopPropagation();
                     setUnlocking(true);
                     try {
                       await onUnlock(result.id);
@@ -606,8 +809,477 @@ function ResultRow({
                 >
                   {unlocking ? "Unlocking…" : "Unlock for client"}
                 </button>
-              )}
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ACSI ResultRow ────────────────────────────────────────────────────────────
+
+const ACSI_LABELS: Record<AcsiSubscaleKey, string> = {
+  coping:        "Coping",
+  peaking:       "Peaking",
+  goalSetting:   "Goal Setting",
+  concentration: "Concentration",
+  freedom:       "Freedom",
+  confidence:    "Confidence",
+  coachability:  "Coachability",
+};
+
+const ACSI_ORDER: AcsiSubscaleKey[] = [
+  "coping",
+  "peaking",
+  "goalSetting",
+  "concentration",
+  "freedom",
+  "confidence",
+  "coachability",
+];
+
+function AcsiResultRow({
+  result,
+  onUnlock,
+}: {
+  result: AcsiResult;
+  onUnlock?: (id: string) => Promise<void>;
+}) {
+  const [expanded, setExpanded] = React.useState(false);
+  const [unlocking, setUnlocking] = React.useState(false);
+  const [localPaid, setLocalPaid] = React.useState(result.paid);
+
+  return (
+    <div
+      className="rounded-2xl border border-white/5 bg-[#13151A] overflow-hidden cursor-pointer hover:border-purple-500/20 transition"
+      onClick={() => setExpanded((v) => !v)}
+    >
+      {/* Collapsed row */}
+      <div className="flex flex-wrap items-center gap-3 p-4 sm:p-5">
+        <div className="flex-1 min-w-0">
+          <p className="font-saira text-sm font-semibold text-zinc-100 truncate">
+            {result.first_name}{" "}
+            <span className="font-normal text-zinc-400 text-xs">{result.email}</span>
+          </p>
+          <p className="font-saira text-[11px] text-zinc-500 mt-0.5">{fmtDate(result.submitted_at)}</p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-saira text-xs font-semibold text-zinc-200">
+            {result.total_score}
+            <span className="text-zinc-600 font-normal">/112</span>
+          </span>
+
+          {localPaid && (
+            <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.15em] text-emerald-300">
+              Unlocked
+            </span>
+          )}
+
+          <AcsiSparkBar result={result} />
+          <span className="font-saira text-[11px] text-zinc-600 ml-1">{expanded ? "▲" : "▼"}</span>
+        </div>
+      </div>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div
+          className="border-t border-white/5 p-4 sm:p-5 space-y-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div>
+            <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.2em] text-purple-300 mb-3">
+              Subscale Scores
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {ACSI_ORDER.map((key) => {
+                const scoreMap: Record<AcsiSubscaleKey, number> = {
+                  coping:        result.score_coping,
+                  peaking:       result.score_peaking,
+                  goalSetting:   result.score_goal_setting,
+                  concentration: result.score_concentration,
+                  freedom:       result.score_freedom,
+                  confidence:    result.score_confidence,
+                  coachability:  result.score_coachability,
+                };
+                const s = scoreMap[key];
+                const band = classifyAcsi(s);
+                return (
+                  <div key={key} className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
+                    <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500 mb-1">
+                      {ACSI_LABELS[key]}
+                    </p>
+                    <div className="flex items-baseline justify-between mb-1">
+                      <p className="font-saira text-base font-bold text-zinc-100">
+                        {s}
+                        <span className="text-xs font-normal text-zinc-600">/16</span>
+                      </p>
+                      <BandChip band={band} />
+                    </div>
+                    <MiniProgressBar value={s - 4} max={12} />
+                  </div>
+                );
+              })}
             </div>
+          </div>
+
+          {/* Actions */}
+          <div className="pt-2 border-t border-white/5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const report = buildAcsiReport(result);
+                const payload = {
+                  report,
+                  respondent: {
+                    firstName: result.first_name,
+                    email: result.email,
+                    gender: result.gender,
+                    lang: result.lang ?? "en",
+                    startedAt: result.submitted_at,
+                    submittedAt: result.submitted_at,
+                  },
+                };
+                try {
+                  localStorage.setItem("powerflow.acsi.lastResult.v1", JSON.stringify(payload));
+                  localStorage.setItem("powerflow.acsi.unlocked.v1", "1");
+                } catch { /* ignore */ }
+                window.open("/tests/acsi/results", "_blank");
+              }}
+              className="rounded-full border border-purple-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-purple-200 transition hover:bg-purple-500/20"
+            >
+              View full report →
+            </button>
+
+            {onUnlock && (
+              localPaid ? (
+                <p className="self-center font-saira text-[11px] text-emerald-400">
+                  ✓ Report unlocked for this client
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  disabled={unlocking}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setUnlocking(true);
+                    try {
+                      await onUnlock(result.id);
+                      setLocalPaid(true);
+                    } finally {
+                      setUnlocking(false);
+                    }
+                  }}
+                  className="rounded-full border border-emerald-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-200 transition hover:bg-emerald-500/20 disabled:opacity-40"
+                >
+                  {unlocking ? "Unlocking…" : "Unlock for client"}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CSAI ResultRow ────────────────────────────────────────────────────────────
+
+const CSAI_LABELS: Record<CsaiSubscaleKey, string> = {
+  cognitive:  "Cognitive Anxiety",
+  somatic:    "Somatic Anxiety",
+  confidence: "Self-Confidence",
+};
+
+function CsaiResultRow({
+  result,
+  onUnlock,
+}: {
+  result: CsaiResult;
+  onUnlock?: (id: string) => Promise<void>;
+}) {
+  const [expanded, setExpanded] = React.useState(false);
+  const [unlocking, setUnlocking] = React.useState(false);
+  const [localPaid, setLocalPaid] = React.useState(result.paid);
+
+  const scores: Record<CsaiSubscaleKey, number> = {
+    cognitive:  result.score_cognitive,
+    somatic:    result.score_somatic,
+    confidence: result.score_confidence,
+  };
+
+  return (
+    <div
+      className="rounded-2xl border border-white/5 bg-[#13151A] overflow-hidden cursor-pointer hover:border-sky-500/20 transition"
+      onClick={() => setExpanded((v) => !v)}
+    >
+      {/* Collapsed row */}
+      <div className="flex flex-wrap items-center gap-3 p-4 sm:p-5">
+        <div className="flex-1 min-w-0">
+          <p className="font-saira text-sm font-semibold text-zinc-100 truncate">
+            {result.first_name}{" "}
+            <span className="font-normal text-zinc-400 text-xs">{result.email}</span>
+          </p>
+          <p className="font-saira text-[11px] text-zinc-500 mt-0.5">{fmtDate(result.submitted_at)}</p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {(["cognitive", "somatic", "confidence"] as CsaiSubscaleKey[]).map((key) => (
+            <span
+              key={key}
+              className="font-saira text-[11px] text-zinc-400"
+              title={CSAI_LABELS[key]}
+            >
+              {key === "cognitive" ? "Cog" : key === "somatic" ? "Som" : "Conf"}:{" "}
+              <span className="text-zinc-200 font-semibold">{scores[key]}</span>
+            </span>
+          ))}
+
+          {localPaid && (
+            <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.15em] text-emerald-300">
+              Unlocked
+            </span>
+          )}
+
+          <span className="font-saira text-[11px] text-zinc-600 ml-1">{expanded ? "▲" : "▼"}</span>
+        </div>
+      </div>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div
+          className="border-t border-white/5 p-4 sm:p-5 space-y-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div>
+            <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-300 mb-3">
+              Subscale Scores
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {(["cognitive", "somatic", "confidence"] as CsaiSubscaleKey[]).map((key) => {
+                const s = scores[key];
+                const band = classifyCsai(key, s);
+                // Anxiety subscales: low is good; confidence: high is good
+                const inverse = key !== "confidence";
+                return (
+                  <div key={key} className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
+                    <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500 mb-1">
+                      {CSAI_LABELS[key]}
+                    </p>
+                    <div className="flex items-baseline justify-between mb-1">
+                      <p className="font-saira text-base font-bold text-zinc-100">
+                        {s}
+                        <span className="text-xs font-normal text-zinc-600">/36</span>
+                      </p>
+                      <BandChip band={band} inverse={inverse} />
+                    </div>
+                    <MiniProgressBar value={s - 9} max={27} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="pt-2 border-t border-white/5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const report = buildCsaiReport(result);
+                const payload = {
+                  report,
+                  respondent: {
+                    firstName: result.first_name,
+                    email: result.email,
+                    gender: result.gender,
+                    lang: result.lang ?? "en",
+                    startedAt: result.submitted_at,
+                    submittedAt: result.submitted_at,
+                  },
+                };
+                try {
+                  localStorage.setItem("powerflow.csai.lastResult.v1", JSON.stringify(payload));
+                  localStorage.setItem("powerflow.csai.unlocked.v1", "1");
+                } catch { /* ignore */ }
+                window.open("/tests/csai/results", "_blank");
+              }}
+              className="rounded-full border border-sky-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-sky-200 transition hover:bg-sky-500/20"
+            >
+              View full report →
+            </button>
+
+            {onUnlock && (
+              localPaid ? (
+                <p className="self-center font-saira text-[11px] text-emerald-400">
+                  ✓ Report unlocked for this client
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  disabled={unlocking}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setUnlocking(true);
+                    try {
+                      await onUnlock(result.id);
+                      setLocalPaid(true);
+                    } finally {
+                      setUnlocking(false);
+                    }
+                  }}
+                  className="rounded-full border border-emerald-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-200 transition hover:bg-emerald-500/20 disabled:opacity-40"
+                >
+                  {unlocking ? "Unlocking…" : "Unlock for client"}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── AthleteCard ───────────────────────────────────────────────────────────────
+
+function AthleteCard({
+  profile,
+  onUnlock,
+}: {
+  profile: AthleteProfile;
+  onUnlock: (id: string, table: string) => Promise<void>;
+}) {
+  const [expanded, setExpanded] = React.useState(false);
+
+  const totalTests = profile.sat.length + profile.acsi.length + profile.csai.length;
+  const allDates = [...profile.sat, ...profile.acsi, ...profile.csai].map(
+    (r) => new Date(r.submitted_at).getTime(),
+  );
+  const latestDate = allDates.length > 0 ? Math.max(...allDates) : 0;
+
+  return (
+    <div className="rounded-2xl border border-white/5 bg-[#0F1117] overflow-hidden transition hover:border-purple-500/15">
+      {/* Header row */}
+      <div
+        className="flex flex-wrap items-center gap-3 p-4 sm:p-5 cursor-pointer"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        {/* Avatar letter */}
+        <div className="flex-shrink-0 h-9 w-9 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
+          <span className="font-saira text-sm font-bold text-purple-200 uppercase">
+            {(profile.name || profile.email).charAt(0)}
+          </span>
+        </div>
+
+        {/* Name + email */}
+        <div className="flex-1 min-w-0">
+          <p className="font-saira text-sm font-semibold text-zinc-100 truncate">
+            {profile.name}
+          </p>
+          <p className="font-saira text-[11px] text-zinc-500 truncate">{profile.email}</p>
+        </div>
+
+        {/* Test badges */}
+        <div className="flex flex-wrap items-center gap-2">
+          {profile.sat.length > 0 && (
+            <span className="rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.15em] text-fuchsia-300">
+              SAT ×{profile.sat.length}
+            </span>
+          )}
+          {profile.acsi.length > 0 && (
+            <span className="rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.15em] text-purple-300">
+              ACSI ×{profile.acsi.length}
+            </span>
+          )}
+          {profile.csai.length > 0 && (
+            <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.15em] text-sky-300">
+              CSAI ×{profile.csai.length}
+            </span>
+          )}
+        </div>
+
+        {/* Date + expand */}
+        <div className="flex items-center gap-2">
+          {latestDate > 0 && (
+            <span className="font-saira text-[11px] text-zinc-600">
+              {fmtDate(new Date(latestDate).toISOString())}
+            </span>
+          )}
+          <span className="font-saira text-[11px] text-zinc-600">
+            {expanded ? "▲" : "▼"}
+          </span>
+        </div>
+      </div>
+
+      {/* Expanded: per-test sections */}
+      {expanded && (
+        <div
+          className="border-t border-white/5 p-4 sm:p-5 space-y-8"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* SAT section */}
+          {profile.sat.length > 0 && (
+            <div>
+              <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.22em] text-fuchsia-300 mb-3 flex items-center gap-2">
+                <span className="inline-block h-[2px] w-4 rounded-full bg-fuchsia-400 opacity-70" />
+                Self-Awareness Test · {profile.sat.length} result{profile.sat.length > 1 ? "s" : ""}
+              </p>
+              <div className="space-y-2">
+                {profile.sat.map((r) => (
+                  <ResultRow
+                    key={r.id}
+                    result={r}
+                    onUnlock={(id) => onUnlock(id, "sat_results")}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ACSI section */}
+          {profile.acsi.length > 0 && (
+            <div>
+              <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.22em] text-purple-300 mb-3 flex items-center gap-2">
+                <span className="inline-block h-[2px] w-4 rounded-full bg-purple-400 opacity-70" />
+                Coping Skills Inventory · {profile.acsi.length} result{profile.acsi.length > 1 ? "s" : ""}
+              </p>
+              <div className="space-y-2">
+                {profile.acsi.map((r) => (
+                  <AcsiResultRow
+                    key={r.id}
+                    result={r}
+                    onUnlock={(id) => onUnlock(id, "acsi_results")}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* CSAI section */}
+          {profile.csai.length > 0 && (
+            <div>
+              <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-300 mb-3 flex items-center gap-2">
+                <span className="inline-block h-[2px] w-4 rounded-full bg-sky-400 opacity-70" />
+                Competitive Anxiety Inventory · {profile.csai.length} result{profile.csai.length > 1 ? "s" : ""}
+              </p>
+              <div className="space-y-2">
+                {profile.csai.map((r) => (
+                  <CsaiResultRow
+                    key={r.id}
+                    result={r}
+                    onUnlock={(id) => onUnlock(id, "csai_results")}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {totalTests === 0 && (
+            <p className="font-saira text-sm text-zinc-600 text-center py-4">No results</p>
           )}
         </div>
       )}
@@ -623,9 +1295,7 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const processFiles = async (rawFiles: FileList | File[]) => {
-    const arr = Array.from(rawFiles).filter((f) =>
-      /\.xlsx?$/i.test(f.name),
-    );
+    const arr = Array.from(rawFiles).filter((f) => /\.xlsx?$/i.test(f.name));
     if (arr.length === 0) return;
 
     const newEntries: ImportFile[] = await Promise.all(
@@ -666,9 +1336,7 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
   };
 
   const updateFile = (id: string, patch: Partial<ImportFile>) => {
-    setFiles((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, ...patch } : f)),
-    );
+    setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   };
 
   const removeFile = (id: string) => {
@@ -784,7 +1452,6 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                   <span className="font-saira text-[11px] text-zinc-500 truncate max-w-[180px]">
                     {f.filename}
                   </span>
-                  {/* Answer count badge */}
                   <span
                     className={`rounded-full border px-2 py-0.5 font-saira text-[10px] font-semibold ${
                       f.answeredCount >= 160
@@ -794,7 +1461,6 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                   >
                     {f.answeredCount}/165
                   </span>
-                  {/* Status badge */}
                   {f.status === "scored" && (
                     <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 font-saira text-[10px] text-purple-300">
                       Scored
@@ -815,7 +1481,6 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                       Error
                     </span>
                   )}
-                  {/* Low answer warning */}
                   {f.answeredCount < 160 && (
                     <span className="font-saira text-[10px] text-amber-400">
                       Only {f.answeredCount}/165 answered
@@ -832,7 +1497,6 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
 
                 {/* Inputs row */}
                 <div className="flex flex-wrap items-center gap-3">
-                  {/* Name */}
                   <input
                     type="text"
                     value={f.name}
@@ -840,7 +1504,6 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                     placeholder="Full name"
                     className="rounded-lg border border-zinc-700/70 bg-[#0D0F14] px-3 py-1.5 font-saira text-xs text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/40 w-44"
                   />
-                  {/* Email */}
                   <input
                     type="email"
                     value={f.email}
@@ -848,7 +1511,6 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                     placeholder="Email (optional)"
                     className="rounded-lg border border-zinc-700/70 bg-[#0D0F14] px-3 py-1.5 font-saira text-xs text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/40 w-48"
                   />
-                  {/* Gender pills */}
                   <div className="flex gap-1.5">
                     {(["male", "female"] as const).map((g) => (
                       <button
@@ -857,12 +1519,9 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                         onClick={() =>
                           updateFile(f.id, {
                             gender: f.gender === g ? null : g,
-                            // reset scoring if gender changes
-                            status:
-                              f.status === "scored" ? "pending" : f.status,
+                            status: f.status === "scored" ? "pending" : f.status,
                             report: f.gender === g ? undefined : f.report,
-                            resultAsRow:
-                              f.gender === g ? undefined : f.resultAsRow,
+                            resultAsRow: f.gender === g ? undefined : f.resultAsRow,
                           })
                         }
                         className={`rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.14em] transition ${
@@ -879,41 +1538,44 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                   </div>
                 </div>
 
-                {/* Error message */}
                 {f.status === "error" && f.errorMsg && (
                   <p className="font-saira text-[11px] text-red-400">{f.errorMsg}</p>
                 )}
 
-                {/* Scored result preview + view on site */}
-                {(f.status === "scored" || f.status === "saved") && f.resultAsRow && f.report && (
-                  <div className="mt-2 space-y-2">
-                    <ResultRow result={f.resultAsRow} />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const payload = {
-                          report: f.report,
-                          respondent: {
-                            firstName: f.name,
-                            email: f.email || "",
-                            gender: f.gender,
-                            lang: "en",
-                            startedAt: new Date().toISOString(),
-                            submittedAt: new Date().toISOString(),
-                          },
-                        };
-                        try {
-                          localStorage.setItem("powerflow.selfAwareness.lastResult.v1", JSON.stringify(payload));
-                          localStorage.setItem("powerflow.selfAwareness.unlocked.v1", "1");
-                        } catch { /* ignore */ }
-                        window.open("/tests/self-awareness/results", "_blank");
-                      }}
-                      className="rounded-full border border-purple-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-purple-200 transition hover:bg-purple-500/20"
-                    >
-                      View full results →
-                    </button>
-                  </div>
-                )}
+                {(f.status === "scored" || f.status === "saved") &&
+                  f.resultAsRow &&
+                  f.report && (
+                    <div className="mt-2 space-y-2">
+                      <ResultRow result={f.resultAsRow} />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const payload = {
+                            report: f.report,
+                            respondent: {
+                              firstName: f.name,
+                              email: f.email || "",
+                              gender: f.gender,
+                              lang: "en",
+                              startedAt: new Date().toISOString(),
+                              submittedAt: new Date().toISOString(),
+                            },
+                          };
+                          try {
+                            localStorage.setItem(
+                              "powerflow.selfAwareness.lastResult.v1",
+                              JSON.stringify(payload),
+                            );
+                            localStorage.setItem("powerflow.selfAwareness.unlocked.v1", "1");
+                          } catch { /* ignore */ }
+                          window.open("/tests/self-awareness/results", "_blank");
+                        }}
+                        className="rounded-full border border-purple-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-purple-200 transition hover:bg-purple-500/20"
+                      >
+                        View full results →
+                      </button>
+                    </div>
+                  )}
               </div>
             ))}
           </div>
@@ -960,42 +1622,72 @@ export default function AdminPage() {
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [authError, setAuthError] = React.useState<string | null>(null);
-  const [results, setResults] = React.useState<Result[] | null>(null);
-  const [genderFilter, setGenderFilter] = React.useState<GenderFilter>("all");
+
+  // All results — null means not yet logged in
+  const [satResults, setSatResults] = React.useState<Result[] | null>(null);
+  const [acsiResults, setAcsiResults] = React.useState<AcsiResult[]>([]);
+  const [csaiResults, setCsaiResults] = React.useState<CsaiResult[]>([]);
+
+  const [search, setSearch] = React.useState("");
   const [showBandAnalysis, setShowBandAnalysis] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<"results" | "import">("results");
+
+  // Derived athlete list
+  const athletes = React.useMemo(() => {
+    if (satResults === null) return [];
+    return groupByAthlete(satResults, acsiResults, csaiResults);
+  }, [satResults, acsiResults, csaiResults]);
+
+  const filteredAthletes = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return athletes;
+    return athletes.filter(
+      (a) =>
+        a.name.toLowerCase().includes(q) ||
+        a.email.toLowerCase().includes(q),
+    );
+  }, [athletes, search]);
+
+  // ── Auth ───────────────────────────────────────────────────────────────────
+
+  const fetchAllResults = React.useCallback(async (pw: string) => {
+    const res = await fetch(`/api/admin/all-results?password=${encodeURIComponent(pw)}`);
+    if (res.status === 401) throw new Error("__unauthorized__");
+    if (!res.ok) {
+      const data = (await res.json()) as { error?: string };
+      throw new Error(data.error ?? `HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as {
+      sat?: Result[];
+      acsi?: AcsiResult[];
+      csai?: CsaiResult[];
+    };
+    return {
+      sat: data.sat ?? [],
+      acsi: data.acsi ?? [],
+      csai: data.csai ?? [],
+    };
+  }, []);
 
   const handleLogin = React.useCallback(async () => {
     if (!password.trim() || loading) return;
     setLoading(true);
     setAuthError(null);
     try {
-      const res = await fetch(
-        `/api/admin/results?password=${encodeURIComponent(password)}`,
-      );
-      if (res.status === 401) {
-        setAuthError("Wrong password");
-        setLoading(false);
-        return;
-      }
-      const data = (await res.json()) as { results?: Result[]; error?: string };
-      if (data.error) {
-        setAuthError(data.error);
-        setLoading(false);
-        return;
-      }
-      const rows = data.results ?? [];
-      setResults(rows);
-      // Auto-show band analysis when count is a multiple of 50
-      if (rows.length >= 10 && rows.length % 50 === 0) {
+      const { sat, acsi, csai } = await fetchAllResults(password);
+      setSatResults(sat);
+      setAcsiResults(acsi);
+      setCsaiResults(csai);
+      if (sat.length >= 10 && sat.length % 50 === 0) {
         setShowBandAnalysis(true);
       }
-    } catch {
-      setAuthError("Could not reach server");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Could not reach server";
+      setAuthError(msg === "__unauthorized__" ? "Wrong password" : msg);
     } finally {
       setLoading(false);
     }
-  }, [password, loading]);
+  }, [password, loading, fetchAllResults]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleLogin();
@@ -1004,33 +1696,34 @@ export default function AdminPage() {
   const refreshResults = React.useCallback(async () => {
     if (!password.trim()) return;
     try {
-      const res = await fetch(
-        `/api/admin/results?password=${encodeURIComponent(password)}`,
-      );
-      if (!res.ok) return;
-      const data = (await res.json()) as { results?: Result[] };
-      setResults(data.results ?? []);
+      const { sat, acsi, csai } = await fetchAllResults(password);
+      setSatResults(sat);
+      setAcsiResults(acsi);
+      setCsaiResults(csai);
     } catch {
       // silent
     }
-  }, [password]);
+  }, [password, fetchAllResults]);
 
   const handleSwitchToResults = React.useCallback(() => {
     setActiveTab("results");
     refreshResults();
   }, [refreshResults]);
 
-  const handleUnlock = React.useCallback(async (resultId: string) => {
-    await fetch("/api/admin/unlock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resultId, password }),
-    });
-  }, [password]);
+  const handleUnlock = React.useCallback(
+    async (resultId: string, table: string) => {
+      await fetch("/api/admin/unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resultId, password, table }),
+      });
+    },
+    [password],
+  );
 
   // ── Auth gate ──────────────────────────────────────────────────────────────
 
-  if (results === null) {
+  if (satResults === null) {
     return (
       <div className="min-h-screen bg-[#050608] pt-24 text-white">
         <div className="pointer-events-none fixed inset-0 z-0">
@@ -1072,11 +1765,6 @@ export default function AdminPage() {
 
   // ── Dashboard ──────────────────────────────────────────────────────────────
 
-  const filtered = results.filter(
-    (r) => genderFilter === "all" || r.gender === genderFilter,
-  );
-  const totalPaid = results.filter((r) => r.paid).length;
-
   return (
     <div className="min-h-screen bg-[#050608] pt-24 pb-20 text-white">
       <div className="pointer-events-none fixed inset-0 z-0">
@@ -1091,49 +1779,31 @@ export default function AdminPage() {
               PowerFlow · Admin
             </p>
             <h1 className="mt-1 font-saira text-2xl font-extrabold uppercase tracking-[0.1em]">
-              SAT Results
+              Athletes
             </h1>
             <p className="mt-1 font-saira text-sm text-zinc-400">
-              {results.length} total · {totalPaid} paid
+              {athletes.length} athlete{athletes.length !== 1 ? "s" : ""}
+              {" · "}
+              <span className="text-fuchsia-300/80">{satResults.length} SAT</span>
+              {" · "}
+              <span className="text-purple-300/80">{acsiResults.length} ACSI</span>
+              {" · "}
+              <span className="text-sky-300/80">{csaiResults.length} CSAI</span>
             </p>
           </div>
 
-          {/* Results-tab controls — only shown when results tab is active */}
-          {activeTab === "results" && (
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Gender filter */}
-              <div className="flex gap-2">
-                {(["all", "male", "female"] as GenderFilter[]).map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => setGenderFilter(g)}
-                    className={`rounded-full border px-4 py-1.5 font-saira text-[11px] uppercase tracking-[0.15em] transition ${
-                      genderFilter === g
-                        ? "border-purple-400 bg-purple-500/20 text-white"
-                        : "border-zinc-700 text-zinc-400 hover:border-purple-400"
-                    }`}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-
-              {/* Band analysis button */}
-              {results.length >= 10 && (
-                <button
-                  type="button"
-                  onClick={() => setShowBandAnalysis((v) => !v)}
-                  className={`rounded-full border px-4 py-1.5 font-saira text-[11px] uppercase tracking-[0.15em] transition ${
-                    showBandAnalysis
-                      ? "border-purple-400 bg-purple-500/20 text-white"
-                      : "border-zinc-700 text-zinc-400 hover:border-purple-400"
-                  }`}
-                >
-                  {showBandAnalysis ? "Hide band analysis" : "Compute band analysis"}
-                </button>
-              )}
-            </div>
+          {activeTab === "results" && satResults.length >= 10 && (
+            <button
+              type="button"
+              onClick={() => setShowBandAnalysis((v) => !v)}
+              className={`rounded-full border px-4 py-1.5 font-saira text-[11px] uppercase tracking-[0.15em] transition self-start mt-1 ${
+                showBandAnalysis
+                  ? "border-purple-400 bg-purple-500/20 text-white"
+                  : "border-zinc-700 text-zinc-400 hover:border-purple-400"
+              }`}
+            >
+              {showBandAnalysis ? "Hide band analysis" : "Band analysis"}
+            </button>
           )}
         </div>
 
@@ -1141,7 +1811,7 @@ export default function AdminPage() {
         <div className="mt-8 flex gap-0 border-b border-white/5">
           {(
             [
-              { key: "results", label: "Results" },
+              { key: "results", label: "Athletes" },
               { key: "import", label: "Import Excel" },
             ] as const
           ).map((tab) => (
@@ -1150,9 +1820,7 @@ export default function AdminPage() {
               type="button"
               onClick={() => setActiveTab(tab.key)}
               className={`relative px-5 py-2.5 font-saira text-xs font-semibold uppercase tracking-[0.2em] transition-colors ${
-                activeTab === tab.key
-                  ? "text-white"
-                  : "text-zinc-500 hover:text-zinc-300"
+                activeTab === tab.key ? "text-white" : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
               {tab.label}
@@ -1168,16 +1836,33 @@ export default function AdminPage() {
           {activeTab === "results" && (
             <>
               {/* Band analysis panel */}
-              {showBandAnalysis && <BandAnalysisPanel results={results} />}
+              {showBandAnalysis && <BandAnalysisPanel results={satResults} />}
 
-              {/* Results list */}
-              <div className="mt-2 space-y-3">
-                {filtered.length === 0 ? (
+              {/* Search */}
+              <div className="mt-4 mb-4">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by name or email…"
+                  className="w-full max-w-sm rounded-xl border border-zinc-700/70 bg-[#13151A] px-4 py-2.5 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30"
+                />
+              </div>
+
+              {/* Athletes list */}
+              <div className="space-y-3">
+                {filteredAthletes.length === 0 ? (
                   <p className="font-saira text-sm text-zinc-500 py-8 text-center">
-                    No results found.
+                    {search ? "No athletes match your search." : "No results found."}
                   </p>
                 ) : (
-                  filtered.map((r) => <ResultRow key={r.id} result={r} onUnlock={handleUnlock} />)
+                  filteredAthletes.map((profile) => (
+                    <AthleteCard
+                      key={profile.email}
+                      profile={profile}
+                      onUnlock={handleUnlock}
+                    />
+                  ))
                 )}
               </div>
             </>
