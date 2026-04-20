@@ -74,7 +74,7 @@ const ui = {
     upsellTitle: "Unlock your written report",
     upsellBody: (email: string) =>
       `The chart above is a snapshot \u2014 the report explains what each of your seven coping skills means for you, how they interact, and where targeted work will yield the biggest return. We'll pre-fill the Stripe checkout with ${email}.`,
-    upsellCta: "Unlock full report \u00B7 \u20AC9",
+    upsellCta: "Unlock full report \u00B7 \u20AC19",
     upsellFine:
       "Secure payment via Stripe. You'll return here with the full narrative unlocked.",
     unlockedTag: "Full report unlocked",
