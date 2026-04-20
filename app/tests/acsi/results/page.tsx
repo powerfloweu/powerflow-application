@@ -657,19 +657,9 @@ export default function AcsiResultsPage() {
       </div>
 
       <style jsx global>{`
-        /* Suppress browser auto page headers/footers (Chrome 120+) */
-        @page {
-          @top-left   { content: ""; }
-          @top-center { content: ""; }
-          @top-right  { content: ""; }
-          @bottom-left   { content: ""; }
-          @bottom-center { content: ""; }
-          @bottom-right  { content: ""; }
-        }
-
         @media print {
           @page {
-            margin: 12mm 16mm 12mm;
+            margin: 0;
             size: A4;
           }
 
