@@ -203,10 +203,10 @@ export default function ResultsPage() {
       upsellFine: "Biztonságos fizetés Stripe-on keresztül. A teljes narratívával visszatérhetsz ide.",
       unlockedTag: "Teljes riport feloldva",
       unlockedTitle: "Köszönjük",
-      unlockedBody: "A tizenegy faktor narratívája most már látható fent. Töltsd le PDF-ként az oldalt.",
+      unlockedBody: "A tizenegy faktor narratívája most már látható fent. Töltsd le PDF-ként az oldalról.",
       downloadPdf: "PDF letöltése",
       downloadFine: `Megnyílik a böngésző nyomtatási ablaka – válaszd a „Mentés PDF-ként" lehetőséget.`,
-      coaching: "1:1 coaching igénylése",
+      coaching: "Jelentkezés sportpszichológiai konzultációra",
       allTests: "← Összes teszt",
     },
   };
