@@ -488,7 +488,7 @@ export default function PowerFlowApplicationPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#050608] text-white">
+    <div className="min-h-screen text-white">
       {/* Fixed athlete photo slideshow — full page background */}
       <div className="fixed inset-0 -z-10" aria-hidden>
         {HERO_IMAGES.map((img, i) => (
