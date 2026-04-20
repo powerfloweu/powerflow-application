@@ -7,46 +7,185 @@ export const metadata = {
     "Psychology tests by PowerFlow. Take a test and get structured insights into your mental profile.",
 };
 
-// ── Decorative honeycomb: 11 cells, one per factor ────────────────────────────
+// ── SAT visual: mini 11-point radar chart ─────────────────────────────────────
 
-function HexMap() {
-  const r = 11;
-  const cells: { cx: number; cy: number; o: number }[] = [
-    // row 0 — 3 cells
-    { cx: 21.5, cy: 23,   o: 0.80 },
-    { cx: 40.5, cy: 23,   o: 0.40 },
-    { cx: 59.5, cy: 23,   o: 0.65 },
-    // row 1 — 4 cells (offset left)
-    { cx: 12,   cy: 39.5, o: 0.30 },
-    { cx: 31,   cy: 39.5, o: 0.70 },
-    { cx: 50,   cy: 39.5, o: 0.55 },
-    { cx: 69,   cy: 39.5, o: 0.90 },
-    // row 2 — 4 cells
-    { cx: 21.5, cy: 56,   o: 0.60 },
-    { cx: 40.5, cy: 56,   o: 0.25 },
-    { cx: 59.5, cy: 56,   o: 0.75 },
-    { cx: 78.5, cy: 56,   o: 0.45 },
-  ];
+function SatRadarPreview() {
+  const n = 11;
+  const cx = 46;
+  const cy = 37;
+  const r = 26;
+  const angle = (i: number) => -Math.PI / 2 + (2 * Math.PI * i) / n;
 
-  const hex = (cx: number, cy: number) => {
-    const pts = Array.from({ length: 6 }, (_, i) => {
-      const a = (Math.PI / 3) * i - Math.PI / 6; // pointy-top
-      return `${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`;
-    });
-    return `M${pts.join("L")}Z`;
+  // Decorative values — evocative of a real varied profile
+  const vals = [0.82, 0.55, 0.48, 0.73, 0.91, 0.38, 0.68, 0.60, 0.85, 0.50, 0.76];
+
+  const pt = (i: number, v: number) => {
+    const a = angle(i);
+    return `${(cx + v * r * Math.cos(a)).toFixed(1)},${(cy + v * r * Math.sin(a)).toFixed(1)}`;
   };
 
+  const userPoints = vals.map((v, i) => pt(i, v)).join(" ");
+  const avgPoints  = vals.map((_, i) => pt(i, 0.58)).join(" ");
+
+  const ring = (lv: number) =>
+    vals.map((_, i) => {
+      const a = angle(i);
+      return `${(cx + lv * r * Math.cos(a)).toFixed(1)},${(cy + lv * r * Math.sin(a)).toFixed(1)}`;
+    }).join(" ");
+
   return (
-    <svg viewBox="0 0 92 70" className="w-full h-full" aria-hidden>
-      {cells.map((c, i) => (
-        <path
+    <svg viewBox="0 0 92 74" className="w-full h-full" aria-hidden>
+      {/* Grid rings */}
+      {[0.33, 0.67, 1].map((lv, i) => (
+        <polygon key={i} points={ring(lv)} fill="none" stroke="rgba(168,85,247,0.20)" strokeWidth="0.7" />
+      ))}
+      {/* Axes */}
+      {vals.map((_, i) => {
+        const a = angle(i);
+        return (
+          <line
+            key={i}
+            x1={cx} y1={cy}
+            x2={(cx + r * Math.cos(a)).toFixed(1)}
+            y2={(cy + r * Math.sin(a)).toFixed(1)}
+            stroke="rgba(168,85,247,0.18)"
+            strokeWidth="0.6"
+          />
+        );
+      })}
+      {/* Population avg */}
+      <polygon points={avgPoints} fill="rgba(255,255,255,0.04)" stroke="rgba(200,200,200,0.40)" strokeDasharray="2.5 2.5" strokeWidth="1" />
+      {/* User polygon */}
+      <polygon points={userPoints} fill="rgba(168,85,247,0.30)" stroke="rgb(192,132,252)" strokeWidth="1.4" />
+      {/* Dots */}
+      {vals.map((v, i) => {
+        const a = angle(i);
+        return (
+          <circle
+            key={i}
+            cx={(cx + v * r * Math.cos(a)).toFixed(1)}
+            cy={(cy + v * r * Math.sin(a)).toFixed(1)}
+            r="1.8"
+            fill="rgb(216,180,254)"
+          />
+        );
+      })}
+      <circle cx={cx} cy={cy} r="1.5" fill="rgba(255,255,255,0.25)" />
+    </svg>
+  );
+}
+
+// ── ACSI visual: mini 7-bar chart ─────────────────────────────────────────────
+
+function AcsiBarPreview() {
+  // Decorative scores for 7 subscales (coping, peaking, goals, conc, freedom, conf, coach)
+  const vals = [0.72, 0.55, 0.88, 0.62, 0.44, 0.80, 0.66];
+  const barW = 9;
+  const gap  = 3.5;
+  const maxH = 46;
+  const totalW = vals.length * (barW + gap) - gap;
+  const startX = (92 - totalW) / 2;
+  const baseline = 62;
+
+  return (
+    <svg viewBox="0 0 92 74" className="w-full h-full" aria-hidden>
+      {/* Horizontal grid lines */}
+      {[0.33, 0.67, 1].map((lv, i) => (
+        <line
           key={i}
-          d={hex(c.cx, c.cy)}
-          fill={`rgba(168,85,247,${(c.o * 0.55).toFixed(2)})`}
-          stroke="rgba(168,85,247,0.45)"
-          strokeWidth="0.8"
+          x1={startX - 2} y1={baseline - lv * maxH}
+          x2={startX + totalW + 2} y2={baseline - lv * maxH}
+          stroke="rgba(168,85,247,0.14)"
+          strokeWidth="0.6"
         />
       ))}
+      {/* Bars */}
+      {vals.map((v, i) => {
+        const h = v * maxH;
+        const x = startX + i * (barW + gap);
+        return (
+          <rect
+            key={i}
+            x={x.toFixed(1)} y={(baseline - h).toFixed(1)}
+            width={barW} height={h.toFixed(1)}
+            rx="2.5"
+            fill={`rgba(168,85,247,${(0.35 + v * 0.45).toFixed(2)})`}
+          />
+        );
+      })}
+      {/* Baseline */}
+      <line
+        x1={startX - 2} y1={baseline}
+        x2={startX + totalW + 2} y2={baseline}
+        stroke="rgba(168,85,247,0.35)"
+        strokeWidth="0.8"
+      />
+    </svg>
+  );
+}
+
+// ── CSAI visual: mini 3-spoke radar ───────────────────────────────────────────
+
+function CsaiRadarPreview() {
+  const n = 3;
+  const cx = 46;
+  const cy = 38;
+  const r  = 26;
+  const angle = (i: number) => -Math.PI / 2 + (2 * Math.PI * i) / n;
+
+  // cognitive anxiety (moderate), somatic anxiety (low-ish), confidence (high)
+  const vals = [0.60, 0.42, 0.84];
+
+  const pt = (i: number, v: number) => {
+    const a = angle(i);
+    return `${(cx + v * r * Math.cos(a)).toFixed(1)},${(cy + v * r * Math.sin(a)).toFixed(1)}`;
+  };
+
+  const userPoints = vals.map((v, i) => pt(i, v)).join(" ");
+  const ring = (lv: number) =>
+    vals.map((_, i) => {
+      const a = angle(i);
+      return `${(cx + lv * r * Math.cos(a)).toFixed(1)},${(cy + lv * r * Math.sin(a)).toFixed(1)}`;
+    }).join(" ");
+
+  return (
+    <svg viewBox="0 0 92 74" className="w-full h-full" aria-hidden>
+      {/* Grid rings */}
+      {[0.33, 0.67, 1].map((lv, i) => (
+        <polygon key={i} points={ring(lv)} fill="none" stroke="rgba(56,189,248,0.20)" strokeWidth="0.7" />
+      ))}
+      {/* Axes */}
+      {vals.map((_, i) => {
+        const a = angle(i);
+        return (
+          <line
+            key={i}
+            x1={cx} y1={cy}
+            x2={(cx + r * Math.cos(a)).toFixed(1)}
+            y2={(cy + r * Math.sin(a)).toFixed(1)}
+            stroke="rgba(56,189,248,0.20)"
+            strokeWidth="0.8"
+          />
+        );
+      })}
+      {/* User polygon */}
+      <polygon points={userPoints} fill="rgba(56,189,248,0.22)" stroke="rgb(125,211,252)" strokeWidth="1.5" />
+      {/* Dots */}
+      {vals.map((v, i) => {
+        const a = angle(i);
+        return (
+          <circle
+            key={i}
+            cx={(cx + v * r * Math.cos(a)).toFixed(1)}
+            cy={(cy + v * r * Math.sin(a)).toFixed(1)}
+            r="2.5"
+            fill="rgb(186,230,253)"
+            stroke="rgb(14,165,233)"
+            strokeWidth="0.8"
+          />
+        );
+      })}
+      <circle cx={cx} cy={cy} r="1.5" fill="rgba(255,255,255,0.20)" />
     </svg>
   );
 }
@@ -85,7 +224,7 @@ export default function TestsIndexPage() {
             href="/tests/self-awareness"
             cta="Discover your profile"
             available
-            visual={<HexMap />}
+            visual={<SatRadarPreview />}
           />
 
           <TestCard
@@ -97,6 +236,7 @@ export default function TestsIndexPage() {
             href="/tests/acsi"
             cta="Assess your coping skills"
             available
+            visual={<AcsiBarPreview />}
           />
 
           <TestCard
@@ -108,6 +248,7 @@ export default function TestsIndexPage() {
             href="/tests/csai"
             cta="Measure your readiness"
             available
+            visual={<CsaiRadarPreview />}
           />
         </div>
 
@@ -175,13 +316,13 @@ function TestCard({
         {title}
       </h2>
 
-      {/* Description + hex visual side by side */}
+      {/* Description + visual side by side */}
       <div className="mt-4 flex flex-1 items-start gap-5">
         <p className="flex-1 font-saira text-sm leading-relaxed text-zinc-300">
           {description}
         </p>
         {visual && (
-          <div className="hidden sm:block flex-shrink-0 w-[88px] h-[68px] opacity-75">
+          <div className="hidden sm:block flex-shrink-0 w-[96px] h-[76px] opacity-80">
             {visual}
           </div>
         )}
