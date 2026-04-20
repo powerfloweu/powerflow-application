@@ -239,11 +239,25 @@ function formatCountdown(dateStr: string): string {
   return `${weeks} week${weeks === 1 ? "" : "s"} + ${remDays} day${remDays === 1 ? "" : "s"} out`;
 }
 
+const HERO_IMAGES = [
+  "andris.jpg", "dani.jpeg", "denise.jpg", "erik.jpg",
+  "jacqueline.jpg", "jonah.jpg", "kincso.jpg", "kjell.png",
+  "kjell2.jpg", "leah.jpg", "maca.jpg", "rumeysa.jpg",
+];
+
 export default function PowerFlowApplicationPage() {
+  const [bgIndex, setBgIndex] = React.useState(0);
   const [lang, setLang] = React.useState<Lang>("en");
   const [step, setStep] = React.useState(0);
   const [nextCompDate, setNextCompDate] = React.useState<string>("");
   const [submitted, setSubmitted] = React.useState(false);
+
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setBgIndex((i) => (i + 1) % HERO_IMAGES.length);
+    }, 10000);
+    return () => clearInterval(id);
+  }, []);
   const formRef = React.useRef<HTMLFormElement>(null);
   const t = copy[lang];
 
@@ -476,8 +490,26 @@ export default function PowerFlowApplicationPage() {
   return (
     <div className="min-h-screen bg-[#050608] text-white">
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-b from-black/40 to-black/0">
-        <div className="mx-auto flex max-w-5xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden border-b border-white/5">
+        {/* Athlete photo slideshow */}
+        {HERO_IMAGES.map((img, i) => (
+          <div
+            key={img}
+            className="absolute inset-0 transition-opacity duration-1000"
+            style={{ opacity: i === bgIndex ? 1 : 0 }}
+            aria-hidden
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/${img}`}
+              alt=""
+              className="h-full w-full object-cover object-center"
+            />
+          </div>
+        ))}
+        {/* Dark overlay so text stays readable */}
+        <div className="absolute inset-0 bg-black/65 bg-gradient-to-b from-black/50 to-black/80" />
+        <div className="mx-auto flex max-w-5xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:px-8 relative z-10">
           <div className="flex items-center justify-center">
             <Image
               src="/fm_powerflow_logo_verziok_02_negatív.png"
