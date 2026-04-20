@@ -74,9 +74,28 @@ export default function ResultsPage() {
             } catch {}
           });
       } else {
+        let alreadyUnlocked = false;
         try {
-          if (localStorage.getItem(UNLOCK_KEY) === "1") setUnlocked(true);
+          alreadyUnlocked = localStorage.getItem(UNLOCK_KEY) === "1";
+          if (alreadyUnlocked) setUnlocked(true);
         } catch {}
+
+        // Silently check if admin has unlocked this result in the DB
+        if (!alreadyUnlocked) {
+          let resultRef = "";
+          try { resultRef = localStorage.getItem(RESULT_REF_KEY) ?? ""; } catch {}
+          if (resultRef) {
+            fetch(`/api/sat/check-paid?ref=${encodeURIComponent(resultRef)}`)
+              .then((r) => r.json())
+              .then((data: { paid: boolean }) => {
+                if (data.paid) {
+                  try { localStorage.setItem(UNLOCK_KEY, "1"); } catch {}
+                  setUnlocked(true);
+                }
+              })
+              .catch(() => {/* non-fatal */});
+          }
+        }
       }
     }
     setHydrated(true);
@@ -101,6 +120,7 @@ export default function ResultsPage() {
     if (typeof window === "undefined") return;
     window.print();
   }, []);
+
 
   if (!hydrated) {
     return (
@@ -425,6 +445,7 @@ export default function ResultsPage() {
             <p className="mt-4 font-saira text-[11px] text-zinc-500">
               {c.upsellFine}
             </p>
+
           </div>
         ) : (
           <div className="mt-14 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-600/20 via-teal-500/10 to-transparent p-8 text-center shadow-[0_22px_60px_rgba(16,185,129,0.18)] print:hidden">

@@ -332,8 +332,16 @@ function BandAnalysisPanel({ results }: { results: Result[] }) {
   );
 }
 
-function ResultRow({ result }: { result: Result }) {
+function ResultRow({
+  result,
+  onUnlock,
+}: {
+  result: Result;
+  onUnlock?: (id: string) => Promise<void>;
+}) {
   const [expanded, setExpanded] = React.useState(false);
+  const [unlocking, setUnlocking] = React.useState(false);
+  const [localPaid, setLocalPaid] = React.useState(result.paid);
 
   const factorScores: number[] = FACTOR_KEYS.map((k) => getFactorScore(result, k));
 
@@ -380,9 +388,9 @@ function ResultRow({ result }: { result: Result }) {
             {result.gender}
           </span>
 
-          {result.paid && (
+          {localPaid && (
             <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.15em] text-emerald-300">
-              Paid
+              Unlocked
             </span>
           )}
 
@@ -473,6 +481,34 @@ function ResultRow({ result }: { result: Result }) {
               </span>
             </div>
           </div>
+
+          {/* Admin unlock */}
+          {onUnlock && (
+            <div className="pt-2 border-t border-white/5">
+              {localPaid ? (
+                <p className="font-saira text-[11px] text-emerald-400">
+                  ✓ Report unlocked for this client
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  disabled={unlocking}
+                  onClick={async () => {
+                    setUnlocking(true);
+                    try {
+                      await onUnlock(result.id);
+                      setLocalPaid(true);
+                    } finally {
+                      setUnlocking(false);
+                    }
+                  }}
+                  className="rounded-full border border-emerald-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-200 transition hover:bg-emerald-500/20 disabled:opacity-40"
+                >
+                  {unlocking ? "Unlocking…" : "Unlock for client"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -884,6 +920,14 @@ export default function AdminPage() {
     refreshResults();
   }, [refreshResults]);
 
+  const handleUnlock = React.useCallback(async (resultId: string) => {
+    await fetch("/api/admin/unlock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resultId, password }),
+    });
+  }, [password]);
+
   // ── Auth gate ──────────────────────────────────────────────────────────────
 
   if (results === null) {
@@ -1033,7 +1077,7 @@ export default function AdminPage() {
                     No results found.
                   </p>
                 ) : (
-                  filtered.map((r) => <ResultRow key={r.id} result={r} />)
+                  filtered.map((r) => <ResultRow key={r.id} result={r} onUnlock={handleUnlock} />)
                 )}
               </div>
             </>
