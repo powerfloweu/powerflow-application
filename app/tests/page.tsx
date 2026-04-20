@@ -89,14 +89,25 @@ export default function TestsIndexPage() {
           />
 
           <TestCard
-            slug="coming-soon-2"
-            tier="Coming soon"
-            duration=""
-            title="Test #2"
-            description="To be announced."
-            href="#"
-            cta="Coming soon"
-            available={false}
+            slug="acsi"
+            tier="Free + Paid"
+            duration="~10–15 min · 28 items"
+            title="Coping Skills Inventory"
+            description="Seven mental skills define how athletes perform when it matters most. This test profiles your coping ability, concentration, confidence, goal-setting discipline, and coachability — revealing your strengths and the gaps worth closing."
+            href="/tests/acsi"
+            cta="Assess your coping skills"
+            available
+          />
+
+          <TestCard
+            slug="csai"
+            tier="Free + Paid"
+            duration="~5 min · 27 items · Pre-competition"
+            title="Competitive Anxiety Inventory"
+            description="Taken right before you compete, this test captures your mental and physical readiness in real time — cognitive worry, somatic tension, and self-confidence — giving you an honest picture of where your head is before the bar goes up."
+            href="/tests/csai"
+            cta="Measure your readiness"
+            available
           />
         </div>
 
