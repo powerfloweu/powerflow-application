@@ -92,12 +92,33 @@ type CsaiResult = {
   score_confidence: number;
 };
 
+type DasResult = {
+  id: string;
+  created_at: string;
+  result_ref?: string;
+  first_name: string;
+  email: string;
+  lang: string;
+  submitted_at: string;
+  paid: boolean;
+  score_external_approval: number;
+  score_lovability: number;
+  score_achievement: number;
+  score_perfectionism: number;
+  score_entitlement: number;
+  score_omnipotence: number;
+  score_external_control: number;
+  total_score: number;
+  depression_prone: boolean;
+};
+
 type AthleteProfile = {
   email: string;
   name: string;
   sat: Result[];
   acsi: AcsiResult[];
   csai: CsaiResult[];
+  das: DasResult[];
 };
 
 type GenderFilter = "all" | "male" | "female";
@@ -415,20 +436,22 @@ function groupByAthlete(
   sat: Result[],
   acsi: AcsiResult[],
   csai: CsaiResult[],
+  das: DasResult[],
 ): AthleteProfile[] {
   const map = new Map<string, AthleteProfile>();
   const getOrCreate = (email: string, name: string) => {
     const key = email.toLowerCase();
-    if (!map.has(key)) map.set(key, { email: key, name, sat: [], acsi: [], csai: [] });
+    if (!map.has(key)) map.set(key, { email: key, name, sat: [], acsi: [], csai: [], das: [] });
     return map.get(key)!;
   };
   for (const r of sat)  getOrCreate(r.email, r.first_name).sat.push(r);
   for (const r of acsi) getOrCreate(r.email, r.first_name).acsi.push(r);
   for (const r of csai) getOrCreate(r.email, r.first_name).csai.push(r);
+  for (const r of das)  getOrCreate(r.email, r.first_name).das.push(r);
   const ts = (r: { submitted_at: string }) => new Date(r.submitted_at).getTime();
   return Array.from(map.values()).sort((a, b) => {
-    const aMax = Math.max(...[...a.sat, ...a.acsi, ...a.csai].map(ts), 0);
-    const bMax = Math.max(...[...b.sat, ...b.acsi, ...b.csai].map(ts), 0);
+    const aMax = Math.max(...[...a.sat, ...a.acsi, ...a.csai, ...a.das].map(ts), 0);
+    const bMax = Math.max(...[...b.sat, ...b.acsi, ...b.csai, ...b.das].map(ts), 0);
     return bMax - aMax;
   });
 }
@@ -1288,6 +1311,286 @@ function CsaiResultRow({
   );
 }
 
+// ── DAS ResultRow ─────────────────────────────────────────────────────────────
+
+const DAS_LABELS: Record<string, string> = {
+  externalApproval: "Ext. Approval",
+  lovability:       "Lovability",
+  achievement:      "Achievement",
+  perfectionism:    "Perfectionism",
+  entitlement:      "Entitlement",
+  omnipotence:      "Omnipotence",
+  externalControl:  "Ext. Control",
+};
+
+const DAS_ORDER = [
+  "externalApproval",
+  "lovability",
+  "achievement",
+  "perfectionism",
+  "entitlement",
+  "omnipotence",
+  "externalControl",
+] as const;
+
+function DasSparkBar({ result }: { result: DasResult }) {
+  const scores = [
+    result.score_external_approval,
+    result.score_lovability,
+    result.score_achievement,
+    result.score_perfectionism,
+    result.score_entitlement,
+    result.score_omnipotence,
+    result.score_external_control,
+  ];
+  // Map -10..+10 to 0..1 for bar height
+  return (
+    <div className="flex items-end gap-[2px] h-6">
+      {scores.map((s, i) => {
+        const normalised = (s + 10) / 20; // 0..1
+        const dysfunctional = Math.abs(s) > 5;
+        return (
+          <div
+            key={i}
+            className={`w-2 rounded-sm ${dysfunctional ? "bg-rose-500/70" : "bg-purple-500/70"}`}
+            style={{ height: `${Math.max(2, Math.round(normalised * 24))}px` }}
+            title={`${DAS_LABELS[DAS_ORDER[i]]}: ${s}`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function DasResultRow({
+  result,
+  onUnlock,
+  onDelete,
+}: {
+  result: DasResult;
+  onUnlock?: (id: string) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
+}) {
+  const [expanded, setExpanded] = React.useState(false);
+  const [unlocking, setUnlocking] = React.useState(false);
+  const [localPaid, setLocalPaid] = React.useState(result.paid);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const [deleted, setDeleted] = React.useState(false);
+
+  if (deleted) return null;
+
+  const scoreMap: Record<string, number> = {
+    externalApproval: result.score_external_approval,
+    lovability:       result.score_lovability,
+    achievement:      result.score_achievement,
+    perfectionism:    result.score_perfectionism,
+    entitlement:      result.score_entitlement,
+    omnipotence:      result.score_omnipotence,
+    externalControl:  result.score_external_control,
+  };
+
+  return (
+    <div
+      className="rounded-2xl border border-white/5 bg-[#13151A] overflow-hidden cursor-pointer hover:border-amber-500/20 transition"
+      onClick={() => setExpanded((v) => !v)}
+    >
+      {/* Collapsed row */}
+      <div className="flex flex-wrap items-center gap-3 p-4 sm:p-5">
+        <div className="flex-1 min-w-0">
+          <p className="font-saira text-sm font-semibold text-zinc-100 truncate">
+            {result.first_name}{" "}
+            <span className="font-normal text-zinc-400 text-xs">{result.email}</span>
+          </p>
+          <p className="font-saira text-[11px] text-zinc-500 mt-0.5">{fmtDate(result.submitted_at)}</p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-saira text-xs font-semibold text-zinc-200">
+            {result.total_score > 0 ? "+" : ""}{result.total_score}
+            <span className="text-zinc-600 font-normal">/70</span>
+          </span>
+
+          {result.depression_prone && (
+            <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.15em] text-amber-300">
+              Elevated
+            </span>
+          )}
+
+          {localPaid && (
+            <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.15em] text-emerald-300">
+              Unlocked
+            </span>
+          )}
+
+          <DasSparkBar result={result} />
+          <span className="font-saira text-[11px] text-zinc-600 ml-1">{expanded ? "▲" : "▼"}</span>
+        </div>
+      </div>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div
+          className="border-t border-white/5 p-4 sm:p-5 space-y-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div>
+            <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-300 mb-3">
+              Subscale Scores
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {DAS_ORDER.map((key) => {
+                const s = scoreMap[key] ?? 0;
+                const dysfunctional = Math.abs(s) > 5;
+                return (
+                  <div key={key} className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
+                    <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500 mb-1">
+                      {DAS_LABELS[key]}
+                    </p>
+                    <div className="flex items-baseline justify-between mb-1">
+                      <p className="font-saira text-base font-bold text-zinc-100">
+                        {s > 0 ? "+" : ""}{s}
+                        <span className="text-xs font-normal text-zinc-600">/10</span>
+                      </p>
+                      <span className={`rounded-full border px-2 py-0.5 font-saira text-[9px] uppercase tracking-[0.12em] ${
+                        dysfunctional
+                          ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                          : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                      }`}>
+                        {dysfunctional ? "dysf." : "normal"}
+                      </span>
+                    </div>
+                    {/* Center-zero progress bar */}
+                    <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden relative">
+                      <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/20" />
+                      {s >= 0 ? (
+                        <div
+                          className={`h-full rounded-full ${dysfunctional ? "bg-rose-500" : "bg-purple-500"}`}
+                          style={{ marginLeft: "50%", width: `${(s / 10) * 50}%` }}
+                        />
+                      ) : (
+                        <div
+                          className={`h-full rounded-full ${dysfunctional ? "bg-sky-500" : "bg-purple-500"}`}
+                          style={{ marginLeft: `${50 + (s / 10) * 50}%`, width: `${(-s / 10) * 50}%` }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="pt-2 border-t border-white/5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const report = {
+                  subscales: DAS_ORDER.map((key) => ({
+                    key,
+                    score: scoreMap[key] ?? 0,
+                    band: Math.abs(scoreMap[key] ?? 0) > 5 ? "dysfunctional" : "normal",
+                    ...(key === "externalControl" ? { direction: (scoreMap[key] ?? 0) > 0 ? "externalControl" : "autonomy" } : {}),
+                  })),
+                  totalScore: result.total_score,
+                  depressionProne: result.depression_prone,
+                };
+                const payload = {
+                  report,
+                  respondent: {
+                    firstName: result.first_name,
+                    email: result.email,
+                    lang: result.lang ?? "en",
+                    startedAt: result.submitted_at,
+                    submittedAt: result.submitted_at,
+                  },
+                };
+                try {
+                  localStorage.setItem("powerflow.das.lastResult.v1", JSON.stringify(payload));
+                  localStorage.setItem("powerflow.das.unlocked.v1", "1");
+                } catch { /* ignore */ }
+                window.open("/tests/das/results", "_blank");
+              }}
+              className="rounded-full border border-amber-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-amber-200 transition hover:bg-amber-500/20"
+            >
+              View full report →
+            </button>
+
+            {onUnlock && (
+              localPaid ? (
+                <p className="self-center font-saira text-[11px] text-emerald-400">
+                  ✓ Report unlocked for this client
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  disabled={unlocking}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setUnlocking(true);
+                    try {
+                      await onUnlock(result.id);
+                      setLocalPaid(true);
+                    } finally {
+                      setUnlocking(false);
+                    }
+                  }}
+                  className="rounded-full border border-emerald-500/50 px-4 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-200 transition hover:bg-emerald-500/20 disabled:opacity-40"
+                >
+                  {unlocking ? "Unlocking…" : "Unlock for client"}
+                </button>
+              )
+            )}
+
+            {onDelete && (
+              confirmDelete ? (
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="font-saira text-[11px] text-red-300">Delete this result?</span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                    className="rounded-full border border-zinc-600 px-3 py-1 font-saira text-[10px] text-zinc-400 hover:border-zinc-400 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setDeleting(true);
+                      try {
+                        await onDelete(result.id);
+                        setDeleted(true);
+                      } finally {
+                        setDeleting(false);
+                        setConfirmDelete(false);
+                      }
+                    }}
+                    className="rounded-full border border-red-500/50 bg-red-500/10 px-3 py-1 font-saira text-[10px] font-semibold text-red-300 hover:bg-red-500/20 transition disabled:opacity-40"
+                  >
+                    {deleting ? "Deleting…" : "Yes, delete"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-500 hover:border-red-500/50 hover:text-red-400 transition"
+                >
+                  Delete
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── AthleteCard ───────────────────────────────────────────────────────────────
 
 function AthleteCard({
@@ -1301,8 +1604,8 @@ function AthleteCard({
 }) {
   const [expanded, setExpanded] = React.useState(false);
 
-  const totalTests = profile.sat.length + profile.acsi.length + profile.csai.length;
-  const allDates = [...profile.sat, ...profile.acsi, ...profile.csai].map(
+  const totalTests = profile.sat.length + profile.acsi.length + profile.csai.length + profile.das.length;
+  const allDates = [...profile.sat, ...profile.acsi, ...profile.csai, ...profile.das].map(
     (r) => new Date(r.submitted_at).getTime(),
   );
   const latestDate = allDates.length > 0 ? Math.max(...allDates) : 0;
@@ -1344,6 +1647,11 @@ function AthleteCard({
           {profile.csai.length > 0 && (
             <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.15em] text-sky-300">
               CSAI ×{profile.csai.length}
+            </span>
+          )}
+          {profile.das.length > 0 && (
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.15em] text-amber-300">
+              DAS ×{profile.das.length}
             </span>
           )}
         </div>
@@ -1421,6 +1729,26 @@ function AthleteCard({
                     result={r}
                     onUnlock={(id) => onUnlock(id, "csai_results")}
                     onDelete={(id) => onDelete(id, "csai_results")}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* DAS section */}
+          {profile.das.length > 0 && (
+            <div>
+              <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-300 mb-3 flex items-center gap-2">
+                <span className="inline-block h-[2px] w-4 rounded-full bg-amber-400 opacity-70" />
+                Attitude Scale · {profile.das.length} result{profile.das.length > 1 ? "s" : ""}
+              </p>
+              <div className="space-y-2">
+                {profile.das.map((r) => (
+                  <DasResultRow
+                    key={r.id}
+                    result={r}
+                    onUnlock={(id) => onUnlock(id, "das_results")}
+                    onDelete={(id) => onDelete(id, "das_results")}
                   />
                 ))}
               </div>
@@ -1776,6 +2104,7 @@ export default function AdminPage() {
   const [satResults, setSatResults] = React.useState<Result[] | null>(null);
   const [acsiResults, setAcsiResults] = React.useState<AcsiResult[]>([]);
   const [csaiResults, setCsaiResults] = React.useState<CsaiResult[]>([]);
+  const [dasResults, setDasResults] = React.useState<DasResult[]>([]);
 
   const [search, setSearch] = React.useState("");
   const [showBandAnalysis, setShowBandAnalysis] = React.useState(false);
@@ -1784,8 +2113,8 @@ export default function AdminPage() {
   // Derived athlete list
   const athletes = React.useMemo(() => {
     if (satResults === null) return [];
-    return groupByAthlete(satResults, acsiResults, csaiResults);
-  }, [satResults, acsiResults, csaiResults]);
+    return groupByAthlete(satResults, acsiResults, csaiResults, dasResults);
+  }, [satResults, acsiResults, csaiResults, dasResults]);
 
   const filteredAthletes = React.useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -1810,11 +2139,13 @@ export default function AdminPage() {
       sat?: Result[];
       acsi?: AcsiResult[];
       csai?: CsaiResult[];
+      das?: DasResult[];
     };
     return {
       sat: data.sat ?? [],
       acsi: data.acsi ?? [],
       csai: data.csai ?? [],
+      das: data.das ?? [],
     };
   }, []);
 
@@ -1823,10 +2154,11 @@ export default function AdminPage() {
     setLoading(true);
     setAuthError(null);
     try {
-      const { sat, acsi, csai } = await fetchAllResults(password);
+      const { sat, acsi, csai, das } = await fetchAllResults(password);
       setSatResults(sat);
       setAcsiResults(acsi);
       setCsaiResults(csai);
+      setDasResults(das);
       if (sat.length >= 10 && sat.length % 50 === 0) {
         setShowBandAnalysis(true);
       }
@@ -1845,10 +2177,11 @@ export default function AdminPage() {
   const refreshResults = React.useCallback(async () => {
     if (!password.trim()) return;
     try {
-      const { sat, acsi, csai } = await fetchAllResults(password);
+      const { sat, acsi, csai, das } = await fetchAllResults(password);
       setSatResults(sat);
       setAcsiResults(acsi);
       setCsaiResults(csai);
+      setDasResults(das);
     } catch {
       // silent
     }
@@ -1949,6 +2282,8 @@ export default function AdminPage() {
               <span className="text-purple-300/80">{acsiResults.length} ACSI</span>
               {" · "}
               <span className="text-sky-300/80">{csaiResults.length} CSAI</span>
+              {" · "}
+              <span className="text-amber-300/80">{dasResults.length} DAS</span>
             </p>
           </div>
 

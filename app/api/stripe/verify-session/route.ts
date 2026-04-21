@@ -52,6 +52,8 @@ export async function GET(req: NextRequest) {
           ? "acsi_results"
           : clientReferenceId.startsWith("pfcs_")
           ? "csai_results"
+          : clientReferenceId.startsWith("pfdas_")
+          ? "das_results"
           : "sat_results";
         await dbPatch(table, { result_ref: clientReferenceId }, {
           paid: true,

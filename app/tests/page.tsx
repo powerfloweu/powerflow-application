@@ -191,6 +191,53 @@ function CsaiRadarPreview() {
   );
 }
 
+// ── DAS visual: mini 7-bar diverging chart ────────────────────────────────────
+
+function DasBarPreview() {
+  // Decorative scores for 7 subscales (–10 to +10)
+  // Showing a varied profile: some normal, some slightly elevated
+  const vals = [3, -1, 6, 4, -3, 7, -2]; // raw value points
+  const barW = 9;
+  const gap  = 3.5;
+  const maxH = 20; // half height for center-zero
+  const totalW = vals.length * (barW + gap) - gap;
+  const startX = (92 - totalW) / 2;
+  const centerY = 37;
+
+  return (
+    <svg viewBox="0 0 92 74" className="w-full h-full" aria-hidden>
+      {/* Normal zone shading */}
+      <rect
+        x={startX - 2} y={centerY - maxH * 0.5}
+        width={totalW + 4} height={maxH}
+        fill="rgba(168,85,247,0.07)"
+        rx="2"
+      />
+      {/* Center line */}
+      <line
+        x1={startX - 2} y1={centerY}
+        x2={startX + totalW + 2} y2={centerY}
+        stroke="rgba(168,85,247,0.40)"
+        strokeWidth="0.7"
+      />
+      {/* Bars */}
+      {vals.map((v, i) => {
+        const x = startX + i * (barW + gap);
+        const dysfunctional = Math.abs(v) > 5;
+        const h = (Math.abs(v) / 10) * maxH;
+        const fill = dysfunctional
+          ? "rgba(244,63,94,0.65)"
+          : `rgba(168,85,247,${(0.35 + Math.abs(v) / 10 * 0.45).toFixed(2)})`;
+        if (v >= 0) {
+          return <rect key={i} x={x.toFixed(1)} y={(centerY - h).toFixed(1)} width={barW} height={h.toFixed(1)} rx="2" fill={fill} />;
+        } else {
+          return <rect key={i} x={x.toFixed(1)} y={centerY.toFixed(1)} width={barW} height={h.toFixed(1)} rx="2" fill="rgba(56,189,248,0.50)" />;
+        }
+      })}
+    </svg>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TestsIndexPage() {
@@ -251,6 +298,18 @@ export default function TestsIndexPage() {
             available
             visual={<CsaiRadarPreview />}
           />
+
+          <TestCard
+            slug="das"
+            tier="Free + Paid"
+            duration="~10 min · 35 items"
+            title="Attitude Scale"
+            description="Seven deep-seated belief patterns — about approval, achievement, perfectionism, and control — shape how you respond to pressure, setbacks, and criticism. This test surfaces the ones working against you, so you can start to change them."
+            href="/tests/das"
+            cta="Examine your beliefs"
+            available
+            visual={<DasBarPreview />}
+          />
         </div>
 
         {/* Bundle card */}
@@ -301,7 +360,25 @@ export default function TestsIndexPage() {
           </div>
         </div>
 
-        <p className="mt-12 text-center font-saira text-[11px] text-zinc-500">
+        {/* Journal CTA */}
+        <div className="mt-10 flex items-center justify-between rounded-2xl border border-white/6 bg-[#0F1117] px-6 py-4">
+          <div>
+            <p className="font-saira text-xs font-semibold text-zinc-200">
+              Already training mentally?
+            </p>
+            <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
+              Log your self-talk between sessions and track your thought patterns over time.
+            </p>
+          </div>
+          <Link
+            href="/journal"
+            className="flex-shrink-0 ml-4 rounded-full border border-purple-500/40 px-5 py-2 font-saira text-[11px] font-semibold uppercase tracking-[0.18em] text-purple-200 transition hover:bg-purple-500/15"
+          >
+            Open journal →
+          </Link>
+        </div>
+
+        <p className="mt-8 text-center font-saira text-[11px] text-zinc-500">
           Our tests are screening and self-reflection tools, not clinical diagnoses.
           If you are looking for 1:1 coaching, see the{" "}
           <Link href="/" className="underline decoration-zinc-600 hover:text-white">
