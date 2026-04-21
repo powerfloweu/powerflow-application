@@ -43,18 +43,21 @@ export async function GET(req: NextRequest) {
 
     if (paid && clientReferenceId && isConfigured()) {
       // Route to the correct table based on result_ref prefix:
-      //   pfsa_ → sat_results
-      //   pfac_ → acsi_results
-      //   pfcs_ → csai_results
-      const table = clientReferenceId.startsWith("pfac_")
-        ? "acsi_results"
-        : clientReferenceId.startsWith("pfcs_")
-        ? "csai_results"
-        : "sat_results";
-      await dbPatch(table, { result_ref: clientReferenceId }, {
-        paid: true,
-        stripe_session_id: sessionId,
-      });
+      //   pfbundle_ → bundle purchase, no single DB row to update (handled client-side)
+      //   pfac_     → acsi_results
+      //   pfcs_     → csai_results
+      //   pfsa_ / * → sat_results
+      if (!clientReferenceId.startsWith("pfbundle_")) {
+        const table = clientReferenceId.startsWith("pfac_")
+          ? "acsi_results"
+          : clientReferenceId.startsWith("pfcs_")
+          ? "csai_results"
+          : "sat_results";
+        await dbPatch(table, { result_ref: clientReferenceId }, {
+          paid: true,
+          stripe_session_id: sessionId,
+        });
+      }
     }
 
     return NextResponse.json({

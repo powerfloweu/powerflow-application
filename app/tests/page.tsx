@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { BundleCta } from "./bundle/BundleCta";
 
 export const metadata = {
   title: "PowerFlow — Mental Tests",
@@ -250,6 +251,54 @@ export default function TestsIndexPage() {
             available
             visual={<CsaiRadarPreview />}
           />
+        </div>
+
+        {/* Bundle card */}
+        <div className="mt-6 rounded-3xl border border-purple-500/30 bg-gradient-to-br from-purple-600/20 via-fuchsia-500/10 to-transparent p-7 shadow-[0_22px_60px_rgba(126,34,206,0.22)] sm:p-9">
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            {/* Left: copy */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3">
+                <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-0.5 font-saira text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-300">
+                  Best value
+                </span>
+                <span className="font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-400">
+                  All three tests
+                </span>
+              </div>
+              <h2 className="mt-3 font-saira text-xl font-extrabold uppercase tracking-[0.1em] sm:text-2xl">
+                Full profile bundle
+              </h2>
+              <p className="mt-3 font-saira text-sm leading-relaxed text-zinc-300 max-w-xl">
+                Get the complete picture — motivations, coping skills, and competitive state — in one purchase. All three full written reports unlocked the moment you pay.
+              </p>
+
+              {/* Included tests */}
+              <div className="mt-5 flex flex-wrap gap-2">
+                {[
+                  { label: "Self-Awareness Test", color: "border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300" },
+                  { label: "Coping Skills Inventory", color: "border-purple-500/30 bg-purple-500/10 text-purple-300" },
+                  { label: "Competitive Anxiety Inventory", color: "border-sky-500/30 bg-sky-500/10 text-sky-300" },
+                ].map((t) => (
+                  <span
+                    key={t.label}
+                    className={`rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.15em] ${t.color}`}
+                  >
+                    ✓ {t.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: price + CTA */}
+            <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
+              <div className="text-right">
+                <p className="font-saira text-[11px] text-zinc-500 line-through">€57 separately</p>
+                <p className="font-saira text-3xl font-extrabold text-white">€49</p>
+              </div>
+              <BundleCta />
+            </div>
+          </div>
         </div>
 
         <p className="mt-12 text-center font-saira text-[11px] text-zinc-500">
