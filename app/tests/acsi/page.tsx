@@ -187,9 +187,12 @@ export default function AcsiTestPage() {
       };
       const payload = { report, respondent };
       localStorage.setItem(RESULT_KEY, JSON.stringify(payload));
-      // Clear any previous unlock so a new submission always starts locked
+      // Clear any previous unlock so a new submission always starts locked,
+      // unless the user purchased the bundle (which unlocks all tests permanently).
       try {
-        localStorage.removeItem(UNLOCK_KEY);
+        if (localStorage.getItem("powerflow.bundle.unlocked.v1") !== "1") {
+          localStorage.removeItem(UNLOCK_KEY);
+        }
       } catch {
         /* ignore */
       }
