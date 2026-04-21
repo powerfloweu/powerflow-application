@@ -76,7 +76,9 @@ export default function ResultsPage() {
       } else {
         let alreadyUnlocked = false;
         try {
-          alreadyUnlocked = localStorage.getItem(UNLOCK_KEY) === "1";
+          alreadyUnlocked =
+            localStorage.getItem(UNLOCK_KEY) === "1" ||
+            localStorage.getItem("powerflow.bundle.unlocked.v1") === "1";
           if (alreadyUnlocked) setUnlocked(true);
         } catch {}
 

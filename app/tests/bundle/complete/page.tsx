@@ -41,9 +41,13 @@ export default function BundleCompletePage() {
   const [errorMsg, setErrorMsg] = React.useState("");
 
   React.useEffect(() => {
-    // Check if already unlocked via bundle (e.g. page refresh)
+    // Check if already unlocked via bundle (e.g. page refresh).
+    // Re-set all keys in case an individual one was cleared by a test re-submission.
     try {
       if (localStorage.getItem("powerflow.bundle.unlocked.v1") === "1") {
+        for (const key of UNLOCK_KEYS) {
+          localStorage.setItem(key, "1");
+        }
         setStatus("already");
         return;
       }
