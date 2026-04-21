@@ -3,7 +3,7 @@
 // Client component — handles generating a unique client_reference_id before
 // redirecting to the Stripe bundle payment link.
 
-const STRIPE_BUNDLE_LINK = "https://buy.stripe.com/placeholder_bundle";
+const STRIPE_BUNDLE_LINK = "https://buy.stripe.com/8x28wObuT7Ksg3i2PjdfG0u";
 
 export function BundleCta() {
   const handleClick = () => {
