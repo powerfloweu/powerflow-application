@@ -88,8 +88,8 @@ const CLIENTS: Client[] = [
 
   {
     id: "c2",
-    name: "Máté Horváth",
-    initials: "MH",
+    name: "Liam O'Brien",
+    initials: "LO",
     sport: "Swimming",
     level: "Club elite",
     flag: "monitor",
@@ -120,8 +120,8 @@ const CLIENTS: Client[] = [
 
   {
     id: "c3",
-    name: "Sara Fekete",
-    initials: "SF",
+    name: "Sara Blackwell",
+    initials: "SB",
     sport: "Tennis",
     level: "National junior",
     flag: "stable",
@@ -184,8 +184,8 @@ const CLIENTS: Client[] = [
 
   {
     id: "c5",
-    name: "Bence Tóth",
-    initials: "BT",
+    name: "Tobias Schneider",
+    initials: "TS",
     sport: "Football",
     level: "Academy",
     flag: "monitor",
