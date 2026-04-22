@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
 
 type ProfileRow = {
@@ -33,6 +33,7 @@ type CsaiRow = { id: string; user_id?: string; athlete_name?: string; somatic_an
 type DasRow  = { id: string; user_id?: string; athlete_name?: string; total_score: number; depression_prone: boolean; submitted_at: string; paid: boolean };
 
 export async function GET() {
+  if (!isConfigured) return NextResponse.json([], { status: 200 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbInsert, dbSelect, dbDelete } from "@/lib/supabaseAdmin";
 
 type EntryRow = {
@@ -24,6 +24,7 @@ type EntryRow = {
 // ── GET ───────────────────────────────────────────────────────────────────────
 
 export async function GET() {
+  if (!isConfigured) return NextResponse.json([], { status: 200 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -41,6 +42,7 @@ export async function GET() {
 // ── POST ──────────────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  if (!isConfigured) return NextResponse.json({ error: "Auth not configured" }, { status: 503 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -67,6 +69,7 @@ export async function POST(request: NextRequest) {
 // ── DELETE ────────────────────────────────────────────────────────────────────
 
 export async function DELETE(request: NextRequest) {
+  if (!isConfigured) return NextResponse.json({ error: "Auth not configured" }, { status: 503 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
