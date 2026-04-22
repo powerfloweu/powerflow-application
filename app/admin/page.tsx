@@ -1740,7 +1740,7 @@ function AthleteCard({
             <div>
               <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-300 mb-3 flex items-center gap-2">
                 <span className="inline-block h-[2px] w-4 rounded-full bg-amber-400 opacity-70" />
-                Attitude Scale · {profile.das.length} result{profile.das.length > 1 ? "s" : ""}
+                Dysfunctional Attitude Scale · {profile.das.length} result{profile.das.length > 1 ? "s" : ""}
               </p>
               <div className="space-y-2">
                 {profile.das.map((r) => (

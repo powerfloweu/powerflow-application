@@ -57,7 +57,7 @@ const ui = {
     subscalesTitle: "Your seven belief dimensions",
     noResults: "No results yet",
     noResultsBody:
-      "You haven't completed the Attitude Scale on this device.",
+      "You haven't completed the Dysfunctional Attitude Scale on this device.",
     startTest: "Start the test",
     verifying: "Verifying your payment with Stripe\u2026",
     verifyErrorSuffix: "If you completed payment, please contact",
@@ -96,7 +96,7 @@ const ui = {
     subscalesTitle: "A h\u00E9t hiedelemdimenz\u00ED\u00F3",
     noResults: "M\u00E9g nincsenek eredm\u00E9nyek",
     noResultsBody:
-      "Ezen az eszk\u00F6z\u00F6n m\u00E9g nem t\u00F6lt\u00F6tted ki az Attit\u0171d Sk\u00E1l\u00E1t.",
+      "Ezen az eszk\u00F6z\u00F6n m\u00E9g nem t\u00F6lt\u00F6tted ki a Diszfunkcion\u00E1lis Attit\u0171d Sk\u00E1l\u00E1t.",
     startTest: "Teszt ind\u00EDt\u00E1sa",
     verifying: "Fizet\u00E9s ellen\u0151rz\u00E9se a Stripe-on\u2026",
     verifyErrorSuffix:
@@ -136,7 +136,7 @@ const ui = {
     subscalesTitle: "Deine sieben \u00DCberzeugungsdimensionen",
     noResults: "Noch keine Ergebnisse",
     noResultsBody:
-      "Du hast die Einstellungsskala auf diesem Ger\u00E4t noch nicht ausgef\u00FCllt.",
+      "Du hast die Dysfunktionale Einstellungsskala auf diesem Ger\u00E4t noch nicht ausgef\u00FCllt.",
     startTest: "Test starten",
     verifying:
       "Zahlung wird mit Stripe verifiziert\u2026",

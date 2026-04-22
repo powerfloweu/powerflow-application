@@ -473,7 +473,7 @@ function ClientCard({ client }: { client: Client }) {
                 {client.testScores.das && (
                   <div>
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-300 mb-3">
-                      Attitude Scale (DAS)
+                      Dysfunctional Attitude Scale (DAS)
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <ScoreCard label="Total" value={`${client.testScores.das.total > 0 ? "+" : ""}${client.testScores.das.total}`} sub="of 70" flag={client.testScores.das.total >= 18 ? "rose" : "emerald"} />

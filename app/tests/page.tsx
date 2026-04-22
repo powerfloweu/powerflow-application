@@ -303,7 +303,7 @@ export default function TestsIndexPage() {
             slug="das"
             tier="Free + Paid"
             duration="~10 min · 35 items"
-            title="Attitude Scale"
+            title="Dysfunctional Attitude Scale"
             description="Seven deep-seated belief patterns — about approval, achievement, perfectionism, and control — shape how you respond to pressure, setbacks, and criticism. This test surfaces the ones working against you, so you can start to change them."
             href="/tests/das"
             cta="Examine your beliefs"

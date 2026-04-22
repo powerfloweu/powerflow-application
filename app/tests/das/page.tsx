@@ -22,7 +22,7 @@ type Answers = Record<number, 1 | 2 | 3 | 4 | 5>;
 const copy = {
   en: {
     heroTag: "PowerFlow \u00B7 DAS",
-    heroTitle: "Attitude Scale",
+    heroTitle: "Dysfunctional Attitude Scale",
     heroSubtitle: "Dysfunctional Attitudes \u00B7 35 items \u00B7 ~10 minutes",
     intro: "About you",
     introBody:
@@ -43,7 +43,7 @@ const copy = {
   },
   hu: {
     heroTag: "PowerFlow \u00B7 DAS",
-    heroTitle: "Attit\u0171d Sk\u00E1la",
+    heroTitle: "Diszfunkcion\u00E1lis Attit\u0171d Sk\u00E1la",
     heroSubtitle:
       "Diszfunkcion\u00E1lis attit\u0171d\u00F6k \u00B7 35 \u00E1ll\u00EDt\u00E1s \u00B7 ~10 perc",
     intro: "Alapadatok",
@@ -66,7 +66,7 @@ const copy = {
   },
   de: {
     heroTag: "PowerFlow \u00B7 DAS",
-    heroTitle: "Einstellungsskala",
+    heroTitle: "Dysfunktionale Einstellungsskala",
     heroSubtitle:
       "Dysfunktionale Einstellungen \u00B7 35 Aussagen \u00B7 ~10 Minuten",
     intro: "\u00DCber dich",
