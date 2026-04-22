@@ -682,12 +682,15 @@ export default function JournalPage() {
         </div>
 
         {/* Footer */}
-        <p className="mt-14 text-center font-saira text-[11px] text-zinc-700">
-          Entries are private and stored on this device.{" "}
-          <Link href="/tests" className="underline decoration-zinc-700 hover:text-zinc-400">
+        <div className="mt-14 flex flex-wrap items-center justify-center gap-6">
+          <Link href="/tests" className="font-saira text-[11px] text-zinc-700 underline decoration-zinc-700 hover:text-zinc-400 transition">
             ← Back to tests
           </Link>
-        </p>
+          <span className="text-zinc-800">·</span>
+          <Link href="/coach" className="font-saira text-[11px] text-purple-500/70 underline decoration-purple-500/30 hover:text-purple-300 transition">
+            Coach dashboard →
+          </Link>
+        </div>
       </div>
     </div>
   );
