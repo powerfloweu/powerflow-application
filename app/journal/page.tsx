@@ -15,40 +15,20 @@ type Context =
 
 type JournalEntry = {
   id: string;
-  text: string;
+  content: string;
   sentiment: Sentiment;
   context: Context;
-  createdAt: string;
+  themes: string[];
+  created_at: string;
 };
 
-// ── Storage ───────────────────────────────────────────────────────────────────
-
-const STORAGE_KEY = "powerflow.journal.entries.v1";
-const SEEDED_KEY  = "powerflow.journal.seeded.v1";
-
-// ── Mock seed data ─────────────────────────────────────────────────────────────
-
-function ago(days: number, h = 10, m = 0): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  d.setHours(h, m, 0, 0);
-  return d.toISOString();
-}
-
-const SEED: JournalEntry[] = [
-  { id: "s1",  text: "Felt completely off today. My timing was late on everything and I kept overthinking every single move. The coach noticed too, which made it worse.", sentiment: "negative", context: "post-competition", createdAt: ago(6, 19, 15) },
-  { id: "s2",  text: "Had a solid warm-up, felt loose and ready. Performance in the session itself didn't match that energy though. Hard to explain.", sentiment: "neutral",  context: "post-competition", createdAt: ago(6, 21, 0)  },
-  { id: "s3",  text: "Woke up early and actually looked forward to training. That hasn't happened in a while. Maybe the rest day did more than I thought.", sentiment: "positive", context: "pre-training",    createdAt: ago(5, 7, 30)  },
-  { id: "s4",  text: "Should have done better in the drill. I know the technique, I just can't execute it under pressure. It's like my brain shuts down.", sentiment: "negative", context: "during-session",  createdAt: ago(5, 10, 45) },
-  { id: "s5",  text: "Really solid session today. I was in the zone for most of it. Think the visualisation work before bed is starting to pay off.", sentiment: "positive", context: "during-session",  createdAt: ago(4, 17, 0)  },
-  { id: "s6",  text: "Keeping imagining worst case scenarios ahead of next week instead of what I can control. Need to stop this.", sentiment: "negative", context: "rest-day",         createdAt: ago(3, 20, 30) },
-  { id: "s7",  text: "Had a really honest conversation with my coach about where I'm heading. Felt genuinely motivated for the first time in weeks.", sentiment: "positive", context: "general",           createdAt: ago(3, 16, 0)  },
-  { id: "s8",  text: "Nailed the movement pattern we've been drilling. Repetition finally clicked. I can feel my confidence coming back.", sentiment: "positive", context: "during-session",  createdAt: ago(2, 11, 15) },
-  { id: "s9",  text: "Rest day but couldn't stop thinking about training. Not sure if that's dedication or anxiety.", sentiment: "neutral",  context: "rest-day",         createdAt: ago(2, 18, 0)  },
-  { id: "s10", text: "Pre-session nerves bad again. Kept telling myself I'm not ready, haven't done enough. Tried to reframe but slipped back in.", sentiment: "negative", context: "pre-training",    createdAt: ago(1, 9, 0)   },
-  { id: "s11", text: "Told myself before the session: just compete, don't judge. And it actually worked. Best performance in three weeks.", sentiment: "positive", context: "post-competition", createdAt: ago(1, 17, 30) },
-  { id: "s12", text: "Woke up feeling strong. Competition is in two days and I finally feel like I belong here.", sentiment: "positive", context: "pre-training",    createdAt: ago(0, 8, 0)   },
-];
+type UserProfile = {
+  id: string;
+  display_name: string;
+  avatar_url: string | null;
+  role: "athlete" | "coach";
+  coach_id: string | null;
+};
 
 // ── Theme engine ──────────────────────────────────────────────────────────────
 
@@ -63,16 +43,14 @@ const THEME_DEFS: ThemeDef[] = [
   { label: "Self-doubt",        keywords: ["can't", "unable", "brain shuts", "doubt", "overthinking", "not sure"],                                 color: "orange"  },
 ];
 
-function detectThemes(entries: JournalEntry[]) {
+function detectThemes(entries: JournalEntry[]): string[] {
   return THEME_DEFS
-    .map((def) => ({
-      def,
-      count: entries.filter((e) =>
-        def.keywords.some((kw) => e.text.toLowerCase().includes(kw)),
-      ).length,
-    }))
-    .filter((t) => t.count > 0)
-    .sort((a, b) => b.count - a.count);
+    .filter((def) =>
+      entries.some((e) =>
+        def.keywords.some((kw) => e.content.toLowerCase().includes(kw))
+      )
+    )
+    .map((def) => def.label);
 }
 
 // ── Date helpers ───────────────────────────────────────────────────────────────
@@ -93,10 +71,10 @@ function dayLabel(iso: string) {
 function groupByDay(entries: JournalEntry[]): [string, JournalEntry[]][] {
   const map = new Map<string, JournalEntry[]>();
   const sorted = [...entries].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
   for (const e of sorted) {
-    const key = new Date(e.createdAt).toDateString();
+    const key = new Date(e.created_at).toDateString();
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(e);
   }
@@ -105,7 +83,7 @@ function groupByDay(entries: JournalEntry[]): [string, JournalEntry[]][] {
 
 function weekEntries(entries: JournalEntry[]) {
   const cut = new Date(); cut.setDate(cut.getDate() - 7);
-  return entries.filter((e) => new Date(e.createdAt) >= cut);
+  return entries.filter((e) => new Date(e.created_at) >= cut);
 }
 
 function streak(entries: JournalEntry[]) {
@@ -113,7 +91,7 @@ function streak(entries: JournalEntry[]) {
   let s = 0;
   const d = new Date();
   while (true) {
-    if (entries.some((e) => new Date(e.createdAt).toDateString() === d.toDateString())) {
+    if (entries.some((e) => new Date(e.created_at).toDateString() === d.toDateString())) {
       s++;
       d.setDate(d.getDate() - 1);
     } else break;
@@ -121,12 +99,21 @@ function streak(entries: JournalEntry[]) {
   return s;
 }
 
+/** Returns true if athlete has been journaling ≥14 days and has no coach */
+function shouldPromptCoach(entries: JournalEntry[], profile: UserProfile | null): boolean {
+  if (!profile || profile.role !== "athlete" || profile.coach_id) return false;
+  if (entries.length < 5) return false;
+  const oldest = new Date(entries[entries.length - 1].created_at);
+  const daysSinceFirst = (Date.now() - oldest.getTime()) / 86400000;
+  return daysSinceFirst >= 14;
+}
+
 // ── Config maps ────────────────────────────────────────────────────────────────
 
-const SENT: Record<Sentiment, { label: string; icon: string; ring: string; bg: string; text: string; dot: string }> = {
-  positive: { label: "Positive", icon: "↑", ring: "border-emerald-500/60", bg: "bg-emerald-500/15", text: "text-emerald-300", dot: "bg-emerald-400" },
-  negative: { label: "Negative", icon: "↓", ring: "border-rose-500/60",    bg: "bg-rose-500/15",    text: "text-rose-300",    dot: "bg-rose-400"    },
-  neutral:  { label: "Neutral",  icon: "→", ring: "border-sky-500/60",     bg: "bg-sky-500/15",     text: "text-sky-300",     dot: "bg-sky-400"     },
+const SENT: Record<Sentiment, { label: string; icon: string; ring: string; bg: string; text: string }> = {
+  positive: { label: "Positive", icon: "↑", ring: "border-emerald-500/60", bg: "bg-emerald-500/15", text: "text-emerald-300" },
+  negative: { label: "Negative", icon: "↓", ring: "border-rose-500/60",    bg: "bg-rose-500/15",    text: "text-rose-300"    },
+  neutral:  { label: "Neutral",  icon: "→", ring: "border-sky-500/60",     bg: "bg-sky-500/15",     text: "text-sky-300"     },
 };
 
 const CTX: Record<Context, { label: string; icon: string }> = {
@@ -210,7 +197,7 @@ function WeekBar({ entries }: { entries: JournalEntry[] }) {
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i));
     const key = d.toDateString();
-    const dayEntries = entries.filter((e) => new Date(e.createdAt).toDateString() === key);
+    const dayEntries = entries.filter((e) => new Date(e.created_at).toDateString() === key);
     const pos = dayEntries.filter((e) => e.sentiment === "positive").length;
     const neg = dayEntries.filter((e) => e.sentiment === "negative").length;
     const neu = dayEntries.filter((e) => e.sentiment === "neutral").length;
@@ -257,18 +244,22 @@ function WeekBar({ entries }: { entries: JournalEntry[] }) {
 
 function EntryCard({ entry, onDelete }: { entry: JournalEntry; onDelete: (id: string) => void }) {
   const [confirm, setConfirm] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
   const s = SENT[entry.sentiment];
   const c = CTX[entry.context];
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    await onDelete(entry.id);
+  };
 
   return (
     <div className={`rounded-2xl border ${s.ring} ${s.bg} p-4 group transition hover:brightness-110`}>
       <div className="flex items-start gap-3">
-        {/* Sentiment icon */}
         <div className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${s.text} bg-white/5`}>
           {s.icon}
         </div>
-        {/* Text */}
-        <p className="flex-1 font-saira text-sm leading-relaxed text-zinc-200">{entry.text}</p>
+        <p className="flex-1 font-saira text-sm leading-relaxed text-zinc-200">{entry.content}</p>
       </div>
 
       <div className="mt-3 flex items-center gap-2 flex-wrap">
@@ -279,14 +270,15 @@ function EntryCard({ entry, onDelete }: { entry: JournalEntry; onDelete: (id: st
           {c.icon} {c.label}
         </span>
         <span className="ml-auto font-saira text-[10px] text-zinc-600">
-          {timeLabel(entry.createdAt)}
+          {timeLabel(entry.created_at)}
         </span>
 
-        {/* Delete */}
         {confirm ? (
           <div className="flex items-center gap-1.5 ml-1">
             <span className="font-saira text-[10px] text-red-400">Remove?</span>
-            <button onClick={() => onDelete(entry.id)} className="font-saira text-[10px] text-red-300 hover:text-red-200 underline">Yes</button>
+            <button onClick={handleDelete} disabled={deleting} className="font-saira text-[10px] text-red-300 hover:text-red-200 underline disabled:opacity-50">
+              {deleting ? "…" : "Yes"}
+            </button>
             <button onClick={() => setConfirm(false)} className="font-saira text-[10px] text-zinc-500 hover:text-zinc-300 underline">No</button>
           </div>
         ) : (
@@ -310,29 +302,49 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
   const [context, setContext] = React.useState<Context>("general");
   const [submitting, setSubmitting] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
   const canSubmit = text.trim().length >= 3 && !submitting;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
-    const entry: JournalEntry = {
-      id: `e_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      text: text.trim(),
-      sentiment,
-      context,
-      createdAt: new Date().toISOString(),
-    };
-    setTimeout(() => {
+    setError(null);
+
+    const themes = detectThemes([{
+      id: "", content: text, sentiment, context, themes: [], created_at: new Date().toISOString()
+    }]);
+
+    try {
+      const res = await fetch("/api/journal/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: text.trim(), sentiment, context, themes }),
+      });
+
+      if (!res.ok) throw new Error("Save failed");
+
+      const saved = await res.json() as { id: string };
+      const entry: JournalEntry = {
+        id: saved.id,
+        content: text.trim(),
+        sentiment,
+        context,
+        themes,
+        created_at: new Date().toISOString(),
+      };
+
       onAdd(entry);
       setText("");
       setSentiment("neutral");
       setContext("general");
-      setSubmitting(false);
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 1800);
-    }, 350);
+    } catch {
+      setError("Couldn't save — please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -342,7 +354,6 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
   return (
     <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 via-fuchsia-500/5 to-transparent p-5 sm:p-6 shadow-[0_16px_40px_rgba(126,34,206,0.15)]">
       <textarea
-        ref={textareaRef}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKey}
@@ -352,7 +363,6 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
       />
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        {/* Sentiment selector */}
         <div className="flex gap-1.5">
           {(["positive", "neutral", "negative"] as Sentiment[]).map((s) => {
             const cfg = SENT[s];
@@ -373,7 +383,6 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
           })}
         </div>
 
-        {/* Context selector */}
         <select
           value={context}
           onChange={(e) => setContext(e.target.value as Context)}
@@ -384,7 +393,6 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
           ))}
         </select>
 
-        {/* Submit */}
         <button
           type="button"
           onClick={handleSubmit}
@@ -401,6 +409,10 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
         </button>
       </div>
 
+      {error && (
+        <p className="mt-2 font-saira text-[11px] text-red-400">{error}</p>
+      )}
+
       <p className="mt-2 font-saira text-[10px] text-zinc-700">
         ⌘ + Enter to submit quickly
       </p>
@@ -416,12 +428,19 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
   const neg = week.filter((e) => e.sentiment === "negative").length;
   const neu = week.filter((e) => e.sentiment === "neutral").length;
   const str = streak(entries);
-  const themes = detectThemes(week);
+  const themes = THEME_DEFS
+    .map((def) => ({
+      def,
+      count: week.filter((e) =>
+        def.keywords.some((kw) => e.content.toLowerCase().includes(kw))
+      ).length,
+    }))
+    .filter((t) => t.count > 0)
+    .sort((a, b) => b.count - a.count);
   const posRate = week.length ? Math.round((pos / week.length) * 100) : 0;
 
   return (
     <div className="space-y-4">
-      {/* Weekly card */}
       <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-5 space-y-5">
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-purple-300">
@@ -434,7 +453,6 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
           </p>
         </div>
 
-        {/* Donut + stats */}
         <div className="flex items-center gap-4">
           <SentimentDonut pos={pos} neg={neg} neu={neu} />
           <div className="space-y-2 flex-1">
@@ -444,21 +462,18 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
           </div>
         </div>
 
-        {/* Summary stats */}
         <div className="grid grid-cols-3 gap-2 pt-1 border-t border-white/5">
           <StatPill label="Entries" value={String(week.length)} />
           <StatPill label="Positive" value={`${posRate}%`} highlight={posRate >= 50} />
           <StatPill label="Streak" value={`${str}d`} highlight={str >= 3} />
         </div>
 
-        {/* 7-day bar */}
         <div>
           <p className="font-saira text-[10px] text-zinc-600 mb-2 uppercase tracking-[0.18em]">Daily volume</p>
           <WeekBar entries={entries} />
         </div>
       </div>
 
-      {/* Themes */}
       {themes.length > 0 && (
         <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-5">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-purple-300 mb-3">
@@ -476,12 +491,11 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
             ))}
           </div>
           <p className="mt-3 font-saira text-[10px] text-zinc-600 leading-relaxed">
-            AI-powered theme analysis and reframes will be available in the full version.
+            AI-powered theme analysis and reframes coming in a future update.
           </p>
         </div>
       )}
 
-      {/* Teaser: connect to test results */}
       <div className="rounded-3xl border border-purple-500/15 bg-purple-500/5 p-5">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400 mb-2">
           Coming soon
@@ -519,50 +533,62 @@ function StatPill({ label, value, highlight = false }: { label: string; value: s
   );
 }
 
-// ── Auth placeholder banner ────────────────────────────────────────────────────
+// ── Coach prompt banner (contextual, after 14 days) ────────────────────────────
 
-function AuthBanner() {
-  const [dismissed, setDismissed] = React.useState(false);
-  if (dismissed) return null;
-
+function CoachPromptBanner({ onDismiss }: { onDismiss: () => void }) {
   return (
-    <div className="mb-6 rounded-2xl border border-white/8 bg-[#0F1117] px-5 py-4 flex flex-wrap items-center gap-4">
+    <div className="mb-6 rounded-2xl border border-purple-500/20 bg-purple-500/[0.07] px-5 py-4 flex flex-wrap items-center gap-4">
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        {/* Google icon placeholder */}
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-          <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden>
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-sm">
+          🧠
         </div>
         <div className="min-w-0">
-          <p className="font-saira text-xs font-semibold text-zinc-200">You're in preview mode</p>
+          <p className="font-saira text-xs font-semibold text-purple-200">Working with a coach?</p>
           <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
-            Entries save to this device only. Sign in with Google to sync across devices and unlock weekly AI reports.
+            You've built a solid journaling streak. Share your data with your coach — ask them to send you an invite link.
           </p>
         </div>
       </div>
+      <button
+        onClick={onDismiss}
+        className="font-saira text-[11px] text-zinc-700 hover:text-zinc-400 transition flex-shrink-0"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
 
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <button
-          type="button"
-          className="relative rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 font-saira text-[11px] font-semibold text-zinc-300 transition hover:bg-white/[0.08] cursor-default"
-          title="Authentication coming soon"
-        >
-          Sign in with Google
-          <span className="absolute -top-2 -right-2 rounded-full border border-amber-500/40 bg-amber-500/15 px-1.5 py-px font-saira text-[8px] uppercase tracking-[0.15em] text-amber-300">
-            Soon
-          </span>
-        </button>
-        <button
-          onClick={() => setDismissed(true)}
-          className="font-saira text-[11px] text-zinc-700 hover:text-zinc-400 transition"
-        >
-          ✕
-        </button>
+// ── User header bar ────────────────────────────────────────────────────────────
+
+function UserHeader({ profile }: { profile: UserProfile }) {
+  return (
+    <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        {profile.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={profile.avatar_url}
+            alt={profile.display_name}
+            className="w-8 h-8 rounded-full border border-white/10"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-saira text-xs font-bold text-purple-300">
+            {profile.display_name.slice(0, 1).toUpperCase()}
+          </div>
+        )}
+        <div>
+          <p className="font-saira text-xs font-semibold text-zinc-200">{profile.display_name}</p>
+          <p className="font-saira text-[10px] text-zinc-600 capitalize">{profile.role}</p>
+        </div>
       </div>
+
+      <a
+        href="/auth/sign-out"
+        className="font-saira text-[10px] text-zinc-700 hover:text-zinc-400 transition underline underline-offset-2"
+      >
+        Sign out
+      </a>
     </div>
   );
 }
@@ -571,38 +597,33 @@ function AuthBanner() {
 
 export default function JournalPage() {
   const [entries, setEntries] = React.useState<JournalEntry[]>([]);
+  const [profile, setProfile] = React.useState<UserProfile | null>(null);
   const [ready, setReady] = React.useState(false);
+  const [coachPromptDismissed, setCoachPromptDismissed] = React.useState(false);
 
-  // Load from localStorage + seed once
   React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const existing: JournalEntry[] = raw ? JSON.parse(raw) : [];
-      const alreadySeeded = localStorage.getItem(SEEDED_KEY) === "1";
+    (async () => {
+      const [profileRes, entriesRes] = await Promise.all([
+        fetch("/api/me"),
+        fetch("/api/journal/entries"),
+      ]);
 
-      if (!alreadySeeded) {
-        const merged = [...SEED, ...existing];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-        localStorage.setItem(SEEDED_KEY, "1");
-        setEntries(merged);
-      } else {
-        setEntries(existing);
-      }
-    } catch {
-      setEntries(SEED);
-    }
-    setReady(true);
+      if (profileRes.ok) setProfile(await profileRes.json());
+      if (entriesRes.ok) setEntries(await entriesRes.json());
+
+      setReady(true);
+    })();
   }, []);
 
-  const save = (updated: JournalEntry[]) => {
-    setEntries(updated);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch { /* ignore */ }
+  const handleAdd = (entry: JournalEntry) => setEntries((prev) => [entry, ...prev]);
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/journal/entries?id=${id}`, { method: "DELETE" });
+    setEntries((prev) => prev.filter((e) => e.id !== id));
   };
 
-  const handleAdd = (entry: JournalEntry) => save([entry, ...entries]);
-  const handleDelete = (id: string) => save(entries.filter((e) => e.id !== id));
-
   const grouped = React.useMemo(() => groupByDay(entries), [entries]);
+  const showCoachPrompt = !coachPromptDismissed && shouldPromptCoach(entries, profile);
 
   if (!ready) {
     return (
@@ -614,7 +635,6 @@ export default function JournalPage() {
 
   return (
     <div className="relative min-h-screen bg-[#050608] pt-24 pb-20 text-white">
-      {/* Background glow */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.13),transparent_55%)]" />
       </div>
@@ -634,19 +654,21 @@ export default function JournalPage() {
           </p>
         </div>
 
-        {/* Auth banner */}
-        <AuthBanner />
+        {/* User header */}
+        {profile && <UserHeader profile={profile} />}
+
+        {/* Contextual coach prompt */}
+        {showCoachPrompt && (
+          <CoachPromptBanner onDismiss={() => setCoachPromptDismissed(true)} />
+        )}
 
         {/* Two-column layout */}
         <div className="flex flex-col lg:flex-row gap-6 items-start">
 
           {/* ── Left: entry + feed ──────────────────────────────────────── */}
           <div className="flex-1 min-w-0 space-y-6">
-
-            {/* Quick entry */}
             <QuickEntry onAdd={handleAdd} />
 
-            {/* Feed */}
             {grouped.length === 0 ? (
               <div className="rounded-3xl border border-white/5 bg-[#0F1117] p-10 text-center">
                 <p className="font-saira text-sm text-zinc-600">No entries yet — log your first thought above.</p>
@@ -655,10 +677,9 @@ export default function JournalPage() {
               <div className="space-y-8">
                 {grouped.map(([dateKey, dayEntries]) => (
                   <div key={dateKey}>
-                    {/* Day label */}
                     <div className="flex items-center gap-3 mb-3">
                       <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
-                        {dayLabel(dayEntries[0].createdAt)}
+                        {dayLabel(dayEntries[0].created_at)}
                       </span>
                       <div className="flex-1 h-px bg-white/5" />
                       <span className="font-saira text-[10px] text-zinc-700">{dayEntries.length} entr{dayEntries.length === 1 ? "y" : "ies"}</span>
@@ -687,9 +708,11 @@ export default function JournalPage() {
             ← Back to tests
           </Link>
           <span className="text-zinc-800">·</span>
-          <Link href="/coach" className="font-saira text-[11px] text-purple-500/70 underline decoration-purple-500/30 hover:text-purple-300 transition">
-            Coach dashboard →
-          </Link>
+          {profile?.role === "coach" && (
+            <Link href="/coach" className="font-saira text-[11px] text-purple-500/70 underline decoration-purple-500/30 hover:text-purple-300 transition">
+              Coach dashboard →
+            </Link>
+          )}
         </div>
       </div>
     </div>
