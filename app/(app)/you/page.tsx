@@ -28,8 +28,10 @@ export default function YouPage() {
     fetch("/api/me")
       .then((r) => r.json())
       .then((p: Profile) => {
-        setProfile(p);
-        setMeetDate(p.meet_date ?? "");
+        if (p?.id) {
+          setProfile(p);
+          setMeetDate(p.meet_date ?? "");
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -91,7 +93,7 @@ export default function YouPage() {
           ) : (
             <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
               <span className="font-saira text-lg font-bold text-purple-300">
-                {profile.display_name[0].toUpperCase()}
+                {(profile.display_name?.[0] ?? "?").toUpperCase()}
               </span>
             </div>
           )}

@@ -36,7 +36,8 @@ function formatDate(): string {
   });
 }
 
-function firstName(name: string): string {
+function firstName(name: string | null | undefined): string {
+  if (!name) return "";
   return name.split(" ")[0];
 }
 
@@ -54,7 +55,7 @@ export default function TodayPage() {
       fetch("/api/journal/entries?limit=3").then((r) => r.json()),
     ])
       .then(([prof, ents]) => {
-        setProfile(prof);
+        if (prof?.id) setProfile(prof);   // only set if it's a real profile row
         setEntries(Array.isArray(ents) ? ents.slice(0, 3) : []);
       })
       .catch(() => {})
