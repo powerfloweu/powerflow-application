@@ -41,11 +41,9 @@ export async function proxy(request: NextRequest) {
 
     const { pathname } = request.nextUrl;
 
-    // Protect /journal and /coach — redirect to sign-in if unauthenticated
-    if (
-      !user &&
-      (pathname.startsWith("/journal") || pathname.startsWith("/coach"))
-    ) {
+    // Protect app routes — redirect to sign-in if unauthenticated
+    const APP_ROUTES = ["/today", "/journal", "/library", "/course", "/you", "/coach"];
+    if (!user && APP_ROUTES.some((r) => pathname.startsWith(r))) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/auth/sign-in";
       redirectUrl.searchParams.set("next", pathname);
