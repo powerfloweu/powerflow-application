@@ -13,7 +13,7 @@ interface Props {
  */
 export default function AppShell({ children }: Props) {
   return (
-    <div className="min-h-screen bg-[#050608]">
+    <div className="min-h-screen bg-[#050608] pt-[env(safe-area-inset-top)]">
       {/* Page content — padded so it clears the fixed tab bar on mobile */}
       <main className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         {children}

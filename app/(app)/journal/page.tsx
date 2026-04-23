@@ -214,7 +214,7 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
         value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKey}
         placeholder="What's on your mind right now? Log a thought, a doubt, a win…"
         rows={3}
-        className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
+        className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-base sm:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
       />
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -223,7 +223,7 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
             const cfg = SENT_CONFIG[s];
             return (
               <button key={s} type="button" onClick={() => setSentiment(s)}
-                className={`rounded-full border px-3 py-1 font-saira text-[10px] font-semibold uppercase tracking-[0.18em] transition ${
+                className={`rounded-full border px-3 py-2 sm:py-1 font-saira text-[10px] font-semibold uppercase tracking-[0.18em] transition ${
                   sentiment === s
                     ? `${cfg.ring} ${cfg.bg} ${cfg.text}`
                     : "border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-400"
@@ -235,14 +235,14 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
         </div>
 
         <select value={context} onChange={(e) => setContext(e.target.value as Context)}
-          className="rounded-full border border-white/10 bg-[#13151A] px-3 py-1 font-saira text-[10px] text-zinc-400 outline-none transition focus:border-purple-400/50 cursor-pointer">
+          className="rounded-full border border-white/10 bg-[#13151A] px-3 py-2 sm:py-1 font-saira text-sm sm:text-[10px] text-zinc-400 outline-none transition focus:border-purple-400/50 cursor-pointer">
           {(Object.entries(CTX_CONFIG) as [Context, { label: string; icon: string }][]).map(([k, v]) => (
             <option key={k} value={k}>{v.icon} {v.label}</option>
           ))}
         </select>
 
         <button type="button" onClick={handleSubmit} disabled={!canSubmit}
-          className={`ml-auto rounded-full px-5 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
+          className={`ml-auto rounded-full px-5 py-2.5 sm:py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
             submitted ? "bg-emerald-500 text-white"
             : canSubmit ? "bg-purple-500 text-white hover:bg-purple-400"
             : "bg-purple-500/20 text-purple-500/50 cursor-not-allowed"
@@ -252,7 +252,7 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
       </div>
 
       {error && <p className="mt-2 font-saira text-[11px] text-red-400">{error}</p>}
-      <p className="mt-2 font-saira text-[10px] text-zinc-700">⌘ + Enter to submit quickly</p>
+      <p className="mt-2 font-saira text-[10px] text-zinc-700 hidden sm:block">⌘ + Enter to submit quickly</p>
     </div>
   );
 }
@@ -432,7 +432,7 @@ export default function JournalPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#050608] pt-24 pb-20 text-white">
+    <div className="relative min-h-screen bg-[#050608] pt-8 text-white">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.13),transparent_55%)]" />
       </div>

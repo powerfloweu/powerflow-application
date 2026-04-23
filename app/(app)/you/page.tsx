@@ -117,7 +117,7 @@ export default function YouPage() {
             type="date"
             value={meetDate}
             onChange={(e) => setMeetDate(e.target.value)}
-            className="flex-1 rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
+            className="flex-1 rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
           />
           <button
             type="submit"

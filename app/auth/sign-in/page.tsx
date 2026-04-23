@@ -39,7 +39,7 @@ function SignInContent() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#050608] flex items-center justify-center px-4">
+    <div className="relative min-h-screen bg-[#050608] flex items-center justify-center px-4 py-[env(safe-area-inset-top)]">
       {/* Background glow */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.13),transparent_55%)]" />
@@ -60,7 +60,7 @@ function SignInContent() {
         </div>
 
         {/* Card */}
-        <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-8 space-y-4">
+        <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-6 sm:p-8 space-y-4">
 
           {/* Athlete sign-in */}
           <button
