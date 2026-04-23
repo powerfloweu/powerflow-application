@@ -1,31 +1,20 @@
 /**
  * Course reflection answers API.
  *
- * GET   /api/course/answers?week=<slug>    → list answers for a given week
- * GET   /api/course/answers                → list ALL the user's answers
- * POST  /api/course/answers                → upsert a single answer
- *   body: {
- *     week_slug: string,
- *     question_id: string,
- *     answer: string,
- *     journalMirror?: boolean,   // if true, mirror to journal_entries
- *     questionPrompt?: string    // used as a header in the journal mirror
- *   }
+ * GET  /api/course/answers?week=<num>  → answers for a given week
+ * GET  /api/course/answers             → all answers for the user
+ * POST /api/course/answers             → upsert a single answer
+ *   body: { week_num: number, question_id: string, text: string }
  *
- * Row uniqueness: (user_id, week_slug, question_id).
+ * Audio upload is handled by /api/course/answers/audio (Phase 4).
  *
- * Journal mirror behaviour:
- *   - If journalMirror is true AND there is no existing journal_entry_id,
- *     we INSERT a new journal_entries row and link it.
- *   - If journalMirror is true AND journal_entry_id exists, we PATCH the
- *     existing row so reflection edits flow through.
- *   - The journal row is tagged with the "course" theme so athletes and
- *     coaches can filter for coursework in the journal view.
+ * Saving an answer also auto-marks the quiz step as done when at least one
+ * question in the week has a non-empty answer.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
-import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
+import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
 import type { CourseAnswerRow } from "@/lib/course";
 
 // ── GET ───────────────────────────────────────────────────────────────────────
@@ -38,12 +27,12 @@ export async function GET(req: NextRequest) {
 
   const params: Record<string, string> = {
     user_id: `eq.${user.id}`,
-    select: "id,user_id,week_slug,question_id,answer,journal_entry_id,created_at,updated_at",
+    select: "id,user_id,week_num,question_id,text,audio_url,audio_duration_s,created_at,updated_at",
     order: "updated_at.desc",
   };
 
   const week = req.nextUrl.searchParams.get("week");
-  if (week) params.week_slug = `eq.${week}`;
+  if (week) params.week_num = `eq.${week}`;
 
   const rows = await dbSelect<CourseAnswerRow>("course_answers", params);
   return NextResponse.json(rows);
@@ -57,80 +46,67 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let body: {
-    week_slug?: string;
-    question_id?: string;
-    answer?: string;
-    journalMirror?: boolean;
-    questionPrompt?: string;
-  };
-  try {
-    body = await req.json();
-  } catch {
+  let body: { week_num?: number; question_id?: string; text?: string };
+  try { body = await req.json(); } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const week_slug = body.week_slug?.trim();
+  const week_num    = Number(body.week_num);
   const question_id = body.question_id?.trim();
-  const answer = (body.answer ?? "").slice(0, 4000);
-  if (!week_slug || !question_id) {
-    return NextResponse.json({ error: "Missing week_slug or question_id" }, { status: 400 });
+  const text        = (body.text ?? "").slice(0, 4000);
+
+  if (!week_num || week_num < 1 || week_num > 16) {
+    return NextResponse.json({ error: "week_num must be 1–16" }, { status: 400 });
+  }
+  if (!question_id) {
+    return NextResponse.json({ error: "Missing question_id" }, { status: 400 });
   }
 
-  // Fetch existing row if any
-  const existing = await dbSelect<CourseAnswerRow>("course_answers", {
-    user_id: `eq.${user.id}`,
-    week_slug: `eq.${week_slug}`,
-    question_id: `eq.${question_id}`,
-    select: "id,user_id,week_slug,question_id,answer,journal_entry_id,created_at,updated_at",
-    limit: "1",
+  const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  const now = new Date().toISOString();
+
+  // Upsert the answer row
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/course_answers`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: SERVICE_KEY,
+      Authorization: `Bearer ${SERVICE_KEY}`,
+      Prefer: "resolution=merge-duplicates,return=representation",
+    },
+    body: JSON.stringify({ user_id: user.id, week_num, question_id, text, updated_at: now }),
   });
 
-  // ── Handle journal mirror ──────────────────────────────────────────────────
-  // Only create/update a journal row when there is actual content to mirror.
-  let journal_entry_id: string | null = existing[0]?.journal_entry_id ?? null;
-  if (body.journalMirror && answer.trim().length > 0) {
-    const journalContent =
-      (body.questionPrompt ? `${body.questionPrompt}\n\n` : "") + answer.trim();
+  if (!res.ok) {
+    const err = await res.text().catch(() => "");
+    console.error("[course/answers] upsert failed", res.status, err);
+    return NextResponse.json({ error: "Save failed" }, { status: 500 });
+  }
 
-    if (journal_entry_id) {
-      await dbPatch(
-        "journal_entries",
-        { id: journal_entry_id, user_id: user.id },
-        { content: journalContent },
-      );
-    } else {
-      const created = await dbInsert("journal_entries", {
-        user_id: user.id,
-        content: journalContent.slice(0, 4000),
-        sentiment: "neutral",
-        context: "general",
-        themes: ["course"],
+  // Auto-mark quiz step done when at least one answer is non-empty
+  if (text.trim().length > 0) {
+    const progressRows = await dbSelect<{ quiz_done_at: string | null }>("course_progress", {
+      user_id:  `eq.${user.id}`,
+      week_num: `eq.${week_num}`,
+      select:   "quiz_done_at",
+      limit:    "1",
+    });
+
+    if (!progressRows.length || !progressRows[0].quiz_done_at) {
+      // Upsert progress row with quiz_done_at
+      await fetch(`${SUPABASE_URL}/rest/v1/course_progress`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SERVICE_KEY,
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          Prefer: "resolution=merge-duplicates,return=minimal",
+        },
+        body: JSON.stringify({ user_id: user.id, week_num, quiz_done_at: now, updated_at: now }),
       });
-      journal_entry_id = created?.id ?? null;
     }
   }
 
-  // ── Upsert the answer row ──────────────────────────────────────────────────
-  if (existing.length) {
-    await dbPatch(
-      "course_answers",
-      { id: existing[0].id },
-      {
-        answer,
-        journal_entry_id,
-        updated_at: new Date().toISOString(),
-      },
-    );
-    return NextResponse.json({ ok: true, updated: true, journal_entry_id });
-  }
-
-  const created = await dbInsert("course_answers", {
-    user_id: user.id,
-    week_slug,
-    question_id,
-    answer,
-    journal_entry_id,
-  });
-  return NextResponse.json({ ok: true, created: true, id: created?.id, journal_entry_id }, { status: 201 });
+  return NextResponse.json({ ok: true });
 }

@@ -8,6 +8,23 @@ export type PhaseInfo = {
 };
 
 /**
+ * Map a meet date to a suggested course week (1–16).
+ *
+ * Logic: 16 weeks out → W1, 1 week out → W16, meet day/past → null.
+ * Clamped so W1 is shown for anything ≥ 16 weeks out.
+ *
+ * Used to highlight the "current" week on the course index and to power
+ * the Today "This week" card.
+ */
+export function computeCourseWeek(meetDate: string | null | undefined): number | null {
+  if (!meetDate) return null;
+  const days = Math.ceil((+new Date(meetDate) - Date.now()) / 86_400_000);
+  if (days < 0) return null; // meet has passed
+  const weeksOut = Math.ceil(days / 7);
+  return Math.max(1, Math.min(16, 17 - weeksOut));
+}
+
+/**
  * Derive the current training phase from a meet date string (YYYY-MM-DD).
  * Returns null if no date is provided or the meet is already in the past.
  *

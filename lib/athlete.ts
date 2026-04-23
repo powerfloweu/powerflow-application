@@ -1,0 +1,79 @@
+/**
+ * Athlete performance helpers — GL Points, weight categories, lift utilities.
+ */
+
+// ── GL (Goodlift) Points ──────────────────────────────────────────────────────
+//
+// Formula: GL = 100 × Total / (a − b × e^(−c × bodyweight))
+// Constants from the IPF Goodlift 2020 formula.
+//
+// https://www.powerlifting.sport/fileadmin/ipf/data/ipf-formula/IPF_GL_Coefficients-2020.pdf
+
+const GL_COEFF = {
+  male:   { a: 1199.72839, b: 1025.18162, c: 0.00921 },
+  female: { a:  610.32796, b: 1045.59282, c: 0.03048 },
+};
+
+/**
+ * Compute IPF GL Points.
+ * Returns null if inputs are invalid or bodyweight < 30 kg.
+ */
+export function computeGLPoints(
+  total: number,
+  bodyweight: number,
+  gender: "male" | "female",
+): number | null {
+  if (total <= 0 || bodyweight < 30) return null;
+  const { a, b, c } = GL_COEFF[gender];
+  const denom = a - b * Math.exp(-c * bodyweight);
+  if (denom <= 0) return null;
+  return Math.round((100 * total / denom) * 10) / 10; // 1 decimal place
+}
+
+// ── Weight categories ─────────────────────────────────────────────────────────
+
+export const WEIGHT_CATEGORIES = {
+  male:   ["59kg", "66kg", "74kg", "83kg", "93kg", "105kg", "120kg", "120kg+"],
+  female: ["47kg", "52kg", "57kg", "63kg", "69kg", "76kg",  "84kg",  "84kg+"],
+} as const;
+
+// ── Full profile type (all fields including v2 additions) ─────────────────────
+
+export type AthleteProfile = {
+  id: string;
+  display_name: string;
+  avatar_url: string | null;
+  role: "athlete" | "coach";
+  coach_id: string | null;
+  coach_code: string | null;
+  meet_date: string | null;
+  // v2 additions
+  gender: "male" | "female" | null;
+  bodyweight_kg: number | null;
+  weight_category: string | null;
+  squat_current_kg: number | null;
+  squat_goal_kg: number | null;
+  bench_current_kg: number | null;
+  bench_goal_kg: number | null;
+  deadlift_current_kg: number | null;
+  deadlift_goal_kg: number | null;
+  mental_goals: string[];
+};
+
+/** Compute current total from profile fields. Returns null if no lifts set. */
+export function currentTotal(p: Pick<AthleteProfile,
+  "squat_current_kg" | "bench_current_kg" | "deadlift_current_kg">
+): number | null {
+  const { squat_current_kg: s, bench_current_kg: b, deadlift_current_kg: d } = p;
+  if (!s && !b && !d) return null;
+  return (s ?? 0) + (b ?? 0) + (d ?? 0);
+}
+
+/** Compute goal total from profile fields. Returns null if no goals set. */
+export function goalTotal(p: Pick<AthleteProfile,
+  "squat_goal_kg" | "bench_goal_kg" | "deadlift_goal_kg">
+): number | null {
+  const { squat_goal_kg: s, bench_goal_kg: b, deadlift_goal_kg: d } = p;
+  if (!s && !b && !d) return null;
+  return (s ?? 0) + (b ?? 0) + (d ?? 0);
+}

@@ -1,21 +1,21 @@
 /**
- * GET  /api/me — Returns the current user's profile.
- * PATCH /api/me — Updates meet_date and/or display_name.
+ * GET  /api/me — Returns the current user's full profile.
+ * PATCH /api/me — Updates any patchable profile field.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
+import type { AthleteProfile } from "@/lib/athlete";
 
-type ProfileRow = {
-  id: string;
-  display_name: string;
-  avatar_url: string | null;
-  role: "athlete" | "coach";
-  coach_id: string | null;
-  coach_code: string | null;
-  meet_date: string | null;
-};
+const SELECT_COLS = [
+  "id", "display_name", "avatar_url", "role", "coach_id", "coach_code", "meet_date",
+  "gender", "bodyweight_kg", "weight_category",
+  "squat_current_kg", "squat_goal_kg",
+  "bench_current_kg", "bench_goal_kg",
+  "deadlift_current_kg", "deadlift_goal_kg",
+  "mental_goals",
+].join(",");
 
 export async function GET() {
   if (!isConfigured) return NextResponse.json({ error: "Auth not configured" }, { status: 503 });
@@ -23,9 +23,9 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const rows = await dbSelect<ProfileRow>("profiles", {
+  const rows = await dbSelect<AthleteProfile>("profiles", {
     id: `eq.${user.id}`,
-    select: "id,display_name,avatar_url,role,coach_id,coach_code,meet_date",
+    select: SELECT_COLS,
   });
 
   if (!rows.length) {
@@ -37,10 +37,22 @@ export async function GET() {
       coach_id: null,
       coach_code: null,
       meet_date: null,
-    });
+      gender: null,
+      bodyweight_kg: null,
+      weight_category: null,
+      squat_current_kg: null,
+      squat_goal_kg: null,
+      bench_current_kg: null,
+      bench_goal_kg: null,
+      deadlift_current_kg: null,
+      deadlift_goal_kg: null,
+      mental_goals: [],
+    } satisfies AthleteProfile);
   }
 
-  return NextResponse.json(rows[0]);
+  const row = rows[0];
+  // Normalise: mental_goals may come back as null from DB
+  return NextResponse.json({ ...row, mental_goals: row.mental_goals ?? [] });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -49,23 +61,40 @@ export async function PATCH(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let body: { meet_date?: string | null; display_name?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  let body: Partial<AthleteProfile>;
+  try { body = await req.json(); }
+  catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
+
+  // Allowlist — only these keys may be patched
+  const PATCHABLE: Array<keyof AthleteProfile> = [
+    "meet_date", "display_name",
+    "gender", "bodyweight_kg", "weight_category",
+    "squat_current_kg", "squat_goal_kg",
+    "bench_current_kg", "bench_goal_kg",
+    "deadlift_current_kg", "deadlift_goal_kg",
+    "mental_goals",
+  ];
+
+  const patch: Record<string, unknown> = {};
+  for (const key of PATCHABLE) {
+    if (key in body) {
+      const val = body[key];
+      // Null out empty strings for nullable numeric/text fields
+      if (val === "") patch[key] = null;
+      else patch[key] = val ?? null;
+    }
   }
 
-  const allowed: Record<string, unknown> = {};
-  if ("meet_date" in body) allowed.meet_date = body.meet_date ?? null;
-  if ("display_name" in body && body.display_name?.trim()) {
-    allowed.display_name = body.display_name.trim();
+  // Special: trim display_name
+  if (typeof patch.display_name === "string") {
+    patch.display_name = (patch.display_name as string).trim();
+    if (!patch.display_name) delete patch.display_name;
   }
 
-  if (!Object.keys(allowed).length) {
+  if (!Object.keys(patch).length) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
-  await dbPatch("profiles", { id: user.id }, allowed);
+  await dbPatch("profiles", { id: user.id }, patch);
   return NextResponse.json({ ok: true });
 }

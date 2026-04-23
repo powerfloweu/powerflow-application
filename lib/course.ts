@@ -549,9 +549,14 @@ export const COURSE_WEEKS: CourseWeek[] = [
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Lookup a single week by slug. */
+/** Lookup a week by its slug (used internally). */
 export function getWeek(slug: string): CourseWeek | undefined {
   return COURSE_WEEKS.find((w) => w.slug === slug);
+}
+
+/** Lookup a week by its 1-indexed number (used in /course/w/[week] routes). */
+export function getWeekByNum(weekNum: number): CourseWeek | undefined {
+  return COURSE_WEEKS.find((w) => w.weekNumber === weekNum);
 }
 
 /** Group weeks by theme, preserving the order defined above. */
@@ -575,39 +580,61 @@ export function weeksByTheme(): Array<{ theme: CourseTheme; weeks: CourseWeek[] 
 export const TOTAL_WEEKS = COURSE_WEEKS.length;
 
 /**
- * Pick a suggested "current" week for an athlete based on days-to-meet.
- * Rough heuristic — the user can always override by tapping any week.
+ * Pick the suggested week number based on days-to-meet.
+ * Delegates to computeCourseWeek from lib/phase.ts where possible;
+ * falls back to W1 when no meet is set.
  *
- *   Foundation (57+ d) → W1 (or most recent unfinished early week)
- *   Build      (22–56) → ~W5 (arousal/breath/pressure/flow)
- *   Peak       (7–21)  → ~W10 (rehearsal/cues/self-talk)
- *   Meet week  (1–6)   → W14–15 (refocus, meet day)
- *   Meet day / no date → W1
+ * Kept here (in addition to computeCourseWeek) so course UI components only
+ * need to import from lib/course.
  */
-export function suggestedWeek(daysUntilMeet: number | null): CourseWeek {
-  if (daysUntilMeet === null || daysUntilMeet < 0) return COURSE_WEEKS[0];
-  if (daysUntilMeet <= 6) return getWeek("w15-meet-day") ?? COURSE_WEEKS[0];
-  if (daysUntilMeet <= 21) return getWeek("w10-mental-rehearsal") ?? COURSE_WEEKS[0];
-  if (daysUntilMeet <= 56) return getWeek("w05-arousal-control") ?? COURSE_WEEKS[0];
-  return COURSE_WEEKS[0];
+export function suggestedWeekNum(daysUntilMeet: number | null): number {
+  if (daysUntilMeet === null || daysUntilMeet < 0) return 1;
+  const weeksOut = Math.ceil(daysUntilMeet / 7);
+  return Math.max(1, Math.min(16, 17 - weeksOut));
 }
 
+/** @deprecated Use getWeekByNum + suggestedWeekNum instead */
+export function suggestedWeek(daysUntilMeet: number | null): CourseWeek {
+  return getWeekByNum(suggestedWeekNum(daysUntilMeet)) ?? COURSE_WEEKS[0];
+}
+
+// ── DB row types (must match migration_course_v2.sql) ────────────────────────
+
 export type CourseProgressRow = {
-  id: string;
   user_id: string;
-  week_slug: string;
-  completed: boolean;
-  started_at: string;
+  week_num: number;
+  video_done_at: string | null;
+  exercise_done_at: string | null;
+  quiz_done_at: string | null;
   completed_at: string | null;
+  updated_at: string;
 };
 
 export type CourseAnswerRow = {
   id: string;
   user_id: string;
-  week_slug: string;
+  week_num: number;
   question_id: string;
-  answer: string;
-  journal_entry_id: string | null;
+  text: string | null;
+  audio_url: string | null;
+  audio_duration_s: number | null;
   created_at: string;
   updated_at: string;
 };
+
+// ── Step helpers ─────────────────────────────────────────────────────────────
+
+export type ProgressStep = "video" | "exercise" | "quiz";
+
+export function stepsComplete(row: CourseProgressRow | undefined): {
+  video: boolean;
+  exercise: boolean;
+  quiz: boolean;
+  all: boolean;
+} {
+  if (!row) return { video: false, exercise: false, quiz: false, all: false };
+  const video    = !!row.video_done_at;
+  const exercise = !!row.exercise_done_at;
+  const quiz     = !!row.quiz_done_at;
+  return { video, exercise, quiz, all: video && exercise && quiz };
+}

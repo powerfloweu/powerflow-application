@@ -3,27 +3,32 @@
 import React from "react";
 
 interface Props {
-  /** The Vidyard video UUID (the last segment of a share or embed URL) */
+  /** The Vidyard video UUID (last segment of the share URL) */
   uuid: string;
-  /** Optional poster/placeholder label shown before the iframe loads */
+  /** Optional label shown in the placeholder */
   title?: string;
+  /** Called the first time the user taps "play" — use to mark video step done */
+  onPlay?: () => void;
 }
 
 /**
- * Lightweight Vidyard embed.
- *
- * We avoid Vidyard's JS SDK (it ships a big bundle and mutates the DOM)
- * and instead use the documented iframe embed. This works on mobile,
- * respects autoplay policies, and never blocks hydration.
- *
- * The iframe is loaded on first user interaction (tap on the poster) to
- * keep the initial page snappy on slower connections.
+ * Lightweight Vidyard embed — lazy-loaded on first tap to keep the page snappy.
+ * Uses the documented iframe embed (no JS SDK, no bundle bloat).
+ * `onPlay` fires once when the user initiates playback.
  */
-export default function VidyardPlayer({ uuid, title }: Props) {
+export default function VidyardPlayer({ uuid, title, onPlay }: Props) {
   const [loaded, setLoaded] = React.useState(false);
+  const firedRef = React.useRef(false);
 
-  // Guard against unreplaced placeholder UUIDs
   const isPlaceholder = !uuid || uuid.startsWith("YOUR_VIDYARD_UUID");
+
+  const handlePlay = () => {
+    setLoaded(true);
+    if (!firedRef.current && onPlay) {
+      firedRef.current = true;
+      onPlay();
+    }
+  };
 
   if (isPlaceholder) {
     return (
@@ -34,7 +39,7 @@ export default function VidyardPlayer({ uuid, title }: Props) {
           </div>
           <p className="font-saira text-xs text-zinc-400 mb-1">Video coming soon</p>
           <p className="font-saira text-[10px] text-zinc-600">
-            {title ?? "This week's video will be wired up before launch."}
+            {title ?? "This week's video will be added shortly."}
           </p>
         </div>
       </div>
@@ -56,7 +61,7 @@ export default function VidyardPlayer({ uuid, title }: Props) {
       ) : (
         <button
           type="button"
-          onClick={() => setLoaded(true)}
+          onClick={handlePlay}
           className="group absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-[#17131F] to-[#0D0B14] hover:from-[#1e1828] transition"
         >
           <div className="w-16 h-16 rounded-full bg-purple-600/80 group-hover:bg-purple-500 flex items-center justify-center shadow-lg shadow-purple-900/40 transition">
