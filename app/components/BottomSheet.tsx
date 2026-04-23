@@ -42,19 +42,19 @@ export default function BottomSheet({ open, onClose, title, children, footer }: 
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — above TabBar (z-50) */}
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden
       />
 
-      {/* Sheet / modal */}
+      {/* Sheet / modal — above backdrop */}
       <div
         role="dialog"
         aria-modal
         className={[
-          "fixed z-50 bg-[#0F1117] flex flex-col",
+          "fixed z-[70] bg-[#0F1117] flex flex-col",
           // Mobile: bottom sheet
           "bottom-0 inset-x-0 rounded-t-2xl max-h-[90dvh]",
           // Desktop: centred modal
