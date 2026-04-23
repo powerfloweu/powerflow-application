@@ -2,12 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
+import EntryCard from "@/app/components/EntryCard";
+import TagChip from "@/app/components/TagChip";
+import { THEME_DEFS, type Sentiment, type Context } from "@/lib/journal";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Sentiment = "positive" | "negative" | "neutral";
-type Context   = "pre-training" | "during-session" | "post-competition" | "rest-day" | "general";
-type Flag      = "attention" | "monitor" | "stable";
+type Flag = "attention" | "monitor" | "stable";
 type Trend     = "up" | "down" | "stable";
 
 type EntryRow = {
@@ -46,17 +47,6 @@ type CoachProfile = {
 };
 
 // ── Data computation ───────────────────────────────────────────────────────────
-
-type ThemeDef = { label: string; keywords: string[]; color: string };
-
-const THEME_DEFS: ThemeDef[] = [
-  { label: "Perfectionism",     keywords: ["should have", "not good enough", "perfect", "mistake", "wrong", "failed", "can't execute", "better"], color: "rose"    },
-  { label: "Confidence",        keywords: ["believe", "can do", "strong", "confident", "trust", "coming back", "nailed", "belong"],                color: "emerald" },
-  { label: "Pre-comp anxiety",  keywords: ["nervous", "worried", "anxious", "scared", "fear", "worst case", "not ready", "imagin"],                color: "amber"   },
-  { label: "Focus & flow",      keywords: ["zone", "clicked", "in the zone", "focused", "concentrate", "flow", "sharp", "locked"],                 color: "purple"  },
-  { label: "Motivation",        keywords: ["motivated", "excited", "look forward", "pay off", "progress", "great session", "solid"],               color: "sky"     },
-  { label: "Self-doubt",        keywords: ["can't", "unable", "brain shuts", "doubt", "overthinking", "not sure"],                                 color: "orange"  },
-];
 
 function weekAgo(n: number): Date {
   const d = new Date(); d.setDate(d.getDate() - n); d.setHours(0, 0, 0, 0); return d;
@@ -153,28 +143,6 @@ const FLAG_CONFIG: Record<Flag, { label: string; dot: string; text: string; bg: 
   stable:    { label: "On track",        dot: "bg-emerald-400", text: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/30" },
 };
 
-const SENT_CFG: Record<Sentiment, { icon: string; ring: string; bg: string; text: string }> = {
-  positive: { icon: "↑", ring: "border-emerald-500/50", bg: "bg-emerald-500/10", text: "text-emerald-300" },
-  negative: { icon: "↓", ring: "border-rose-500/50",    bg: "bg-rose-500/10",    text: "text-rose-300"    },
-  neutral:  { icon: "→", ring: "border-sky-500/50",     bg: "bg-sky-500/10",     text: "text-sky-300"     },
-};
-
-const CTX_ICON: Record<Context, string> = {
-  "pre-training":     "⚡",
-  "during-session":   "🎯",
-  "post-competition": "🏆",
-  "rest-day":         "💤",
-  "general":          "💭",
-};
-
-const THEME_CLS: Record<string, string> = {
-  rose:    "border-rose-500/30 bg-rose-500/10 text-rose-300",
-  emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-  amber:   "border-amber-500/30 bg-amber-500/10 text-amber-300",
-  purple:  "border-purple-500/30 bg-purple-500/10 text-purple-300",
-  sky:     "border-sky-500/30 bg-sky-500/10 text-sky-300",
-  orange:  "border-orange-500/30 bg-orange-500/10 text-orange-300",
-};
 
 const TREND_ICON:  Record<Trend, string> = { up: "↑", down: "↓", stable: "→" };
 const TREND_COLOR: Record<Trend, string> = { up: "text-emerald-400", down: "text-rose-400", stable: "text-zinc-500" };
@@ -198,17 +166,6 @@ function SentimentSparkline({ data }: { data: number[] }) {
   );
 }
 
-// ── Relative time helper ───────────────────────────────────────────────────────
-
-function relTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffH  = Math.floor(diffMs / 3600000);
-  const diffD  = Math.floor(diffMs / 86400000);
-  if (diffH < 1)   return "just now";
-  if (diffH < 24)  return `${diffH}h ago`;
-  if (diffD === 1) return "Yesterday";
-  return `${diffD} days ago`;
-}
 
 // ── Client card ────────────────────────────────────────────────────────────────
 
@@ -320,14 +277,13 @@ function ClientCard({ client }: { client: Client }) {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {client.themes.map((t) => (
-                        <span
+                        <TagChip
                           key={t.label}
-                          className={`rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.13em] ${THEME_CLS[THEME_DEFS.find((d) => d.label === t.label)?.color ?? "purple"]}`}
-                        >
-                          <span className={`mr-1 ${TREND_COLOR[t.trend]} font-bold`}>{TREND_ICON[t.trend]}</span>
-                          {t.label}
-                          <span className="ml-1.5 opacity-50">×{t.count}</span>
-                        </span>
+                          label={t.label}
+                          color={THEME_DEFS.find((d) => d.label === t.label)?.color ?? "purple"}
+                          count={t.count}
+                          trend={t.trend}
+                        />
                       ))}
                     </div>
                   </div>
@@ -385,24 +341,9 @@ function ClientCard({ client }: { client: Client }) {
                 {client.recentEntries.length === 0 ? (
                   <p className="font-saira text-sm text-zinc-600 py-4 text-center">No entries yet.</p>
                 ) : (
-                  client.recentEntries.map((e) => {
-                    const s = SENT_CFG[e.sentiment];
-                    const ctxIcon = CTX_ICON[e.context] ?? "💭";
-                    return (
-                      <div key={e.id} className={`rounded-2xl border ${s.ring} ${s.bg} p-4`}>
-                        <div className="flex items-start gap-3">
-                          <span className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${s.text} bg-white/5`}>
-                            {s.icon}
-                          </span>
-                          <p className="font-saira text-sm leading-relaxed text-zinc-200 flex-1">{e.content}</p>
-                        </div>
-                        <div className="mt-2.5 flex items-center gap-2">
-                          <span className="font-saira text-[10px] text-zinc-600">{ctxIcon} {e.context.replace(/-/g, " ")}</span>
-                          <span className="ml-auto font-saira text-[10px] text-zinc-600">{relTime(e.created_at)}</span>
-                        </div>
-                      </div>
-                    );
-                  })
+                  client.recentEntries.map((e) => (
+                    <EntryCard key={e.id} entry={e} />
+                  ))
                 )}
               </div>
             )}
