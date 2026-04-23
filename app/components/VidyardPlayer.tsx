@@ -5,28 +5,51 @@ import React from "react";
 interface Props {
   /** The Vidyard video UUID (last segment of the share URL) */
   uuid: string;
-  /** Optional label shown in the placeholder */
   title?: string;
-  /** Called the first time the user taps "play" — use to mark video step done */
+  /** Called the first time the user taps play — use to mark video step done */
   onPlay?: () => void;
 }
 
 /**
- * Lightweight Vidyard embed — lazy-loaded on first tap to keep the page snappy.
- * Uses the documented iframe embed (no JS SDK, no bundle bloat).
- * `onPlay` fires once when the user initiates playback.
+ * Vidyard video embed with iOS PWA fallback.
+ *
+ * Regular browser → lazy-loaded iframe (standard embed).
+ * iOS standalone (added to home screen) → tapping opens the Vidyard share
+ * URL in Safari, because WKWebView blocks third-party iframes.
+ *
+ * onPlay fires before navigation/load in both cases.
  */
 export default function VidyardPlayer({ uuid, title, onPlay }: Props) {
   const [loaded, setLoaded] = React.useState(false);
   const firedRef = React.useRef(false);
 
+  // Detect iOS standalone / WKWebView context
+  const isIOSStandalone = React.useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return (
+      // iOS "Add to Home Screen" sets navigator.standalone
+      (window.navigator as { standalone?: boolean }).standalone === true ||
+      // Broader standalone PWA check
+      window.matchMedia("(display-mode: standalone)").matches
+    );
+  }, []);
+
   const isPlaceholder = !uuid || uuid.startsWith("YOUR_VIDYARD_UUID");
 
-  const handlePlay = () => {
-    setLoaded(true);
+  const fireOnPlay = () => {
     if (!firedRef.current && onPlay) {
       firedRef.current = true;
       onPlay();
+    }
+  };
+
+  const handleTap = () => {
+    fireOnPlay();
+    if (isIOSStandalone) {
+      // Open in Safari — iframes don't work in WKWebView standalone mode
+      window.open(`https://share.vidyard.com/watch/${uuid}`, "_blank", "noopener");
+    } else {
+      setLoaded(true);
     }
   };
 
@@ -46,11 +69,11 @@ export default function VidyardPlayer({ uuid, title, onPlay }: Props) {
     );
   }
 
-  const src = `https://play.vidyard.com/${uuid}.html?autoplay=0`;
+  const src = `https://play.vidyard.com/${uuid}?autoplay=0`;
 
   return (
     <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/5 bg-black">
-      {loaded ? (
+      {loaded && !isIOSStandalone ? (
         <iframe
           src={src}
           title={title ?? "PowerFlow lesson"}
@@ -61,15 +84,22 @@ export default function VidyardPlayer({ uuid, title, onPlay }: Props) {
       ) : (
         <button
           type="button"
-          onClick={handlePlay}
-          className="group absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-[#17131F] to-[#0D0B14] hover:from-[#1e1828] transition"
+          onClick={handleTap}
+          className="group absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#17131F] to-[#0D0B14] hover:from-[#1e1828] transition gap-3"
         >
           <div className="w-16 h-16 rounded-full bg-purple-600/80 group-hover:bg-purple-500 flex items-center justify-center shadow-lg shadow-purple-900/40 transition">
             <span className="text-white text-2xl ml-1">▶</span>
           </div>
-          <span className="absolute bottom-3 left-3 font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-            Tap to play
-          </span>
+          {isIOSStandalone && (
+            <span className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+              Opens in Safari ↗
+            </span>
+          )}
+          {!isIOSStandalone && (
+            <span className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+              Tap to play
+            </span>
+          )}
         </button>
       )}
     </div>
