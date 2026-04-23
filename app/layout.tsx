@@ -20,9 +20,25 @@ const saira = Saira({
 });
 
 export const metadata: Metadata = {
-  title: "PowerFlow Application Form",
+  title: "PowerFlow",
   description:
-    "Apply for 1:1 mental coaching with PowerFlow — tailored mindset, competition prep, and long-term development for powerlifters.",
+    "Mental performance training for powerlifters — journal, course, and coaching tools.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "PowerFlow",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({
