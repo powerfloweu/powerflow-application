@@ -341,7 +341,23 @@ export default function WeekDetailPage() {
       </div>
 
       {/* ── Question bottom sheet ────────────────────────────── */}
-      <BottomSheet open={!!activeQ} onClose={closeSheet} title={activeQ?.prompt}>
+      <BottomSheet
+        open={!!activeQ}
+        onClose={closeSheet}
+        title={activeQ?.prompt}
+        footer={
+          activeQ && sheetTab === "text" ? (
+            <button
+              type="button"
+              onClick={saveAnswer}
+              disabled={sheetSaving || !sheetText.trim()}
+              className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-3 font-saira text-xs font-semibold uppercase tracking-[0.16em] text-white transition"
+            >
+              {sheetSaving ? "Saving…" : sheetSaved ? "Saved ✓" : "Save reflection"}
+            </button>
+          ) : undefined
+        }
+      >
         {activeQ && (
           <div className="space-y-4">
             {/* Tabs */}
@@ -363,24 +379,14 @@ export default function WeekDetailPage() {
             </div>
 
             {sheetTab === "text" ? (
-              <>
-                <textarea
-                  value={sheetText}
-                  onChange={(e) => { setSheetText(e.target.value); setSheetSaved(false); }}
-                  placeholder={activeQ.placeholder ?? "Write your reflection…"}
-                  rows={6}
-                  autoFocus
-                  className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark]"
-                />
-                <button
-                  type="button"
-                  onClick={saveAnswer}
-                  disabled={sheetSaving || !sheetText.trim()}
-                  className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-3 font-saira text-xs font-semibold uppercase tracking-[0.16em] text-white transition"
-                >
-                  {sheetSaving ? "Saving…" : sheetSaved ? "Saved ✓" : "Save reflection"}
-                </button>
-              </>
+              <textarea
+                value={sheetText}
+                onChange={(e) => { setSheetText(e.target.value); setSheetSaved(false); }}
+                placeholder={activeQ.placeholder ?? "Write your reflection…"}
+                rows={6}
+                autoFocus
+                className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark]"
+              />
             ) : (
               <div className="flex flex-col items-center gap-4 py-8 text-center">
                 <div className="w-14 h-14 rounded-full border border-purple-500/30 bg-purple-500/10 flex items-center justify-center text-2xl">

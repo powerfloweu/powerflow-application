@@ -8,6 +8,11 @@ interface Props {
   /** Shown in the drag-handle row */
   title?: string;
   children: React.ReactNode;
+  /**
+   * Sticky footer rendered outside the scrollable body — always visible above
+   * the iOS software keyboard. Pass action buttons here so they're never hidden.
+   */
+  footer?: React.ReactNode;
 }
 
 /**
@@ -18,7 +23,7 @@ interface Props {
  *
  * Closes on backdrop click or Escape key.
  */
-export default function BottomSheet({ open, onClose, title, children }: Props) {
+export default function BottomSheet({ open, onClose, title, children, footer }: Props) {
   // Trap Escape key
   React.useEffect(() => {
     if (!open) return;
@@ -81,6 +86,13 @@ export default function BottomSheet({ open, onClose, title, children }: Props) {
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4">
           {children}
         </div>
+
+        {/* Sticky footer — always above the iOS keyboard */}
+        {footer && (
+          <div className="flex-shrink-0 border-t border-white/5 px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+            {footer}
+          </div>
+        )}
       </div>
     </>
   );
