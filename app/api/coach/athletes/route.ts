@@ -27,10 +27,10 @@ type EntryRow = {
   created_at: string;
 };
 
-type SatRow = { id: string; user_id?: string; athlete_name?: string; total_score: number; submitted_at: string; paid: boolean };
-type AcsiRow = { id: string; user_id?: string; athlete_name?: string; coping: number; concentration: number; confidence: number; goal_setting: number; submitted_at: string; paid: boolean };
-type CsaiRow = { id: string; user_id?: string; athlete_name?: string; somatic_anxiety: number; cognitive_anxiety: number; self_confidence: number; submitted_at: string; paid: boolean };
-type DasRow  = { id: string; user_id?: string; athlete_name?: string; total_score: number; depression_prone: boolean; submitted_at: string; paid: boolean };
+type SatRow  = { id: string; user_id?: string; total_score: number; submitted_at: string; paid: boolean };
+type AcsiRow = { id: string; user_id?: string; score_coping: number; score_concentration: number; score_confidence: number; score_goal_setting: number; total_score: number; submitted_at: string; paid: boolean };
+type CsaiRow = { id: string; user_id?: string; score_cognitive: number; score_somatic: number; score_confidence: number; submitted_at: string; paid: boolean };
+type DasRow  = { id: string; user_id?: string; total_score: number; depression_prone: boolean; submitted_at: string; paid: boolean };
 
 export async function GET() {
   if (!isConfigured) return NextResponse.json([], { status: 200 });
@@ -77,12 +77,12 @@ export async function GET() {
     dbSelect<AcsiRow>("acsi_results", {
       user_id: `in.${idList}`,
       order: "submitted_at.desc",
-      select: "id,user_id,coping,concentration,confidence,goal_setting,submitted_at,paid",
+      select: "id,user_id,score_coping,score_concentration,score_confidence,score_goal_setting,total_score,submitted_at,paid",
     }),
     dbSelect<CsaiRow>("csai_results", {
       user_id: `in.${idList}`,
       order: "submitted_at.desc",
-      select: "id,user_id,somatic_anxiety,cognitive_anxiety,self_confidence,submitted_at,paid",
+      select: "id,user_id,score_cognitive,score_somatic,score_confidence,submitted_at,paid",
     }),
     dbSelect<DasRow>("das_results", {
       user_id: `in.${idList}`,

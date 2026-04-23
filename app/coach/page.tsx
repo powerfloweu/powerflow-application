@@ -22,8 +22,8 @@ type EntryRow = {
 };
 
 type SatRow  = { id: string; total_score: number; submitted_at: string; paid: boolean };
-type AcsiRow = { id: string; coping: number; concentration: number; confidence: number; goal_setting: number; submitted_at: string; paid: boolean };
-type CsaiRow = { id: string; somatic_anxiety: number; cognitive_anxiety: number; self_confidence: number; submitted_at: string; paid: boolean };
+type AcsiRow = { id: string; score_coping: number; score_concentration: number; score_confidence: number; score_goal_setting: number; total_score: number; submitted_at: string; paid: boolean };
+type CsaiRow = { id: string; score_cognitive: number; score_somatic: number; score_confidence: number; submitted_at: string; paid: boolean };
 type DasRow  = { id: string; total_score: number; depression_prone: boolean; submitted_at: string; paid: boolean };
 
 type AthleteRaw = {
@@ -380,13 +380,13 @@ function ClientCard({ client }: { client: Client }) {
                     </p>
                     {(() => {
                       const r = client.testScores.acsi[0];
-                      const total = r.coping + r.concentration + r.confidence + r.goal_setting;
+                      const total = r.total_score ?? (r.score_coping + r.score_concentration + r.score_confidence + r.score_goal_setting);
                       return (
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <ScoreCard label="Total" value={String(total)} sub="of 112" flag={total >= 75 ? "emerald" : total >= 50 ? "amber" : "rose"} />
-                          <ScoreCard label="Coping" value={String(r.coping)} sub="of 28" flag={r.coping >= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label="Concentration" value={String(r.concentration)} sub="of 28" flag={r.concentration >= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label="Confidence" value={String(r.confidence)} sub="of 28" flag={r.confidence >= 18 ? "emerald" : "rose"} />
+                          <ScoreCard label="Total" value={String(total)} sub="of 196" flag={total >= 130 ? "emerald" : total >= 90 ? "amber" : "rose"} />
+                          <ScoreCard label="Coping" value={String(r.score_coping)} sub="of 28" flag={r.score_coping >= 18 ? "emerald" : "rose"} />
+                          <ScoreCard label="Concentration" value={String(r.score_concentration)} sub="of 28" flag={r.score_concentration >= 18 ? "emerald" : "rose"} />
+                          <ScoreCard label="Confidence" value={String(r.score_confidence)} sub="of 28" flag={r.score_confidence >= 18 ? "emerald" : "rose"} />
                         </div>
                       );
                     })()}
@@ -403,9 +403,9 @@ function ClientCard({ client }: { client: Client }) {
                       const r = client.testScores.csai[0];
                       return (
                         <div className="grid grid-cols-3 gap-3">
-                          <ScoreCard label="Cognitive" value={String(r.cognitive_anxiety)} sub="of 36" flag={r.cognitive_anxiety <= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label="Somatic"   value={String(r.somatic_anxiety)}   sub="of 36" flag={r.somatic_anxiety <= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label="Confidence" value={String(r.self_confidence)} sub="of 36" flag={r.self_confidence >= 22 ? "emerald" : "rose"} />
+                          <ScoreCard label="Cognitive" value={String(r.score_cognitive)} sub="of 36" flag={r.score_cognitive <= 18 ? "emerald" : "rose"} />
+                          <ScoreCard label="Somatic"   value={String(r.score_somatic)}   sub="of 36" flag={r.score_somatic <= 18 ? "emerald" : "rose"} />
+                          <ScoreCard label="Confidence" value={String(r.score_confidence)} sub="of 36" flag={r.score_confidence >= 22 ? "emerald" : "rose"} />
                         </div>
                       );
                     })()}

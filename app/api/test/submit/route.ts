@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
     ...factorScores,
     ...subfactorScores,
     sum_yes: report.validity.sumYes,
+    total_score: report.validity.sumYes,   // alias used by coach dashboard
     validity_reliable: report.validity.reliable,
   };
 
