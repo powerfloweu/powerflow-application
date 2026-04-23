@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 function SignInContent() {
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/journal";
+  const next = searchParams.get("next") ?? "/today";
   const role = searchParams.get("role") ?? (next.startsWith("/coach") ? "coach" : "athlete");
 
   const [loading, setLoading] = React.useState<"athlete" | "coach" | null>(null);

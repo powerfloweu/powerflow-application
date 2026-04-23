@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   // Read role + next destination stored before the OAuth redirect
   const role = (request.cookies.get("pf_auth_role")?.value ?? "athlete") as "athlete" | "coach";
   const nextRaw = request.cookies.get("pf_auth_next")?.value ?? "";
-  const next = nextRaw ? decodeURIComponent(nextRaw) : role === "coach" ? "/coach" : "/journal";
+  const next = nextRaw ? decodeURIComponent(nextRaw) : role === "coach" ? "/coach" : "/today";
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

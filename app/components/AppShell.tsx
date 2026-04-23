@@ -1,25 +1,62 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import TabBar from "./TabBar";
 
 interface Props {
   children: React.ReactNode;
 }
 
+const NAV_LINKS = [
+  { href: "/today",   label: "Today"   },
+  { href: "/journal", label: "Journal" },
+  { href: "/library", label: "Library" },
+  { href: "/course",  label: "Course"  },
+  { href: "/you",     label: "You"     },
+] as const;
+
 /**
  * AppShell wraps all authenticated app routes.
- * - Renders <TabBar> at the bottom on mobile (hidden on md+)
- * - Adds bottom padding so content clears the tab bar
- * - The top NavBar is hidden within the app shell; the per-page
- *   header handles identity / back navigation instead.
+ * Mobile  → fixed bottom TabBar
+ * Desktop → fixed top nav bar (same links, different layout)
  */
 export default function AppShell({ children }: Props) {
+  const pathname = usePathname();
+
   return (
     <div className="min-h-screen bg-[#050608] pt-[env(safe-area-inset-top)]">
-      {/* Page content — padded so it clears the fixed tab bar on mobile */}
-      <main className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+
+      {/* ── Desktop top nav (hidden on mobile) ────────────────── */}
+      <header className="hidden md:flex fixed inset-x-0 top-0 z-50 h-12 items-center border-b border-white/5 bg-[#0D0B14]/90 backdrop-blur-md px-6 gap-6">
+        <span className="font-saira text-[10px] font-semibold uppercase tracking-[0.32em] text-purple-300 mr-2">
+          PowerFlow
+        </span>
+        {NAV_LINKS.map(({ href, label }) => {
+          const active = pathname === href || pathname.startsWith(href + "/");
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`font-saira text-[11px] uppercase tracking-[0.18em] transition ${
+                active
+                  ? "text-white font-semibold"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {label}
+            </Link>
+          );
+        })}
+      </header>
+
+      {/* ── Page content ──────────────────────────────────────── */}
+      {/* Mobile: pad for bottom TabBar. Desktop: pad for top nav. */}
+      <main className="pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0 md:pt-12">
         {children}
       </main>
 
-      {/* Bottom tab bar — only visible below md breakpoint */}
+      {/* ── Mobile bottom tab bar ─────────────────────────────── */}
       <TabBar />
     </div>
   );

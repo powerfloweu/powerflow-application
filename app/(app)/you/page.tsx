@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { computePhase } from "@/lib/phase";
 
@@ -48,9 +49,9 @@ export default function YouPage() {
     });
     setSaving(false);
     setSaved(true);
-    // Update local state
     setProfile((p) => p ? { ...p, meet_date: meetDate || null } : p);
-    setTimeout(() => setSaved(false), 2500);
+    // Navigate back to Today so the phase block appears immediately
+    setTimeout(() => router.push("/today"), 900);
   };
 
   const handleSignOut = async () => {
@@ -70,6 +71,14 @@ export default function YouPage() {
 
   return (
     <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto">
+
+      {/* ── Back link ─────────────────────────────────────────── */}
+      <Link
+        href="/today"
+        className="inline-block mb-5 font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.18em] transition"
+      >
+        ← Today
+      </Link>
 
       {/* ── Header ────────────────────────────────────────────── */}
       <div className="mb-8">
