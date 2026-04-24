@@ -144,17 +144,32 @@ const COLOR_MAP: Record<ToolColor, {
 
 function AudioPlayer({ url, color }: { url: string | null; color: ToolColor }) {
   const audioRef  = React.useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying]       = React.useState(false);
-  const [progress, setProgress]     = React.useState(0);
+  const [playing, setPlaying]         = React.useState(false);
+  const [loading, setLoading]         = React.useState(false);
+  const [errored, setErrored]         = React.useState(false);
+  const [progress, setProgress]       = React.useState(0);
   const [currentTime, setCurrentTime] = React.useState(0);
-  const [duration, setDuration]     = React.useState(0);
+  const [duration, setDuration]       = React.useState(0);
   const c = COLOR_MAP[color];
 
-  const toggle = () => {
+  const toggle = async () => {
     const el = audioRef.current;
-    if (!el) return;
-    if (playing) { el.pause(); setPlaying(false); }
-    else         { el.play();  setPlaying(true);  }
+    if (!el || loading) return;
+    if (playing) {
+      el.pause();
+      setPlaying(false);
+    } else {
+      setLoading(true);
+      try {
+        await el.play();
+        setPlaying(true);
+      } catch (err) {
+        console.error("[AudioPlayer] play() rejected:", err);
+        setErrored(true);
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const handleTimeUpdate = () => {
@@ -165,14 +180,14 @@ function AudioPlayer({ url, color }: { url: string | null; color: ToolColor }) {
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el   = audioRef.current;
+    const el = audioRef.current;
     if (!el || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const t    = ((e.clientX - rect.left) / rect.width) * duration;
-    el.currentTime = t;
+    el.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
   };
 
-  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  const fmt = (s: number) =>
+    `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
   // ── Placeholder (no audio yet) ──────────────────────────────
   if (!url) {
@@ -193,6 +208,27 @@ function AudioPlayer({ url, color }: { url: string | null; color: ToolColor }) {
     );
   }
 
+  // ── Error state ─────────────────────────────────────────────
+  if (errored) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3.5">
+        <div className="w-10 h-10 rounded-full border border-red-500/20 flex items-center justify-center flex-shrink-0 text-red-400 text-sm">
+          ✕
+        </div>
+        <div>
+          <p className="font-saira text-xs font-semibold text-red-400">Couldn't load audio</p>
+          <button
+            type="button"
+            onClick={() => { setErrored(false); setPlaying(false); }}
+            className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Active player ───────────────────────────────────────────
   return (
     <div className="rounded-xl border border-white/10 bg-[#0D0B14] p-4">
@@ -201,18 +237,24 @@ function AudioPlayer({ url, color }: { url: string | null; color: ToolColor }) {
         src={url}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
-        onEnded={() => { setPlaying(false); setProgress(0); setCurrentTime(0); }}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => { setPlaying(false); setProgress(0); setCurrentTime(0); if (audioRef.current) audioRef.current.currentTime = 0; }}
+        onError={() => { setErrored(true); setPlaying(false); setLoading(false); }}
         preload="metadata"
       />
       <div className="flex items-center gap-3">
-        {/* Play / Pause */}
+        {/* Play / Pause / Loading */}
         <button
           type="button"
           onClick={toggle}
-          className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center transition ${c.player}`}
+          disabled={loading}
+          className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center transition disabled:opacity-70 ${c.player}`}
           aria-label={playing ? "Pause" : "Play"}
         >
-          {playing ? (
+          {loading ? (
+            <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+          ) : playing ? (
             <svg viewBox="0 0 20 20" className="w-4 h-4" fill="white" aria-hidden>
               <rect x="5" y="3" width="3.5" height="14" rx="1"/>
               <rect x="11.5" y="3" width="3.5" height="14" rx="1"/>
@@ -235,8 +277,11 @@ function AudioPlayer({ url, color }: { url: string | null; color: ToolColor }) {
             onClick={handleSeek}
           >
             <div
-              className="h-full rounded-full bg-current opacity-70 transition-[width]"
-              style={{ width: `${progress * 100}%`, color: "inherit" }}
+              className={`h-full rounded-full transition-[width] ${
+                color === "purple" ? "bg-purple-400" :
+                color === "amber"  ? "bg-amber-400"  : "bg-teal-400"
+              }`}
+              style={{ width: `${progress * 100}%` }}
             />
           </div>
           <div className="flex justify-between mt-1.5">
