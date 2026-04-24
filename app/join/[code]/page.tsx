@@ -4,59 +4,67 @@ import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function JoinPage() {
-  const { code } = useParams<{ code: string }>();
-  const router = useRouter();
-  const [state, setState] = React.useState<
-    "loading" | "found" | "invalid" | "joining" | "done" | "error"
-  >("loading");
-  const [coachName, setCoachName] = React.useState<string>("");
-  const [authLoading, setAuthLoading] = React.useState(false);
+type State = "loading" | "found" | "found-loggedin" | "invalid" | "joining" | "done" | "error";
 
-  // Verify the coach code is real
+export default function JoinPage() {
+  const { code }  = useParams<{ code: string }>();
+  const router    = useRouter();
+  const [state, setState]       = React.useState<State>("loading");
+  const [coachName, setCoachName] = React.useState("");
+  const [userId, setUserId]     = React.useState<string | null>(null);
+  const [busy, setBusy]         = React.useState(false);
+
+  // ── 1. Verify code + check for existing session ───────────────
   React.useEffect(() => {
     if (!code) { setState("invalid"); return; }
+
     (async () => {
-      const res = await fetch(`/api/join/verify?code=${encodeURIComponent(code)}`);
-      if (!res.ok) { setState("invalid"); return; }
-      const data = await res.json();
-      if (!data.valid) { setState("invalid"); return; }
-      setCoachName(data.coachName ?? "your coach");
-      setState("found");
+      // Verify the code is real
+      const verifyRes = await fetch(`/api/join/verify?code=${encodeURIComponent(code)}`);
+      if (!verifyRes.ok) { setState("invalid"); return; }
+      const verifyData = await verifyRes.json();
+      if (!verifyData.valid) { setState("invalid"); return; }
+      setCoachName(verifyData.coachName ?? "your coach");
+
+      // Check if the user is already signed in
+      const supabase  = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUserId(session.user.id);
+        setState("found-loggedin");
+      } else {
+        setState("found");
+      }
     })();
   }, [code]);
 
-  // After OAuth, link athlete to coach
-  React.useEffect(() => {
-    const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        setState("joining");
-        const res = await fetch("/api/join/link", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, userId: session.user.id }),
-        });
-        if (res.ok) {
-          setState("done");
-          setTimeout(() => router.push("/journal"), 1500);
-        } else {
-          setState("error");
-        }
-      }
+  // ── 2a. Already logged in — link directly, no OAuth needed ────
+  async function handleDirectConnect() {
+    if (!userId) return;
+    setBusy(true);
+    setState("joining");
+    const res = await fetch("/api/join/link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, userId }),
     });
-    return () => subscription.unsubscribe();
-  }, [code, router]);
+    if (res.ok) {
+      setState("done");
+      setTimeout(() => router.push("/today"), 1500);
+    } else {
+      setState("error");
+    }
+    setBusy(false);
+  }
 
-  async function handleJoin() {
-    setAuthLoading(true);
+  // ── 2b. Not logged in — OAuth flow; callback handles the link ─
+  async function handleOAuth() {
+    setBusy(true);
     const supabase = createClient();
-
-    // Store role cookie so callback knows this is an athlete joining via invite
-    document.cookie = `pf_auth_role=athlete; path=/; max-age=300; SameSite=Lax`;
-    document.cookie = `pf_auth_next=${encodeURIComponent("/journal")}; path=/; max-age=300; SameSite=Lax`;
+    // Store code so /auth/callback can do the linking after OAuth completes
+    document.cookie = `pf_auth_role=athlete;  path=/; max-age=300; SameSite=Lax`;
+    document.cookie = `pf_auth_next=${encodeURIComponent("/today")}; path=/; max-age=300; SameSite=Lax`;
     document.cookie = `pf_join_code=${encodeURIComponent(code)}; path=/; max-age=300; SameSite=Lax`;
-
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -64,9 +72,10 @@ export default function JoinPage() {
         queryParams: { access_type: "offline", prompt: "consent" },
       },
     });
-    if (error) setAuthLoading(false);
+    if (error) setBusy(false);
   }
 
+  // ── Render ─────────────────────────────────────────────────────
   return (
     <div className="relative min-h-screen bg-[#050608] flex items-center justify-center px-4">
       <div className="pointer-events-none fixed inset-0 z-0">
@@ -78,51 +87,79 @@ export default function JoinPage() {
           PowerFlow
         </p>
 
+        {/* Loading */}
         {state === "loading" && (
           <div className="mt-8 flex justify-center">
             <div className="w-6 h-6 rounded-full border-2 border-purple-500/40 border-t-purple-400 animate-spin" />
           </div>
         )}
 
+        {/* Invalid */}
         {state === "invalid" && (
           <div className="mt-8 rounded-3xl border border-red-500/20 bg-red-500/5 p-8">
             <p className="font-saira text-lg font-bold text-red-300 mb-2">Invalid link</p>
             <p className="font-saira text-sm text-zinc-500">
-              This invite link is invalid or has expired. Ask your coach to resend it.
+              This invite link is invalid or has expired. Ask your coach for a new one.
             </p>
           </div>
         )}
 
-        {(state === "found" || authLoading) && (
+        {/* Found — not logged in → OAuth */}
+        {(state === "found" || (state === "loading" && busy)) && (
           <>
             <h1 className="font-saira text-2xl font-extrabold uppercase tracking-[0.1em] text-white mt-4">
               You've been invited
             </h1>
             <p className="mt-3 font-saira text-sm text-zinc-400">
-              <span className="text-purple-300 font-semibold">{coachName}</span> has invited you to share
-              your self-talk journal.
+              <span className="text-purple-300 font-semibold">{coachName}</span> has invited you
+              to join PowerFlow.
             </p>
             <div className="mt-8 rounded-3xl border border-white/8 bg-[#0F1117] p-8">
               <p className="font-saira text-xs text-zinc-500 mb-5">
-                Sign in with Google to join. Your coach will be able to see your journal entries and test results.
+                Sign in with Google to connect. Your coach will be able to see your journal and test results.
               </p>
               <button
                 type="button"
-                onClick={handleJoin}
-                disabled={authLoading}
+                onClick={handleOAuth}
+                disabled={busy}
                 className="w-full flex items-center justify-center gap-3 rounded-xl border border-purple-500/30 bg-purple-500/10 px-5 py-3.5 font-saira text-sm font-semibold text-purple-200 transition hover:bg-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {authLoading ? (
-                  <span className="w-4 h-4 rounded-full border-2 border-purple-300/30 border-t-purple-300 animate-spin" />
-                ) : (
-                  <GoogleIcon />
-                )}
-                {authLoading ? "Redirecting…" : "Accept with Google"}
+                {busy
+                  ? <span className="w-4 h-4 rounded-full border-2 border-purple-300/30 border-t-purple-300 animate-spin" />
+                  : <GoogleIcon />}
+                {busy ? "Redirecting…" : "Accept with Google"}
               </button>
             </div>
           </>
         )}
 
+        {/* Found — already logged in → direct connect */}
+        {state === "found-loggedin" && (
+          <>
+            <h1 className="font-saira text-2xl font-extrabold uppercase tracking-[0.1em] text-white mt-4">
+              You've been invited
+            </h1>
+            <p className="mt-3 font-saira text-sm text-zinc-400">
+              <span className="text-purple-300 font-semibold">{coachName}</span> has invited you
+              to join PowerFlow.
+            </p>
+            <div className="mt-8 rounded-3xl border border-white/8 bg-[#0F1117] p-8">
+              <p className="font-saira text-xs text-zinc-500 mb-5">
+                You're already signed in. Tap below to connect your account to {coachName}.
+              </p>
+              <button
+                type="button"
+                onClick={handleDirectConnect}
+                disabled={busy}
+                className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 px-5 py-3.5 font-saira text-sm font-semibold text-white transition"
+              >
+                {busy ? "Connecting…" : `Connect to ${coachName}`}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Joining */}
         {state === "joining" && (
           <div className="mt-8">
             <div className="flex justify-center mb-4">
@@ -132,16 +169,16 @@ export default function JoinPage() {
           </div>
         )}
 
+        {/* Done */}
         {state === "done" && (
           <div className="mt-8 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-8">
             <p className="font-saira text-2xl mb-2">✓</p>
             <p className="font-saira text-lg font-bold text-emerald-300 mb-2">You're connected!</p>
-            <p className="font-saira text-sm text-zinc-500">
-              Redirecting to your journal…
-            </p>
+            <p className="font-saira text-sm text-zinc-500">Redirecting you now…</p>
           </div>
         )}
 
+        {/* Error */}
         {state === "error" && (
           <div className="mt-8 rounded-3xl border border-red-500/20 bg-red-500/5 p-8">
             <p className="font-saira text-lg font-bold text-red-300 mb-2">Something went wrong</p>

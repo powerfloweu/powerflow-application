@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -17,9 +18,13 @@ export async function GET(request: NextRequest) {
 
   const cookieStore = await cookies();
 
-  // Read role + next destination stored before the OAuth redirect
-  const role = (request.cookies.get("pf_auth_role")?.value ?? "athlete") as "athlete" | "coach";
-  const nextRaw = request.cookies.get("pf_auth_next")?.value ?? "";
+  // Read one-time cookies set before OAuth redirect
+  const role     = (request.cookies.get("pf_auth_role")?.value ?? "athlete") as "athlete" | "coach";
+  const nextRaw  = request.cookies.get("pf_auth_next")?.value ?? "";
+  const joinCode = request.cookies.get("pf_join_code")?.value
+    ? decodeURIComponent(request.cookies.get("pf_join_code")!.value)
+    : null;
+
   const next = nextRaw ? decodeURIComponent(nextRaw) : role === "coach" ? "/coach" : "/today";
 
   const supabase = createServerClient(
@@ -27,9 +32,7 @@ export async function GET(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
+        getAll() { return cookieStore.getAll(); },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
@@ -47,18 +50,36 @@ export async function GET(request: NextRequest) {
 
   const user = data.user;
 
-  // Upsert profile row (using service role key via supabaseAdmin for bypassing RLS on insert)
+  // Upsert profile (no-op if already exists)
   await ensureProfile(user.id, role, {
     display_name: user.user_metadata?.full_name ?? user.email ?? "User",
-    avatar_url: user.user_metadata?.avatar_url ?? null,
+    avatar_url:   user.user_metadata?.avatar_url ?? null,
   });
 
-  // Clear the one-time cookies
+  // Link athlete to coach if a join code was present before the OAuth redirect
+  if (joinCode) {
+    await linkAthleteToCoach(user.id, joinCode);
+  }
+
+  // Clear all one-time cookies
   const response = NextResponse.redirect(`${origin}${next}`);
-  response.cookies.set("pf_auth_role", "", { maxAge: 0, path: "/" });
-  response.cookies.set("pf_auth_next", "", { maxAge: 0, path: "/" });
+  response.cookies.set("pf_auth_role",  "", { maxAge: 0, path: "/" });
+  response.cookies.set("pf_auth_next",  "", { maxAge: 0, path: "/" });
+  response.cookies.set("pf_join_code",  "", { maxAge: 0, path: "/" });
 
   return response;
+}
+
+// ── Link athlete to coach ─────────────────────────────────────────────────────
+
+async function linkAthleteToCoach(userId: string, code: string) {
+  const coaches = await dbSelect<{ id: string }>("profiles", {
+    coach_code: `eq.${code.toUpperCase()}`,
+    role:       "eq.coach",
+    select:     "id",
+  });
+  if (!coaches.length) return;
+  await dbPatch("profiles", { id: userId }, { coach_id: coaches[0].id });
 }
 
 // ── Profile upsert via service-role REST ──────────────────────────────────────
@@ -68,29 +89,22 @@ async function ensureProfile(
   role: "athlete" | "coach",
   meta: { display_name: string; avatar_url: string | null }
 ) {
-  const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-
+  const SUPABASE_URL  = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
   if (!SUPABASE_URL || !SERVICE_KEY) return;
 
-  const headers: HeadersInit = {
+  const authHeaders: HeadersInit = {
     "Content-Type": "application/json",
     apikey: SERVICE_KEY,
     Authorization: `Bearer ${SERVICE_KEY}`,
-    Prefer: "resolution=ignore-duplicates,return=representation",
   };
 
   // Check if profile already exists
-  const checkRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=id,role`,
-    { headers: { ...headers, Prefer: "" } }
-  );
-  const existing = checkRes.ok ? await checkRes.json() : [];
-
-  if (existing.length > 0) {
-    // Profile already exists — don't overwrite role
-    return;
-  }
+  const checkRes  = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=id,role`, {
+    headers: { ...authHeaders, Prefer: "" },
+  });
+  const existing  = checkRes.ok ? await checkRes.json() : [];
+  if (existing.length > 0) return; // Don't overwrite role
 
   // Generate coach_code for coaches (random 8-char alphanumeric)
   const coach_code =
@@ -103,14 +117,8 @@ async function ensureProfile(
       : null;
 
   await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      id: userId,
-      role,
-      display_name: meta.display_name,
-      avatar_url: meta.avatar_url,
-      coach_code,
-    }),
+    method:  "POST",
+    headers: { ...authHeaders, Prefer: "resolution=ignore-duplicates,return=representation" },
+    body:    JSON.stringify({ id: userId, role, display_name: meta.display_name, avatar_url: meta.avatar_url, coach_code }),
   });
 }
