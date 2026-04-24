@@ -60,6 +60,7 @@ export type AthleteProfile = {
   deadlift_current_kg: number | null;
   deadlift_goal_kg: number | null;
   mental_goals: string[];
+  training_days_per_week: number | null;
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */

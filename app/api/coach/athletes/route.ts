@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
+import type { TrainingEntry } from "@/lib/training";
 
 type ProfileRow = {
   id: string;
@@ -31,6 +32,22 @@ type SatRow  = { id: string; user_id?: string; total_score: number; submitted_at
 type AcsiRow = { id: string; user_id?: string; score_coping: number; score_concentration: number; score_confidence: number; score_goal_setting: number; total_score: number; submitted_at: string; paid: boolean };
 type CsaiRow = { id: string; user_id?: string; score_cognitive: number; score_somatic: number; score_confidence: number; submitted_at: string; paid: boolean };
 type DasRow  = { id: string; user_id?: string; total_score: number; depression_prone: boolean; submitted_at: string; paid: boolean };
+
+function getMondayOfWeek(d: Date): string {
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const mon = new Date(d);
+  mon.setDate(d.getDate() + diff);
+  return mon.toISOString().slice(0, 10);
+}
+
+function getSundayOfWeek(d: Date): string {
+  const day = d.getDay();
+  const diff = day === 0 ? 0 : 7 - day;
+  const sun = new Date(d);
+  sun.setDate(d.getDate() + diff);
+  return sun.toISOString().slice(0, 10);
+}
 
 export async function GET() {
   if (!isConfigured) return NextResponse.json([], { status: 200 });
@@ -61,8 +78,11 @@ export async function GET() {
   const athleteIds = athletes.map((a) => a.id);
   const idList = `(${athleteIds.map((id) => `"${id}"`).join(",")})`;
 
-  // Fetch entries, test results for all athletes in parallel
-  const [entries, sat, acsi, csai, das] = await Promise.all([
+  const monday = getMondayOfWeek(new Date());
+  const sunday = getSundayOfWeek(new Date());
+
+  // Fetch entries, test results and training entries for all athletes in parallel
+  const [entries, sat, acsi, csai, das, trainingEntriesRaw] = await Promise.all([
     dbSelect<EntryRow>("journal_entries", {
       user_id: `in.${idList}`,
       order: "created_at.desc",
@@ -89,7 +109,15 @@ export async function GET() {
       order: "submitted_at.desc",
       select: "id,user_id,total_score,depression_prone,submitted_at,paid",
     }),
+    dbSelect<TrainingEntry>("training_entries", {
+      user_id: `in.${idList}`,
+      entry_date: `gte.${monday}`,
+      order: "entry_date.asc",
+      select: "id,user_id,entry_date,is_training_day,mood_rating,thoughts_before,thoughts_after,what_went_well,frustrations,next_session,created_at,updated_at",
+    }),
   ]);
+
+  const trainingEntries = trainingEntriesRaw.filter((e) => e.entry_date <= sunday);
 
   // Group by athlete
   const result = athletes.map((athlete) => ({
@@ -99,6 +127,7 @@ export async function GET() {
     acsi: acsi.filter((r) => r.user_id === athlete.id),
     csai: csai.filter((r) => r.user_id === athlete.id),
     das: das.filter((r) => r.user_id === athlete.id),
+    training_entries: trainingEntries.filter((e) => e.user_id === athlete.id),
   }));
 
   return NextResponse.json(result);

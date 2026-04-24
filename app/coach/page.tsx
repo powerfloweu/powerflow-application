@@ -5,6 +5,7 @@ import Link from "next/link";
 import EntryCard from "@/app/components/EntryCard";
 import TagChip from "@/app/components/TagChip";
 import { THEME_DEFS, type Sentiment, type Context } from "@/lib/journal";
+import type { TrainingEntry } from "@/lib/training";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -36,6 +37,7 @@ type AthleteRaw = {
   acsi: AcsiRow[];
   csai: CsaiRow[];
   das: DasRow[];
+  training_entries: TrainingEntry[];
 };
 
 type CoachProfile = {
@@ -130,6 +132,7 @@ function computeClient(a: AthleteRaw) {
     testScores: { sat: a.sat, acsi: a.acsi, csai: a.csai, das: a.das },
     lastActive,
     joinedAt: a.created_at,
+    trainingThisWeek: a.training_entries,
   };
 }
 
@@ -171,7 +174,7 @@ function SentimentSparkline({ data }: { data: number[] }) {
 
 function ClientCard({ client }: { client: Client }) {
   const [expanded, setExpanded] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<"analysis" | "entries" | "scores">("analysis");
+  const [activeTab, setActiveTab] = React.useState<"analysis" | "entries" | "scores" | "training">("analysis");
   const flag = FLAG_CONFIG[client.flag];
 
   return (
@@ -246,9 +249,10 @@ function ClientCard({ client }: { client: Client }) {
           {/* Tab bar */}
           <div className="flex gap-0 border-b border-white/5 px-5 sm:px-6">
             {([
-              { key: "analysis", label: "Analysis" },
-              { key: "entries",  label: "Recent entries" },
-              { key: "scores",   label: "Test scores" },
+              { key: "analysis",  label: "Analysis" },
+              { key: "entries",   label: "Recent entries" },
+              { key: "scores",    label: "Test scores" },
+              { key: "training",  label: "Training Log" },
             ] as const).map((tab) => (
               <button
                 key={tab.key}
@@ -442,10 +446,252 @@ function ClientCard({ client }: { client: Client }) {
                 )}
               </div>
             )}
+
+            {/* ── Tab: Training Log ── */}
+            {activeTab === "training" && (
+              <TrainingLogTab trainingThisWeek={client.trainingThisWeek} />
+            )}
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+// ── Training log helpers ───────────────────────────────────────────────────────
+
+const STOP_WORDS = new Set([
+  "a","the","is","it","and","i","my","to","of","was","that","were","with","for",
+  "so","not","but","in","on","at","be","by","as","an","or","if","do","no","we",
+  "up","out","had","have","has","did","get","got","just","its","im","me","they",
+  "our","he","she","us","you","your","this","from","are","all","can","when",
+  "what","how","really","very","too","also","about","their","there","then",
+]);
+
+function extractTopics(texts: string[]): string[] {
+  const freq: Record<string, number> = {};
+  for (const t of texts) {
+    for (const word of t.toLowerCase().split(/\W+/)) {
+      if (word.length < 3 || STOP_WORDS.has(word)) continue;
+      freq[word] = (freq[word] ?? 0) + 1;
+    }
+  }
+  return Object.entries(freq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([w]) => w.charAt(0).toUpperCase() + w.slice(1));
+}
+
+/** 7 days Mon–Sun for the current week. Returns YYYY-MM-DD strings. */
+function currentWeekDays(): string[] {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d.toISOString().slice(0, 10);
+  });
+}
+
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function MoodSparkline({ entries, weekDays }: { entries: TrainingEntry[]; weekDays: string[] }) {
+  const byDate = new Map(entries.map((e) => [e.entry_date, e]));
+  return (
+    <div className="flex items-end gap-1.5 h-8">
+      {weekDays.map((d, i) => {
+        const e = byDate.get(d);
+        const mood = e?.mood_rating ?? null;
+        const pct = mood !== null ? (mood / 10) : 0;
+        const height = mood !== null ? Math.max(4, Math.round(pct * 32)) : 4;
+        const color = mood === null ? "bg-white/10"
+          : mood >= 7 ? "bg-emerald-400"
+          : mood >= 5 ? "bg-amber-400"
+          : "bg-rose-400";
+        return (
+          <div key={d} className="flex flex-col items-center gap-0.5 flex-1">
+            <div
+              className={`w-full rounded-sm ${color} transition-all`}
+              style={{ height: `${height}px` }}
+              title={`${DAY_LABELS[i]}: ${mood !== null ? `${mood}/10` : "no entry"}`}
+            />
+            <span className="font-saira text-[8px] text-zinc-600">{DAY_LABELS[i]}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TrainingLogTab({ trainingThisWeek }: { trainingThisWeek: TrainingEntry[] }) {
+  const weekDays = React.useMemo(() => currentWeekDays(), []);
+  const trainingDays = trainingThisWeek.filter((e) => e.is_training_day).length;
+  const moodValues = trainingThisWeek
+    .map((e) => e.mood_rating)
+    .filter((m): m is number => m !== null);
+  const avgMood = moodValues.length
+    ? (moodValues.reduce((s, v) => s + v, 0) / moodValues.length).toFixed(1)
+    : null;
+
+  const allMoodValues = moodValues;
+  const moodTrend = allMoodValues.length >= 2
+    ? allMoodValues[allMoodValues.length - 1] > allMoodValues[0] ? "up"
+      : allMoodValues[allMoodValues.length - 1] < allMoodValues[0] ? "down"
+      : "flat"
+    : "flat";
+
+  const beforeTexts = trainingThisWeek.map((e) => e.thoughts_before ?? "").filter(Boolean);
+  const afterTexts  = trainingThisWeek.map((e) => e.thoughts_after ?? "").filter(Boolean);
+  const nextTexts   = trainingThisWeek.map((e) => e.next_session ?? "").filter(Boolean);
+
+  return (
+    <div className="space-y-5">
+      {/* Week summary */}
+      <div>
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-3">
+          Week Summary
+        </p>
+        <div className="rounded-2xl border border-white/5 bg-[#0D0F14] p-4 space-y-3">
+          <div className="flex items-center justify-between text-xs font-saira">
+            <span className="text-zinc-400">Training days</span>
+            <span className="font-semibold text-white">{trainingDays}/7</span>
+          </div>
+          {avgMood !== null && (
+            <div className="flex items-center justify-between text-xs font-saira">
+              <span className="text-zinc-400">Avg mood</span>
+              <span className={`font-semibold ${
+                parseFloat(avgMood) >= 7 ? "text-emerald-300"
+                : parseFloat(avgMood) >= 5 ? "text-amber-300"
+                : "text-rose-300"
+              }`}>{avgMood}/10</span>
+            </div>
+          )}
+          <MoodSparkline entries={trainingThisWeek} weekDays={weekDays} />
+        </div>
+      </div>
+
+      {/* Daily log */}
+      {trainingThisWeek.length > 0 && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-3">
+            Daily Log
+          </p>
+          <div className="space-y-3">
+            {trainingThisWeek.map((e, idx) => {
+              const dateObj = new Date(e.entry_date + "T12:00:00");
+              const dayName = dateObj.toLocaleDateString("en-GB", { weekday: "short" });
+              const dayNum  = dateObj.getDate();
+              return (
+                <div key={e.id} className="rounded-xl border border-white/5 bg-[#0D0F14] p-4">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className="font-saira text-xs font-semibold text-zinc-300">
+                      Day {idx + 1} · {dayName} {dayNum}
+                    </span>
+                    <span className={`rounded-full border px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.12em] ${
+                      e.is_training_day
+                        ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
+                        : "border-zinc-600/40 bg-zinc-600/10 text-zinc-400"
+                    }`}>
+                      {e.is_training_day ? "Training" : "Rest"}
+                    </span>
+                    {e.mood_rating !== null && (
+                      <span className={`font-saira text-[10px] font-semibold ${
+                        e.mood_rating >= 7 ? "text-emerald-400"
+                        : e.mood_rating >= 5 ? "text-amber-400"
+                        : "text-rose-400"
+                      }`}>
+                        Mood: {e.mood_rating}/10
+                      </span>
+                    )}
+                  </div>
+                  {e.is_training_day && (
+                    <div className="space-y-1.5 mt-2">
+                      {(
+                        [
+                          ["Before", e.thoughts_before],
+                          ["After",  e.thoughts_after],
+                          ["Went well", e.what_went_well],
+                          ["Frustrations", e.frustrations],
+                          ["Next session", e.next_session],
+                        ] as [string, string | null][]
+                      ).map(([label, val]) =>
+                        val ? (
+                          <div key={label} className="flex gap-2">
+                            <span className="font-saira text-[10px] uppercase tracking-[0.12em] text-zinc-600 w-20 flex-shrink-0 pt-0.5">
+                              {label}
+                            </span>
+                            <span className="font-saira text-xs text-zinc-300 leading-snug">
+                              {val.length > 80 ? val.slice(0, 80) + "…" : val}
+                            </span>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  )}
+                  {!e.is_training_day && e.next_session && (
+                    <p className="font-saira text-xs text-zinc-400 mt-1 leading-snug">
+                      {e.next_session.length > 80 ? e.next_session.slice(0, 80) + "…" : e.next_session}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Weekly brief */}
+      <div>
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-3">
+          Weekly Brief
+        </p>
+        <div className="rounded-2xl border border-white/5 bg-[#0D0F14] p-4 space-y-2">
+          <BriefLine>
+            Mood trend: <span className={
+              moodTrend === "up" ? "text-emerald-300"
+              : moodTrend === "down" ? "text-rose-300"
+              : "text-zinc-400"
+            }>{moodTrend === "up" ? "↑ Up" : moodTrend === "down" ? "↓ Down" : "→ Flat"}</span>
+          </BriefLine>
+          <BriefLine>
+            Training days: <span className="text-zinc-200 font-semibold">{trainingDays} this week</span>
+          </BriefLine>
+          {beforeTexts.length > 0 && (
+            <BriefLine>
+              Pre-session themes:{" "}
+              <span className="text-zinc-300">{extractTopics(beforeTexts).join(", ") || "—"}</span>
+            </BriefLine>
+          )}
+          {afterTexts.length > 0 && (
+            <BriefLine>
+              Post-session themes:{" "}
+              <span className="text-zinc-300">{extractTopics(afterTexts).join(", ") || "—"}</span>
+            </BriefLine>
+          )}
+          {nextTexts.length > 0 && (
+            <BriefLine>
+              Recurring focus:{" "}
+              <span className="text-zinc-300">{extractTopics(nextTexts).join(", ") || "—"}</span>
+            </BriefLine>
+          )}
+          {trainingThisWeek.length === 0 && (
+            <p className="font-saira text-xs text-zinc-600">No training entries logged this week.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BriefLine({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="font-saira text-xs text-zinc-500 leading-snug">
+      — {children}
+    </p>
   );
 }
 

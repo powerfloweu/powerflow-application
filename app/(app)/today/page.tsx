@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PhaseBadge from "@/app/components/PhaseBadge";
 import EntryCard from "@/app/components/EntryCard";
+import BottomSheet from "@/app/components/BottomSheet";
 import { computePhase, computeCourseWeek } from "@/lib/phase";
 import { computeGLPoints, currentTotal, goalTotal } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
 import type { JournalEntry } from "@/lib/journal";
 import { getWeekByNum, stepsComplete, type CourseProgressRow } from "@/lib/course";
+import { TRAINING_QUESTIONS, type TrainingEntry } from "@/lib/training";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -47,6 +49,14 @@ export default function TodayPage() {
   const [courseCardDismissed, setCourseCardDismissed] = React.useState(false);
   const [loading, setLoading]           = React.useState(true);
 
+  // ── Training check-in state ────────────────────────────────
+  const [todayEntry, setTodayEntry]     = React.useState<TrainingEntry | null>(null);
+  const [checkInOpen, setCheckInOpen]   = React.useState(false);
+  const [checkInMode, setCheckInMode]   = React.useState<"training" | "rest" | null>(null);
+  const [moodRating, setMoodRating]     = React.useState<number | null>(null);
+  const [answers, setAnswers]           = React.useState<Record<string, string>>({});
+  const [checkInSaving, setCheckInSaving] = React.useState(false);
+
   React.useEffect(() => {
     // Check dismiss flag for today
     const dismissed = localStorage.getItem(`course-card-dismissed-${todayKey()}`);
@@ -56,11 +66,13 @@ export default function TodayPage() {
       fetch("/api/me").then((r) => r.json()),
       fetch("/api/journal/entries?limit=3").then((r) => r.json()),
       fetch("/api/course/progress").then((r) => r.json()),
+      fetch(`/api/training/entries?date=${todayKey()}`).then((r) => r.json()),
     ])
-      .then(([prof, ents, prog]) => {
+      .then(([prof, ents, prog, trainingEntry]) => {
         if (prof?.id) setProfile(prof);
         setEntries(Array.isArray(ents) ? ents.slice(0, 3) : []);
         setCourseProgress(Array.isArray(prog) ? prog : []);
+        if (trainingEntry?.id) setTodayEntry(trainingEntry as TrainingEntry);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -70,6 +82,61 @@ export default function TodayPage() {
   React.useEffect(() => {
     if (profile?.role === "coach") router.replace("/coach");
   }, [profile, router]);
+
+  const openCheckIn = (mode: "training" | "rest") => {
+    setCheckInMode(mode);
+    setMoodRating(todayEntry?.mood_rating ?? null);
+    const prefill: Record<string, string> = {};
+    if (todayEntry) {
+      for (const q of TRAINING_QUESTIONS) {
+        prefill[q.key] = todayEntry[q.key] ?? "";
+      }
+    }
+    setAnswers(prefill);
+    setCheckInOpen(true);
+  };
+
+  const saveCheckIn = async () => {
+    if (!moodRating || checkInSaving) return;
+    setCheckInSaving(true);
+    const body: Record<string, unknown> = {
+      entry_date: todayKey(),
+      is_training_day: checkInMode === "training",
+      mood_rating: moodRating,
+    };
+    if (checkInMode === "training") {
+      for (const q of TRAINING_QUESTIONS) {
+        body[q.key] = answers[q.key] ?? null;
+      }
+    } else {
+      body.thoughts_before = null;
+      body.thoughts_after = null;
+      body.what_went_well = null;
+      body.frustrations = null;
+      body.next_session = answers["notes"] ?? null;
+    }
+    await fetch("/api/training/entries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    setTodayEntry({
+      id: todayEntry?.id ?? "",
+      user_id: "",
+      entry_date: todayKey(),
+      is_training_day: checkInMode === "training",
+      mood_rating: moodRating,
+      thoughts_before: (body.thoughts_before as string | null) ?? null,
+      thoughts_after: (body.thoughts_after as string | null) ?? null,
+      what_went_well: (body.what_went_well as string | null) ?? null,
+      frustrations: (body.frustrations as string | null) ?? null,
+      next_session: (body.next_session as string | null) ?? null,
+      created_at: todayEntry?.created_at ?? new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    setCheckInSaving(false);
+    setCheckInOpen(false);
+  };
 
   const phase      = profile ? computePhase(profile.meet_date) : null;
   const courseWeekNum = profile ? computeCourseWeek(profile.meet_date) : null;
@@ -115,6 +182,136 @@ export default function TodayPage() {
         </h1>
         <p className="font-saira text-sm text-zinc-500">{formatDate()}</p>
       </div>
+
+      {/* ── Daily check-in card ───────────────────────────────── */}
+      {todayEntry === null ? (
+        <div className="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-5 mb-5">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
+            LOG TODAY
+          </p>
+          <p className="font-saira text-sm text-zinc-300 mb-3">How did training go today?</p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => openCheckIn("training")}
+              className="flex-1 rounded-xl border border-purple-500/40 bg-purple-600/20 py-2.5 font-saira text-xs font-semibold text-purple-200 hover:bg-purple-600/30 transition"
+            >
+              🏋️ Training Day
+            </button>
+            <button
+              type="button"
+              onClick={() => openCheckIn("rest")}
+              className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 font-saira text-xs font-semibold text-zinc-300 hover:bg-white/10 transition"
+            >
+              😴 Rest Day
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 mb-5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="font-saira text-xs font-semibold text-emerald-300">Today ✓</span>
+            <span className={`rounded-full border px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] ${
+              todayEntry.is_training_day
+                ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
+                : "border-zinc-600/40 bg-zinc-600/10 text-zinc-400"
+            }`}>
+              {todayEntry.is_training_day ? "Training" : "Rest"}
+            </span>
+            {todayEntry.mood_rating !== null && (
+              <span className="font-saira text-xs text-zinc-400">
+                Mood: {todayEntry.mood_rating}/10
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => openCheckIn(todayEntry.is_training_day ? "training" : "rest")}
+            className="flex-shrink-0 font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
+          >
+            Edit
+          </button>
+        </div>
+      )}
+
+      {/* ── Check-in bottom sheet ──────────────────────────────── */}
+      <BottomSheet
+        open={checkInOpen}
+        onClose={() => setCheckInOpen(false)}
+        title={checkInMode === "training" ? "Training Day" : "Rest Day"}
+        footer={
+          <button
+            type="button"
+            onClick={saveCheckIn}
+            disabled={!moodRating || checkInSaving}
+            className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-3 font-saira text-xs font-semibold uppercase tracking-[0.16em] text-white transition"
+          >
+            {checkInSaving ? "Saving…" : "Save"}
+          </button>
+        }
+      >
+        {/* Mood rating */}
+        <div className="mb-5">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
+            Rate your mood
+          </p>
+          <div className="space-y-2">
+            {[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].map((row, ri) => (
+              <div key={ri} className="flex gap-2">
+                {row.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setMoodRating(n)}
+                    className={`flex-1 rounded-xl border py-2 font-saira text-sm font-semibold transition ${
+                      moodRating === n
+                        ? "border-purple-500 bg-purple-600 text-white"
+                        : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Training-day questions */}
+        {checkInMode === "training" && (
+          <div className="space-y-4">
+            {TRAINING_QUESTIONS.map((q) => (
+              <div key={q.key}>
+                <label className="block font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-1.5">
+                  {q.label}
+                </label>
+                <textarea
+                  rows={3}
+                  value={answers[q.key] ?? ""}
+                  onChange={(e) => setAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
+                  className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Rest-day note */}
+        {checkInMode === "rest" && (
+          <div>
+            <label className="block font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-1.5">
+              Any notes for today? (optional)
+            </label>
+            <textarea
+              rows={3}
+              value={answers["notes"] ?? ""}
+              onChange={(e) => setAnswers((prev) => ({ ...prev, notes: e.target.value }))}
+              className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
+              placeholder="How are you feeling?"
+            />
+          </div>
+        )}
+      </BottomSheet>
 
       {/* ── Phase block ───────────────────────────────────────── */}
       {phase ? (

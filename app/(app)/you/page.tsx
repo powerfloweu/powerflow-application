@@ -37,6 +37,7 @@ export default function YouPage() {
   const [dlCurrent, setDlCurrent]         = React.useState("");
   const [dlGoal, setDlGoal]               = React.useState("");
   const [mentalGoals, setMentalGoals]     = React.useState(["", "", ""]);
+  const [trainingDays, setTrainingDays]   = React.useState<number | null>(null);
 
   // ── Load profile ───────────────────────────────────────────
   React.useEffect(() => {
@@ -57,6 +58,7 @@ export default function YouPage() {
         setDlGoal(kgField(p.deadlift_goal_kg));
         const mg = Array.isArray(p.mental_goals) ? p.mental_goals : [];
         setMentalGoals([mg[0] ?? "", mg[1] ?? "", mg[2] ?? ""]);
+        setTrainingDays(p.training_days_per_week ?? null);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -296,6 +298,34 @@ export default function YouPage() {
           onClick={() => save("mental", {
             mental_goals: mentalGoals.filter(Boolean),
           })}
+        />
+      </Section>
+
+      {/* ── Training schedule ───────────────────────────────── */}
+      <Section label="Training schedule">
+        <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-2">
+          Training days per week
+        </label>
+        <div className="flex gap-2 mb-3">
+          {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setTrainingDays(n)}
+              className={`flex-1 rounded-xl border py-2 font-saira text-xs font-semibold transition ${
+                trainingDays === n
+                  ? "border-purple-500 bg-purple-600 text-white"
+                  : "border-white/10 bg-[#0D0B14] text-zinc-400 hover:border-purple-500/40 hover:text-white"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        <SaveButton
+          label={btnLabel("training")}
+          disabled={!!savingSection}
+          onClick={() => save("training", { training_days_per_week: trainingDays })}
         />
       </Section>
 

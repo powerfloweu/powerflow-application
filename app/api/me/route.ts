@@ -16,6 +16,7 @@ const SELECT_COLS = [
   "bench_current_kg", "bench_goal_kg",
   "deadlift_current_kg", "deadlift_goal_kg",
   "mental_goals",
+  "training_days_per_week",
 ].join(",");
 
 export async function GET() {
@@ -49,6 +50,7 @@ export async function GET() {
       deadlift_current_kg: null,
       deadlift_goal_kg: null,
       mental_goals: [],
+      training_days_per_week: null,
     } satisfies AthleteProfile);
   }
 
@@ -75,6 +77,7 @@ export async function PATCH(req: NextRequest) {
     "bench_current_kg", "bench_goal_kg",
     "deadlift_current_kg", "deadlift_goal_kg",
     "mental_goals",
+    "training_days_per_week",
   ];
 
   const patch: Record<string, unknown> = {};
