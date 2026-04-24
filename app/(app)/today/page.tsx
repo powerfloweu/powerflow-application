@@ -57,10 +57,21 @@ export default function TodayPage() {
   const [answers, setAnswers]           = React.useState<Record<string, string>>({});
   const [checkInSaving, setCheckInSaving] = React.useState(false);
 
+  // Capture ?checkin= param before data loads so we can auto-open once ready
+  const pendingCheckin = React.useRef<"training" | "rest" | null>(null);
+
   React.useEffect(() => {
     // Check dismiss flag for today
     const dismissed = localStorage.getItem(`course-card-dismissed-${todayKey()}`);
     if (dismissed) setCourseCardDismissed(true);
+
+    // Capture URL param then clean it from the address bar
+    const params = new URLSearchParams(window.location.search);
+    const ci = params.get("checkin");
+    if (ci === "training" || ci === "rest") {
+      pendingCheckin.current = ci;
+      router.replace("/today", { scroll: false });
+    }
 
     Promise.all([
       fetch("/api/me").then((r) => r.json()),
@@ -77,6 +88,16 @@ export default function TodayPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Auto-open check-in when navigated here with ?checkin= (e.g. from journal)
+  React.useEffect(() => {
+    if (!loading && pendingCheckin.current) {
+      openCheckIn(pendingCheckin.current);
+      pendingCheckin.current = null;
+    }
+  // openCheckIn is stable — defined in render scope, deps are state setters
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   // Coaches go to their dashboard
   React.useEffect(() => {

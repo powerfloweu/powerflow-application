@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
-import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
+import { dbSelect, dbPatch, dbInsert } from "@/lib/supabaseAdmin";
 import type { AthleteProfile } from "@/lib/athlete";
 
 const SELECT_COLS = [
@@ -100,6 +100,25 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
-  await dbPatch("profiles", { id: user.id }, patch);
+  // Check whether a profile row exists first
+  const existing = await dbSelect<{ id: string }>("profiles", {
+    id: `eq.${user.id}`,
+    select: "id",
+  });
+
+  if (existing.length > 0) {
+    await dbPatch("profiles", { id: user.id }, patch);
+  } else {
+    // Row was never created (ensureProfile may have failed during OAuth).
+    // Insert now with required defaults + the patch data.
+    await dbInsert("profiles", {
+      id: user.id,
+      display_name: user.user_metadata?.full_name ?? user.email ?? "User",
+      avatar_url: user.user_metadata?.avatar_url ?? null,
+      role: "athlete",
+      ...patch,
+    });
+  }
+
   return NextResponse.json({ ok: true });
 }

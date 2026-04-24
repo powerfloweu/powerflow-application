@@ -443,7 +443,7 @@ export default function JournalPage() {
           <div className="flex-1 min-w-0 space-y-6">
             {/* Training session check-in CTA */}
             <Link
-              href="/today"
+              href="/today?checkin=training"
               className="flex items-center justify-between rounded-2xl border border-purple-500/25 bg-purple-500/5 px-5 py-4 hover:bg-purple-500/10 hover:border-purple-400/40 transition group"
             >
               <div className="flex items-center gap-3">
