@@ -148,10 +148,7 @@ export default function YouPage() {
           <SaveButton
             label={btnLabel("meet")}
             disabled={!!savingSection}
-            onClick={async () => {
-              await save("meet", { meet_date: meetDate || null });
-              setTimeout(() => router.push("/today"), 900);
-            }}
+            onClick={() => save("meet", { meet_date: meetDate || null })}
           />
         </div>
         {meetDate && (

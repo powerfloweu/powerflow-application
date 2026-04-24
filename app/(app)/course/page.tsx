@@ -294,13 +294,15 @@ function CourseLockedPage() {
         </ul>
 
         <a
-          href="mailto:trainer.pod@gmail.com?subject=PowerFlow%20Course%20Access"
+          href="https://power-flow.eu/checkout/"
+          target="_blank"
+          rel="noopener noreferrer"
           className="block w-full rounded-xl bg-purple-600 hover:bg-purple-500 py-3.5 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition"
         >
-          Get Access
+          Get Access →
         </a>
         <p className="font-saira text-[10px] text-zinc-600 mt-2">
-          Contact your coach to unlock
+          One-time purchase · instant access
         </p>
       </div>
 

@@ -6,10 +6,8 @@ import EntryCard from "@/app/components/EntryCard";
 import TagChip from "@/app/components/TagChip";
 import {
   type Sentiment,
-  type Context,
   type JournalEntry,
   SENT_CONFIG,
-  CTX_CONFIG,
   THEME_DEFS,
   detectThemesWithCount,
 } from "@/lib/journal";
@@ -26,7 +24,7 @@ type UserProfile = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function detectThemesForEntry(text: string, sentiment: Sentiment, context: Context): string[] {
+function detectThemesForEntry(text: string, sentiment: Sentiment): string[] {
   return THEME_DEFS
     .filter((def) => def.keywords.some((kw) => text.toLowerCase().includes(kw)))
     .map((def) => def.label);
@@ -173,7 +171,6 @@ function WeekBar({ entries }: { entries: JournalEntry[] }) {
 function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
   const [text, setText]         = React.useState("");
   const [sentiment, setSentiment] = React.useState<Sentiment>("neutral");
-  const [context, setContext]   = React.useState<Context>("general");
   const [submitting, setSubmitting] = React.useState(false);
   const [submitted, setSubmitted]   = React.useState(false);
   const [error, setError]           = React.useState<string | null>(null);
@@ -184,17 +181,17 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
-    const themes = detectThemesForEntry(text, sentiment, context);
+    const themes = detectThemesForEntry(text, sentiment);
     try {
       const res = await fetch("/api/journal/entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: text.trim(), sentiment, context, themes }),
+        body: JSON.stringify({ content: text.trim(), sentiment, context: "general", themes }),
       });
       if (!res.ok) throw new Error("Save failed");
       const saved = await res.json() as { id: string };
-      onAdd({ id: saved.id, content: text.trim(), sentiment, context, themes, created_at: new Date().toISOString() });
-      setText(""); setSentiment("neutral"); setContext("general");
+      onAdd({ id: saved.id, content: text.trim(), sentiment, context: "general", themes, created_at: new Date().toISOString() });
+      setText(""); setSentiment("neutral");
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 1800);
     } catch {
@@ -233,13 +230,6 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
             );
           })}
         </div>
-
-        <select value={context} onChange={(e) => setContext(e.target.value as Context)}
-          className="rounded-full border border-white/10 bg-[#13151A] px-3 py-2 sm:py-1 font-saira text-sm sm:text-[10px] text-zinc-400 outline-none transition focus:border-purple-400/50 cursor-pointer">
-          {(Object.entries(CTX_CONFIG) as [Context, { label: string; icon: string }][]).map(([k, v]) => (
-            <option key={k} value={k}>{v.icon} {v.label}</option>
-          ))}
-        </select>
 
         <button type="button" onClick={handleSubmit} disabled={!canSubmit}
           className={`ml-auto rounded-full px-5 py-2.5 sm:py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
@@ -451,6 +441,25 @@ export default function JournalPage() {
 
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           <div className="flex-1 min-w-0 space-y-6">
+            {/* Training session check-in CTA */}
+            <Link
+              href="/today"
+              className="flex items-center justify-between rounded-2xl border border-purple-500/25 bg-purple-500/5 px-5 py-4 hover:bg-purple-500/10 hover:border-purple-400/40 transition group"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🏋️</span>
+                <div>
+                  <p className="font-saira text-sm font-semibold text-purple-200 group-hover:text-white transition">
+                    Log training session mentality
+                  </p>
+                  <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
+                    Structured check-in · thoughts before & after
+                  </p>
+                </div>
+              </div>
+              <span className="font-saira text-zinc-500 group-hover:text-purple-300 transition">→</span>
+            </Link>
+
             <QuickEntry onAdd={handleAdd} />
 
             {grouped.length === 0 ? (

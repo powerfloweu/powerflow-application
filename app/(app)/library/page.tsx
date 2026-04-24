@@ -21,7 +21,7 @@ const TOOLS = [
           "Holmes & Collins (2001). The PETTLEP approach to motor imagery. Journal of Applied Sport Psychology, 13(1), 60–83.",
           "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
         ],
-        audioUrl: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/Visualization_Squat_EN_fin.m4a" as string | null,
+        fileKey: "Visualization_Squat_EN_fin.m4a" as string | null,
       },
       {
         id: "viz-bench",
@@ -35,7 +35,7 @@ const TOOLS = [
           "Ranganathan et al. (2004). From mental power to muscle power. Neuropsychologia, 42(7), 944–956.",
           "Holmes & Collins (2001). The PETTLEP approach to motor imagery. Journal of Applied Sport Psychology, 13(1), 60–83.",
         ],
-        audioUrl: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/Visualization_Bench_EN_fin.m4a" as string | null,
+        fileKey: "Visualization_Bench_EN_fin.m4a" as string | null,
       },
       {
         id: "viz-deadlift",
@@ -49,7 +49,7 @@ const TOOLS = [
           "Guillot & Collet (2008). Construction of the motor imagery integrative model in sport. International Review of Sport and Exercise Psychology, 1(1), 31–44.",
           "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
         ],
-        audioUrl: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/Visualization_Deadlift_EN_fin.m4a" as string | null,
+        fileKey: "Visualization_Deadlift_EN_fin.m4a" as string | null,
       },
     ],
   },
@@ -68,7 +68,7 @@ const TOOLS = [
           "Cotterill (2010). Pre-performance routines in sport. International Review of Sport and Exercise Psychology, 3(2), 132–153.",
           "Lidor & Singer (2000). Teaching pre-performance routines to beginners. Journal of Physical Education, Recreation & Dance, 71(7), 34–36.",
         ],
-        audioUrl: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/SikerPillanata_EN_fin.m4a" as string | null,
+        fileKey: "SikerPillanata_EN_fin.m4a" as string | null,
       },
     ],
   },
@@ -88,7 +88,7 @@ const TOOLS = [
           "Maynard et al. (1995). The effect of a somatic intervention on competitive state anxiety and performance. Journal of Sports Sciences, 13(4), 289–300.",
           "Carlson & Hoyle (1993). Efficacy of abbreviated progressive muscle relaxation training. Journal of Consulting and Clinical Psychology, 61(6), 1059–1067.",
         ],
-        audioUrl: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/ProgRelax_EN_final.m4a" as string | null,
+        fileKey: "ProgRelax_EN_final.m4a" as string | null,
       },
       {
         id: "autogenic-training",
@@ -103,7 +103,7 @@ const TOOLS = [
           "Ernst & Kanji (2000). Autogenic training for stress and anxiety: A systematic review. Complementary Therapies in Medicine, 8(2), 106–110.",
           "Linden (1994). Autogenic training: A narrative and quantitative review of clinical outcome. Biofeedback and Self-Regulation, 19(3), 227–264.",
         ],
-        audioUrl: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/AT_Base.m4a" as string | null,
+        fileKey: "AT_Base.m4a" as string | null,
       },
     ],
   },
@@ -141,35 +141,44 @@ const COLOR_MAP: Record<ToolColor, {
 };
 
 // ── Audio player ──────────────────────────────────────────────────────────────
+//
+// Fetches a signed URL from /api/tools/audio when the card is opened so that
+// play() can be called *synchronously* inside the tap handler — required on iOS.
 
-function AudioPlayer({ url, color }: { url: string | null; color: ToolColor }) {
+function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolColor }) {
   const audioRef  = React.useRef<HTMLAudioElement>(null);
+  const [audioSrc, setAudioSrc]       = React.useState<string | null>(null);
+  const [urlLoading, setUrlLoading]   = React.useState(!!fileKey);
   const [playing, setPlaying]         = React.useState(false);
-  const [loading, setLoading]         = React.useState(false);
+  const [buffering, setBuffering]     = React.useState(false);
   const [errored, setErrored]         = React.useState(false);
   const [progress, setProgress]       = React.useState(0);
   const [currentTime, setCurrentTime] = React.useState(0);
   const [duration, setDuration]       = React.useState(0);
   const c = COLOR_MAP[color];
 
-  const toggle = async () => {
+  // Pre-fetch the signed URL as soon as the card opens
+  React.useEffect(() => {
+    if (!fileKey) { setUrlLoading(false); return; }
+    let cancelled = false;
+    setUrlLoading(true);
+    fetch(`/api/tools/audio?file=${encodeURIComponent(fileKey)}`)
+      .then((r) => { if (!r.ok) throw new Error("url_failed"); return r.json(); })
+      .then(({ url }: { url: string }) => { if (!cancelled) setAudioSrc(url); })
+      .catch(() => { if (!cancelled) setErrored(true); })
+      .finally(() => { if (!cancelled) setUrlLoading(false); });
+    return () => { cancelled = true; };
+  }, [fileKey]);
+
+  // play() called synchronously in tap handler — no await before it (iOS requirement)
+  const toggle = () => {
     const el = audioRef.current;
-    if (!el || loading) return;
-    if (playing) {
-      el.pause();
-      setPlaying(false);
-    } else {
-      setLoading(true);
-      try {
-        await el.play();
-        setPlaying(true);
-      } catch (err) {
-        console.error("[AudioPlayer] play() rejected:", err);
-        setErrored(true);
-      } finally {
-        setLoading(false);
-      }
-    }
+    if (!el || urlLoading || !audioSrc) return;
+    if (playing) { el.pause(); setPlaying(false); return; }
+    setBuffering(true);
+    el.play()
+      .catch(() => setErrored(true))
+      .finally(() => setBuffering(false));
   };
 
   const handleTimeUpdate = () => {
@@ -190,7 +199,7 @@ function AudioPlayer({ url, color }: { url: string | null; color: ToolColor }) {
     `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
   // ── Placeholder (no audio yet) ──────────────────────────────
-  if (!url) {
+  if (!fileKey) {
     return (
       <div className="flex items-center gap-4 rounded-xl border border-white/5 bg-[#0D0B14] px-4 py-3.5">
         <div className="w-10 h-10 rounded-full border border-white/8 bg-white/[0.03] flex items-center justify-center flex-shrink-0">
@@ -219,7 +228,13 @@ function AudioPlayer({ url, color }: { url: string | null; color: ToolColor }) {
           <p className="font-saira text-xs font-semibold text-red-400">Couldn't load audio</p>
           <button
             type="button"
-            onClick={() => { setErrored(false); setPlaying(false); }}
+            onClick={() => {
+              setErrored(false); setAudioSrc(null); setUrlLoading(true);
+              fetch(`/api/tools/audio?file=${encodeURIComponent(fileKey)}`)
+                .then((r) => r.json()).then(({ url }) => setAudioSrc(url))
+                .catch(() => setErrored(true))
+                .finally(() => setUrlLoading(false));
+            }}
             className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
           >
             Try again
@@ -232,27 +247,29 @@ function AudioPlayer({ url, color }: { url: string | null; color: ToolColor }) {
   // ── Active player ───────────────────────────────────────────
   return (
     <div className="rounded-xl border border-white/10 bg-[#0D0B14] p-4">
-      <audio
-        ref={audioRef}
-        src={url}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={() => { setPlaying(false); setProgress(0); setCurrentTime(0); if (audioRef.current) audioRef.current.currentTime = 0; }}
-        onError={() => { setErrored(true); setPlaying(false); setLoading(false); }}
-        preload="metadata"
-      />
+      {audioSrc && (
+        <audio
+          ref={audioRef}
+          src={audioSrc}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => { setPlaying(false); setProgress(0); setCurrentTime(0); if (audioRef.current) audioRef.current.currentTime = 0; }}
+          onError={() => { setErrored(true); setPlaying(false); setBuffering(false); }}
+          preload="metadata"
+        />
+      )}
       <div className="flex items-center gap-3">
         {/* Play / Pause / Loading */}
         <button
           type="button"
           onClick={toggle}
-          disabled={loading}
+          disabled={urlLoading || buffering}
           className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center transition disabled:opacity-70 ${c.player}`}
           aria-label={playing ? "Pause" : "Play"}
         >
-          {loading ? (
+          {(urlLoading || buffering) ? (
             <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
           ) : playing ? (
             <svg viewBox="0 0 20 20" className="w-4 h-4" fill="white" aria-hidden>
@@ -401,7 +418,7 @@ export default function ToolsPage() {
                         </ul>
 
                         {/* Audio player */}
-                        <AudioPlayer url={tool.audioUrl} color={tool.color as ToolColor} />
+                        <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
                       </div>
                     )}
                   </div>

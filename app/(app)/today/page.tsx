@@ -189,7 +189,9 @@ export default function TodayPage() {
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
             LOG TODAY
           </p>
-          <p className="font-saira text-sm text-zinc-300 mb-3">How did training go today?</p>
+          <p className="font-saira text-sm text-zinc-300 mb-3">
+            {new Date().toLocaleDateString("en-GB", { weekday: "long" })} — training day or rest day?
+          </p>
           <div className="flex gap-3">
             <button
               type="button"
