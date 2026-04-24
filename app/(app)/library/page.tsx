@@ -142,13 +142,15 @@ const COLOR_MAP: Record<ToolColor, {
 
 // ── Audio player ──────────────────────────────────────────────────────────────
 //
-// Fetches a signed URL from /api/tools/audio when the card is opened so that
-// play() can be called *synchronously* inside the tap handler — required on iOS.
+// Uses a direct public-bucket URL. The bucket must be set to Public in
+// Supabase Storage → Buckets → tools → Edit bucket → Public on.
+// play() is called synchronously inside the tap handler (iOS requirement).
+
+const STORAGE_BASE =
+  "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/";
 
 function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolColor }) {
   const audioRef  = React.useRef<HTMLAudioElement>(null);
-  const [audioSrc, setAudioSrc]       = React.useState<string | null>(null);
-  const [urlLoading, setUrlLoading]   = React.useState(!!fileKey);
   const [playing, setPlaying]         = React.useState(false);
   const [buffering, setBuffering]     = React.useState(false);
   const [errored, setErrored]         = React.useState(false);
@@ -157,23 +159,12 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
   const [duration, setDuration]       = React.useState(0);
   const c = COLOR_MAP[color];
 
-  // Pre-fetch the signed URL as soon as the card opens
-  React.useEffect(() => {
-    if (!fileKey) { setUrlLoading(false); return; }
-    let cancelled = false;
-    setUrlLoading(true);
-    fetch(`/api/tools/audio?file=${encodeURIComponent(fileKey)}`)
-      .then((r) => { if (!r.ok) throw new Error("url_failed"); return r.json(); })
-      .then(({ url }: { url: string }) => { if (!cancelled) setAudioSrc(url); })
-      .catch(() => { if (!cancelled) setErrored(true); })
-      .finally(() => { if (!cancelled) setUrlLoading(false); });
-    return () => { cancelled = true; };
-  }, [fileKey]);
+  const url = fileKey ? `${STORAGE_BASE}${encodeURIComponent(fileKey)}` : null;
 
-  // play() called synchronously in tap handler — no await before it (iOS requirement)
+  // play() is called synchronously — no await in front of it (iOS requirement)
   const toggle = () => {
     const el = audioRef.current;
-    if (!el || urlLoading || !audioSrc) return;
+    if (!el || !url) return;
     if (playing) { el.pause(); setPlaying(false); return; }
     setBuffering(true);
     el.play()
@@ -199,7 +190,7 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
     `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
   // ── Placeholder (no audio yet) ──────────────────────────────
-  if (!fileKey) {
+  if (!url) {
     return (
       <div className="flex items-center gap-4 rounded-xl border border-white/5 bg-[#0D0B14] px-4 py-3.5">
         <div className="w-10 h-10 rounded-full border border-white/8 bg-white/[0.03] flex items-center justify-center flex-shrink-0">
@@ -228,13 +219,7 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
           <p className="font-saira text-xs font-semibold text-red-400">Couldn't load audio</p>
           <button
             type="button"
-            onClick={() => {
-              setErrored(false); setAudioSrc(null); setUrlLoading(true);
-              fetch(`/api/tools/audio?file=${encodeURIComponent(fileKey)}`)
-                .then((r) => r.json()).then(({ url }) => setAudioSrc(url))
-                .catch(() => setErrored(true))
-                .finally(() => setUrlLoading(false));
-            }}
+            onClick={() => setErrored(false)}
             className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
           >
             Try again
@@ -247,29 +232,27 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
   // ── Active player ───────────────────────────────────────────
   return (
     <div className="rounded-xl border border-white/10 bg-[#0D0B14] p-4">
-      {audioSrc && (
-        <audio
-          ref={audioRef}
-          src={audioSrc}
-          onTimeUpdate={handleTimeUpdate}
-          onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
-          onEnded={() => { setPlaying(false); setProgress(0); setCurrentTime(0); if (audioRef.current) audioRef.current.currentTime = 0; }}
-          onError={() => { setErrored(true); setPlaying(false); setBuffering(false); }}
-          preload="metadata"
-        />
-      )}
+      <audio
+        ref={audioRef}
+        src={url}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => { setPlaying(false); setProgress(0); setCurrentTime(0); if (audioRef.current) audioRef.current.currentTime = 0; }}
+        onError={() => { setErrored(true); setPlaying(false); setBuffering(false); }}
+        preload="metadata"
+      />
       <div className="flex items-center gap-3">
-        {/* Play / Pause / Loading */}
+        {/* Play / Pause / Buffering */}
         <button
           type="button"
           onClick={toggle}
-          disabled={urlLoading || buffering}
+          disabled={buffering}
           className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center transition disabled:opacity-70 ${c.player}`}
           aria-label={playing ? "Pause" : "Play"}
         >
-          {(urlLoading || buffering) ? (
+          {buffering ? (
             <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
           ) : playing ? (
             <svg viewBox="0 0 20 20" className="w-4 h-4" fill="white" aria-hidden>
