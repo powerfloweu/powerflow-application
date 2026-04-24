@@ -76,20 +76,6 @@ const TOOLS = [
           "To use it: before a heavy set, squeeze your thumb and index finger. The state comes back automatically. It is a skill — the more you practise it, the faster and stronger it fires.",
         ],
       },
-      {
-        id: "arousal-control",
-        title: "Arousal Control",
-        tagline: "Find your optimal zone",
-        icon: "◎",
-        color: "amber",
-        steps: [
-          "Peak performance sits between too calm and too anxious. Learn to adjust both directions.",
-          "Too activated (nervous, scattered, heart racing): Box breathing — inhale 4s, hold 4s, exhale 4s, hold 4s. Repeat 4 rounds. Slows your nervous system within 2 minutes.",
-          "Too flat (low energy, unmotivated, heavy): Power posing — stand tall, chest up, hands on hips or raised overhead. Hold for 2 minutes. Research shows this raises testosterone and energy.",
-          "Activation cue (pre-lift spike): Explosive exhale, stamp one foot, say your personal cue word out loud. This creates a quick, trained spike of arousal — ideal 10–15 seconds before your attempt.",
-          "Know your zone: after each session, rate your mental state 1–10. Over time you'll identify your personal optimal range — most athletes peak between 6–8.",
-        ],
-      },
     ],
   },
   {
@@ -134,27 +120,24 @@ const TOOLS = [
 type ToolColor = "purple" | "amber" | "teal";
 
 const COLOR_MAP: Record<ToolColor, {
-  border: string; bg: string; icon: string; dot: string; num: string;
+  border: string; bg: string; icon: string; num: string;
 }> = {
   purple: {
     border: "border-purple-500/20",
     bg:     "bg-purple-500/[0.06]",
     icon:   "bg-purple-500/15 text-purple-300 border-purple-500/30",
-    dot:    "bg-purple-400",
     num:    "text-purple-400",
   },
   amber: {
     border: "border-amber-500/20",
     bg:     "bg-amber-500/[0.05]",
     icon:   "bg-amber-500/15 text-amber-300 border-amber-500/30",
-    dot:    "bg-amber-400",
     num:    "text-amber-400",
   },
   teal: {
     border: "border-teal-500/20",
     bg:     "bg-teal-500/[0.05]",
     icon:   "bg-teal-500/15 text-teal-300 border-teal-500/30",
-    dot:    "bg-teal-400",
     num:    "text-teal-400",
   },
 };
@@ -162,9 +145,30 @@ const COLOR_MAP: Record<ToolColor, {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ToolsPage() {
-  const [openId, setOpenId] = React.useState<string | null>(null);
+  const [openId, setOpenId]       = React.useState<string | null>(null);
+  const [requestText, setRequestText] = React.useState("");
+  const [requestState, setRequestState] = React.useState<"idle" | "sending" | "sent" | "error">("idle");
 
   const toggle = (id: string) => setOpenId((prev) => (prev === id ? null : id));
+
+  const submitRequest = async () => {
+    const text = requestText.trim();
+    if (!text) return;
+    setRequestState("sending");
+    try {
+      const res = await fetch("/api/tool-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setRequestState("sent");
+      setRequestText("");
+    } catch {
+      setRequestState("error");
+      setTimeout(() => setRequestState("idle"), 3000);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-8 sm:px-6 max-w-lg mx-auto">
@@ -182,7 +186,7 @@ export default function ToolsPage() {
         </p>
       </div>
 
-      {/* ── Sections ──────────────────────────────────────────── */}
+      {/* ── Tool sections ─────────────────────────────────────── */}
       <div className="space-y-8">
         {TOOLS.map(({ section, items }) => (
           <div key={section}>
@@ -191,7 +195,7 @@ export default function ToolsPage() {
             </p>
             <div className="space-y-2">
               {items.map((tool) => {
-                const c   = COLOR_MAP[tool.color as ToolColor];
+                const c    = COLOR_MAP[tool.color as ToolColor];
                 const open = openId === tool.id;
                 return (
                   <div
@@ -206,20 +210,14 @@ export default function ToolsPage() {
                       onClick={() => toggle(tool.id)}
                       className="w-full flex items-center gap-4 px-5 py-4 text-left"
                     >
-                      <div
-                        className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-saira text-sm font-bold border ${c.icon}`}
-                      >
+                      <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-saira text-sm font-bold border ${c.icon}`}>
                         {tool.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-saira text-sm font-semibold text-white">
-                          {tool.title}
-                        </p>
-                        <p className="font-saira text-[11px] text-zinc-500">
-                          {tool.tagline}
-                        </p>
+                        <p className="font-saira text-sm font-semibold text-white">{tool.title}</p>
+                        <p className="font-saira text-[11px] text-zinc-500">{tool.tagline}</p>
                       </div>
-                      <span className={`font-saira text-sm transition-transform duration-200 ${open ? "rotate-90" : ""} text-zinc-600`}>
+                      <span className={`font-saira text-sm text-zinc-600 transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
                         →
                       </span>
                     </button>
@@ -227,7 +225,7 @@ export default function ToolsPage() {
                     {/* Expandable steps */}
                     {open && (
                       <div className="px-5 pb-5">
-                        <div className={`w-full h-px mb-4 ${c.border} border-t`} />
+                        <div className={`w-full h-px mb-4 border-t ${c.border}`} />
                         <ol className="space-y-3">
                           {tool.steps.map((step, i) => (
                             <li key={i} className="flex gap-3">
@@ -248,6 +246,60 @@ export default function ToolsPage() {
             </div>
           </div>
         ))}
+
+        {/* ── Request a tool ──────────────────────────────────── */}
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-500 mb-3">
+            Suggest a Tool
+          </p>
+          <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5">
+            {requestState === "sent" ? (
+              <div className="flex flex-col items-center gap-3 py-4 text-center">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-lg">
+                  ✓
+                </div>
+                <p className="font-saira text-sm font-semibold text-emerald-300">Request sent</p>
+                <p className="font-saira text-xs text-zinc-500 max-w-[240px]">
+                  Thank you — we review every suggestion and add the most-requested tools.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setRequestState("idle")}
+                  className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-600 hover:text-zinc-400 underline transition"
+                >
+                  Submit another
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="font-saira text-xs text-zinc-400 mb-3">
+                  Is there a mental skill or technique you'd like to see added? Let us know.
+                </p>
+                <textarea
+                  value={requestText}
+                  onChange={(e) => setRequestText(e.target.value)}
+                  placeholder="e.g. A pre-meet focus routine, self-talk scripts, handling nerves on the platform…"
+                  rows={4}
+                  maxLength={500}
+                  className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark] mb-3"
+                />
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-saira text-[10px] text-zinc-600 tabular-nums">
+                    {requestText.length}/500
+                  </span>
+                  <button
+                    type="button"
+                    onClick={submitRequest}
+                    disabled={!requestText.trim() || requestState === "sending"}
+                    className="rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 px-5 py-2.5 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition"
+                  >
+                    {requestState === "sending" ? "Sending…" : requestState === "error" ? "Try again" : "Send request"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
