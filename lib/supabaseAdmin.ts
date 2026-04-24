@@ -4,7 +4,12 @@
  * All functions gracefully no-op when the env vars are absent.
  */
 
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
+// Fall back to the public env var so Vercel deployments work even when only
+// NEXT_PUBLIC_SUPABASE_URL is set (SUPABASE_URL is the same value, server-only alias)
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ??
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 
 export function isConfigured(): boolean {
@@ -77,7 +82,7 @@ export async function dbPatch(
   table: string,
   match: Record<string, string>,
   data: Record<string, unknown>,
-): Promise<void> {
+): Promise<boolean> {
   const qs =
     "?" +
     Object.entries(match)
@@ -96,7 +101,9 @@ export async function dbPatch(
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     console.error(`[supabaseAdmin] dbPatch ${table} failed ${res.status}`, text);
+    return false;
   }
+  return true;
 }
 
 /**

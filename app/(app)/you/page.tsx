@@ -24,6 +24,7 @@ export default function YouPage() {
   // ── Section save state ─────────────────────────────────────
   const [savingSection, setSavingSection] = React.useState<string | null>(null);
   const [savedSection, setSavedSection]   = React.useState<string | null>(null);
+  const [saveError, setSaveError]         = React.useState<string | null>(null);
 
   // ── Local form state ───────────────────────────────────────
   const [meetDate, setMeetDate]           = React.useState("");
@@ -68,13 +69,20 @@ export default function YouPage() {
   const save = async (section: string, body: Record<string, unknown>) => {
     setSavingSection(section);
     setSavedSection(null);
-    await fetch("/api/me", {
+    setSaveError(null);
+    const res = await fetch("/api/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    setProfile((p) => p ? { ...p, ...body } as AthleteProfile : p);
     setSavingSection(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setSaveError(data.error ?? "Save failed — please try again.");
+      setTimeout(() => setSaveError(null), 5000);
+      return;
+    }
+    setProfile((p) => p ? { ...p, ...body } as AthleteProfile : p);
     setSavedSection(section);
     setTimeout(() => setSavedSection(null), 2000);
   };
@@ -112,6 +120,14 @@ export default function YouPage() {
           Profile
         </h1>
       </div>
+
+      {/* ── Save error banner ───────────────────────────────── */}
+      {saveError && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 mb-4 flex items-start gap-2">
+          <span className="text-red-400 flex-shrink-0 mt-0.5">!</span>
+          <p className="font-saira text-xs text-red-300">{saveError}</p>
+        </div>
+      )}
 
       {/* ── Identity card ───────────────────────────────────── */}
       {profile && (

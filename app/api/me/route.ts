@@ -106,18 +106,27 @@ export async function PATCH(req: NextRequest) {
     select: "id",
   });
 
+  let ok: boolean;
   if (existing.length > 0) {
-    await dbPatch("profiles", { id: user.id }, patch);
+    ok = await dbPatch("profiles", { id: user.id }, patch);
   } else {
     // Row was never created (ensureProfile may have failed during OAuth).
     // Insert now with required defaults + the patch data.
-    await dbInsert("profiles", {
+    const inserted = await dbInsert("profiles", {
       id: user.id,
       display_name: user.user_metadata?.full_name ?? user.email ?? "User",
       avatar_url: user.user_metadata?.avatar_url ?? null,
       role: "athlete",
       ...patch,
     });
+    ok = !!inserted;
+  }
+
+  if (!ok) {
+    return NextResponse.json(
+      { error: "Database write failed — check server logs or run missing migrations." },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ ok: true });
