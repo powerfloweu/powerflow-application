@@ -38,10 +38,16 @@ export default function WeekDetailPage() {
   React.useEffect(() => {
     if (!weekNum) return;
     Promise.all([
+      fetch("/api/me").then((r) => r.json()),
       fetch("/api/course/progress").then((r) => r.json()),
       fetch(`/api/course/answers?week=${weekNum}`).then((r) => r.json()),
     ])
-      .then(([prog, ans]: [CourseProgressRow[], CourseAnswerRow[]]) => {
+      .then(([profile, prog, ans]: [{ course_access?: boolean }, CourseProgressRow[], CourseAnswerRow[]]) => {
+        // Guard: no access → back to course index (which shows the upsell)
+        if (!profile?.course_access) {
+          router.replace("/course");
+          return;
+        }
         const row = Array.isArray(prog) ? prog.find((p) => p.week_num === weekNum) ?? null : null;
         setProgress(row);
         const map: Record<string, string> = {};
@@ -50,7 +56,7 @@ export default function WeekDetailPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [weekNum]);
+  }, [weekNum, router]);
 
   // ── Open question sheet ────────────────────────────────────
   const openQuestion = (q: CourseQuestion) => {

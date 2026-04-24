@@ -18,6 +18,7 @@ type Profile = {
   id: string;
   display_name: string;
   meet_date: string | null;
+  course_access: boolean;
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -61,6 +62,11 @@ export default function CourseIndexPage() {
         <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
       </div>
     );
+  }
+
+  // ── Locked (no course access) ──────────────────────────────
+  if (!loading && profile && !profile.course_access) {
+    return <CourseLockedPage />;
   }
 
   const currentWeek = COURSE_WEEKS.find((w) => w.weekNumber === currentNum);
@@ -229,5 +235,94 @@ function Dot({ filled, label }: { filled: boolean; label: string }) {
         filled ? "bg-purple-400" : "bg-white/15"
       }`}
     />
+  );
+}
+
+// ── CourseLockedPage ──────────────────────────────────────────────────────────
+
+const PREVIEW_THEMES = [
+  { theme: "Identity & Why", weeks: "W1 – W2" },
+  { theme: "Focus & Attention", weeks: "W3 – W4" },
+  { theme: "Confidence", weeks: "W5 – W7" },
+  { theme: "Arousal & Anxiety", weeks: "W8 – W10" },
+  { theme: "Mental Toughness", weeks: "W11 – W12" },
+  { theme: "Competition Prep", weeks: "W13 – W14" },
+  { theme: "Meet Day & Review", weeks: "W15 – W16" },
+];
+
+function CourseLockedPage() {
+  return (
+    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto flex flex-col">
+
+      {/* ── Header ────────────────────────────────────────────── */}
+      <div className="mb-8">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
+          POWERFLOW · COURSE
+        </p>
+        <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-2">
+          Mental Training
+        </h1>
+      </div>
+
+      {/* ── Lock card ─────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 to-[#17131F] p-6 mb-6 text-center">
+        <div className="w-16 h-16 rounded-full border border-purple-500/30 bg-purple-500/10 flex items-center justify-center text-3xl mx-auto mb-4">
+          🔒
+        </div>
+        <h2 className="font-saira text-xl font-bold text-white mb-2">
+          16-Week Mental Performance System
+        </h2>
+        <p className="font-saira text-sm text-zinc-400 leading-relaxed mb-5">
+          A structured programme covering every mental skill that separates good lifters from great ones — from identity and confidence through to meet-day execution.
+        </p>
+
+        {/* Bullets */}
+        <ul className="text-left space-y-2 mb-6">
+          {[
+            "16 weeks of guided mental training",
+            "Video lesson + reflection exercise each week",
+            "Built around your competition date",
+            "7 themes: identity, focus, confidence, anxiety, toughness, prep & meet day",
+          ].map((point) => (
+            <li key={point} className="flex items-start gap-2">
+              <span className="w-4 h-4 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              </span>
+              <span className="font-saira text-[13px] text-zinc-300">{point}</span>
+            </li>
+          ))}
+        </ul>
+
+        <a
+          href="mailto:trainer.pod@gmail.com?subject=PowerFlow%20Course%20Access"
+          className="block w-full rounded-xl bg-purple-600 hover:bg-purple-500 py-3.5 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition"
+        >
+          Get Access
+        </a>
+        <p className="font-saira text-[10px] text-zinc-600 mt-2">
+          Contact your coach to unlock
+        </p>
+      </div>
+
+      {/* ── Blurred preview ───────────────────────────────────── */}
+      <div className="relative rounded-2xl border border-white/5 bg-[#17131F] p-5 overflow-hidden">
+        <div className="absolute inset-0 backdrop-blur-[2px] bg-[#050608]/60 z-10 flex items-center justify-center rounded-2xl">
+          <span className="font-saira text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+            Unlocks with access
+          </span>
+        </div>
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-3">
+          What's inside
+        </p>
+        <div className="space-y-2 opacity-40">
+          {PREVIEW_THEMES.map(({ theme, weeks }) => (
+            <div key={theme} className="flex items-center justify-between">
+              <span className="font-saira text-sm text-white">{theme}</span>
+              <span className="font-saira text-[11px] text-zinc-500">{weeks}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

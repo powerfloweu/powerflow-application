@@ -47,6 +47,8 @@ export type AthleteProfile = {
   coach_id: string | null;
   coach_code: string | null;
   meet_date: string | null;
+  /** Whether the 16-week course is unlocked for this athlete. Granted by coach/admin. */
+  course_access: boolean;
   // v2 additions
   gender: "male" | "female" | null;
   bodyweight_kg: number | null;
