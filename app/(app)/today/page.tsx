@@ -12,6 +12,7 @@ import type { AthleteProfile } from "@/lib/athlete";
 import type { JournalEntry } from "@/lib/journal";
 import { getWeekByNum, stepsComplete, type CourseProgressRow } from "@/lib/course";
 import { TRAINING_QUESTIONS, type TrainingEntry } from "@/lib/training";
+import { ymdLocal } from "@/lib/date";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ function firstName(name: string | null | undefined): string {
 }
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  return ymdLocal(); // local YYYY-MM-DD (avoids UTC off-by-one)
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────

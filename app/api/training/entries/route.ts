@@ -8,31 +8,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbPatch, dbInsert } from "@/lib/supabaseAdmin";
 import type { TrainingEntry } from "@/lib/training";
+import { ymdLocal, mondayOfWeek, sundayOfWeek } from "@/lib/date";
 
 const ENTRY_SELECT =
   "id,user_id,entry_date,is_training_day,mood_rating,thoughts_before,thoughts_after,what_went_well,frustrations,next_session,created_at,updated_at";
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-/** Return Monday (YYYY-MM-DD) of the week containing `d`. */
-function getMondayOf(d: Date): string {
-  const day = d.getDay(); // 0=Sun
-  const diff = (day === 0 ? -6 : 1 - day);
-  const mon = new Date(d);
-  mon.setDate(d.getDate() + diff);
-  return mon.toISOString().slice(0, 10);
-}
-
-/** Return Sunday (YYYY-MM-DD) of the week containing `d`. */
-function getSundayOf(d: Date): string {
-  const day = d.getDay();
-  const diff = day === 0 ? 0 : 7 - day;
-  const sun = new Date(d);
-  sun.setDate(d.getDate() + diff);
-  return sun.toISOString().slice(0, 10);
-}
+const todayISO    = (): string         => ymdLocal();
+const getMondayOf = (d: Date): string  => mondayOfWeek(d);
+const getSundayOf = (d: Date): string  => sundayOfWeek(d);
 
 export async function GET(req: NextRequest) {
   if (!isConfigured) return NextResponse.json({ error: "Auth not configured" }, { status: 503 });

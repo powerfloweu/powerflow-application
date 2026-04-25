@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
 import type { TrainingEntry } from "@/lib/training";
+import { mondayOfWeek, sundayOfWeek } from "@/lib/date";
 
 type ProfileRow = {
   id: string;
@@ -33,21 +34,8 @@ type AcsiRow = { id: string; user_id?: string; score_coping: number; score_conce
 type CsaiRow = { id: string; user_id?: string; score_cognitive: number; score_somatic: number; score_confidence: number; submitted_at: string; paid: boolean };
 type DasRow  = { id: string; user_id?: string; total_score: number; depression_prone: boolean; submitted_at: string; paid: boolean };
 
-function getMondayOfWeek(d: Date): string {
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const mon = new Date(d);
-  mon.setDate(d.getDate() + diff);
-  return mon.toISOString().slice(0, 10);
-}
-
-function getSundayOfWeek(d: Date): string {
-  const day = d.getDay();
-  const diff = day === 0 ? 0 : 7 - day;
-  const sun = new Date(d);
-  sun.setDate(d.getDate() + diff);
-  return sun.toISOString().slice(0, 10);
-}
+const getMondayOfWeek = (d: Date): string => mondayOfWeek(d);
+const getSundayOfWeek = (d: Date): string => sundayOfWeek(d);
 
 export async function GET() {
   if (!isConfigured) return NextResponse.json([], { status: 200 });

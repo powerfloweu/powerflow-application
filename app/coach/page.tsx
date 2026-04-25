@@ -6,6 +6,7 @@ import EntryCard from "@/app/components/EntryCard";
 import TagChip from "@/app/components/TagChip";
 import { THEME_DEFS, type Sentiment, type Context } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
+import { weekDays as currentWeekDaysLocal } from "@/lib/date";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -482,20 +483,8 @@ function extractTopics(texts: string[]): string[] {
     .map(([w]) => w.charAt(0).toUpperCase() + w.slice(1));
 }
 
-/** 7 days Mon–Sun for the current week. Returns YYYY-MM-DD strings. */
-function currentWeekDays(): string[] {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diff);
-  monday.setHours(0, 0, 0, 0);
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return d.toISOString().slice(0, 10);
-  });
-}
+/** 7 days Mon–Sun for the current week. Returns YYYY-MM-DD strings (local TZ). */
+const currentWeekDays = (): string[] => currentWeekDaysLocal();
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 

@@ -79,6 +79,12 @@ async function linkAthleteToCoach(userId: string, code: string) {
     select:     "id",
   });
   if (!coaches.length) return;
+  // Refuse to link a coach to themselves (which can happen if a coach clicks
+  // their own invite link while signed in)
+  if (coaches[0].id === userId) {
+    console.warn(`[linkAthleteToCoach] refused self-link for user ${userId}`);
+    return;
+  }
   await dbPatch("profiles", { id: userId }, { coach_id: coaches[0].id });
 }
 

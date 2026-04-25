@@ -88,10 +88,16 @@ export async function POST(req: NextRequest) {
   }
 
   // coach_id — allow setting (including null = "no coach")
-  // Must refer to an actual coach if non-null.
+  // Must refer to an actual coach if non-null. Self-links rejected.
   if ("coach_id" in body) {
     const cid = body.coach_id ?? null;
     if (cid !== null) {
+      if (cid === user.id) {
+        return NextResponse.json(
+          { error: "Cannot set yourself as your coach." },
+          { status: 400 },
+        );
+      }
       const coachRows = await dbSelect<{ id: string }>("profiles", {
         id: `eq.${cid}`,
         role: "eq.coach",

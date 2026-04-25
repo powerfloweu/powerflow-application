@@ -99,9 +99,15 @@ export async function PATCH(req: NextRequest) {
   }
 
   // Guard: coach_id must refer to an actual coach (or be null = "no coach").
-  // Without this an athlete could link themselves to any user UUID.
+  // Also reject self-links (coach picking themselves as their own coach).
   if ("coach_id" in patch && patch.coach_id !== null) {
     const cid = patch.coach_id as string;
+    if (cid === user.id) {
+      return NextResponse.json(
+        { error: "Cannot set yourself as your coach." },
+        { status: 400 },
+      );
+    }
     const coachRows = await dbSelect<{ id: string }>("profiles", {
       id: `eq.${cid}`,
       role: "eq.coach",
