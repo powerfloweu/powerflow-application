@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import TabBar from "./TabBar";
+import CheckinReminderScheduler from "./CheckinReminderScheduler";
 
 interface Props {
   children: React.ReactNode;
@@ -58,6 +59,9 @@ export default function AppShell({ children }: Props) {
 
       {/* ── Mobile bottom tab bar ─────────────────────────────── */}
       <TabBar />
+
+      {/* ── Daily check-in reminder (invisible, schedules notification) ── */}
+      <CheckinReminderScheduler />
     </div>
   );
 }

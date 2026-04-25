@@ -13,6 +13,7 @@ import type { JournalEntry } from "@/lib/journal";
 import { getWeekByNum, stepsComplete, type CourseProgressRow } from "@/lib/course";
 import { TRAINING_QUESTIONS, type TrainingEntry } from "@/lib/training";
 import { ymdLocal } from "@/lib/date";
+import { markCheckinDone } from "@/lib/checkinReminder";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,10 @@ export default function TodayPage() {
         }
         setEntries(Array.isArray(ents) ? ents.slice(0, 3) : []);
         setCourseProgress(Array.isArray(prog) ? prog : []);
-        if (trainingEntry?.id) setTodayEntry(trainingEntry as TrainingEntry);
+        if (trainingEntry?.id) {
+          setTodayEntry(trainingEntry as TrainingEntry);
+          markCheckinDone(); // clear badge / suppress tonight's notification
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -162,6 +166,7 @@ export default function TodayPage() {
       created_at: todayEntry?.created_at ?? new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
+    markCheckinDone(); // clear badge + suppress tonight's browser notification
     setCheckInSaving(false);
     setCheckInOpen(false);
   };
@@ -214,9 +219,12 @@ export default function TodayPage() {
       {/* ── Daily check-in card ───────────────────────────────── */}
       {todayEntry === null ? (
         <div className="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-5 mb-5">
-          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
-            LOG TODAY
-          </p>
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400">
+              LOG TODAY
+            </p>
+            <ReminderPermissionButton />
+          </div>
           <p className="font-saira text-sm text-zinc-300 mb-3">
             {new Date().toLocaleDateString("en-GB", { weekday: "long" })} — training day or rest day?
           </p>
@@ -508,6 +516,39 @@ export default function TodayPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ── Reminder permission button ────────────────────────────────────────────────
+
+/**
+ * Small inline button shown on the check-in card.
+ * Disappears once notifications are granted (or if unsupported).
+ */
+function ReminderPermissionButton() {
+  const [permission, setPermission] = React.useState<NotificationPermission | null>(null);
+
+  React.useEffect(() => {
+    if (!("Notification" in window)) { setPermission("denied"); return; }
+    setPermission(Notification.permission);
+  }, []);
+
+  const handleEnable = async () => {
+    const result = await Notification.requestPermission();
+    setPermission(result);
+  };
+
+  // Don't render until we know the permission state, or if already granted/unsupported
+  if (!permission || permission === "granted" || permission === "denied") return null;
+
+  return (
+    <button
+      type="button"
+      onClick={handleEnable}
+      className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-600 hover:text-purple-400 transition flex items-center gap-1"
+    >
+      🔔 Reminders
+    </button>
   );
 }
 

@@ -12,19 +12,40 @@ import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbPatch, dbInsert, dbSelect } from "@/lib/supabaseAdmin";
 
 interface OnboardingBody {
+  // Step 1 — About you
   display_name?: string;
+  instagram?: string | null;
   gender?: "male" | "female" | null;
+  // Step 2 — Powerlifting profile
+  years_powerlifting?: string | null;
+  federation?: string | null;
   bodyweight_kg?: number | null;
   weight_category?: string | null;
+  meet_date?: string | null;
+  training_days_per_week?: number | null;
+  // Step 3 — Lifts
   squat_current_kg?: number | null;
   squat_goal_kg?: number | null;
   bench_current_kg?: number | null;
   bench_goal_kg?: number | null;
   deadlift_current_kg?: number | null;
   deadlift_goal_kg?: number | null;
-  meet_date?: string | null;
-  training_days_per_week?: number | null;
+  // Step 4 — Mindset
+  main_barrier?: string | null;
+  confidence_break?: string | null;
+  overthinking_focus?: string | null;
+  previous_mental_work?: string | null;
+  self_confidence_reg?: number | null;
+  self_focus_fatigue?: number | null;
+  self_handling_pressure?: number | null;
+  self_competition_anxiety?: number | null;
+  self_emotional_recovery?: number | null;
+  // Step 5 — Goals
   mental_goals?: string[];
+  expectations?: string | null;
+  previous_tools?: string | null;
+  anything_else?: string | null;
+  // Step 6 — Coach
   coach_id?: string | null;
 }
 
@@ -50,7 +71,10 @@ export async function POST(req: NextRequest) {
   };
 
   const textFields: Array<keyof OnboardingBody> = [
-    "display_name", "gender", "weight_category", "meet_date",
+    "display_name", "instagram", "gender", "weight_category", "meet_date",
+    "years_powerlifting", "federation",
+    "main_barrier", "confidence_break", "overthinking_focus", "previous_mental_work",
+    "expectations", "previous_tools", "anything_else",
   ];
   for (const key of textFields) {
     if (key in body) {
@@ -62,6 +86,10 @@ export async function POST(req: NextRequest) {
   // Trim display_name
   if (typeof patch.display_name === "string") {
     patch.display_name = (patch.display_name as string).trim() || null;
+  }
+  // Trim instagram (strip leading @)
+  if (typeof patch.instagram === "string") {
+    patch.instagram = (patch.instagram as string).trim().replace(/^@/, "") || null;
   }
 
   const numericFields: Array<keyof OnboardingBody> = [
@@ -78,6 +106,23 @@ export async function POST(req: NextRequest) {
         patch[key] = null;
       } else {
         patch[key] = Number(val) > 0 ? Number(val) : null;
+      }
+    }
+  }
+
+  // Self-assessment scales (1-10, integer)
+  const scaleFields: Array<keyof OnboardingBody> = [
+    "self_confidence_reg", "self_focus_fatigue", "self_handling_pressure",
+    "self_competition_anxiety", "self_emotional_recovery",
+  ];
+  for (const key of scaleFields) {
+    if (key in body) {
+      const val = body[key];
+      if (val === null || val === undefined) {
+        patch[key] = null;
+      } else {
+        const n = Number(val);
+        patch[key] = n >= 1 && n <= 10 ? Math.round(n) : null;
       }
     }
   }

@@ -62,6 +62,22 @@ export type AthleteProfile = {
   deadlift_goal_kg: number | null;
   mental_goals: string[];
   training_days_per_week: number | null;
+  // v3 — application-form fields
+  instagram: string | null;
+  years_powerlifting: string | null;
+  federation: string | null;
+  main_barrier: string | null;
+  confidence_break: string | null;
+  overthinking_focus: string | null;
+  previous_mental_work: string | null;
+  self_confidence_reg: number | null;
+  self_focus_fatigue: number | null;
+  self_handling_pressure: number | null;
+  self_competition_anxiety: number | null;
+  self_emotional_recovery: number | null;
+  expectations: string | null;
+  previous_tools: string | null;
+  anything_else: string | null;
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */

@@ -17,6 +17,12 @@ const SELECT_COLS = [
   "deadlift_current_kg", "deadlift_goal_kg",
   "mental_goals",
   "training_days_per_week",
+  // v3 — application-form fields
+  "instagram", "years_powerlifting", "federation",
+  "main_barrier", "confidence_break", "overthinking_focus", "previous_mental_work",
+  "self_confidence_reg", "self_focus_fatigue", "self_handling_pressure",
+  "self_competition_anxiety", "self_emotional_recovery",
+  "expectations", "previous_tools", "anything_else",
 ].join(",");
 
 export async function GET() {
@@ -52,6 +58,21 @@ export async function GET() {
       deadlift_goal_kg: null,
       mental_goals: [],
       training_days_per_week: null,
+      instagram: null,
+      years_powerlifting: null,
+      federation: null,
+      main_barrier: null,
+      confidence_break: null,
+      overthinking_focus: null,
+      previous_mental_work: null,
+      self_confidence_reg: null,
+      self_focus_fatigue: null,
+      self_handling_pressure: null,
+      self_competition_anxiety: null,
+      self_emotional_recovery: null,
+      expectations: null,
+      previous_tools: null,
+      anything_else: null,
     } satisfies AthleteProfile);
   }
 
@@ -81,6 +102,12 @@ export async function PATCH(req: NextRequest) {
     "training_days_per_week",
     "onboarding_complete",
     "coach_id",
+    // v3 — application-form fields
+    "instagram", "years_powerlifting", "federation",
+    "main_barrier", "confidence_break", "overthinking_focus", "previous_mental_work",
+    "self_confidence_reg", "self_focus_fatigue", "self_handling_pressure",
+    "self_competition_anxiety", "self_emotional_recovery",
+    "expectations", "previous_tools", "anything_else",
   ];
 
   const patch: Record<string, unknown> = {};

@@ -13,7 +13,7 @@ interface CoachOption {
   avatar_url: string | null;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Shared style helpers ──────────────────────────────────────────────────────
 
 function initials(name: string): string {
   return name
@@ -23,6 +23,26 @@ function initials(name: string): string {
     .map((w) => w[0].toUpperCase())
     .join("");
 }
+
+const inputCls =
+  "w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2.5 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 placeholder-zinc-600";
+
+const textareaCls =
+  "w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2.5 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 placeholder-zinc-600 resize-none";
+
+const pillCls = (active: boolean) =>
+  `flex-1 rounded-xl border py-3 font-saira text-sm font-semibold transition ${
+    active
+      ? "border-purple-500 bg-purple-600 text-white"
+      : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
+  }`;
+
+const dayBtnCls = (active: boolean) =>
+  `w-9 h-9 rounded-xl border font-saira text-sm font-semibold transition ${
+    active
+      ? "border-purple-500 bg-purple-600 text-white"
+      : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
+  }`;
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -55,46 +75,53 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-const inputCls =
-  "w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2.5 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 placeholder-zinc-600";
-
-const pillCls = (active: boolean) =>
-  `flex-1 rounded-xl border py-3 font-saira text-sm font-semibold transition ${
-    active
-      ? "border-purple-500 bg-purple-600 text-white"
-      : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
-  }`;
-
-const dayBtnCls = (active: boolean) =>
-  `w-9 h-9 rounded-xl border font-saira text-sm font-semibold transition ${
-    active
-      ? "border-purple-500 bg-purple-600 text-white"
-      : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
-  }`;
+function ScaleSelector({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <SectionLabel>{label}</SectionLabel>
+      <div className="flex flex-wrap gap-1.5">
+        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange(n)}
+            className={`w-9 h-9 rounded-xl border font-saira text-sm font-semibold transition ${
+              value === n
+                ? "border-purple-500 bg-purple-600 text-white"
+                : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
+            }`}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+      <div className="flex justify-between font-saira text-[9px] text-zinc-600 px-0.5">
+        <span>Very low</span>
+        <span>Very high</span>
+      </div>
+    </div>
+  );
+}
 
 // ── Step 1 — About you ────────────────────────────────────────────────────────
 
 function Step1({
-  displayName,
-  setDisplayName,
-  gender,
-  setGender,
-  bodyweight,
-  setBodyweight,
-  weightCat,
-  setWeightCat,
+  displayName, setDisplayName,
+  instagram, setInstagram,
+  gender, setGender,
 }: {
-  displayName: string;
-  setDisplayName: (v: string) => void;
-  gender: "male" | "female" | "";
-  setGender: (v: "male" | "female") => void;
-  bodyweight: string;
-  setBodyweight: (v: string) => void;
-  weightCat: string;
-  setWeightCat: (v: string) => void;
+  displayName: string; setDisplayName: (v: string) => void;
+  instagram: string; setInstagram: (v: string) => void;
+  gender: "male" | "female" | ""; setGender: (v: "male" | "female") => void;
 }) {
-  const cats = gender ? WEIGHT_CATEGORIES[gender] : [];
-
   return (
     <div className="space-y-6">
       <div>
@@ -106,9 +133,8 @@ function Step1({
         </p>
       </div>
 
-      {/* Display name */}
       <div>
-        <SectionLabel>Your name</SectionLabel>
+        <SectionLabel>Your name *</SectionLabel>
         <input
           type="text"
           value={displayName}
@@ -118,67 +144,149 @@ function Step1({
         />
       </div>
 
-      {/* Gender */}
       <div>
-        <SectionLabel>Gender</SectionLabel>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => { setGender("male"); setWeightCat(""); }}
-            className={pillCls(gender === "male")}
-          >
-            Male
-          </button>
-          <button
-            type="button"
-            onClick={() => { setGender("female"); setWeightCat(""); }}
-            className={pillCls(gender === "female")}
-          >
-            Female
-          </button>
+        <SectionLabel>Instagram (optional)</SectionLabel>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-saira text-sm text-zinc-500">@</span>
+          <input
+            type="text"
+            value={instagram}
+            onChange={(e) => setInstagram(e.target.value.replace(/^@/, ""))}
+            placeholder="yourhandle"
+            className={`${inputCls} pl-7`}
+          />
         </div>
       </div>
 
-      {/* Bodyweight */}
       <div>
-        <SectionLabel>Bodyweight (kg)</SectionLabel>
-        <input
-          type="number"
-          inputMode="decimal"
-          value={bodyweight}
-          onChange={(e) => setBodyweight(e.target.value)}
-          placeholder="e.g. 82.5"
-          min={0}
-          className={inputCls}
-        />
-      </div>
-
-      {/* Weight category */}
-      <div>
-        <SectionLabel>Weight category</SectionLabel>
-        <select
-          value={weightCat}
-          onChange={(e) => setWeightCat(e.target.value)}
-          disabled={!gender}
-          className={`${inputCls} disabled:opacity-40 appearance-none`}
-        >
-          <option value="">
-            {gender ? "Select category" : "Select gender first"}
-          </option>
-          {cats.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+        <SectionLabel>Gender *</SectionLabel>
+        <div className="flex gap-3">
+          <button type="button" onClick={() => setGender("male")} className={pillCls(gender === "male")}>
+            Male
+          </button>
+          <button type="button" onClick={() => setGender("female")} className={pillCls(gender === "female")}>
+            Female
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Step 2 — Your lifts ───────────────────────────────────────────────────────
+// ── Step 2 — Powerlifting profile ─────────────────────────────────────────────
 
 function Step2({
+  yearsPl, setYearsPl,
+  federation, setFederation,
+  bodyweight, setBodyweight,
+  weightCat, setWeightCat,
+  gender,
+  meetDate, setMeetDate,
+  trainingDays, setTrainingDays,
+}: {
+  yearsPl: string; setYearsPl: (v: string) => void;
+  federation: string; setFederation: (v: string) => void;
+  bodyweight: string; setBodyweight: (v: string) => void;
+  weightCat: string; setWeightCat: (v: string) => void;
+  gender: "male" | "female" | "";
+  meetDate: string; setMeetDate: (v: string) => void;
+  trainingDays: number | null; setTrainingDays: (v: number) => void;
+}) {
+  const cats = gender ? WEIGHT_CATEGORIES[gender] : [];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
+          Powerlifting profile
+        </h2>
+        <p className="font-saira text-sm text-zinc-500">
+          Your experience and competition details.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <SectionLabel>Years in powerlifting</SectionLabel>
+          <input
+            type="text"
+            value={yearsPl}
+            onChange={(e) => setYearsPl(e.target.value)}
+            placeholder="e.g. 3 years"
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <SectionLabel>Federation</SectionLabel>
+          <input
+            type="text"
+            value={federation}
+            onChange={(e) => setFederation(e.target.value)}
+            placeholder="e.g. IPF, GPC"
+            className={inputCls}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <SectionLabel>Bodyweight (kg)</SectionLabel>
+          <input
+            type="number"
+            inputMode="decimal"
+            value={bodyweight}
+            onChange={(e) => setBodyweight(e.target.value)}
+            placeholder="e.g. 82.5"
+            min={0}
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <SectionLabel>Weight category</SectionLabel>
+          <select
+            value={weightCat}
+            onChange={(e) => setWeightCat(e.target.value)}
+            disabled={!gender}
+            className={`${inputCls} disabled:opacity-40 appearance-none`}
+          >
+            <option value="">{gender ? "Select" : "Gender first"}</option>
+            {cats.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <SectionLabel>Next competition date (optional)</SectionLabel>
+        <input
+          type="date"
+          value={meetDate}
+          onChange={(e) => setMeetDate(e.target.value)}
+          className={`${inputCls} [color-scheme:dark]`}
+        />
+      </div>
+
+      <div>
+        <SectionLabel>Training days per week</SectionLabel>
+        <div className="flex gap-2 flex-wrap">
+          {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => setTrainingDays(d)}
+              className={dayBtnCls(trainingDays === d)}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 3 — Your lifts ───────────────────────────────────────────────────────
+
+function Step3({
   squatCurrent, setSquatCurrent,
   squatGoal, setSquatGoal,
   benchCurrent, setBenchCurrent,
@@ -193,13 +301,7 @@ function Step2({
   dlCurrent: string; setDlCurrent: (v: string) => void;
   dlGoal: string; setDlGoal: (v: string) => void;
 }) {
-  const rows: Array<{
-    label: string;
-    current: string;
-    setCurrent: (v: string) => void;
-    goal: string;
-    setGoal: (v: string) => void;
-  }> = [
+  const rows = [
     { label: "Squat",    current: squatCurrent, setCurrent: setSquatCurrent, goal: squatGoal, setGoal: setSquatGoal },
     { label: "Bench",    current: benchCurrent, setCurrent: setBenchCurrent, goal: benchGoal, setGoal: setBenchGoal },
     { label: "Deadlift", current: dlCurrent,    setCurrent: setDlCurrent,    goal: dlGoal,    setGoal: setDlGoal    },
@@ -212,7 +314,7 @@ function Step2({
           Your lifts
         </h2>
         <p className="font-saira text-sm text-zinc-500">
-          Enter your current bests and competition goals. All optional.
+          Current bests and competition goals. All optional.
         </p>
       </div>
 
@@ -253,16 +355,113 @@ function Step2({
   );
 }
 
-// ── Step 3 — Season & mindset ─────────────────────────────────────────────────
+// ── Step 4 — Mindset & self-assessment ────────────────────────────────────────
 
-function Step3({
-  meetDate, setMeetDate,
-  trainingDays, setTrainingDays,
-  mentalGoals, setMentalGoals,
+function Step4({
+  mainBarrier, setMainBarrier,
+  confidenceBreak, setConfidenceBreak,
+  overthinkingFocus, setOverthinkingFocus,
+  previousMentalWork, setPreviousMentalWork,
+  selfConfidenceReg, setSelfConfidenceReg,
+  selfFocusFatigue, setSelfFocusFatigue,
+  selfHandlingPressure, setSelfHandlingPressure,
+  selfCompetitionAnxiety, setSelfCompetitionAnxiety,
+  selfEmotionalRecovery, setSelfEmotionalRecovery,
 }: {
-  meetDate: string; setMeetDate: (v: string) => void;
-  trainingDays: number | null; setTrainingDays: (v: number) => void;
+  mainBarrier: string; setMainBarrier: (v: string) => void;
+  confidenceBreak: string; setConfidenceBreak: (v: string) => void;
+  overthinkingFocus: string; setOverthinkingFocus: (v: string) => void;
+  previousMentalWork: string; setPreviousMentalWork: (v: string) => void;
+  selfConfidenceReg: number | null; setSelfConfidenceReg: (v: number) => void;
+  selfFocusFatigue: number | null; setSelfFocusFatigue: (v: number) => void;
+  selfHandlingPressure: number | null; setSelfHandlingPressure: (v: number) => void;
+  selfCompetitionAnxiety: number | null; setSelfCompetitionAnxiety: (v: number) => void;
+  selfEmotionalRecovery: number | null; setSelfEmotionalRecovery: (v: number) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
+          Mindset &amp; self-assessment
+        </h2>
+        <p className="font-saira text-sm text-zinc-500">
+          Help us understand where you are mentally right now.
+        </p>
+      </div>
+
+      <div>
+        <SectionLabel>What holds your performance back the most right now? *</SectionLabel>
+        <textarea
+          rows={3}
+          value={mainBarrier}
+          onChange={(e) => setMainBarrier(e.target.value)}
+          placeholder="Describe your biggest mental barrier…"
+          className={textareaCls}
+        />
+      </div>
+
+      <div>
+        <SectionLabel>In which situations does your confidence break?</SectionLabel>
+        <textarea
+          rows={3}
+          value={confidenceBreak}
+          onChange={(e) => setConfidenceBreak(e.target.value)}
+          placeholder="e.g. Heavy attempts, meets, training slumps…"
+          className={textareaCls}
+        />
+      </div>
+
+      <div>
+        <SectionLabel>When do you start to overthink or lose focus?</SectionLabel>
+        <textarea
+          rows={3}
+          value={overthinkingFocus}
+          onChange={(e) => setOverthinkingFocus(e.target.value)}
+          placeholder="e.g. Before big sets, during warm-up, competition day…"
+          className={textareaCls}
+        />
+      </div>
+
+      <div>
+        <SectionLabel>Have you worked with a mental coach or sports psychologist before?</SectionLabel>
+        <textarea
+          rows={3}
+          value={previousMentalWork}
+          onChange={(e) => setPreviousMentalWork(e.target.value)}
+          placeholder="What helped, what didn't…"
+          className={textareaCls}
+        />
+      </div>
+
+      {/* Self-assessment scales */}
+      <div className="pt-2 border-t border-white/5">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400 mb-4">
+          Self-assessment (1 = very low · 10 = very high)
+        </p>
+        <div className="space-y-5">
+          <ScaleSelector label="Confidence regulation" value={selfConfidenceReg} onChange={setSelfConfidenceReg} />
+          <ScaleSelector label="Focus under fatigue" value={selfFocusFatigue} onChange={setSelfFocusFatigue} />
+          <ScaleSelector label="Handling pressure" value={selfHandlingPressure} onChange={setSelfHandlingPressure} />
+          <ScaleSelector label="Competition anxiety" value={selfCompetitionAnxiety} onChange={setSelfCompetitionAnxiety} />
+          <ScaleSelector label="Emotional recovery after bad sessions or meets" value={selfEmotionalRecovery} onChange={setSelfEmotionalRecovery} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 5 — Goals & commitment ───────────────────────────────────────────────
+
+function Step5({
+  mentalGoals, setMentalGoals,
+  expectations, setExpectations,
+  previousTools, setPreviousTools,
+  anythingElse, setAnythingElse,
+}: {
   mentalGoals: string[]; setMentalGoals: (v: string[]) => void;
+  expectations: string; setExpectations: (v: string) => void;
+  previousTools: string; setPreviousTools: (v: string) => void;
+  anythingElse: string; setAnythingElse: (v: string) => void;
 }) {
   const updateGoal = (i: number, val: string) => {
     const next = [...mentalGoals];
@@ -274,44 +473,15 @@ function Step3({
     <div className="space-y-6">
       <div>
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
-          Your season &amp; mindset
+          Goals &amp; commitment
         </h2>
         <p className="font-saira text-sm text-zinc-500">
-          Set your competition timeline and mental targets.
+          What you want to achieve in the next 3 months.
         </p>
       </div>
 
-      {/* Meet date */}
       <div>
-        <SectionLabel>Next competition date (optional)</SectionLabel>
-        <input
-          type="date"
-          value={meetDate}
-          onChange={(e) => setMeetDate(e.target.value)}
-          className={`${inputCls} [color-scheme:dark]`}
-        />
-      </div>
-
-      {/* Training days */}
-      <div>
-        <SectionLabel>Training days per week</SectionLabel>
-        <div className="flex gap-2 flex-wrap">
-          {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => setTrainingDays(d)}
-              className={dayBtnCls(trainingDays === d)}
-            >
-              {d}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Mental goals */}
-      <div>
-        <SectionLabel>Mental goals</SectionLabel>
+        <SectionLabel>Three mental goals for the next 3 months *</SectionLabel>
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
             <div key={i}>
@@ -335,13 +505,46 @@ function Step3({
           ))}
         </div>
       </div>
+
+      <div>
+        <SectionLabel>What do you expect from the coaching process?</SectionLabel>
+        <textarea
+          rows={3}
+          value={expectations}
+          onChange={(e) => setExpectations(e.target.value)}
+          placeholder="What you expect from us as a team…"
+          className={textareaCls}
+        />
+      </div>
+
+      <div>
+        <SectionLabel>What mental strategies have you used so far?</SectionLabel>
+        <textarea
+          rows={3}
+          value={previousTools}
+          onChange={(e) => setPreviousTools(e.target.value)}
+          placeholder="How did they work for you…"
+          className={textareaCls}
+        />
+      </div>
+
+      <div>
+        <SectionLabel>Anything else you&apos;d like us to know?</SectionLabel>
+        <textarea
+          rows={3}
+          value={anythingElse}
+          onChange={(e) => setAnythingElse(e.target.value)}
+          placeholder="Optional — anything important we should know…"
+          className={textareaCls}
+        />
+      </div>
     </div>
   );
 }
 
-// ── Step 4 — Your coach ───────────────────────────────────────────────────────
+// ── Step 6 — Your coach ───────────────────────────────────────────────────────
 
-function Step4({
+function Step6({
   coaches,
   loadingCoaches,
   selectedCoachId,
@@ -369,7 +572,6 @@ function Step4({
         </div>
       ) : (
         <div className="space-y-3">
-          {/* No coach option */}
           <button
             type="button"
             onClick={() => setSelectedCoachId(null)}
@@ -384,14 +586,13 @@ function Step4({
             </div>
             <div>
               <p className="font-saira text-sm font-semibold text-white">No coach yet</p>
-              <p className="font-saira text-[10px] text-zinc-500">You can connect later</p>
+              <p className="font-saira text-[10px] text-zinc-500">You can connect later in your profile</p>
             </div>
             {selectedCoachId === null && (
               <span className="ml-auto text-purple-400 text-sm">✓</span>
             )}
           </button>
 
-          {/* Coach options */}
           {coaches.map((coach) => (
             <button
               key={coach.id}
@@ -435,74 +636,76 @@ function Step4({
 
 export default function OnboardingPage() {
   const router = useRouter();
-
-  // Auth / profile loading
   const [authChecked, setAuthChecked] = React.useState(false);
 
-  // Wizard step
+  const TOTAL_STEPS = 6;
   const [step, setStep] = React.useState(1);
-  const TOTAL_STEPS = 4;
 
-  // Step 1 fields
-  const [displayName, setDisplayName] = React.useState("");
-  const [gender, setGender]           = React.useState<"male" | "female" | "">("");
-  const [bodyweight, setBodyweight]   = React.useState("");
-  const [weightCat, setWeightCat]     = React.useState("");
+  // Step 1 — About you
+  const [displayName, setDisplayName]   = React.useState("");
+  const [instagram, setInstagram]       = React.useState("");
+  const [gender, setGender]             = React.useState<"male" | "female" | "">("");
 
-  // Step 2 fields
-  const [squatCurrent, setSquatCurrent]   = React.useState("");
-  const [squatGoal, setSquatGoal]         = React.useState("");
-  const [benchCurrent, setBenchCurrent]   = React.useState("");
-  const [benchGoal, setBenchGoal]         = React.useState("");
-  const [dlCurrent, setDlCurrent]         = React.useState("");
-  const [dlGoal, setDlGoal]               = React.useState("");
-
-  // Step 3 fields
+  // Step 2 — Powerlifting profile
+  const [yearsPl, setYearsPl]           = React.useState("");
+  const [federation, setFederation]     = React.useState("");
+  const [bodyweight, setBodyweight]     = React.useState("");
+  const [weightCat, setWeightCat]       = React.useState("");
   const [meetDate, setMeetDate]         = React.useState("");
   const [trainingDays, setTrainingDays] = React.useState<number | null>(null);
-  const [mentalGoals, setMentalGoals]   = React.useState(["", "", ""]);
 
-  // Step 4 fields
-  const [coaches, setCoaches]             = React.useState<CoachOption[]>([]);
+  // Step 3 — Lifts
+  const [squatCurrent, setSquatCurrent] = React.useState("");
+  const [squatGoal, setSquatGoal]       = React.useState("");
+  const [benchCurrent, setBenchCurrent] = React.useState("");
+  const [benchGoal, setBenchGoal]       = React.useState("");
+  const [dlCurrent, setDlCurrent]       = React.useState("");
+  const [dlGoal, setDlGoal]             = React.useState("");
+
+  // Step 4 — Mindset
+  const [mainBarrier, setMainBarrier]           = React.useState("");
+  const [confidenceBreak, setConfidenceBreak]   = React.useState("");
+  const [overthinkingFocus, setOverthinkingFocus] = React.useState("");
+  const [previousMentalWork, setPreviousMentalWork] = React.useState("");
+  const [selfConfidenceReg, setSelfConfidenceReg]       = React.useState<number | null>(null);
+  const [selfFocusFatigue, setSelfFocusFatigue]         = React.useState<number | null>(null);
+  const [selfHandlingPressure, setSelfHandlingPressure] = React.useState<number | null>(null);
+  const [selfCompetitionAnxiety, setSelfCompetitionAnxiety] = React.useState<number | null>(null);
+  const [selfEmotionalRecovery, setSelfEmotionalRecovery]   = React.useState<number | null>(null);
+
+  // Step 5 — Goals
+  const [mentalGoals, setMentalGoals]     = React.useState(["", "", ""]);
+  const [expectations, setExpectations]   = React.useState("");
+  const [previousTools, setPreviousTools] = React.useState("");
+  const [anythingElse, setAnythingElse]   = React.useState("");
+
+  // Step 6 — Coach
+  const [coaches, setCoaches]           = React.useState<CoachOption[]>([]);
   const [loadingCoaches, setLoadingCoaches] = React.useState(false);
   const [selectedCoachId, setSelectedCoachId] = React.useState<string | null>(null);
 
-  // Submit
   const [submitting, setSubmitting] = React.useState(false);
 
-  // ── Auth check + pre-fill ────────────────────────────────────
+  // ── Auth check + pre-fill ────────────────────────────────────────────────────
   React.useEffect(() => {
     fetch("/api/me")
       .then((r) => {
-        if (r.status === 401) {
-          router.replace("/auth/sign-in");
-          return null;
-        }
+        if (r.status === 401) { router.replace("/auth/sign-in"); return null; }
         return r.json();
       })
       .then((prof: AthleteProfile | null) => {
         if (!prof) return;
-        // Coaches don't onboard via this wizard
-        if (prof.role === "coach") {
-          router.replace("/coach");
-          return;
-        }
-        if (prof.onboarding_complete) {
-          router.replace("/today");
-          return;
-        }
-        // Pre-fill name from Google
+        if (prof.role === "coach") { router.replace("/coach"); return; }
+        if (prof.onboarding_complete) { router.replace("/today"); return; }
         if (prof.display_name) setDisplayName(prof.display_name);
         setAuthChecked(true);
       })
-      .catch(() => {
-        router.replace("/auth/sign-in");
-      });
+      .catch(() => router.replace("/auth/sign-in"));
   }, [router]);
 
-  // ── Load coaches when reaching step 4 ────────────────────────
+  // ── Load coaches when reaching step 6 ───────────────────────────────────────
   React.useEffect(() => {
-    if (step !== 4) return;
+    if (step !== 6) return;
     setLoadingCoaches(true);
     fetch("/api/coaches")
       .then((r) => r.json())
@@ -511,16 +714,18 @@ export default function OnboardingPage() {
       .finally(() => setLoadingCoaches(false));
   }, [step]);
 
-  // ── Validation ───────────────────────────────────────────────
+  // ── Validation ───────────────────────────────────────────────────────────────
   const canNext = React.useMemo(() => {
     if (step === 1) return displayName.trim().length > 0 && gender !== "";
-    if (step === 2) return true; // all optional, but numbers must be > 0 if entered
-    if (step === 3) return trainingDays !== null;
-    if (step === 4) return true; // "No coach" is a valid selection
+    if (step === 2) return true;
+    if (step === 3) return true;
+    if (step === 4) return mainBarrier.trim().length > 0;
+    if (step === 5) return mentalGoals[0].trim().length > 0;
+    if (step === 6) return true;
     return false;
-  }, [step, displayName, gender, trainingDays]);
+  }, [step, displayName, gender, mainBarrier, mentalGoals]);
 
-  // ── Submit ───────────────────────────────────────────────────
+  // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (submitting) return;
     setSubmitting(true);
@@ -531,19 +736,40 @@ export default function OnboardingPage() {
     };
 
     const body = {
+      // Step 1
       display_name: displayName.trim(),
+      instagram: instagram.trim() || null,
       gender: gender || null,
+      // Step 2
+      years_powerlifting: yearsPl.trim() || null,
+      federation: federation.trim() || null,
       bodyweight_kg: toNum(bodyweight),
       weight_category: weightCat || null,
+      meet_date: meetDate || null,
+      training_days_per_week: trainingDays,
+      // Step 3
       squat_current_kg: toNum(squatCurrent),
       squat_goal_kg: toNum(squatGoal),
       bench_current_kg: toNum(benchCurrent),
       bench_goal_kg: toNum(benchGoal),
       deadlift_current_kg: toNum(dlCurrent),
       deadlift_goal_kg: toNum(dlGoal),
-      meet_date: meetDate || null,
-      training_days_per_week: trainingDays,
+      // Step 4
+      main_barrier: mainBarrier.trim() || null,
+      confidence_break: confidenceBreak.trim() || null,
+      overthinking_focus: overthinkingFocus.trim() || null,
+      previous_mental_work: previousMentalWork.trim() || null,
+      self_confidence_reg: selfConfidenceReg,
+      self_focus_fatigue: selfFocusFatigue,
+      self_handling_pressure: selfHandlingPressure,
+      self_competition_anxiety: selfCompetitionAnxiety,
+      self_emotional_recovery: selfEmotionalRecovery,
+      // Step 5
       mental_goals: mentalGoals.filter(Boolean),
+      expectations: expectations.trim() || null,
+      previous_tools: previousTools.trim() || null,
+      anything_else: anythingElse.trim() || null,
+      // Step 6
       coach_id: selectedCoachId,
     };
 
@@ -560,7 +786,7 @@ export default function OnboardingPage() {
     }
   };
 
-  // ── Render ───────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────────────────────
   if (!authChecked) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#050608]">
@@ -593,18 +819,24 @@ export default function OnboardingPage() {
       <div className="flex-1 px-5 pb-4 max-w-lg mx-auto w-full overflow-y-auto">
         {step === 1 && (
           <Step1
-            displayName={displayName}
-            setDisplayName={setDisplayName}
-            gender={gender}
-            setGender={setGender}
-            bodyweight={bodyweight}
-            setBodyweight={setBodyweight}
-            weightCat={weightCat}
-            setWeightCat={setWeightCat}
+            displayName={displayName} setDisplayName={setDisplayName}
+            instagram={instagram}     setInstagram={setInstagram}
+            gender={gender}           setGender={setGender}
           />
         )}
         {step === 2 && (
           <Step2
+            yearsPl={yearsPl}         setYearsPl={setYearsPl}
+            federation={federation}   setFederation={setFederation}
+            bodyweight={bodyweight}   setBodyweight={setBodyweight}
+            weightCat={weightCat}     setWeightCat={setWeightCat}
+            gender={gender}
+            meetDate={meetDate}       setMeetDate={setMeetDate}
+            trainingDays={trainingDays} setTrainingDays={setTrainingDays}
+          />
+        )}
+        {step === 3 && (
+          <Step3
             squatCurrent={squatCurrent} setSquatCurrent={setSquatCurrent}
             squatGoal={squatGoal}       setSquatGoal={setSquatGoal}
             benchCurrent={benchCurrent} setBenchCurrent={setBenchCurrent}
@@ -613,15 +845,29 @@ export default function OnboardingPage() {
             dlGoal={dlGoal}             setDlGoal={setDlGoal}
           />
         )}
-        {step === 3 && (
-          <Step3
-            meetDate={meetDate}           setMeetDate={setMeetDate}
-            trainingDays={trainingDays}   setTrainingDays={setTrainingDays}
-            mentalGoals={mentalGoals}     setMentalGoals={setMentalGoals}
-          />
-        )}
         {step === 4 && (
           <Step4
+            mainBarrier={mainBarrier}               setMainBarrier={setMainBarrier}
+            confidenceBreak={confidenceBreak}       setConfidenceBreak={setConfidenceBreak}
+            overthinkingFocus={overthinkingFocus}   setOverthinkingFocus={setOverthinkingFocus}
+            previousMentalWork={previousMentalWork} setPreviousMentalWork={setPreviousMentalWork}
+            selfConfidenceReg={selfConfidenceReg}           setSelfConfidenceReg={setSelfConfidenceReg}
+            selfFocusFatigue={selfFocusFatigue}             setSelfFocusFatigue={setSelfFocusFatigue}
+            selfHandlingPressure={selfHandlingPressure}     setSelfHandlingPressure={setSelfHandlingPressure}
+            selfCompetitionAnxiety={selfCompetitionAnxiety} setSelfCompetitionAnxiety={setSelfCompetitionAnxiety}
+            selfEmotionalRecovery={selfEmotionalRecovery}   setSelfEmotionalRecovery={setSelfEmotionalRecovery}
+          />
+        )}
+        {step === 5 && (
+          <Step5
+            mentalGoals={mentalGoals}     setMentalGoals={setMentalGoals}
+            expectations={expectations}   setExpectations={setExpectations}
+            previousTools={previousTools} setPreviousTools={setPreviousTools}
+            anythingElse={anythingElse}   setAnythingElse={setAnythingElse}
+          />
+        )}
+        {step === 6 && (
+          <Step6
             coaches={coaches}
             loadingCoaches={loadingCoaches}
             selectedCoachId={selectedCoachId}

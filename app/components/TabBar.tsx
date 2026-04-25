@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import React from "react";
+import { isCheckinDone, checkinKey } from "@/lib/checkinReminder";
 
 const TABS = [
   { href: "/today",   label: "Today",   icon: TodayIcon   },
@@ -13,6 +15,21 @@ const TABS = [
 
 export default function TabBar() {
   const pathname = usePathname();
+  const [checkinDone, setCheckinDone] = React.useState(true); // optimistic: no badge flash on load
+
+  // Read localStorage after mount (avoids SSR mismatch)
+  React.useEffect(() => {
+    setCheckinDone(isCheckinDone());
+
+    // Update badge when check-in is saved (storage event fired by markCheckinDone)
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === checkinKey()) {
+        setCheckinDone(e.newValue === "1");
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   return (
     <nav
@@ -25,15 +42,21 @@ export default function TabBar() {
       <div className="relative flex items-stretch justify-around px-1">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
+          const showBadge = href === "/today" && !checkinDone && !active;
           return (
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center justify-center gap-1 flex-1 py-2.5 transition-colors ${
+              className={`relative flex flex-col items-center justify-center gap-1 flex-1 py-2.5 transition-colors ${
                 active ? "text-purple-300" : "text-zinc-600 hover:text-zinc-400"
               }`}
             >
-              <Icon active={active} />
+              <div className="relative">
+                <Icon active={active} />
+                {showBadge && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 ring-1 ring-[#0D0B14]" />
+                )}
+              </div>
               <span className="font-saira text-[9px] uppercase tracking-[0.16em]">
                 {label}
               </span>
