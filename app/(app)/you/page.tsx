@@ -522,6 +522,25 @@ export default function YouPage() {
         })()}
       </Section>
 
+      {/* ── Guide link ───────────────────────────────────────── */}
+      <Link
+        href="/guide"
+        className="flex items-center justify-between w-full mt-2 rounded-2xl border border-white/5 bg-[#17131F] px-5 py-4 font-saira text-sm text-zinc-400 hover:text-purple-300 hover:border-purple-500/20 transition group"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-lg">📖</span>
+          <div>
+            <p className="font-saira text-sm font-semibold text-zinc-300 group-hover:text-purple-300 transition">
+              User guide
+            </p>
+            <p className="font-saira text-[10px] text-zinc-600">
+              How to use PowerFlow · includes printable PDF
+            </p>
+          </div>
+        </div>
+        <span className="text-zinc-600 group-hover:text-purple-400 transition">→</span>
+      </Link>
+
       {/* ── Sign out ─────────────────────────────────────────── */}
       <button
         onClick={async () => {
