@@ -85,6 +85,20 @@ export default function YouPage() {
         setMentalGoals([mg[0] ?? "", mg[1] ?? "", mg[2] ?? ""]);
         setTrainingDays(p.training_days_per_week ?? null);
         setCoachId(p.coach_id ?? null);
+        // If user already has a coach, fetch the coach list now so we can
+        // display the coach's name in the static view (without making them
+        // open the picker).
+        if (p.coach_id) {
+          setLoadingCoaches(true);
+          fetch("/api/coaches")
+            .then((r) => r.json())
+            .then((data: CoachOption[]) => setCoaches(Array.isArray(data) ? data : []))
+            .catch(() => {})
+            .finally(() => {
+              setCoachesLoaded(true);
+              setLoadingCoaches(false);
+            });
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));

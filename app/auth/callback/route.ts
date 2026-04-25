@@ -91,7 +91,10 @@ async function ensureProfile(
 ) {
   const SUPABASE_URL  = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  if (!SUPABASE_URL || !SERVICE_KEY) return;
+  if (!SUPABASE_URL || !SERVICE_KEY) {
+    console.error("[ensureProfile] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars — profile NOT created");
+    return;
+  }
 
   const authHeaders: HeadersInit = {
     "Content-Type": "application/json",
@@ -103,6 +106,10 @@ async function ensureProfile(
   const checkRes  = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=id,role`, {
     headers: { ...authHeaders, Prefer: "" },
   });
+  if (!checkRes.ok) {
+    const txt = await checkRes.text().catch(() => "");
+    console.error(`[ensureProfile] check failed ${checkRes.status}`, txt);
+  }
   const existing  = checkRes.ok ? await checkRes.json() : [];
   if (existing.length > 0) return; // Don't overwrite role
 
@@ -116,9 +123,13 @@ async function ensureProfile(
           .slice(0, 8)
       : null;
 
-  await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+  const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
     method:  "POST",
     headers: { ...authHeaders, Prefer: "resolution=ignore-duplicates,return=representation" },
     body:    JSON.stringify({ id: userId, role, display_name: meta.display_name, avatar_url: meta.avatar_url, coach_code }),
   });
+  if (!insertRes.ok) {
+    const txt = await insertRes.text().catch(() => "");
+    console.error(`[ensureProfile] insert failed ${insertRes.status} for user ${userId} role ${role}`, txt);
+  }
 }

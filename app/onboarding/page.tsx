@@ -482,6 +482,11 @@ export default function OnboardingPage() {
       })
       .then((prof: AthleteProfile | null) => {
         if (!prof) return;
+        // Coaches don't onboard via this wizard
+        if (prof.role === "coach") {
+          router.replace("/coach");
+          return;
+        }
         if (prof.onboarding_complete) {
           router.replace("/today");
           return;

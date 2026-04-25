@@ -88,8 +88,23 @@ export async function POST(req: NextRequest) {
   }
 
   // coach_id — allow setting (including null = "no coach")
+  // Must refer to an actual coach if non-null.
   if ("coach_id" in body) {
-    patch.coach_id = body.coach_id ?? null;
+    const cid = body.coach_id ?? null;
+    if (cid !== null) {
+      const coachRows = await dbSelect<{ id: string }>("profiles", {
+        id: `eq.${cid}`,
+        role: "eq.coach",
+        select: "id",
+      });
+      if (!coachRows.length) {
+        return NextResponse.json(
+          { error: "Selected coach does not exist." },
+          { status: 400 },
+        );
+      }
+    }
+    patch.coach_id = cid;
   }
 
   // Check whether the profile row exists

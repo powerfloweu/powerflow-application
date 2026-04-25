@@ -98,6 +98,23 @@ export async function PATCH(req: NextRequest) {
     delete patch.onboarding_complete;
   }
 
+  // Guard: coach_id must refer to an actual coach (or be null = "no coach").
+  // Without this an athlete could link themselves to any user UUID.
+  if ("coach_id" in patch && patch.coach_id !== null) {
+    const cid = patch.coach_id as string;
+    const coachRows = await dbSelect<{ id: string }>("profiles", {
+      id: `eq.${cid}`,
+      role: "eq.coach",
+      select: "id",
+    });
+    if (!coachRows.length) {
+      return NextResponse.json(
+        { error: "Selected coach does not exist." },
+        { status: 400 },
+      );
+    }
+  }
+
   // Special: trim display_name
   if (typeof patch.display_name === "string") {
     patch.display_name = (patch.display_name as string).trim();
