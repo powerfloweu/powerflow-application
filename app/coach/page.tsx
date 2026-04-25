@@ -811,12 +811,20 @@ function CoachHeader({ profile }: { profile: CoachProfile }) {
           <p className="font-saira text-[10px] text-zinc-600">Coach</p>
         </div>
       </div>
-      <a
-        href="/auth/sign-out"
-        className="font-saira text-[10px] text-zinc-700 hover:text-zinc-400 transition underline underline-offset-2"
-      >
-        Sign out
-      </a>
+      <div className="flex items-center gap-4">
+        <Link
+          href="/guide"
+          className="font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition"
+        >
+          📖 Guide
+        </Link>
+        <a
+          href="/auth/sign-out"
+          className="font-saira text-[10px] text-zinc-700 hover:text-zinc-400 transition underline underline-offset-2"
+        >
+          Sign out
+        </a>
+      </div>
     </div>
   );
 }
