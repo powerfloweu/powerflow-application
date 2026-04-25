@@ -568,9 +568,19 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-[#050608] flex flex-col">
       {/* Header */}
       <div className="px-5 pt-12 pb-0 max-w-lg mx-auto w-full">
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-6">
-          POWERFLOW · SETUP
-        </p>
+        <div className="flex items-center justify-between mb-6">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400">
+            POWERFLOW · SETUP
+          </p>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="font-saira text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500 hover:text-zinc-300 disabled:opacity-40 transition"
+          >
+            Skip setup
+          </button>
+        </div>
         <ProgressBar step={step} total={TOTAL_STEPS} />
       </div>
 
