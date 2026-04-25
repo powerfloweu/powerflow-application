@@ -17,6 +17,38 @@ type ProfileRow = {
   role: string;
   coach_id: string | null;
   created_at: string;
+  // competition / physical
+  meet_date: string | null;
+  gender: string | null;
+  bodyweight_kg: number | null;
+  weight_category: string | null;
+  // lifts
+  squat_current_kg: number | null;
+  squat_goal_kg: number | null;
+  bench_current_kg: number | null;
+  bench_goal_kg: number | null;
+  deadlift_current_kg: number | null;
+  deadlift_goal_kg: number | null;
+  // training
+  mental_goals: string[] | null;
+  training_days_per_week: number | null;
+  instagram: string | null;
+  years_powerlifting: string | null;
+  federation: string | null;
+  // mindset
+  main_barrier: string | null;
+  confidence_break: string | null;
+  overthinking_focus: string | null;
+  previous_mental_work: string | null;
+  self_confidence_reg: number | null;
+  self_focus_fatigue: number | null;
+  self_handling_pressure: number | null;
+  self_competition_anxiety: number | null;
+  self_emotional_recovery: number | null;
+  // goals
+  expectations: string | null;
+  previous_tools: string | null;
+  anything_else: string | null;
 };
 
 type EntryRow = {
@@ -53,11 +85,19 @@ export async function GET() {
     return NextResponse.json({ error: "Not a coach" }, { status: 403 });
   }
 
-  // Fetch athletes linked to this coach
+  // Fetch athletes linked to this coach (full profile including onboarding fields)
   const athletes = await dbSelect<ProfileRow>("profiles", {
     coach_id: `eq.${user.id}`,
     role: "eq.athlete",
-    select: "id,display_name,avatar_url,created_at",
+    select: [
+      "id,display_name,avatar_url,created_at",
+      "meet_date,gender,bodyweight_kg,weight_category",
+      "squat_current_kg,squat_goal_kg,bench_current_kg,bench_goal_kg,deadlift_current_kg,deadlift_goal_kg",
+      "mental_goals,training_days_per_week,instagram,years_powerlifting,federation",
+      "main_barrier,confidence_break,overthinking_focus,previous_mental_work",
+      "self_confidence_reg,self_focus_fatigue,self_handling_pressure,self_competition_anxiety,self_emotional_recovery",
+      "expectations,previous_tools,anything_else",
+    ].join(","),
     order: "created_at.asc",
   });
 

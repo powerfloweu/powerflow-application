@@ -33,6 +33,35 @@ type AthleteRaw = {
   display_name: string;
   avatar_url: string | null;
   created_at: string;
+  // onboarding profile fields
+  meet_date: string | null;
+  gender: string | null;
+  bodyweight_kg: number | null;
+  weight_category: string | null;
+  squat_current_kg: number | null;
+  squat_goal_kg: number | null;
+  bench_current_kg: number | null;
+  bench_goal_kg: number | null;
+  deadlift_current_kg: number | null;
+  deadlift_goal_kg: number | null;
+  mental_goals: string[] | null;
+  training_days_per_week: number | null;
+  instagram: string | null;
+  years_powerlifting: string | null;
+  federation: string | null;
+  main_barrier: string | null;
+  confidence_break: string | null;
+  overthinking_focus: string | null;
+  previous_mental_work: string | null;
+  self_confidence_reg: number | null;
+  self_focus_fatigue: number | null;
+  self_handling_pressure: number | null;
+  self_competition_anxiety: number | null;
+  self_emotional_recovery: number | null;
+  expectations: string | null;
+  previous_tools: string | null;
+  anything_else: string | null;
+  // activity data
   entries: EntryRow[];
   sat: SatRow[];
   acsi: AcsiRow[];
@@ -134,6 +163,36 @@ function computeClient(a: AthleteRaw) {
     lastActive,
     joinedAt: a.created_at,
     trainingThisWeek: a.training_entries,
+    // full onboarding profile — passed through for Profile tab
+    profile: {
+      meet_date: a.meet_date,
+      gender: a.gender,
+      bodyweight_kg: a.bodyweight_kg,
+      weight_category: a.weight_category,
+      squat_current_kg: a.squat_current_kg,
+      squat_goal_kg: a.squat_goal_kg,
+      bench_current_kg: a.bench_current_kg,
+      bench_goal_kg: a.bench_goal_kg,
+      deadlift_current_kg: a.deadlift_current_kg,
+      deadlift_goal_kg: a.deadlift_goal_kg,
+      mental_goals: a.mental_goals ?? [],
+      training_days_per_week: a.training_days_per_week,
+      instagram: a.instagram,
+      years_powerlifting: a.years_powerlifting,
+      federation: a.federation,
+      main_barrier: a.main_barrier,
+      confidence_break: a.confidence_break,
+      overthinking_focus: a.overthinking_focus,
+      previous_mental_work: a.previous_mental_work,
+      self_confidence_reg: a.self_confidence_reg,
+      self_focus_fatigue: a.self_focus_fatigue,
+      self_handling_pressure: a.self_handling_pressure,
+      self_competition_anxiety: a.self_competition_anxiety,
+      self_emotional_recovery: a.self_emotional_recovery,
+      expectations: a.expectations,
+      previous_tools: a.previous_tools,
+      anything_else: a.anything_else,
+    },
   };
 }
 
@@ -171,11 +230,191 @@ function SentimentSparkline({ data }: { data: number[] }) {
 }
 
 
+// ── Profile tab helpers ────────────────────────────────────────────────────────
+
+function ProfileField({ label, value }: { label: string; value: string | number | null | undefined }) {
+  if (value === null || value === undefined || value === "") return null;
+  return (
+    <div>
+      <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-0.5">
+        {label}
+      </p>
+      <p className="font-saira text-xs text-zinc-300 leading-relaxed">{String(value)}</p>
+    </div>
+  );
+}
+
+function ScaleBar({ label, value }: { label: string; value: number | null }) {
+  if (!value) return null;
+  const pct = (value / 10) * 100;
+  const barColor = value >= 7 ? "bg-emerald-400" : value >= 4 ? "bg-amber-400" : "bg-rose-400";
+  const textColor = value >= 7 ? "text-emerald-300" : value >= 4 ? "text-amber-300" : "text-rose-300";
+  return (
+    <div>
+      <div className="flex justify-between mb-1.5">
+        <span className="font-saira text-[10px] text-zinc-400">{label}</span>
+        <span className={`font-saira text-[10px] font-bold ${textColor}`}>{value}/10</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+        <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["profile"] }) {
+  const goals = profile.mental_goals.filter(Boolean);
+  const hasLifts =
+    profile.squat_current_kg || profile.bench_current_kg || profile.deadlift_current_kg ||
+    profile.squat_goal_kg    || profile.bench_goal_kg    || profile.deadlift_goal_kg;
+  const hasSelfRatings =
+    profile.self_confidence_reg || profile.self_focus_fatigue || profile.self_handling_pressure ||
+    profile.self_competition_anxiety || profile.self_emotional_recovery;
+  const hasMindset =
+    profile.main_barrier || profile.confidence_break ||
+    profile.overthinking_focus || profile.previous_mental_work;
+  const hasGoalsSection =
+    goals.length > 0 || profile.expectations || profile.previous_tools || profile.anything_else;
+  const hasBio =
+    profile.gender || profile.federation || profile.years_powerlifting ||
+    profile.bodyweight_kg || profile.meet_date || profile.training_days_per_week;
+
+  if (!hasBio && !hasLifts && !hasSelfRatings && !hasMindset && !hasGoalsSection) {
+    return (
+      <p className="font-saira text-sm text-zinc-600 py-6 text-center">
+        Onboarding not completed yet — no profile data to show.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+
+      {/* Personal & sport */}
+      {hasBio && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
+            Personal &amp; sport
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <ProfileField label="Gender" value={profile.gender} />
+            <ProfileField label="Instagram" value={profile.instagram ? `@${profile.instagram}` : null} />
+            <ProfileField label="Federation" value={profile.federation} />
+            <ProfileField label="Years in sport" value={profile.years_powerlifting} />
+            <ProfileField label="Bodyweight" value={profile.bodyweight_kg ? `${profile.bodyweight_kg} kg` : null} />
+            <ProfileField label="Weight class" value={profile.weight_category} />
+            <ProfileField label="Next meet" value={profile.meet_date} />
+            <ProfileField label="Training days/week" value={profile.training_days_per_week} />
+          </div>
+        </div>
+      )}
+
+      {/* Lifts */}
+      {hasLifts && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
+            Lifts
+          </p>
+          <div className="space-y-2">
+            {(
+              [
+                ["Squat",    profile.squat_current_kg,    profile.squat_goal_kg],
+                ["Bench",    profile.bench_current_kg,    profile.bench_goal_kg],
+                ["Deadlift", profile.deadlift_current_kg, profile.deadlift_goal_kg],
+              ] as [string, number | null, number | null][]
+            )
+              .filter(([, cur, goal]) => cur || goal)
+              .map(([label, cur, goal]) => (
+                <div key={label} className="flex items-center gap-3">
+                  <span className="font-saira text-[10px] font-semibold uppercase tracking-wider text-zinc-500 w-16 flex-shrink-0">
+                    {label}
+                  </span>
+                  <span className="font-saira text-sm font-bold text-white">
+                    {cur ? `${cur} kg` : "—"}
+                  </span>
+                  {goal && (
+                    <span className="font-saira text-[10px] text-zinc-500">
+                      → goal: {goal} kg
+                    </span>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mental goals */}
+      {goals.length > 0 && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
+            Mental goals (next 3 months)
+          </p>
+          <div className="space-y-2">
+            {goals.map((g, i) => (
+              <div key={i} className="flex gap-3">
+                <span className="font-saira text-[10px] font-bold text-purple-400 flex-shrink-0 pt-0.5 w-4">
+                  {i + 1}.
+                </span>
+                <p className="font-saira text-xs text-zinc-300 leading-relaxed">{g}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Self-assessment scales */}
+      {hasSelfRatings && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
+            Self-assessment (athlete&apos;s own rating, 1–10)
+          </p>
+          <div className="space-y-3">
+            <ScaleBar label="Confidence regulation"  value={profile.self_confidence_reg} />
+            <ScaleBar label="Focus under fatigue"    value={profile.self_focus_fatigue} />
+            <ScaleBar label="Handling pressure"      value={profile.self_handling_pressure} />
+            <ScaleBar label="Competition anxiety"    value={profile.self_competition_anxiety} />
+            <ScaleBar label="Emotional recovery"     value={profile.self_emotional_recovery} />
+          </div>
+        </div>
+      )}
+
+      {/* Open mindset questions */}
+      {hasMindset && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
+            Mindset assessment
+          </p>
+          <div className="space-y-4">
+            <ProfileField label="Main barrier to performance"             value={profile.main_barrier} />
+            <ProfileField label="When confidence breaks"                  value={profile.confidence_break} />
+            <ProfileField label="When they overthink / lose focus"        value={profile.overthinking_focus} />
+            <ProfileField label="Previous mental coaching / psych work"   value={profile.previous_mental_work} />
+          </div>
+        </div>
+      )}
+
+      {/* Goals & context */}
+      {(profile.expectations || profile.previous_tools || profile.anything_else) && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
+            Goals &amp; context
+          </p>
+          <div className="space-y-4">
+            <ProfileField label="Expectations from coaching"      value={profile.expectations} />
+            <ProfileField label="Mental strategies tried before"  value={profile.previous_tools} />
+            <ProfileField label="Anything else"                   value={profile.anything_else} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Client card ────────────────────────────────────────────────────────────────
 
 function ClientCard({ client }: { client: Client }) {
   const [expanded, setExpanded] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<"analysis" | "entries" | "scores" | "training">("analysis");
+  const [activeTab, setActiveTab] = React.useState<"analysis" | "entries" | "scores" | "training" | "profile">("analysis");
   const flag = FLAG_CONFIG[client.flag];
 
   return (
@@ -254,6 +493,7 @@ function ClientCard({ client }: { client: Client }) {
               { key: "entries",   label: "Recent entries" },
               { key: "scores",    label: "Test scores" },
               { key: "training",  label: "Training Log" },
+              { key: "profile",   label: "Profile" },
             ] as const).map((tab) => (
               <button
                 key={tab.key}
@@ -451,6 +691,11 @@ function ClientCard({ client }: { client: Client }) {
             {/* ── Tab: Training Log ── */}
             {activeTab === "training" && (
               <TrainingLogTab trainingThisWeek={client.trainingThisWeek} />
+            )}
+
+            {/* ── Tab: Profile ── */}
+            {activeTab === "profile" && (
+              <ProfileTab profile={client.profile} />
             )}
           </div>
         </div>
