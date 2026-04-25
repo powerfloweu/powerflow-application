@@ -80,7 +80,13 @@ export default function TodayPage() {
       fetch(`/api/training/entries?date=${todayKey()}`).then((r) => r.json()),
     ])
       .then(([prof, ents, prog, trainingEntry]) => {
-        if (prof?.id) setProfile(prof);
+        if (prof?.id) {
+          setProfile(prof);
+          if (prof.role === "athlete" && prof.onboarding_complete === false) {
+            router.replace("/onboarding");
+            return;
+          }
+        }
         setEntries(Array.isArray(ents) ? ents.slice(0, 3) : []);
         setCourseProgress(Array.isArray(prog) ? prog : []);
         if (trainingEntry?.id) setTodayEntry(trainingEntry as TrainingEntry);

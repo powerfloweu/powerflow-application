@@ -10,7 +10,7 @@ import type { AthleteProfile } from "@/lib/athlete";
 
 const SELECT_COLS = [
   "id", "display_name", "avatar_url", "role", "coach_id", "coach_code", "meet_date",
-  "course_access",
+  "course_access", "onboarding_complete",
   "gender", "bodyweight_kg", "weight_category",
   "squat_current_kg", "squat_goal_kg",
   "bench_current_kg", "bench_goal_kg",
@@ -40,6 +40,7 @@ export async function GET() {
       coach_code: null,
       meet_date: null,
       course_access: false,
+      onboarding_complete: false,
       gender: null,
       bodyweight_kg: null,
       weight_category: null,
@@ -78,6 +79,7 @@ export async function PATCH(req: NextRequest) {
     "deadlift_current_kg", "deadlift_goal_kg",
     "mental_goals",
     "training_days_per_week",
+    "onboarding_complete",
   ];
 
   const patch: Record<string, unknown> = {};
@@ -88,6 +90,11 @@ export async function PATCH(req: NextRequest) {
       if (val === "") patch[key] = null;
       else patch[key] = val ?? null;
     }
+  }
+
+  // Guard: onboarding_complete may only be set to true, never to false/null
+  if ("onboarding_complete" in patch && !patch.onboarding_complete) {
+    delete patch.onboarding_complete;
   }
 
   // Special: trim display_name
