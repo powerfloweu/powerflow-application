@@ -7,6 +7,21 @@ import { computePhase } from "@/lib/phase";
 import { WEIGHT_CATEGORIES } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
 
+interface CoachOption {
+  id: string;
+  display_name: string;
+  avatar_url: string | null;
+}
+
+function initials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function kgField(val: number | null | undefined): string {
@@ -27,6 +42,7 @@ export default function YouPage() {
   const [saveError, setSaveError]         = React.useState<string | null>(null);
 
   // ── Local form state ───────────────────────────────────────
+  const [displayName, setDisplayName]     = React.useState("");
   const [meetDate, setMeetDate]           = React.useState("");
   const [gender, setGender]               = React.useState<"male" | "female" | "">("");
   const [bodyweight, setBodyweight]       = React.useState("");
@@ -39,6 +55,13 @@ export default function YouPage() {
   const [dlGoal, setDlGoal]               = React.useState("");
   const [mentalGoals, setMentalGoals]     = React.useState(["", "", ""]);
   const [trainingDays, setTrainingDays]   = React.useState<number | null>(null);
+  const [coachId, setCoachId]             = React.useState<string | null>(null);
+
+  // ── Coach picker state ─────────────────────────────────────
+  const [coaches, setCoaches]               = React.useState<CoachOption[]>([]);
+  const [loadingCoaches, setLoadingCoaches] = React.useState(false);
+  const [coachesLoaded, setCoachesLoaded]   = React.useState(false);
+  const [showCoachPicker, setShowCoachPicker] = React.useState(false);
 
   // ── Load profile ───────────────────────────────────────────
   React.useEffect(() => {
@@ -47,6 +70,7 @@ export default function YouPage() {
       .then((p: AthleteProfile) => {
         if (!p?.id) return;
         setProfile(p);
+        setDisplayName(p.display_name ?? "");
         setMeetDate(p.meet_date ?? "");
         setGender((p.gender ?? "") as "male" | "female" | "");
         setBodyweight(p.bodyweight_kg ? String(p.bodyweight_kg) : "");
@@ -60,6 +84,7 @@ export default function YouPage() {
         const mg = Array.isArray(p.mental_goals) ? p.mental_goals : [];
         setMentalGoals([mg[0] ?? "", mg[1] ?? "", mg[2] ?? ""]);
         setTrainingDays(p.training_days_per_week ?? null);
+        setCoachId(p.coach_id ?? null);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -131,22 +156,39 @@ export default function YouPage() {
 
       {/* ── Identity card ───────────────────────────────────── */}
       {profile && (
-        <div className="flex items-center gap-4 rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-6">
-          {profile.avatar_url ? (
-            <img src={profile.avatar_url} alt={profile.display_name}
-              className="w-12 h-12 rounded-full object-cover" />
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
-              <span className="font-saira text-lg font-bold text-purple-300">
-                {(profile.display_name?.[0] ?? "?").toUpperCase()}
-              </span>
-            </div>
-          )}
-          <div>
-            <p className="font-saira text-base font-semibold text-white">{profile.display_name}</p>
-            <span className="inline-block mt-0.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.16em] text-purple-300">
+        <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-6">
+          <div className="flex items-center gap-4 mb-4">
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt={profile.display_name}
+                className="w-12 h-12 rounded-full object-cover" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
+                <span className="font-saira text-lg font-bold text-purple-300">
+                  {(displayName?.[0] ?? profile.display_name?.[0] ?? "?").toUpperCase()}
+                </span>
+              </div>
+            )}
+            <span className="inline-block rounded-full border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.16em] text-purple-300">
               {profile.role}
             </span>
+          </div>
+          <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
+            Display name
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              maxLength={80}
+              placeholder="Your name"
+              className="flex-1 rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
+            />
+            <SaveButton
+              label={btnLabel("name")}
+              disabled={!!savingSection || !displayName.trim()}
+              onClick={() => save("name", { display_name: displayName.trim() })}
+            />
           </div>
         </div>
       )}
@@ -342,19 +384,128 @@ export default function YouPage() {
         />
       </Section>
 
-      {/* ── Coach status ─────────────────────────────────────── */}
+      {/* ── Coach picker ─────────────────────────────────────── */}
       <Section label="Coach">
-        {profile?.coach_id ? (
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-            <p className="font-saira text-sm text-emerald-300">Connected to your coach</p>
-          </div>
-        ) : (
-          <p className="font-saira text-sm text-zinc-500">
-            Not connected.{" "}
-            <span className="text-zinc-400">Ask your coach for an invite link.</span>
-          </p>
-        )}
+        {(() => {
+          const currentCoach = coaches.find((c) => c.id === coachId);
+          const showStatic = !showCoachPicker;
+
+          const openPicker = () => {
+            setShowCoachPicker(true);
+            if (coachesLoaded) return;
+            setLoadingCoaches(true);
+            fetch("/api/coaches")
+              .then((r) => r.json())
+              .then((data: CoachOption[]) => setCoaches(Array.isArray(data) ? data : []))
+              .catch(() => {})
+              .finally(() => {
+                setCoachesLoaded(true);
+                setLoadingCoaches(false);
+              });
+          };
+
+          const pickCoach = (id: string | null) => {
+            setCoachId(id);
+            save("coach", { coach_id: id });
+            setShowCoachPicker(false);
+          };
+
+          if (showStatic) {
+            return (
+              <>
+                {coachId ? (
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                    <p className="font-saira text-sm text-emerald-300">
+                      {currentCoach
+                        ? `Connected to ${currentCoach.display_name}`
+                        : "Connected to your coach"}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="font-saira text-sm text-zinc-500 mb-3">Not connected.</p>
+                )}
+                <button
+                  type="button"
+                  onClick={openPicker}
+                  className="rounded-xl border border-white/10 bg-[#0D0B14] hover:border-purple-500/40 hover:text-white px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400 transition"
+                >
+                  {coachId ? "Change coach" : "Choose a coach"}
+                </button>
+              </>
+            );
+          }
+
+          return (
+            <>
+              {loadingCoaches ? (
+                <div className="flex justify-center py-6">
+                  <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => pickCoach(null)}
+                    className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition ${
+                      coachId === null
+                        ? "border-purple-500 bg-purple-500/10"
+                        : "border-white/10 bg-[#0D0B14] hover:border-white/20"
+                    }`}
+                  >
+                    <div className="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                      <span className="font-saira text-xs text-zinc-400">–</span>
+                    </div>
+                    <p className="font-saira text-sm font-semibold text-white">No coach</p>
+                    {coachId === null && (
+                      <span className="ml-auto text-purple-400 text-sm">✓</span>
+                    )}
+                  </button>
+                  {coaches.map((coach) => (
+                    <button
+                      key={coach.id}
+                      type="button"
+                      onClick={() => pickCoach(coach.id)}
+                      className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition ${
+                        coachId === coach.id
+                          ? "border-purple-500 bg-purple-500/10"
+                          : "border-white/10 bg-[#0D0B14] hover:border-white/20"
+                      }`}
+                    >
+                      {coach.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={coach.avatar_url}
+                          alt={coach.display_name}
+                          className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
+                          <span className="font-saira text-[10px] font-bold text-purple-300">
+                            {initials(coach.display_name)}
+                          </span>
+                        </div>
+                      )}
+                      <p className="font-saira text-sm font-semibold text-white">
+                        {coach.display_name}
+                      </p>
+                      {coachId === coach.id && (
+                        <span className="ml-auto text-purple-400 text-sm">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowCoachPicker(false)}
+                className="mt-3 font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
+              >
+                Cancel
+              </button>
+            </>
+          );
+        })()}
       </Section>
 
       {/* ── Sign out ─────────────────────────────────────────── */}

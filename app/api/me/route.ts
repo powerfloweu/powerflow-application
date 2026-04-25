@@ -80,6 +80,7 @@ export async function PATCH(req: NextRequest) {
     "mental_goals",
     "training_days_per_week",
     "onboarding_complete",
+    "coach_id",
   ];
 
   const patch: Record<string, unknown> = {};
