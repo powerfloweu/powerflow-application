@@ -628,6 +628,14 @@ export default function ToolsPage() {
               Open →
             </Link>
           </div>
+          <div className="mt-2 text-center">
+            <Link
+              href="/scripts"
+              className="font-saira text-xs text-zinc-500 hover:text-zinc-300 transition"
+            >
+              📜 My saved scripts →
+            </Link>
+          </div>
         </div>
       )}
 

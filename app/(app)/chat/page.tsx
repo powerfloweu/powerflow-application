@@ -12,21 +12,142 @@ type ChatMessage = {
   content: string;
 };
 
-// ── Markdown-lite renderer ────────────────────────────────────────────────────
-// Renders **bold**, newlines → <br>, and fenced code blocks.
+// ── ScriptBlock ───────────────────────────────────────────────────────────────
 
-function renderContent(text: string): React.ReactNode {
+function ScriptBlock({
+  content,
+  blockId,
+  playingId,
+  onPlay,
+  onStop,
+}: {
+  content: string;
+  blockId: string;
+  playingId: string | null;
+  onPlay: (blockId: string, content: string) => void;
+  onStop: () => void;
+}) {
+  const [saving, setSaving] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+
+  // Extract title from first line if it's in [TITLE] format or ALL CAPS
+  const lines = content.trim().split("\n");
+  const firstLine = lines[0].trim();
+  const hasTitle =
+    (firstLine.startsWith("[") && firstLine.endsWith("]")) ||
+    firstLine === firstLine.toUpperCase();
+  const title = hasTitle ? firstLine.replace(/^\[|\]$/g, "") : "";
+  const body = hasTitle ? lines.slice(1).join("\n").trim() : content.trim();
+
+  const suggestedTitle = title || "Script";
+  const playing = playingId === blockId;
+
+  const handleSave = async () => {
+    const name = window.prompt("Name this script:", suggestedTitle);
+    if (!name) return;
+    setSaving(true);
+    try {
+      await fetch("/api/scripts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: name, content }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // ignore
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="border border-purple-500/20 bg-purple-500/5 rounded-2xl p-4 my-3">
+      {title && (
+        <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.22em] text-purple-400 mb-3">
+          ✦ {title}
+        </p>
+      )}
+      <p className="font-saira text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap mb-4">
+        {body}
+      </p>
+      <div className="flex items-center gap-3">
+        {playing ? (
+          <button
+            type="button"
+            onClick={onStop}
+            className="border border-purple-500/30 bg-purple-500/10 text-purple-300 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider animate-pulse"
+          >
+            ◼ Stop
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onPlay(blockId, content)}
+            className="border border-purple-500/30 bg-purple-500/10 text-purple-300 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:bg-purple-500/20 transition"
+          >
+            ▶ Play
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="border border-white/10 text-zinc-400 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:text-white hover:border-white/30 transition disabled:opacity-50"
+        >
+          {saved ? "✓ Saved" : saving ? "Saving…" : "↓ Save to library"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Markdown-lite renderer ────────────────────────────────────────────────────
+// Renders **bold**, newlines → <br>, ```script blocks → ScriptBlock,
+// and other fenced code blocks → <pre>.
+
+function renderContent(
+  text: string,
+  scriptProps: {
+    playingId: string | null;
+    onPlay: (blockId: string, content: string) => void;
+    onStop: () => void;
+  }
+): React.ReactNode {
   // Split on fenced code blocks first
   const parts = text.split(/(```[\s\S]*?```)/g);
   return parts.map((part, i) => {
     if (part.startsWith("```") && part.endsWith("```")) {
-      const inner = part.slice(3, -3).replace(/^[^\n]*\n/, ""); // strip language hint
+      // Determine language hint
+      const afterFence = part.slice(3); // strip opening ```
+      const newlineIdx = afterFence.indexOf("\n");
+      const lang =
+        newlineIdx >= 0 ? afterFence.slice(0, newlineIdx).trim() : "";
+      const inner =
+        newlineIdx >= 0 ? afterFence.slice(newlineIdx + 1) : afterFence;
+      const body = inner.endsWith("```")
+        ? inner.slice(0, -3)
+        : inner;
+
+      if (lang === "script") {
+        return (
+          <ScriptBlock
+            key={i}
+            content={body.trim()}
+            blockId={`script-${i}`}
+            playingId={scriptProps.playingId}
+            onPlay={scriptProps.onPlay}
+            onStop={scriptProps.onStop}
+          />
+        );
+      }
+
       return (
         <pre
           key={i}
           className="bg-[#0e0b15] rounded-lg p-3 text-xs mt-2 whitespace-pre-wrap font-mono overflow-x-auto"
         >
-          {inner}
+          {body}
         </pre>
       );
     }
@@ -130,6 +251,10 @@ export default function ChatPage() {
   const [showClearConfirm, setShowClearConfirm] = React.useState(false);
   const [clearing, setClearing] = React.useState(false);
 
+  // ── Audio / script state ───────────────────────────────────────────────────
+  const [playingScriptId, setPlayingScriptId] = React.useState<string | null>(null);
+  const currentAudio = React.useRef<HTMLAudioElement | null>(null);
+
   const bottomRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
 
@@ -147,11 +272,13 @@ export default function ChatPage() {
         }
         if (Array.isArray(history)) {
           setMessages(
-            history.map((m: { id: string; role: "user" | "assistant"; content: string }) => ({
-              id: m.id,
-              role: m.role,
-              content: m.content,
-            }))
+            history.map(
+              (m: { id: string; role: "user" | "assistant"; content: string }) => ({
+                id: m.id,
+                role: m.role,
+                content: m.content,
+              })
+            )
           );
         }
       })
@@ -180,6 +307,60 @@ export default function ChatPage() {
     const el = e.target;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  };
+
+  // ── Audio playback ─────────────────────────────────────────────────────────
+
+  const handlePlay = async (blockId: string, content: string) => {
+    // Stop any current audio
+    if (currentAudio.current) {
+      currentAudio.current.pause();
+      currentAudio.current = null;
+      setPlayingScriptId(null);
+      // If clicking the same block, just stop
+      if (playingScriptId === blockId) return;
+    }
+
+    setPlayingScriptId(blockId);
+
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: content }),
+      });
+
+      if (!res.ok) throw new Error("TTS failed");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      currentAudio.current = audio;
+
+      audio.onended = () => {
+        setPlayingScriptId(null);
+        currentAudio.current = null;
+        URL.revokeObjectURL(url);
+      };
+      audio.onerror = () => {
+        setPlayingScriptId(null);
+        currentAudio.current = null;
+        URL.revokeObjectURL(url);
+      };
+
+      await audio.play();
+    } catch {
+      setPlayingScriptId(null);
+      currentAudio.current = null;
+    }
+  };
+
+  const handleStop = () => {
+    if (currentAudio.current) {
+      currentAudio.current.pause();
+      currentAudio.current = null;
+    }
+    setPlayingScriptId(null);
   };
 
   // ── Send message ───────────────────────────────────────────────────────────
@@ -212,10 +393,10 @@ export default function ChatPage() {
     }).catch(() => {});
 
     // Build conversation history for the API
-    const conversationHistory = [
-      ...messages,
-      userMsg,
-    ].map((m) => ({ role: m.role, content: m.content }));
+    const conversationHistory = [...messages, userMsg].map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
 
     try {
       const res = await fetch("/api/chat", {
@@ -307,6 +488,14 @@ export default function ChatPage() {
     }, 0);
   };
 
+  // ── Script render props (stable references via useCallback) ────────────────
+
+  const scriptRenderProps = {
+    playingId: playingScriptId,
+    onPlay: handlePlay,
+    onStop: handleStop,
+  };
+
   // ── Loading state ──────────────────────────────────────────────────────────
 
   if (loadingHistory) {
@@ -336,14 +525,22 @@ export default function ChatPage() {
             Coach AI
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowClearConfirm(true)}
-          disabled={!hasMessages || streaming}
-          className="font-saira text-[11px] text-zinc-600 hover:text-zinc-400 uppercase tracking-[0.14em] transition disabled:opacity-30"
-        >
-          Clear
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/scripts"
+            className="font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.14em] transition"
+          >
+            📜 Scripts
+          </Link>
+          <button
+            type="button"
+            onClick={() => setShowClearConfirm(true)}
+            disabled={!hasMessages || streaming}
+            className="font-saira text-[11px] text-zinc-600 hover:text-zinc-400 uppercase tracking-[0.14em] transition disabled:opacity-30"
+          >
+            Clear
+          </button>
+        </div>
       </header>
 
       {/* ── Clear confirmation dialog ──────────────────────────── */}
@@ -396,23 +593,24 @@ export default function ChatPage() {
                       : "bg-[#17131F] border border-white/8 rounded-2xl rounded-tl-sm"
                   }`}
                 >
-                  {msg.role === "assistant" ? renderContent(msg.content) : msg.content}
+                  {msg.role === "assistant"
+                    ? renderContent(msg.content, scriptRenderProps)
+                    : msg.content}
                 </div>
               </div>
             ))}
 
             {/* Streaming AI response */}
-            {streaming && (
-              streamingContent ? (
+            {streaming &&
+              (streamingContent ? (
                 <div className="flex justify-start mb-4">
                   <div className="bg-[#17131F] border border-white/8 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] font-saira text-sm text-zinc-200">
-                    {renderContent(streamingContent)}
+                    {renderContent(streamingContent, scriptRenderProps)}
                   </div>
                 </div>
               ) : (
                 <TypingIndicator />
-              )
-            )}
+              ))}
 
             <div ref={bottomRef} />
           </div>
