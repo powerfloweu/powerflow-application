@@ -202,6 +202,26 @@ export default function TodayPage() {
     );
   }
 
+  // ── Full-screen day picker (no entry yet for today) ──────────────────────────
+  if (todayEntry === null) {
+    return (
+      <div className="min-h-screen bg-[#050608]">
+        <DayPickerScreen onSelect={openCheckIn} />
+        <CheckInSheet
+          open={checkInOpen}
+          onClose={() => setCheckInOpen(false)}
+          checkInMode={checkInMode}
+          moodRating={moodRating}
+          setMoodRating={setMoodRating}
+          answers={answers}
+          setAnswers={setAnswers}
+          saving={checkInSaving}
+          onSave={saveCheckIn}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto">
 
@@ -216,140 +236,44 @@ export default function TodayPage() {
         <p className="font-saira text-sm text-zinc-500">{formatDate()}</p>
       </div>
 
-      {/* ── Daily check-in card ───────────────────────────────── */}
-      {todayEntry === null ? (
-        <div className="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-5 mb-5">
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400">
-              LOG TODAY
-            </p>
-            <ReminderPermissionButton />
-          </div>
-          <p className="font-saira text-sm text-zinc-300 mb-3">
-            {new Date().toLocaleDateString("en-GB", { weekday: "long" })} — training day or rest day?
-          </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => openCheckIn("training")}
-              className="flex-1 rounded-xl border border-purple-500/40 bg-purple-600/20 py-2.5 font-saira text-xs font-semibold text-purple-200 hover:bg-purple-600/30 transition"
-            >
-              🏋️ Training Day
-            </button>
-            <button
-              type="button"
-              onClick={() => openCheckIn("rest")}
-              className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 font-saira text-xs font-semibold text-zinc-300 hover:bg-white/10 transition"
-            >
-              😴 Rest Day
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 mb-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="font-saira text-xs font-semibold text-emerald-300">Today ✓</span>
-            <span className={`rounded-full border px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] ${
-              todayEntry.is_training_day
-                ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
-                : "border-zinc-600/40 bg-zinc-600/10 text-zinc-400"
-            }`}>
-              {todayEntry.is_training_day ? "Training" : "Rest"}
+      {/* ── Today ✓ card ──────────────────────────────────────── */}
+      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 mb-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="font-saira text-xs font-semibold text-emerald-300">Today ✓</span>
+          <span className={`rounded-full border px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] ${
+            todayEntry.is_training_day
+              ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
+              : "border-zinc-600/40 bg-zinc-600/10 text-zinc-400"
+          }`}>
+            {todayEntry.is_training_day ? "Training" : "Rest"}
+          </span>
+          {todayEntry.mood_rating !== null && (
+            <span className="font-saira text-xs text-zinc-400">
+              Mood: {todayEntry.mood_rating}/10
             </span>
-            {todayEntry.mood_rating !== null && (
-              <span className="font-saira text-xs text-zinc-400">
-                Mood: {todayEntry.mood_rating}/10
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => openCheckIn(todayEntry.is_training_day ? "training" : "rest")}
-            className="flex-shrink-0 font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
-          >
-            Edit
-          </button>
+          )}
         </div>
-      )}
+        <button
+          type="button"
+          onClick={() => openCheckIn(todayEntry.is_training_day ? "training" : "rest")}
+          className="flex-shrink-0 font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
+        >
+          Edit
+        </button>
+      </div>
 
-      {/* ── Check-in bottom sheet ──────────────────────────────── */}
-      <BottomSheet
+      {/* ── Check-in sheet (editing) ───────────────────────────── */}
+      <CheckInSheet
         open={checkInOpen}
         onClose={() => setCheckInOpen(false)}
-        title={checkInMode === "training" ? "Training Day" : "Rest Day"}
-        footer={
-          <button
-            type="button"
-            onClick={saveCheckIn}
-            disabled={!moodRating || checkInSaving}
-            className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-3 font-saira text-xs font-semibold uppercase tracking-[0.16em] text-white transition"
-          >
-            {checkInSaving ? "Saving…" : "Save"}
-          </button>
-        }
-      >
-        {/* Mood rating */}
-        <div className="mb-5">
-          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
-            Rate your mood
-          </p>
-          <div className="space-y-2">
-            {[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].map((row, ri) => (
-              <div key={ri} className="flex gap-2">
-                {row.map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setMoodRating(n)}
-                    className={`flex-1 rounded-xl border py-2 font-saira text-sm font-semibold transition ${
-                      moodRating === n
-                        ? "border-purple-500 bg-purple-600 text-white"
-                        : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Training-day questions */}
-        {checkInMode === "training" && (
-          <div className="space-y-4">
-            {TRAINING_QUESTIONS.map((q) => (
-              <div key={q.key}>
-                <label className="block font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-1.5">
-                  {q.label}
-                </label>
-                <textarea
-                  rows={3}
-                  value={answers[q.key] ?? ""}
-                  onChange={(e) => setAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
-                  className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Rest-day note */}
-        {checkInMode === "rest" && (
-          <div>
-            <label className="block font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-1.5">
-              Any notes for today? (optional)
-            </label>
-            <textarea
-              rows={3}
-              value={answers["notes"] ?? ""}
-              onChange={(e) => setAnswers((prev) => ({ ...prev, notes: e.target.value }))}
-              className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
-              placeholder="How are you feeling?"
-            />
-          </div>
-        )}
-      </BottomSheet>
+        checkInMode={checkInMode}
+        moodRating={moodRating}
+        setMoodRating={setMoodRating}
+        answers={answers}
+        setAnswers={setAnswers}
+        saving={checkInSaving}
+        onSave={saveCheckIn}
+      />
 
       {/* ── Phase block ───────────────────────────────────────── */}
       {phase ? (
@@ -396,83 +320,11 @@ export default function TodayPage() {
         </Link>
       )}
 
-      {/* ── This week (course card) ────────────────────────────── */}
-      {showCourseCard && courseWeek && (
-        <div className="relative rounded-2xl border border-purple-500/25 bg-[#17131F] p-5 mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400">
-              This week · W{courseWeekNum}
-            </p>
-            <button
-              type="button"
-              onClick={dismissCourseCard}
-              className="text-zinc-600 hover:text-zinc-400 transition text-xs ml-2"
-              aria-label="Dismiss for today"
-            >
-              ✕
-            </button>
-          </div>
-          <p className="font-saira text-base font-bold text-white mb-1">{courseWeek.title}</p>
-          <p className="font-saira text-xs text-zinc-500 mb-3">{courseWeek.theme}</p>
-
-          {/* 3-step dots */}
-          <div className="flex items-center gap-3 mb-4">
-            {(["video", "exercise", "quiz"] as const).map((step) => {
-              const row = progressMap[courseWeekNum!];
-              const done = stepsComplete(row)[step];
-              return (
-                <div key={step} className="flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${done ? "bg-purple-400" : "bg-white/15"}`} />
-                  <span className="font-saira text-[10px] uppercase tracking-[0.12em] text-zinc-600">
-                    {step === "quiz" ? "Q&A" : step.charAt(0).toUpperCase() + step.slice(1)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          <Link
-            href={`/course/w/${courseWeekNum}`}
-            className="inline-flex items-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-500 transition px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white"
-          >
-            Continue →
-          </Link>
-        </div>
-      )}
-
       {/* ── Strength goals + GL ───────────────────────────────── */}
       <StrengthCard profile={profile} glPoints={glPoints} />
 
       {/* ── Mental goals ─────────────────────────────────────── */}
       <MentalGoalsCard goals={profile?.mental_goals ?? []} />
-
-      {/* ── Quick actions ─────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <Link
-          href="/journal"
-          className="flex flex-col items-start gap-2 rounded-2xl border border-white/5 bg-[#17131F] p-4 hover:bg-[#1e1828] transition group"
-        >
-          <span className="text-xl">✏️</span>
-          <div>
-            <p className="font-saira text-sm font-semibold text-white group-hover:text-purple-300 transition">
-              Log entry
-            </p>
-            <p className="font-saira text-[10px] text-zinc-500">Capture your mindset</p>
-          </div>
-        </Link>
-        <Link
-          href="/you"
-          className="flex flex-col items-start gap-2 rounded-2xl border border-white/5 bg-[#17131F] p-4 hover:bg-[#1e1828] transition group"
-        >
-          <span className="text-xl">⚙️</span>
-          <div>
-            <p className="font-saira text-sm font-semibold text-white group-hover:text-purple-300 transition">
-              Profile
-            </p>
-            <p className="font-saira text-[10px] text-zinc-500">Settings &amp; goals</p>
-          </div>
-        </Link>
-      </div>
 
       {/* ── Coach badge ───────────────────────────────────────── */}
       {profile?.coach_id && (
@@ -516,6 +368,146 @@ export default function TodayPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ── Day picker full-screen ────────────────────────────────────────────────────
+
+function DayPickerScreen({ onSelect }: { onSelect: (mode: "training" | "rest") => void }) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6">
+      <div className="w-full max-w-sm">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-2 text-center">
+          POWERFLOW · TODAY
+        </p>
+        <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-2 text-center">
+          {new Date().toLocaleDateString("en-GB", { weekday: "long" })}
+        </h1>
+        <p className="font-saira text-sm text-zinc-500 mb-10 text-center">
+          How&apos;s today looking?
+        </p>
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={() => onSelect("training")}
+            className="w-full rounded-2xl border border-purple-500/40 bg-purple-600/15 hover:bg-purple-600/25 py-5 font-saira text-base font-bold text-white transition"
+          >
+            🏋️ Training Day
+          </button>
+          <button
+            type="button"
+            onClick={() => onSelect("rest")}
+            className="w-full rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 py-5 font-saira text-base font-bold text-zinc-300 transition"
+          >
+            😴 Rest Day
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Check-in bottom sheet (shared by picker + edit) ───────────────────────────
+
+function CheckInSheet({
+  open,
+  onClose,
+  checkInMode,
+  moodRating,
+  setMoodRating,
+  answers,
+  setAnswers,
+  saving,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  checkInMode: "training" | "rest" | null;
+  moodRating: number | null;
+  setMoodRating: (n: number) => void;
+  answers: Record<string, string>;
+  setAnswers: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  saving: boolean;
+  onSave: () => void;
+}) {
+  return (
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title={checkInMode === "training" ? "Training Day" : "Rest Day"}
+      footer={
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={!moodRating || saving}
+          className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-3 font-saira text-xs font-semibold uppercase tracking-[0.16em] text-white transition"
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+      }
+    >
+      {/* Mood rating */}
+      <div className="mb-5">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
+          Rate your mood
+        </p>
+        <div className="space-y-2">
+          {[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].map((row, ri) => (
+            <div key={ri} className="flex gap-2">
+              {row.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setMoodRating(n)}
+                  className={`flex-1 rounded-xl border py-2 font-saira text-sm font-semibold transition ${
+                    moodRating === n
+                      ? "border-purple-500 bg-purple-600 text-white"
+                      : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Training-day questions */}
+      {checkInMode === "training" && (
+        <div className="space-y-4">
+          {TRAINING_QUESTIONS.map((q) => (
+            <div key={q.key}>
+              <label className="block font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-1.5">
+                {q.label}
+              </label>
+              <textarea
+                rows={3}
+                value={answers[q.key] ?? ""}
+                onChange={(e) => setAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
+                className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Rest-day note */}
+      {checkInMode === "rest" && (
+        <div>
+          <label className="block font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-1.5">
+            Any notes for today? (optional)
+          </label>
+          <textarea
+            rows={3}
+            value={answers["notes"] ?? ""}
+            onChange={(e) => setAnswers((prev) => ({ ...prev, notes: e.target.value }))}
+            className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
+            placeholder="How are you feeling?"
+          />
+        </div>
+      )}
+    </BottomSheet>
   );
 }
 

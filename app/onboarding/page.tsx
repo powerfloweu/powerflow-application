@@ -25,10 +25,10 @@ function initials(name: string): string {
 }
 
 const inputCls =
-  "w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2.5 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 placeholder-zinc-600";
+  "w-full rounded-xl border border-purple-500/25 bg-[#0D0B14] px-3 py-3 font-saira text-sm text-white focus:outline-none focus:border-purple-500/60 placeholder-zinc-600";
 
 const textareaCls =
-  "w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2.5 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 placeholder-zinc-600 resize-none";
+  "w-full rounded-xl border border-purple-500/25 bg-[#0D0B14] px-3 py-3 font-saira text-sm text-white focus:outline-none focus:border-purple-500/60 placeholder-zinc-600 resize-none";
 
 const pillCls = (active: boolean) =>
   `flex-1 rounded-xl border py-3 font-saira text-sm font-semibold transition ${
@@ -69,7 +69,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-1.5">
+    <p className="font-saira text-sm font-semibold text-purple-300 mb-2">
       {children}
     </p>
   );
@@ -562,7 +562,7 @@ function Step6({
           Your coach
         </h2>
         <p className="font-saira text-sm text-zinc-500">
-          Select your PowerFlow coach, or continue without one for now.
+          Is your coach on PowerFlow? Select them below. If not — or if you train solo — just skip.
         </p>
       </div>
 
@@ -582,11 +582,11 @@ function Step6({
             }`}
           >
             <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
-              <span className="font-saira text-xs text-zinc-400">–</span>
+              <span className="font-saira text-lg text-zinc-400">–</span>
             </div>
             <div>
-              <p className="font-saira text-sm font-semibold text-white">No coach yet</p>
-              <p className="font-saira text-[10px] text-zinc-500">You can connect later in your profile</p>
+              <p className="font-saira text-sm font-semibold text-white">No coach / skip for now</p>
+              <p className="font-saira text-xs text-zinc-500">Training solo, or your coach isn&apos;t on PowerFlow yet</p>
             </div>
             {selectedCoachId === null && (
               <span className="ml-auto text-purple-400 text-sm">✓</span>
@@ -807,7 +807,7 @@ export default function OnboardingPage() {
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="font-saira text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500 hover:text-zinc-300 disabled:opacity-40 transition"
+            className="font-saira text-xs font-semibold text-zinc-300 hover:text-white border border-white/15 hover:border-white/30 rounded-lg px-3 py-1.5 transition disabled:opacity-40"
           >
             Skip setup
           </button>
@@ -876,34 +876,45 @@ export default function OnboardingPage() {
         )}
       </div>
 
-      {/* Footer button */}
+      {/* Footer buttons */}
       <div className="px-5 pb-10 pt-4 max-w-lg mx-auto w-full">
-        {step < TOTAL_STEPS ? (
-          <button
-            type="button"
-            onClick={() => setStep((s) => s + 1)}
-            disabled={!canNext}
-            className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed py-3.5 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition"
-          >
-            Next →
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 py-3.5 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition flex items-center justify-center gap-2"
-          >
-            {submitting ? (
-              <>
-                <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                Setting up…
-              </>
-            ) : (
-              "Complete setup →"
-            )}
-          </button>
-        )}
+        <div className="flex gap-3">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={() => setStep((s) => s - 1)}
+              className="rounded-xl border border-white/10 bg-white/5 hover:border-purple-500/40 hover:text-white py-3.5 px-5 font-saira text-sm font-semibold text-zinc-400 transition"
+            >
+              ← Back
+            </button>
+          )}
+          {step < TOTAL_STEPS ? (
+            <button
+              type="button"
+              onClick={() => setStep((s) => s + 1)}
+              disabled={!canNext}
+              className="flex-1 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed py-3.5 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition"
+            >
+              Next →
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="flex-1 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 py-3.5 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition flex items-center justify-center gap-2"
+            >
+              {submitting ? (
+                <>
+                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  Setting up…
+                </>
+              ) : (
+                "Complete setup →"
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
