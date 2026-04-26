@@ -79,7 +79,7 @@ const TOOLS = [
         id: "pmr",
         title: "Progressive Muscle Relaxation",
         tagline: "Full-body tension release",
-        icon: "~",
+        icon: "PR",
         color: "teal",
         duration: "~12 min",
         intro: "Developed by Edmund Jacobson (1938), PMR works by systematically tensing and releasing muscle groups to produce deep physiological and psychological relaxation. In sport contexts it has been shown to lower pre-competition anxiety, improve sleep quality before meets, and accelerate recovery between sessions — with measurable effects after just a few weeks of daily practice.",
@@ -139,6 +139,105 @@ const COLOR_MAP: Record<ToolColor, {
     player:  "bg-teal-600 hover:bg-teal-500",
   },
 };
+
+// ── Visualization keywords ────────────────────────────────────────────────────
+
+function VizKeywords({ toolId }: { toolId: string }) {
+  const key = `viz-kw-${toolId}`;
+
+  const [keywords, setKeywords] = React.useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(key) ?? "[]"); } catch { return []; }
+  });
+  const [editing, setEditing] = React.useState(false);
+  const [drafts, setDrafts]   = React.useState(["", "", ""]);
+
+  const openEdit = () => {
+    setDrafts([keywords[0] ?? "", keywords[1] ?? "", keywords[2] ?? ""]);
+    setEditing(true);
+  };
+
+  const save = () => {
+    const filtered = drafts.map((s) => s.trim()).filter(Boolean).slice(0, 3);
+    setKeywords(filtered);
+    localStorage.setItem(key, JSON.stringify(filtered));
+    setEditing(false);
+  };
+
+  const placeholders = ["e.g. tight", "e.g. explode", "e.g. breathe"];
+
+  if (editing || keywords.length === 0) {
+    return (
+      <div className="mb-5 rounded-xl border border-purple-500/15 bg-purple-500/5 p-4">
+        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-purple-300 mb-3">
+          Your focus cues {keywords.length === 0 ? "(1–3 keywords)" : ""}
+        </p>
+        <div className="flex gap-2 mb-3 flex-wrap">
+          {[0, 1, 2].map((i) => (
+            <input
+              key={i}
+              type="text"
+              value={drafts[i]}
+              onChange={(e) => {
+                const next = [...drafts];
+                next[i] = e.target.value;
+                setDrafts(next);
+              }}
+              placeholder={placeholders[i]}
+              maxLength={20}
+              className="flex-1 min-w-[80px] rounded-lg border border-white/10 bg-[#0D0B14] px-3 py-1.5 font-saira text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-purple-500/50"
+            />
+          ))}
+        </div>
+        <div className="flex gap-3 items-center">
+          <button
+            type="button"
+            onClick={save}
+            disabled={drafts.every((s) => !s.trim())}
+            className="rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-4 py-1.5 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition"
+          >
+            Save
+          </button>
+          {keywords.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-5">
+      <div className="flex items-center gap-2 mb-2">
+        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+          Your cues
+        </p>
+        <button
+          type="button"
+          onClick={openEdit}
+          className="font-saira text-[10px] text-zinc-600 hover:text-purple-400 underline transition"
+        >
+          Edit
+        </button>
+      </div>
+      <div className="flex gap-1.5 flex-wrap">
+        {keywords.map((kw, i) => (
+          <span
+            key={i}
+            className="rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-0.5 font-saira text-xs text-purple-300"
+          >
+            {kw}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ── Audio player ──────────────────────────────────────────────────────────────
 //
@@ -300,10 +399,22 @@ export default function ToolsPage() {
   const [openId, setOpenId]             = React.useState<string | null>(null);
   const [requestText, setRequestText]   = React.useState("");
   const [requestState, setRequestState] = React.useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [favoriteRelaxId, setFavoriteRelaxId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const stored = localStorage.getItem("relax-favorite");
+    if (stored) setFavoriteRelaxId(stored);
+  }, []);
 
   const toggle = (id: string) => {
-    // Pause any playing audio when closing
     setOpenId((prev) => (prev === id ? null : id));
+  };
+
+  const toggleFavorite = (id: string) => {
+    const next = favoriteRelaxId === id ? null : id;
+    setFavoriteRelaxId(next);
+    if (next) localStorage.setItem("relax-favorite", next);
+    else localStorage.removeItem("relax-favorite");
   };
 
   const submitRequest = async () => {
@@ -359,26 +470,46 @@ export default function ToolsPage() {
                       open ? `${c.border} ${c.bg}` : "border-white/5 bg-[#17131F]"
                     }`}
                   >
-                    {/* Header */}
-                    <button
-                      type="button"
-                      onClick={() => toggle(tool.id)}
-                      className="w-full flex items-center gap-4 px-5 py-4 text-left"
-                    >
-                      <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-saira text-[11px] font-bold border ${c.icon}`}>
-                        {tool.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-saira text-sm font-semibold text-white">{tool.title}</p>
-                        <p className="font-saira text-[11px] text-zinc-500">
-                          {tool.tagline}
-                          <span className="ml-2 text-zinc-700">{tool.duration}</span>
-                        </p>
-                      </div>
-                      <span className={`font-saira text-sm text-zinc-600 transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
-                        →
-                      </span>
-                    </button>
+                    {/* Header row */}
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => toggle(tool.id)}
+                        className="flex-1 flex items-center gap-4 pl-5 pr-3 py-4 text-left"
+                      >
+                        <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-saira text-[11px] font-bold border ${c.icon}`}>
+                          {tool.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-saira text-sm font-semibold text-white">{tool.title}</p>
+                          <p className="font-saira text-[11px] text-zinc-500">
+                            {tool.tagline}
+                            <span className="ml-2 text-zinc-700">{tool.duration}</span>
+                          </p>
+                        </div>
+                        <span className={`font-saira text-sm text-zinc-600 transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
+                          →
+                        </span>
+                      </button>
+
+                      {/* Star — relaxation tools only */}
+                      {section === "Relaxation" && (
+                        <button
+                          type="button"
+                          onClick={() => toggleFavorite(tool.id)}
+                          aria-label={favoriteRelaxId === tool.id ? "Remove favourite" : "Mark as favourite"}
+                          className="pr-5 pl-2 py-4 flex-shrink-0 transition-colors"
+                        >
+                          <span className={`text-lg leading-none ${
+                            favoriteRelaxId === tool.id
+                              ? "text-amber-400"
+                              : "text-zinc-700 hover:text-zinc-400"
+                          }`}>
+                            {favoriteRelaxId === tool.id ? "★" : "☆"}
+                          </span>
+                        </button>
+                      )}
+                    </div>
 
                     {/* Expanded */}
                     {open && (
@@ -399,6 +530,11 @@ export default function ToolsPage() {
                             </li>
                           ))}
                         </ul>
+
+                        {/* Personal cues — visualizations only */}
+                        {section === "Visualizations" && (
+                          <VizKeywords toolId={tool.id} />
+                        )}
 
                         {/* Audio player */}
                         <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
