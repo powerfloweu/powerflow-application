@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
 // audioUrl: swap null for the hosted file URL when recordings are ready.
@@ -521,6 +522,7 @@ export default function ToolsPage() {
   const [vizKeywordsMap, setVizKeywordsMap] = React.useState<Record<string, string[]>>({});
   const [affirmations, setAffirmations]     = React.useState<string[]>([]);
   const [profileLoaded, setProfileLoaded]   = React.useState(false);
+  const [aiAccess, setAiAccess]             = React.useState(false);
 
   React.useEffect(() => {
     const stored = localStorage.getItem("relax-favorite");
@@ -533,6 +535,7 @@ export default function ToolsPage() {
       .then((p) => {
         setVizKeywordsMap(p.viz_keywords ?? {});
         setAffirmations(Array.isArray(p.affirmations) ? p.affirmations : []);
+        setAiAccess(!!p.ai_access);
         setProfileLoaded(true);
       })
       .catch(() => setProfileLoaded(true));
@@ -602,6 +605,31 @@ export default function ToolsPage() {
           Guided audio sessions · tap to expand
         </p>
       </div>
+
+      {/* ── AI Coach card (ai_access only) ────────────────────── */}
+      {profileLoaded && aiAccess && (
+        <div className="mb-8">
+          <div className="rounded-2xl border border-purple-500/25 bg-purple-500/5 px-5 py-4 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-purple-400 text-sm">✦</span>
+                <p className="font-saira text-sm font-semibold text-white uppercase tracking-[0.1em]">
+                  AI Coach
+                </p>
+              </div>
+              <p className="font-saira text-xs text-zinc-400 leading-snug">
+                Talk to the coaching brain. Get personalized scripts and guidance.
+              </p>
+            </div>
+            <Link
+              href="/chat"
+              className="flex-shrink-0 rounded-xl bg-purple-600 hover:bg-purple-500 px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition whitespace-nowrap"
+            >
+              Open →
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Tool sections ─────────────────────────────────────── */}
       <div className="space-y-8">
