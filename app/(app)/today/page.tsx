@@ -5,13 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PhaseBadge from "@/app/components/PhaseBadge";
 import EntryCard from "@/app/components/EntryCard";
-import BottomSheet from "@/app/components/BottomSheet";
-import { computePhase, computeCourseWeek } from "@/lib/phase";
+import { computePhase } from "@/lib/phase";
 import { computeGLPoints, currentTotal, goalTotal } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
 import type { JournalEntry } from "@/lib/journal";
-import { getWeekByNum, stepsComplete, type CourseProgressRow } from "@/lib/course";
-import { TRAINING_QUESTIONS, type TrainingEntry } from "@/lib/training";
+import { type TrainingEntry } from "@/lib/training";
 import { ymdLocal } from "@/lib/date";
 import { markCheckinDone } from "@/lib/checkinReminder";
 
@@ -47,41 +45,19 @@ export default function TodayPage() {
   const router = useRouter();
   const [profile, setProfile]           = React.useState<AthleteProfile | null>(null);
   const [entries, setEntries]           = React.useState<JournalEntry[]>([]);
-  const [courseProgress, setCourseProgress] = React.useState<CourseProgressRow[]>([]);
-  const [courseCardDismissed, setCourseCardDismissed] = React.useState(false);
   const [loading, setLoading]           = React.useState(true);
 
-  // ── Training check-in state ────────────────────────────────
+  // ── Day type state ─────────────────────────────────────────
   const [todayEntry, setTodayEntry]     = React.useState<TrainingEntry | null>(null);
-  const [checkInOpen, setCheckInOpen]   = React.useState(false);
-  const [checkInMode, setCheckInMode]   = React.useState<"training" | "rest" | null>(null);
-  const [moodRating, setMoodRating]     = React.useState<number | null>(null);
-  const [answers, setAnswers]           = React.useState<Record<string, string>>({});
-  const [checkInSaving, setCheckInSaving] = React.useState(false);
-
-  // Capture ?checkin= param before data loads so we can auto-open once ready
-  const pendingCheckin = React.useRef<"training" | "rest" | null>(null);
+  const [dayTypeSaving, setDayTypeSaving] = React.useState(false);
 
   React.useEffect(() => {
-    // Check dismiss flag for today
-    const dismissed = localStorage.getItem(`course-card-dismissed-${todayKey()}`);
-    if (dismissed) setCourseCardDismissed(true);
-
-    // Capture URL param then clean it from the address bar
-    const params = new URLSearchParams(window.location.search);
-    const ci = params.get("checkin");
-    if (ci === "training" || ci === "rest") {
-      pendingCheckin.current = ci;
-      router.replace("/today", { scroll: false });
-    }
-
     Promise.all([
       fetch("/api/me").then((r) => r.json()),
       fetch("/api/journal/entries?limit=3").then((r) => r.json()),
-      fetch("/api/course/progress").then((r) => r.json()),
       fetch(`/api/training/entries?date=${todayKey()}`).then((r) => r.json()),
     ])
-      .then(([prof, ents, prog, trainingEntry]) => {
+      .then(([prof, ents, trainingEntry]) => {
         if (prof?.id) {
           setProfile(prof);
           if (prof.role === "athlete" && prof.onboarding_complete === false) {
@@ -90,103 +66,56 @@ export default function TodayPage() {
           }
         }
         setEntries(Array.isArray(ents) ? ents.slice(0, 3) : []);
-        setCourseProgress(Array.isArray(prog) ? prog : []);
         if (trainingEntry?.id) {
           setTodayEntry(trainingEntry as TrainingEntry);
-          markCheckinDone(); // clear badge / suppress tonight's notification
+          markCheckinDone();
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  // Auto-open check-in when navigated here with ?checkin= (e.g. from journal)
-  React.useEffect(() => {
-    if (!loading && pendingCheckin.current) {
-      openCheckIn(pendingCheckin.current);
-      pendingCheckin.current = null;
-    }
-  // openCheckIn is stable — defined in render scope, deps are state setters
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
-
   // Coaches go to their dashboard
   React.useEffect(() => {
     if (profile?.role === "coach") router.replace("/coach");
   }, [profile, router]);
 
-  const openCheckIn = (mode: "training" | "rest") => {
-    setCheckInMode(mode);
-    setMoodRating(todayEntry?.mood_rating ?? null);
-    const prefill: Record<string, string> = {};
-    if (todayEntry) {
-      for (const q of TRAINING_QUESTIONS) {
-        prefill[q.key] = todayEntry[q.key] ?? "";
-      }
+  // ── Select day type — saves immediately, no questions sheet ─────────────────
+  const selectDayType = async (mode: "training" | "rest") => {
+    if (dayTypeSaving) return;
+    setDayTypeSaving(true);
+    try {
+      const res = await fetch("/api/training/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entry_date: todayKey(),
+          is_training_day: mode === "training",
+          mood_rating: null,
+        }),
+      });
+      const saved = res.ok ? await res.json() : {};
+      setTodayEntry({
+        id: saved.id ?? "",
+        user_id: "",
+        entry_date: todayKey(),
+        is_training_day: mode === "training",
+        mood_rating: null,
+        thoughts_before: null,
+        thoughts_after: null,
+        what_went_well: null,
+        frustrations: null,
+        next_session: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      markCheckinDone();
+    } finally {
+      setDayTypeSaving(false);
     }
-    setAnswers(prefill);
-    setCheckInOpen(true);
   };
 
-  const saveCheckIn = async () => {
-    if (!moodRating || checkInSaving) return;
-    setCheckInSaving(true);
-    const body: Record<string, unknown> = {
-      entry_date: todayKey(),
-      is_training_day: checkInMode === "training",
-      mood_rating: moodRating,
-    };
-    if (checkInMode === "training") {
-      for (const q of TRAINING_QUESTIONS) {
-        body[q.key] = answers[q.key] ?? null;
-      }
-    } else {
-      body.thoughts_before = null;
-      body.thoughts_after = null;
-      body.what_went_well = null;
-      body.frustrations = null;
-      body.next_session = answers["notes"] ?? null;
-    }
-    await fetch("/api/training/entries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    setTodayEntry({
-      id: todayEntry?.id ?? "",
-      user_id: "",
-      entry_date: todayKey(),
-      is_training_day: checkInMode === "training",
-      mood_rating: moodRating,
-      thoughts_before: (body.thoughts_before as string | null) ?? null,
-      thoughts_after: (body.thoughts_after as string | null) ?? null,
-      what_went_well: (body.what_went_well as string | null) ?? null,
-      frustrations: (body.frustrations as string | null) ?? null,
-      next_session: (body.next_session as string | null) ?? null,
-      created_at: todayEntry?.created_at ?? new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-    markCheckinDone(); // clear badge + suppress tonight's browser notification
-    setCheckInSaving(false);
-    setCheckInOpen(false);
-  };
-
-  const phase      = profile ? computePhase(profile.meet_date) : null;
-  const courseWeekNum = profile ? computeCourseWeek(profile.meet_date) : null;
-  const courseWeek    = courseWeekNum ? getWeekByNum(courseWeekNum) : null;
-  const progressMap   = React.useMemo(() => {
-    const m: Record<number, CourseProgressRow> = {};
-    for (const r of courseProgress) m[r.week_num] = r;
-    return m;
-  }, [courseProgress]);
-
-  const showCourseCard =
-    !!courseWeek && !courseCardDismissed && !progressMap[courseWeekNum!]?.completed_at;
-
-  const dismissCourseCard = () => {
-    localStorage.setItem(`course-card-dismissed-${todayKey()}`, "1");
-    setCourseCardDismissed(true);
-  };
+  const phase = profile ? computePhase(profile.meet_date) : null;
 
   // GL points
   const total    = profile ? currentTotal(profile) : null;
@@ -206,18 +135,7 @@ export default function TodayPage() {
   if (todayEntry === null) {
     return (
       <div className="min-h-screen bg-[#050608]">
-        <DayPickerScreen onSelect={openCheckIn} />
-        <CheckInSheet
-          open={checkInOpen}
-          onClose={() => setCheckInOpen(false)}
-          checkInMode={checkInMode}
-          moodRating={moodRating}
-          setMoodRating={setMoodRating}
-          answers={answers}
-          setAnswers={setAnswers}
-          saving={checkInSaving}
-          onSave={saveCheckIn}
-        />
+        <DayPickerScreen onSelect={selectDayType} saving={dayTypeSaving} />
       </div>
     );
   }
@@ -247,33 +165,15 @@ export default function TodayPage() {
           }`}>
             {todayEntry.is_training_day ? "Training" : "Rest"}
           </span>
-          {todayEntry.mood_rating !== null && (
-            <span className="font-saira text-xs text-zinc-400">
-              Mood: {todayEntry.mood_rating}/10
-            </span>
-          )}
         </div>
         <button
           type="button"
-          onClick={() => openCheckIn(todayEntry.is_training_day ? "training" : "rest")}
+          onClick={() => setTodayEntry(null)}
           className="flex-shrink-0 font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
         >
-          Edit
+          Change
         </button>
       </div>
-
-      {/* ── Check-in sheet (editing) ───────────────────────────── */}
-      <CheckInSheet
-        open={checkInOpen}
-        onClose={() => setCheckInOpen(false)}
-        checkInMode={checkInMode}
-        moodRating={moodRating}
-        setMoodRating={setMoodRating}
-        answers={answers}
-        setAnswers={setAnswers}
-        saving={checkInSaving}
-        onSave={saveCheckIn}
-      />
 
       {/* ── Phase block ───────────────────────────────────────── */}
       {phase ? (
@@ -373,7 +273,13 @@ export default function TodayPage() {
 
 // ── Day picker full-screen ────────────────────────────────────────────────────
 
-function DayPickerScreen({ onSelect }: { onSelect: (mode: "training" | "rest") => void }) {
+function DayPickerScreen({
+  onSelect,
+  saving,
+}: {
+  onSelect: (mode: "training" | "rest") => void;
+  saving: boolean;
+}) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
@@ -390,124 +296,22 @@ function DayPickerScreen({ onSelect }: { onSelect: (mode: "training" | "rest") =
           <button
             type="button"
             onClick={() => onSelect("training")}
-            className="w-full rounded-2xl border border-purple-500/40 bg-purple-600/15 hover:bg-purple-600/25 py-5 font-saira text-base font-bold text-white transition"
+            disabled={saving}
+            className="w-full rounded-2xl border border-purple-500/40 bg-purple-600/15 hover:bg-purple-600/25 disabled:opacity-50 py-5 font-saira text-base font-bold text-white transition"
           >
-            🏋️ Training Day
+            {saving ? "Saving…" : "🏋️ Training Day"}
           </button>
           <button
             type="button"
             onClick={() => onSelect("rest")}
-            className="w-full rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 py-5 font-saira text-base font-bold text-zinc-300 transition"
+            disabled={saving}
+            className="w-full rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50 py-5 font-saira text-base font-bold text-zinc-300 transition"
           >
-            😴 Rest Day
+            {saving ? "…" : "😴 Rest Day"}
           </button>
         </div>
       </div>
     </div>
-  );
-}
-
-// ── Check-in bottom sheet (shared by picker + edit) ───────────────────────────
-
-function CheckInSheet({
-  open,
-  onClose,
-  checkInMode,
-  moodRating,
-  setMoodRating,
-  answers,
-  setAnswers,
-  saving,
-  onSave,
-}: {
-  open: boolean;
-  onClose: () => void;
-  checkInMode: "training" | "rest" | null;
-  moodRating: number | null;
-  setMoodRating: (n: number) => void;
-  answers: Record<string, string>;
-  setAnswers: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  saving: boolean;
-  onSave: () => void;
-}) {
-  return (
-    <BottomSheet
-      open={open}
-      onClose={onClose}
-      title={checkInMode === "training" ? "Training Day" : "Rest Day"}
-      footer={
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={!moodRating || saving}
-          className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-3 font-saira text-xs font-semibold uppercase tracking-[0.16em] text-white transition"
-        >
-          {saving ? "Saving…" : "Save"}
-        </button>
-      }
-    >
-      {/* Mood rating */}
-      <div className="mb-5">
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
-          Rate your mood
-        </p>
-        <div className="space-y-2">
-          {[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]].map((row, ri) => (
-            <div key={ri} className="flex gap-2">
-              {row.map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setMoodRating(n)}
-                  className={`flex-1 rounded-xl border py-2 font-saira text-sm font-semibold transition ${
-                    moodRating === n
-                      ? "border-purple-500 bg-purple-600 text-white"
-                      : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Training-day questions */}
-      {checkInMode === "training" && (
-        <div className="space-y-4">
-          {TRAINING_QUESTIONS.map((q) => (
-            <div key={q.key}>
-              <label className="block font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-1.5">
-                {q.label}
-              </label>
-              <textarea
-                rows={3}
-                value={answers[q.key] ?? ""}
-                onChange={(e) => setAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
-                className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Rest-day note */}
-      {checkInMode === "rest" && (
-        <div>
-          <label className="block font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-1.5">
-            Any notes for today? (optional)
-          </label>
-          <textarea
-            rows={3}
-            value={answers["notes"] ?? ""}
-            onChange={(e) => setAnswers((prev) => ({ ...prev, notes: e.target.value }))}
-            className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
-            placeholder="How are you feeling?"
-          />
-        </div>
-      )}
-    </BottomSheet>
   );
 }
 

@@ -11,6 +11,8 @@ import {
   THEME_DEFS,
   detectThemesWithCount,
 } from "@/lib/journal";
+import { TRAINING_QUESTIONS, type TrainingEntry } from "@/lib/training";
+import { ymdLocal } from "@/lib/date";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -162,6 +164,102 @@ function WeekBar({ entries }: { entries: JournalEntry[] }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ── Training journal form (shown when today is a training day) ────────────────
+
+function TrainingJournalForm({
+  entry,
+  onSave,
+}: {
+  entry: TrainingEntry;
+  onSave: (updated: TrainingEntry) => void;
+}) {
+  const [answers, setAnswers] = React.useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    for (const q of TRAINING_QUESTIONS) {
+      init[q.key] = (entry[q.key] as string | null) ?? "";
+    }
+    return init;
+  });
+  const [saving, setSaving]   = React.useState(false);
+  const [saved, setSaved]     = React.useState(false);
+  const [error, setError]     = React.useState<string | null>(null);
+
+  const hasAny = TRAINING_QUESTIONS.some((q) => answers[q.key].trim().length > 0);
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const body: Record<string, unknown> = {
+        entry_date: entry.entry_date,
+        is_training_day: true,
+        mood_rating: entry.mood_rating ?? null,
+      };
+      for (const q of TRAINING_QUESTIONS) {
+        body[q.key] = answers[q.key].trim() || null;
+      }
+      const res = await fetch("/api/training/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      onSave({ ...entry, ...body } as TrainingEntry);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setError("Couldn't save — please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 via-fuchsia-500/5 to-transparent p-5 sm:p-6 shadow-[0_16px_40px_rgba(126,34,206,0.15)]">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-base">🏋️</span>
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-300">
+          Training Day
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {TRAINING_QUESTIONS.map((q) => (
+          <div key={q.key}>
+            <label className="block font-saira text-xs text-zinc-400 mb-1.5">
+              {q.label}
+            </label>
+            <textarea
+              rows={2}
+              value={answers[q.key]}
+              onChange={(e) => setAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
+              className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
+              placeholder="…"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!hasAny || saving}
+          className={`ml-auto rounded-full px-5 py-2.5 sm:py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
+            saved ? "bg-emerald-500 text-white"
+            : hasAny && !saving ? "bg-purple-500 text-white hover:bg-purple-400"
+            : "bg-purple-500/20 text-purple-500/50 cursor-not-allowed"
+          }`}
+        >
+          {saved ? "✓ Saved" : saving ? "Saving…" : "Save"}
+        </button>
+      </div>
+      {error && <p className="mt-2 font-saira text-[11px] text-red-400">{error}</p>}
     </div>
   );
 }
@@ -387,19 +485,27 @@ function UserHeader({ profile }: { profile: UserProfile }) {
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function JournalPage() {
-  const [entries, setEntries]   = React.useState<JournalEntry[]>([]);
-  const [profile, setProfile]   = React.useState<UserProfile | null>(null);
-  const [ready, setReady]       = React.useState(false);
+  const [entries, setEntries]         = React.useState<JournalEntry[]>([]);
+  const [profile, setProfile]         = React.useState<UserProfile | null>(null);
+  const [todayTraining, setTodayTraining] = React.useState<TrainingEntry | null | undefined>(undefined);
+  const [ready, setReady]             = React.useState(false);
   const [coachPromptDismissed, setCoachPromptDismissed] = React.useState(false);
 
   React.useEffect(() => {
     (async () => {
-      const [profileRes, entriesRes] = await Promise.all([
+      const [profileRes, entriesRes, trainingRes] = await Promise.all([
         fetch("/api/me"),
         fetch("/api/journal/entries"),
+        fetch(`/api/training/entries?date=${ymdLocal()}`),
       ]);
       if (profileRes.ok) setProfile(await profileRes.json());
       if (entriesRes.ok) setEntries(await entriesRes.json());
+      if (trainingRes.ok) {
+        const t = await trainingRes.json();
+        setTodayTraining(t?.id ? (t as TrainingEntry) : null);
+      } else {
+        setTodayTraining(null);
+      }
       setReady(true);
     })();
   }, []);
@@ -441,26 +547,14 @@ export default function JournalPage() {
 
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           <div className="flex-1 min-w-0 space-y-6">
-            {/* Training session check-in CTA */}
-            <Link
-              href="/today?checkin=training"
-              className="flex items-center justify-between rounded-2xl border border-purple-500/25 bg-purple-500/5 px-5 py-4 hover:bg-purple-500/10 hover:border-purple-400/40 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-xl">🏋️</span>
-                <div>
-                  <p className="font-saira text-sm font-semibold text-purple-200 group-hover:text-white transition">
-                    Log training session mentality
-                  </p>
-                  <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
-                    Structured check-in · thoughts before & after
-                  </p>
-                </div>
-              </div>
-              <span className="font-saira text-zinc-500 group-hover:text-purple-300 transition">→</span>
-            </Link>
-
-            <QuickEntry onAdd={handleAdd} />
+            {todayTraining?.is_training_day ? (
+              <TrainingJournalForm
+                entry={todayTraining}
+                onSave={(updated) => setTodayTraining(updated)}
+              />
+            ) : (
+              <QuickEntry onAdd={handleAdd} />
+            )}
 
             {grouped.length === 0 ? (
               <div className="rounded-3xl border border-white/5 bg-[#0F1117] p-10 text-center">
