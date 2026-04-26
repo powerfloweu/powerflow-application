@@ -49,6 +49,8 @@ export type AthleteProfile = {
   meet_date: string | null;
   /** Whether the 16-week course is unlocked for this athlete. Granted by coach/admin. */
   course_access: boolean;
+  /** Whether all psychological test reports are unlocked for this athlete. Granted by admin. */
+  test_access: boolean;
   onboarding_complete: boolean;
   // v2 additions
   gender: "male" | "female" | null;

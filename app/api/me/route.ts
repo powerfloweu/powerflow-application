@@ -10,7 +10,7 @@ import type { AthleteProfile } from "@/lib/athlete";
 
 const SELECT_COLS = [
   "id", "display_name", "avatar_url", "role", "coach_id", "coach_code", "meet_date",
-  "course_access", "onboarding_complete",
+  "course_access", "test_access", "onboarding_complete",
   "gender", "bodyweight_kg", "weight_category",
   "squat_current_kg", "squat_goal_kg",
   "bench_current_kg", "bench_goal_kg",
@@ -48,6 +48,7 @@ export async function GET() {
       coach_code: null,
       meet_date: null,
       course_access: false,
+      test_access: false,
       onboarding_complete: false,
       gender: null,
       bodyweight_kg: null,

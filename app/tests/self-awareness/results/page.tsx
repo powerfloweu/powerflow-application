@@ -97,6 +97,14 @@ export default function ResultsPage() {
               })
               .catch(() => {/* non-fatal */});
           }
+
+          // Check 4: profile-level test_access flag
+          fetch("/api/me")
+            .then((r) => r.ok ? r.json() : null)
+            .then((profile) => {
+              if (profile?.test_access === true) setUnlocked(true);
+            })
+            .catch(() => {});
         }
       }
     }
