@@ -70,6 +70,8 @@ type AthleteRaw = {
   csai: CsaiRow[];
   das: DasRow[];
   training_entries: TrainingEntry[];
+  all_training_entries: TrainingEntry[];
+  feedbackByEntryId: Record<string, { id: string; content: string; created_at: string }>;
 };
 
 type CoachProfile = {
@@ -136,6 +138,14 @@ function computeClient(a: AthleteRaw) {
     };
   }).filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
 
+  // All-time themes (for pattern analysis using all entries)
+  const allThemes = THEME_DEFS.map((def) => {
+    const count = a.entries.filter((e) =>
+      def.keywords.some((kw) => e.content.toLowerCase().includes(kw))
+    ).length;
+    return { label: def.label, count };
+  }).filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
+
   // Last active
   const lastEntry = a.entries[0];
   let lastActive = "Never";
@@ -152,19 +162,25 @@ function computeClient(a: AthleteRaw) {
   return {
     id: a.id,
     name: a.display_name,
+    displayName: a.display_name,
     initials: a.display_name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2),
     avatarUrl: a.avatar_url,
     flag,
     positiveRate,
     trend,
     entriesThisWeek: weekEntries.length,
+    entries7d: weekEntries.length,
     sentimentWeek,
     themes,
+    allThemes,
+    allEntries: a.entries,
     recentEntries: a.entries.slice(0, 5),
     testScores: { sat: a.sat, acsi: a.acsi, csai: a.csai, das: a.das },
     lastActive,
     joinedAt: a.created_at,
     trainingThisWeek: a.training_entries,
+    allTrainingEntries: a.all_training_entries,
+    feedbackByEntryId: a.feedbackByEntryId,
     // full onboarding profile — passed through for Profile tab
     profile: {
       meet_date: a.meet_date,
@@ -232,7 +248,6 @@ function SentimentSparkline({ data }: { data: number[] }) {
     </svg>
   );
 }
-
 
 // ── Profile tab helpers ────────────────────────────────────────────────────────
 
@@ -457,12 +472,436 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
   );
 }
 
+// ── Pattern Analysis component ─────────────────────────────────────────────────
+
+const THEME_DESCRIPTORS: Record<string, string> = {
+  "Perfectionism":      "High standards creating self-pressure",
+  "Confidence":         "Positive self-belief patterns",
+  "Pre-comp anxiety":   "Competition readiness stress",
+  "Focus & flow":       "Mental clarity and engagement",
+  "Motivation":         "Drive and purpose alignment",
+  "Self-doubt":         "Internal barriers to performance",
+};
+
+const CONVERSATION_STARTERS: Record<string, string> = {
+  "Perfectionism":    "Explore what 'good enough' looks like on a hard training day",
+  "Pre-comp anxiety": "What physical preparation routine helps them feel most ready before a meet?",
+  "Self-doubt":       "Ask them to recall a moment they surprised themselves — what made it possible?",
+  "Confidence":       "What specific belief or thought is driving their positive momentum?",
+  "Focus & flow":     "What conditions help them stay in flow? Can they engineer more of those?",
+  "Motivation":       "Connect recent entries to their long-term competition goal",
+};
+
+function computeSentimentTrajectory(allEntries: EntryRow[]): { label: string; rate: number }[] {
+  const now = new Date();
+  const result: { label: string; rate: number }[] = [];
+  const labels = ["3 weeks ago", "2 weeks ago", "This week"];
+  for (let w = 2; w >= 0; w--) {
+    const start = new Date(now); start.setDate(now.getDate() - (w + 1) * 7); start.setHours(0, 0, 0, 0);
+    const end   = new Date(now); end.setDate(now.getDate() - w * 7); end.setHours(0, 0, 0, 0);
+    const weekE = allEntries.filter((e) => {
+      const d = new Date(e.created_at);
+      return d >= start && d < end;
+    });
+    const rate = weekE.length
+      ? Math.round((weekE.filter((e) => e.sentiment === "positive").length / weekE.length) * 100)
+      : 0;
+    result.push({ label: labels[2 - w], rate });
+  }
+  return result;
+}
+
+function PatternAnalysis({ client }: { client: Client }) {
+  const entryCount = client.allEntries.length;
+
+  if (entryCount < 5) {
+    return (
+      <div className="rounded-2xl border border-purple-500/15 bg-purple-500/5 p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-5 h-5 rounded-full bg-purple-500/25 border border-purple-400/40 flex items-center justify-center flex-shrink-0">
+            <span className="text-[10px] text-purple-300">✦</span>
+          </div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-300">
+            Pattern Analysis
+          </p>
+        </div>
+        <p className="font-saira text-xs leading-relaxed text-zinc-500">
+          Insufficient data — at least 5 journal entries are needed for pattern analysis.
+        </p>
+      </div>
+    );
+  }
+
+  const primaryTheme = client.allThemes[0] ?? null;
+  const secondaryTheme = client.allThemes[1] ?? null;
+  const hasTrajectory = entryCount >= 14;
+
+  const trajectory = hasTrajectory ? computeSentimentTrajectory(client.allEntries) : [];
+
+  // Trajectory direction
+  let trajectoryLabel = "";
+  let trajectoryColor = "text-zinc-400";
+  if (trajectory.length === 3) {
+    const first = trajectory[0].rate;
+    const last  = trajectory[2].rate;
+    const mid   = trajectory[1].rate;
+    const variance = Math.abs(last - first);
+    const allRates  = trajectory.map((t) => t.rate);
+    const spread = Math.max(...allRates) - Math.min(...allRates);
+    if (spread >= 30) {
+      trajectoryLabel = "⚡ Volatile";
+      trajectoryColor = "text-amber-300";
+    } else if (last > first + 10) {
+      trajectoryLabel = "↗ Improving";
+      trajectoryColor = "text-emerald-300";
+    } else if (last < first - 10) {
+      trajectoryLabel = "↘ Declining";
+      trajectoryColor = "text-rose-300";
+    } else {
+      trajectoryLabel = "→ Stable";
+      trajectoryColor = "text-zinc-300";
+    }
+    void mid; void variance;
+  }
+
+  // Conversation starters
+  const starters: string[] = [];
+  const dominantLabel = primaryTheme?.label ?? "";
+  if (CONVERSATION_STARTERS[dominantLabel]) {
+    starters.push(CONVERSATION_STARTERS[dominantLabel]);
+  }
+  if (secondaryTheme && CONVERSATION_STARTERS[secondaryTheme.label]) {
+    starters.push(CONVERSATION_STARTERS[secondaryTheme.label]);
+  }
+  if (starters.length < 2) {
+    starters.push("Review their onboarding mental goals — how does their current state align?");
+  }
+
+  return (
+    <div className="rounded-2xl border border-purple-500/15 bg-purple-500/5 p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="w-5 h-5 rounded-full bg-purple-500/25 border border-purple-400/40 flex items-center justify-center flex-shrink-0">
+          <span className="text-[10px] text-purple-300">✦</span>
+        </div>
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-300">
+          Pattern Analysis
+        </p>
+        <span className="font-saira text-[9px] text-zinc-600 ml-auto">{entryCount} entries</span>
+      </div>
+
+      {/* Psychological profile */}
+      {primaryTheme && (
+        <div>
+          <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-2">
+            Psychological profile
+          </p>
+          <div className="space-y-1.5">
+            <div className="flex items-start gap-2">
+              <span className="font-saira text-[10px] text-purple-400 font-semibold w-14 flex-shrink-0 pt-0.5">Primary</span>
+              <div>
+                <span className="font-saira text-xs text-zinc-200 font-semibold">{primaryTheme.label}</span>
+                {THEME_DESCRIPTORS[primaryTheme.label] && (
+                  <span className="font-saira text-[10px] text-zinc-500 ml-2">— {THEME_DESCRIPTORS[primaryTheme.label]}</span>
+                )}
+                <span className="font-saira text-[10px] text-zinc-600 ml-2">({primaryTheme.count} mentions)</span>
+              </div>
+            </div>
+            {secondaryTheme && (
+              <div className="flex items-start gap-2">
+                <span className="font-saira text-[10px] text-zinc-500 w-14 flex-shrink-0 pt-0.5">Secondary</span>
+                <div>
+                  <span className="font-saira text-xs text-zinc-400">{secondaryTheme.label}</span>
+                  {THEME_DESCRIPTORS[secondaryTheme.label] && (
+                    <span className="font-saira text-[10px] text-zinc-600 ml-2">— {THEME_DESCRIPTORS[secondaryTheme.label]}</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Sentiment trajectory */}
+      {hasTrajectory && trajectory.length === 3 && (
+        <div>
+          <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-2">
+            Sentiment trajectory
+          </p>
+          <div className="flex items-end gap-3 mb-1.5">
+            {trajectory.map((pt) => (
+              <div key={pt.label} className="flex flex-col items-center gap-1 flex-1">
+                <div className="w-full rounded-sm bg-white/5 overflow-hidden h-6 flex items-end">
+                  <div
+                    className="w-full bg-purple-400/50 rounded-sm transition-all"
+                    style={{ height: `${Math.max(4, pt.rate * 0.24)}px` }}
+                  />
+                </div>
+                <span className="font-saira text-[9px] text-zinc-600 text-center leading-tight">{pt.label}</span>
+                <span className={`font-saira text-[10px] font-semibold ${
+                  pt.rate >= 60 ? "text-emerald-300" : pt.rate >= 40 ? "text-amber-300" : "text-rose-300"
+                }`}>{pt.rate}%</span>
+              </div>
+            ))}
+          </div>
+          <p className={`font-saira text-xs font-semibold ${trajectoryColor}`}>{trajectoryLabel}</p>
+        </div>
+      )}
+
+      {/* Conversation starters */}
+      <div>
+        <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-2">
+          Coaching conversation starters
+        </p>
+        <ul className="space-y-1.5">
+          {starters.slice(0, 3).map((s, i) => (
+            <li key={i} className="flex gap-2 items-start">
+              <span className="font-saira text-[10px] text-purple-400 flex-shrink-0 mt-0.5">→</span>
+              <span className="font-saira text-xs text-zinc-400 leading-relaxed">{s}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// ── Coach Notes tab ────────────────────────────────────────────────────────────
+
+function timeSince(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffH   = Math.floor(diffMs / 3600000);
+  const diffD   = Math.floor(diffMs / 86400000);
+  if (diffMin < 1)  return "just now";
+  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffH   < 24) return `${diffH}h ago`;
+  return `${diffD}d ago`;
+}
+
+function NotesTab({
+  athleteId,
+  note,
+  savedAt,
+  saving,
+  onChange,
+}: {
+  athleteId: string;
+  note: string;
+  savedAt: string | null;
+  saving: boolean;
+  onChange: (athleteId: string, value: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <textarea
+        value={note}
+        onChange={(e) => onChange(athleteId, e.target.value)}
+        placeholder="Session observations, follow-up items, patterns noticed..."
+        rows={6}
+        className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
+      />
+      <div className="flex items-center gap-2 font-saira text-[10px] text-zinc-600">
+        {saving ? (
+          <span className="text-amber-400">Saving...</span>
+        ) : savedAt ? (
+          <span className="text-emerald-400">✓ Saved · {timeSince(savedAt)}</span>
+        ) : (
+          <span>Auto-saves after you stop typing</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Entry Feedback ────────────────────────────────────────────────────────────
+
+function EntryFeedbackSection({
+  entryId,
+  athleteId,
+  existing,
+  onSaved,
+}: {
+  entryId: string;
+  athleteId: string;
+  existing?: { id: string; content: string; created_at: string };
+  onSaved: (entryId: string, feedback: { id: string; content: string; created_at: string }) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [draft, setDraft] = React.useState(existing?.content ?? "");
+  const [saving, setSaving] = React.useState(false);
+  const [localFeedback, setLocalFeedback] = React.useState(existing ?? null);
+
+  const handleSave = async () => {
+    if (!draft.trim() || saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/coach/entry-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entry_id: entryId, athlete_id: athleteId, content: draft.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { id: string; content: string; created_at: string };
+        setLocalFeedback(data);
+        onSaved(entryId, data);
+        setOpen(false);
+      }
+    } catch { /* ignore */ }
+    finally { setSaving(false); }
+  };
+
+  if (localFeedback && !open) {
+    return (
+      <div className="mt-2 pl-3 border-l-2 border-purple-500/20">
+        <div className="flex items-start gap-2">
+          <p className="font-saira text-[10px] text-zinc-400 flex-1 italic leading-relaxed">
+            &ldquo;{localFeedback.content}&rdquo;
+          </p>
+          <button
+            type="button"
+            onClick={() => { setDraft(localFeedback.content); setOpen(true); }}
+            className="font-saira text-[9px] text-zinc-600 hover:text-purple-300 transition flex-shrink-0"
+            title="Edit note"
+          >
+            ✎
+          </button>
+        </div>
+        <p className="font-saira text-[9px] text-zinc-600 mt-0.5">Coach note · {timeSince(localFeedback.created_at)}</p>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-2 font-saira text-[10px] text-zinc-600 hover:text-purple-300 transition"
+      >
+        + Add coach note
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-2 space-y-2">
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={2}
+        placeholder="Add a coaching observation for this entry..."
+        className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 font-saira text-xs text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50"
+      />
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!draft.trim() || saving}
+          className={`rounded-full px-3 py-1 font-saira text-[10px] font-semibold transition ${
+            draft.trim() && !saving
+              ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30"
+              : "bg-white/5 text-zinc-600 cursor-not-allowed"
+          }`}
+        >
+          {saving ? "Saving..." : "Save"}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setOpen(false); setDraft(existing?.content ?? ""); }}
+          className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 transition"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Client card ────────────────────────────────────────────────────────────────
 
-function ClientCard({ client }: { client: Client }) {
+type ActiveTab = "analysis" | "entries" | "scores" | "training" | "profile" | "notes";
+
+function ClientCard({
+  client,
+  coachNote,
+  noteSavedAt,
+  noteSaving,
+  onNoteChange,
+  feedbackByEntry,
+  onFeedbackSaved,
+  sentimentWindow,
+  onSentimentWindowChange,
+}: {
+  client: Client;
+  coachNote: string;
+  noteSavedAt: string | null;
+  noteSaving: boolean;
+  onNoteChange: (athleteId: string, value: string) => void;
+  feedbackByEntry: Record<string, { id: string; content: string; created_at: string }>;
+  onFeedbackSaved: (athleteId: string, entryId: string, feedback: { id: string; content: string; created_at: string }) => void;
+  sentimentWindow: 7 | 30 | 60;
+  onSentimentWindowChange: (athleteId: string, w: 7 | 30 | 60) => void;
+}) {
   const [expanded, setExpanded] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<"analysis" | "entries" | "scores" | "training" | "profile">("analysis");
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>("analysis");
+  const [trainingWeekOffset, setTrainingWeekOffset] = React.useState(0);
   const flag = FLAG_CONFIG[client.flag];
+
+  // Compute windowed stats for Analysis tab
+  const windowedEntries = React.useMemo(() => {
+    const cut = new Date();
+    cut.setDate(cut.getDate() - sentimentWindow);
+    return client.allEntries.filter((e) => new Date(e.created_at) >= cut);
+  }, [client.allEntries, sentimentWindow]);
+
+  const windowedPositiveRate = windowedEntries.length
+    ? Math.round((windowedEntries.filter((e) => e.sentiment === "positive").length / windowedEntries.length) * 100)
+    : 0;
+
+  const windowedThemes = React.useMemo(() => {
+    return THEME_DEFS.map((def) => {
+      const count = windowedEntries.filter((e) =>
+        def.keywords.some((kw) => e.content.toLowerCase().includes(kw))
+      ).length;
+      return { label: def.label, count, color: def.color };
+    }).filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
+  }, [windowedEntries]);
+
+  // Training week navigation
+  const trainingByWeek = React.useMemo(() => {
+    const weeks: TrainingEntry[][] = [[], [], [], []];
+    const now = new Date();
+    for (const e of client.allTrainingEntries) {
+      const entryDate = new Date(e.entry_date + "T12:00:00");
+      const diffDays = Math.floor((now.getTime() - entryDate.getTime()) / 86400000);
+      const weekIdx = Math.floor(diffDays / 7);
+      if (weekIdx >= 0 && weekIdx < 4) {
+        weeks[weekIdx].push(e);
+      }
+    }
+    return weeks;
+  }, [client.allTrainingEntries]);
+
+  const currentWeekTraining = trainingByWeek[trainingWeekOffset] ?? [];
+
+  const weekLabel = trainingWeekOffset === 0 ? "This week"
+    : trainingWeekOffset === 1 ? "Last week"
+    : `${trainingWeekOffset} weeks ago`;
+
+  // Week days for the currently selected offset week
+  const offsetWeekDays = React.useMemo(() => {
+    const days: string[] = [];
+    const now = new Date();
+    // Find Monday of the offset week
+    const dayOfWeek = now.getDay(); // 0=Sun
+    const mondayOffset = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek) - trainingWeekOffset * 7;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now);
+      d.setDate(now.getDate() + mondayOffset + i);
+      days.push(d.toISOString().slice(0, 10));
+    }
+    return days;
+  }, [trainingWeekOffset]);
 
   return (
     <div className={`rounded-3xl border bg-[#0C0E13] overflow-hidden transition ${
@@ -534,19 +973,20 @@ function ClientCard({ client }: { client: Client }) {
       {expanded && (
         <div className="border-t border-white/5" onClick={(e) => e.stopPropagation()}>
           {/* Tab bar */}
-          <div className="flex gap-0 border-b border-white/5 px-5 sm:px-6">
+          <div className="flex gap-0 border-b border-white/5 px-5 sm:px-6 overflow-x-auto">
             {([
               { key: "analysis",  label: "Analysis" },
               { key: "entries",   label: "Recent entries" },
               { key: "scores",    label: "Test scores" },
               { key: "training",  label: "Training Log" },
               { key: "profile",   label: "Profile" },
+              { key: "notes",     label: "Notes" },
             ] as const).map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`relative px-4 py-3 font-saira text-[11px] font-semibold uppercase tracking-[0.18em] transition ${
+                className={`relative flex-shrink-0 px-4 py-3 font-saira text-[11px] font-semibold uppercase tracking-[0.18em] transition ${
                   activeTab === tab.key ? "text-white" : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
@@ -562,41 +1002,61 @@ function ClientCard({ client }: { client: Client }) {
             {/* ── Tab: Analysis ── */}
             {activeTab === "analysis" && (
               <div className="space-y-5">
-                {client.themes.length > 0 ? (
+                {/* Sentiment window selector */}
+                <div className="flex items-center gap-2">
+                  <span className="font-saira text-[10px] text-zinc-600 uppercase tracking-[0.18em]">Window</span>
+                  <div className="flex gap-1">
+                    {([7, 30, 60] as const).map((w) => (
+                      <button
+                        key={w}
+                        type="button"
+                        onClick={() => onSentimentWindowChange(client.id, w)}
+                        className={`rounded-full border px-3 py-0.5 font-saira text-[10px] uppercase tracking-[0.12em] transition ${
+                          sentimentWindow === w
+                            ? "border-purple-400 bg-purple-500/20 text-white"
+                            : "border-zinc-700 text-zinc-500 hover:border-zinc-500"
+                        }`}
+                      >
+                        {w}d
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {windowedThemes.length > 0 ? (
                   <div>
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
-                      Detected themes this week
+                      Detected themes ({sentimentWindow}d)
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {client.themes.map((t) => (
+                      {windowedThemes.map((t) => (
                         <TagChip
                           key={t.label}
                           label={t.label}
                           color={THEME_DEFS.find((d) => d.label === t.label)?.color ?? "purple"}
                           count={t.count}
-                          trend={t.trend}
                         />
                       ))}
                     </div>
                   </div>
                 ) : (
                   <p className="font-saira text-sm text-zinc-600 py-2">
-                    {client.entriesThisWeek === 0 ? "No entries this week — no theme data yet." : "No recurring themes detected this week."}
+                    {windowedEntries.length === 0 ? `No entries in the last ${sentimentWindow} days.` : "No recurring themes detected."}
                   </p>
                 )}
 
                 {/* Stats summary */}
-                {client.entriesThisWeek > 0 && (
+                {windowedEntries.length > 0 && (
                   <div className="rounded-2xl border border-white/5 bg-[#0D0F14] p-5">
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
-                      This week at a glance
+                      Last {sentimentWindow} days at a glance
                     </p>
                     <div className="grid grid-cols-3 gap-3">
-                      <MiniStat label="Entries" value={String(client.entriesThisWeek)} />
+                      <MiniStat label="Entries" value={String(windowedEntries.length)} />
                       <MiniStat
                         label="Positive"
-                        value={`${client.positiveRate}%`}
-                        color={client.positiveRate >= 60 ? "text-emerald-300" : client.positiveRate >= 40 ? "text-amber-300" : "text-rose-300"}
+                        value={`${windowedPositiveRate}%`}
+                        color={windowedPositiveRate >= 60 ? "text-emerald-300" : windowedPositiveRate >= 40 ? "text-amber-300" : "text-rose-300"}
                       />
                       <MiniStat
                         label="Trend"
@@ -607,23 +1067,8 @@ function ClientCard({ client }: { client: Client }) {
                   </div>
                 )}
 
-                {/* AI insight placeholder */}
-                <div className="rounded-2xl border border-purple-500/15 bg-purple-500/5 p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-5 h-5 rounded-full bg-purple-500/25 border border-purple-400/40 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[10px] text-purple-300">✦</span>
-                    </div>
-                    <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-300">
-                      Pattern analysis
-                    </p>
-                    <span className="ml-auto rounded-full border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 font-saira text-[9px] text-purple-400 uppercase tracking-[0.14em]">
-                      AI · Coming soon
-                    </span>
-                  </div>
-                  <p className="font-saira text-xs leading-relaxed text-zinc-500">
-                    AI-generated narrative analysis will appear here once your athlete has logged at least 7 entries. Patterns, belief structures, and session recommendations will be surfaced automatically.
-                  </p>
-                </div>
+                {/* Pattern analysis */}
+                <PatternAnalysis client={client} />
               </div>
             )}
 
@@ -634,7 +1079,15 @@ function ClientCard({ client }: { client: Client }) {
                   <p className="font-saira text-sm text-zinc-600 py-4 text-center">No entries yet.</p>
                 ) : (
                   client.recentEntries.map((e) => (
-                    <EntryCard key={e.id} entry={e} />
+                    <div key={e.id}>
+                      <EntryCard entry={e} />
+                      <EntryFeedbackSection
+                        entryId={e.id}
+                        athleteId={client.id}
+                        existing={feedbackByEntry[e.id]}
+                        onSaved={(entryId, feedback) => onFeedbackSaved(client.id, entryId, feedback)}
+                      />
+                    </div>
                   ))
                 )}
               </div>
@@ -737,12 +1190,53 @@ function ClientCard({ client }: { client: Client }) {
 
             {/* ── Tab: Training Log ── */}
             {activeTab === "training" && (
-              <TrainingLogTab trainingThisWeek={client.trainingThisWeek} />
+              <div className="space-y-4">
+                {/* Week navigation */}
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setTrainingWeekOffset((v) => Math.min(v + 1, 3))}
+                    disabled={trainingWeekOffset >= 3}
+                    className={`font-saira text-[11px] px-3 py-1 rounded-full border transition ${
+                      trainingWeekOffset >= 3
+                        ? "border-zinc-800 text-zinc-700 cursor-not-allowed"
+                        : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+                    }`}
+                  >
+                    ← Prev
+                  </button>
+                  <span className="font-saira text-[11px] font-semibold text-zinc-300">{weekLabel}</span>
+                  <button
+                    type="button"
+                    onClick={() => setTrainingWeekOffset((v) => Math.max(v - 1, 0))}
+                    disabled={trainingWeekOffset <= 0}
+                    className={`font-saira text-[11px] px-3 py-1 rounded-full border transition ${
+                      trainingWeekOffset <= 0
+                        ? "border-zinc-800 text-zinc-700 cursor-not-allowed"
+                        : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+                    }`}
+                  >
+                    Next →
+                  </button>
+                </div>
+                <TrainingLogTab trainingThisWeek={currentWeekTraining} weekDays={offsetWeekDays} />
+              </div>
             )}
 
             {/* ── Tab: Profile ── */}
             {activeTab === "profile" && (
               <ProfileTab profile={client.profile} />
+            )}
+
+            {/* ── Tab: Notes ── */}
+            {activeTab === "notes" && (
+              <NotesTab
+                athleteId={client.id}
+                note={coachNote}
+                savedAt={noteSavedAt}
+                saving={noteSaving}
+                onChange={onNoteChange}
+              />
             )}
           </div>
         </div>
@@ -808,8 +1302,9 @@ function MoodSparkline({ entries, weekDays }: { entries: TrainingEntry[]; weekDa
   );
 }
 
-function TrainingLogTab({ trainingThisWeek }: { trainingThisWeek: TrainingEntry[] }) {
-  const weekDays = React.useMemo(() => currentWeekDays(), []);
+function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { trainingThisWeek: TrainingEntry[]; weekDays?: string[] }) {
+  const defaultWeekDays = React.useMemo(() => currentWeekDays(), []);
+  const weekDays = propWeekDays ?? defaultWeekDays;
   const trainingDays = trainingThisWeek.filter((e) => e.is_training_day).length;
   const moodValues = trainingThisWeek
     .map((e) => e.mood_rating)
@@ -1036,6 +1531,41 @@ function SummaryTile({ value, label, color, dot }: { value: string; label: strin
   );
 }
 
+// ── Attention alerts banner ────────────────────────────────────────────────────
+
+function AttentionBanner({ attentionAthletes }: { attentionAthletes: Client[] }) {
+  if (!attentionAthletes.length) return null;
+  return (
+    <div className="mb-6 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-rose-400">&#9888;</span>
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-rose-300">
+          {attentionAthletes.length} athlete{attentionAthletes.length > 1 ? "s" : ""} need attention
+        </p>
+      </div>
+      <div className="flex flex-col gap-2">
+        {attentionAthletes.map((a) => (
+          <div key={a.id} className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-[10px] text-rose-300 font-saira font-bold">
+                {a.displayName[0]}
+              </span>
+              <span className="font-saira text-xs text-zinc-300">{a.displayName}</span>
+              <span className="font-saira text-[10px] text-rose-400">{a.positiveRate}% positive · {a.entries7d} entries this week</span>
+            </div>
+            <a
+              href={`mailto:?subject=Checking in — ${a.displayName}&body=Hi ${a.displayName.split(" ")[0]},%0A%0AI noticed you've had a tough week. Wanted to check in — how are you doing?%0A%0ABest`}
+              className="font-saira text-[10px] uppercase tracking-[0.14em] text-rose-400 border border-rose-500/20 rounded-lg px-3 py-1 hover:bg-rose-500/10 transition"
+            >
+              Email
+            </a>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Invite link panel ──────────────────────────────────────────────────────────
 
 function InvitePanel({ coachCode }: { coachCode: string }) {
@@ -1108,7 +1638,7 @@ function CoachHeader({ profile }: { profile: CoachProfile }) {
           href="/guide"
           className="font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition"
         >
-          📖 Guide
+          Guide
         </Link>
         <a
           href="/auth/sign-out"
@@ -1146,12 +1676,27 @@ export default function CoachPage() {
   const [sort, setSort]         = React.useState<SortKey>("flag");
   const [search, setSearch]     = React.useState("");
 
+  // Feature 1: Coach notes state
+  const [coachNotes, setCoachNotes]         = React.useState<Record<string, string>>({});
+  const [notesSavedAt, setNotesSavedAt]     = React.useState<Record<string, string>>({});
+  const [notesSaving, setNotesSaving]       = React.useState<Record<string, boolean>>({});
+  const noteTimers                          = React.useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // Feature 3: Entry feedback state (athleteId -> entryId -> feedback)
+  const [feedbackByAthlete, setFeedbackByAthlete] = React.useState<
+    Record<string, Record<string, { id: string; content: string; created_at: string }>>
+  >({});
+
+  // Feature 4: Sentiment window per athlete
+  const [sentimentWindows, setSentimentWindows] = React.useState<Record<string, 7 | 30 | 60>>({});
+
   React.useEffect(() => {
     (async () => {
       try {
-        const [profileRes, athletesRes] = await Promise.all([
+        const [profileRes, athletesRes, notesRes] = await Promise.all([
           fetch("/api/me"),
           fetch("/api/coach/athletes"),
+          fetch("/api/coach/notes"),
         ]);
 
         if (!profileRes.ok || !athletesRes.ok) {
@@ -1166,8 +1711,29 @@ export default function CoachPage() {
         }
 
         const athletes: AthleteRaw[] = await athletesRes.json();
+        const computed = athletes.map(computeClient);
         setProfile(prof);
-        setClients(athletes.map(computeClient));
+        setClients(computed);
+
+        // Populate feedback state from loaded athlete data
+        const initialFeedback: Record<string, Record<string, { id: string; content: string; created_at: string }>> = {};
+        for (const a of athletes) {
+          initialFeedback[a.id] = a.feedbackByEntryId ?? {};
+        }
+        setFeedbackByAthlete(initialFeedback);
+
+        // Load notes
+        if (notesRes.ok) {
+          const notesData: Record<string, { content: string; updated_at: string }> = await notesRes.json();
+          const notes: Record<string, string> = {};
+          const savedAts: Record<string, string> = {};
+          for (const [athleteId, note] of Object.entries(notesData)) {
+            notes[athleteId] = note.content;
+            savedAts[athleteId] = note.updated_at;
+          }
+          setCoachNotes(notes);
+          setNotesSavedAt(savedAts);
+        }
       } catch {
         setError("Network error — please refresh.");
       } finally {
@@ -1176,11 +1742,58 @@ export default function CoachPage() {
     })();
   }, []);
 
+  // Debounced note auto-save
+  const handleNoteChange = React.useCallback((athleteId: string, value: string) => {
+    setCoachNotes((prev) => ({ ...prev, [athleteId]: value }));
+
+    if (noteTimers.current[athleteId]) {
+      clearTimeout(noteTimers.current[athleteId]);
+    }
+
+    noteTimers.current[athleteId] = setTimeout(async () => {
+      setNotesSaving((prev) => ({ ...prev, [athleteId]: true }));
+      try {
+        const res = await fetch("/api/coach/notes", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ athlete_id: athleteId, content: value }),
+        });
+        if (res.ok) {
+          const data = await res.json() as { updated_at: string };
+          setNotesSavedAt((prev) => ({ ...prev, [athleteId]: data.updated_at }));
+        }
+      } catch { /* ignore */ }
+      finally {
+        setNotesSaving((prev) => ({ ...prev, [athleteId]: false }));
+      }
+    }, 1500);
+  }, []);
+
+  const handleFeedbackSaved = React.useCallback((
+    athleteId: string,
+    entryId: string,
+    feedback: { id: string; content: string; created_at: string },
+  ) => {
+    setFeedbackByAthlete((prev) => ({
+      ...prev,
+      [athleteId]: { ...(prev[athleteId] ?? {}), [entryId]: feedback },
+    }));
+  }, []);
+
+  const handleSentimentWindowChange = React.useCallback((athleteId: string, w: 7 | 30 | 60) => {
+    setSentimentWindows((prev) => ({ ...prev, [athleteId]: w }));
+  }, []);
+
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();
     const base = q ? clients.filter((c) => c.name.toLowerCase().includes(q)) : clients;
     return sortClients(base, sort);
   }, [clients, sort, search]);
+
+  const attentionAthletes = React.useMemo(
+    () => clients.filter((c) => c.flag === "attention"),
+    [clients],
+  );
 
   if (loading) {
     return (
@@ -1208,7 +1821,7 @@ export default function CoachPage() {
               Athlete Overview
             </h1>
             <p className="mt-3 font-saira text-sm text-zinc-400 max-w-xl">
-              Monitor your athletes' mental state, self-talk patterns, and test results in one place.
+              Monitor your athletes&apos; mental state, self-talk patterns, and test results in one place.
             </p>
           </div>
           <div className="flex gap-3 self-start mt-1">
@@ -1237,10 +1850,13 @@ export default function CoachPage() {
         {/* Roster summary */}
         {clients.length > 0 && <RosterSummary clients={clients} />}
 
+        {/* Feature 5: Attention alerts banner */}
+        <AttentionBanner attentionAthletes={attentionAthletes} />
+
         {/* Empty state */}
         {!error && clients.length === 0 && (
           <div className="rounded-3xl border border-white/5 bg-[#0F1117] p-14 text-center mb-8">
-            <p className="font-saira text-3xl mb-4">👥</p>
+            <p className="font-saira text-3xl mb-4">&#128101;</p>
             <p className="font-saira text-sm font-semibold text-zinc-300 mb-2">No athletes connected yet</p>
             <p className="font-saira text-xs text-zinc-600 max-w-xs mx-auto mb-6">
               Share your invite link above with athletes. Once they accept and log in, their journal and test data will appear here.
@@ -1289,7 +1905,18 @@ export default function CoachPage() {
         {/* Client list */}
         <div className="space-y-4">
           {filtered.map((client) => (
-            <ClientCard key={client.id} client={client} />
+            <ClientCard
+              key={client.id}
+              client={client}
+              coachNote={coachNotes[client.id] ?? ""}
+              noteSavedAt={notesSavedAt[client.id] ?? null}
+              noteSaving={notesSaving[client.id] ?? false}
+              onNoteChange={handleNoteChange}
+              feedbackByEntry={feedbackByAthlete[client.id] ?? {}}
+              onFeedbackSaved={handleFeedbackSaved}
+              sentimentWindow={sentimentWindows[client.id] ?? 7}
+              onSentimentWindowChange={handleSentimentWindowChange}
+            />
           ))}
           {clients.length > 0 && filtered.length === 0 && (
             <p className="font-saira text-sm text-zinc-600 text-center py-10">No athletes match your search.</p>

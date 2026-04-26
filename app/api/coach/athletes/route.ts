@@ -10,6 +10,15 @@ import { dbSelect } from "@/lib/supabaseAdmin";
 import type { TrainingEntry } from "@/lib/training";
 import { mondayOfWeek, sundayOfWeek } from "@/lib/date";
 
+type FeedbackRow = {
+  id: string;
+  coach_id: string;
+  entry_id: string;
+  athlete_id: string;
+  content: string;
+  created_at: string;
+};
+
 type ProfileRow = {
   id: string;
   display_name: string;
@@ -71,6 +80,12 @@ type DasRow  = { id: string; user_id?: string; total_score: number; depression_p
 const getMondayOfWeek = (d: Date): string => mondayOfWeek(d);
 const getSundayOfWeek = (d: Date): string => sundayOfWeek(d);
 
+function daysAgoYmd(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
 export async function GET() {
   if (!isConfigured) return NextResponse.json([], { status: 200 });
   const supabase = await createClient();
@@ -111,9 +126,10 @@ export async function GET() {
 
   const monday = getMondayOfWeek(new Date());
   const sunday = getSundayOfWeek(new Date());
+  const twentyEightDaysAgo = daysAgoYmd(28);
 
   // Fetch entries, test results and training entries for all athletes in parallel
-  const [entries, sat, acsi, csai, das, trainingEntriesRaw] = await Promise.all([
+  const [entries, sat, acsi, csai, das, trainingEntriesRaw, allFeedback] = await Promise.all([
     dbSelect<EntryRow>("journal_entries", {
       user_id: `in.${idList}`,
       order: "created_at.desc",
@@ -140,26 +156,46 @@ export async function GET() {
       order: "submitted_at.desc",
       select: "id,user_id,total_score,depression_prone,submitted_at,paid",
     }),
+    // Extended to last 28 days for week navigation
     dbSelect<TrainingEntry>("training_entries", {
       user_id: `in.${idList}`,
-      entry_date: `gte.${monday}`,
+      entry_date: `gte.${twentyEightDaysAgo}`,
       order: "entry_date.asc",
       select: "id,user_id,entry_date,is_training_day,mood_rating,thoughts_before,thoughts_after,what_went_well,frustrations,next_session,created_at,updated_at",
     }),
+    // Coach entry feedback for all athletes
+    dbSelect<FeedbackRow>("entry_feedback", {
+      coach_id: `eq.${user.id}`,
+      athlete_id: `in.${idList}`,
+      select: "id,entry_id,athlete_id,content,created_at",
+      order: "created_at.asc",
+    }),
   ]);
 
-  const trainingEntries = trainingEntriesRaw.filter((e) => e.entry_date <= sunday);
+  // Filter training to current week for the primary trainingThisWeek field
+  const trainingEntries = trainingEntriesRaw.filter((e) => e.entry_date >= monday && e.entry_date <= sunday);
 
   // Group by athlete
-  const result = athletes.map((athlete) => ({
-    ...athlete,
-    entries: entries.filter((e) => e.user_id === athlete.id),
-    sat: sat.filter((r) => r.user_id === athlete.id),
-    acsi: acsi.filter((r) => r.user_id === athlete.id),
-    csai: csai.filter((r) => r.user_id === athlete.id),
-    das: das.filter((r) => r.user_id === athlete.id),
-    training_entries: trainingEntries.filter((e) => e.user_id === athlete.id),
-  }));
+  const result = athletes.map((athlete) => {
+    // Build feedbackByEntryId for this athlete
+    const athleteFeedback = allFeedback.filter((f) => f.athlete_id === athlete.id);
+    const feedbackByEntryId: Record<string, { id: string; content: string; created_at: string }> = {};
+    for (const f of athleteFeedback) {
+      feedbackByEntryId[f.entry_id] = { id: f.id, content: f.content, created_at: f.created_at };
+    }
+
+    return {
+      ...athlete,
+      entries: entries.filter((e) => e.user_id === athlete.id),
+      sat: sat.filter((r) => r.user_id === athlete.id),
+      acsi: acsi.filter((r) => r.user_id === athlete.id),
+      csai: csai.filter((r) => r.user_id === athlete.id),
+      das: das.filter((r) => r.user_id === athlete.id),
+      training_entries: trainingEntries.filter((e) => e.user_id === athlete.id),
+      all_training_entries: trainingEntriesRaw.filter((e) => e.user_id === athlete.id),
+      feedbackByEntryId,
+    };
+  });
 
   return NextResponse.json(result);
 }

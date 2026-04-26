@@ -24,12 +24,29 @@ type UserProfile = {
   coach_id: string | null;
 };
 
+type CoachFeedbackItem = {
+  content: string;
+  created_at: string;
+  coach_name: string;
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function detectThemesForEntry(text: string, sentiment: Sentiment): string[] {
   return THEME_DEFS
     .filter((def) => def.keywords.some((kw) => text.toLowerCase().includes(kw)))
     .map((def) => def.label);
+}
+
+function timeSinceJournal(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffH   = Math.floor(diffMs / 3600000);
+  const diffD   = Math.floor(diffMs / 86400000);
+  if (diffMin < 1)  return "just now";
+  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffH   < 24) return `${diffH}h ago`;
+  return `${diffD}d ago`;
 }
 
 function dayLabel(iso: string) {
@@ -481,13 +498,15 @@ export default function JournalPage() {
   const [todayTraining, setTodayTraining] = React.useState<TrainingEntry | null | undefined>(undefined);
   const [ready, setReady]             = React.useState(false);
   const [coachPromptDismissed, setCoachPromptDismissed] = React.useState(false);
+  const [coachFeedback, setCoachFeedback] = React.useState<Record<string, CoachFeedbackItem>>({});
 
   React.useEffect(() => {
     (async () => {
-      const [profileRes, entriesRes, trainingRes] = await Promise.all([
+      const [profileRes, entriesRes, trainingRes, feedbackRes] = await Promise.all([
         fetch("/api/me"),
         fetch("/api/journal/entries"),
         fetch(`/api/training/entries?date=${ymdLocal()}`),
+        fetch("/api/journal/entry-feedback"),
       ]);
       if (profileRes.ok) setProfile(await profileRes.json());
       if (entriesRes.ok) setEntries(await entriesRes.json());
@@ -496,6 +515,9 @@ export default function JournalPage() {
         setTodayTraining(t?.id ? (t as TrainingEntry) : null);
       } else {
         setTodayTraining(null);
+      }
+      if (feedbackRes.ok) {
+        setCoachFeedback(await feedbackRes.json());
       }
       setReady(true);
     })();
@@ -566,7 +588,19 @@ export default function JournalPage() {
                     </div>
                     <div className="space-y-3">
                       {dayEntries.map((e) => (
-                        <EntryCard key={e.id} entry={e} onDelete={handleDelete} />
+                        <div key={e.id}>
+                          <EntryCard entry={e} onDelete={handleDelete} />
+                          {coachFeedback[e.id] && (
+                            <div className="mt-1.5 ml-2 pl-3 border-l-2 border-purple-500/20">
+                              <p className="font-saira text-xs text-zinc-400 italic leading-relaxed">
+                                &ldquo;{coachFeedback[e.id].content}&rdquo;
+                              </p>
+                              <p className="font-saira text-[10px] text-zinc-600 mt-0.5">
+                                — {coachFeedback[e.id].coach_name} (coach) · {timeSinceJournal(coachFeedback[e.id].created_at)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
