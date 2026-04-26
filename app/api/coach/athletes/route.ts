@@ -49,6 +49,8 @@ type ProfileRow = {
   expectations: string | null;
   previous_tools: string | null;
   anything_else: string | null;
+  affirmations: string[] | null;
+  viz_keywords: Record<string, string[]> | null;
 };
 
 type EntryRow = {
@@ -97,6 +99,7 @@ export async function GET() {
       "main_barrier,confidence_break,overthinking_focus,previous_mental_work",
       "self_confidence_reg,self_focus_fatigue,self_handling_pressure,self_competition_anxiety,self_emotional_recovery",
       "expectations,previous_tools,anything_else",
+      "affirmations,viz_keywords",
     ].join(","),
     order: "created_at.asc",
   });

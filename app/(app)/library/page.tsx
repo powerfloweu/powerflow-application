@@ -107,9 +107,29 @@ const TOOLS = [
       },
     ],
   },
+  {
+    section: "Affirmations",
+    items: [
+      {
+        id: "affirmations",
+        title: "Self-Talk Affirmations",
+        tagline: "Personal mindset priming",
+        icon: "✦",
+        color: "emerald",
+        duration: "",
+        intro: "Positive self-talk — deliberate internal statements directed at oneself — is one of the most studied psychological skills in sport. A 2011 meta-analysis by Hatzigeorgiadis et al. found self-talk interventions significantly improve performance across sport disciplines, with motivational self-talk being particularly effective for strength and power tasks. Well-constructed affirmations reduce performance anxiety, prime attentional focus, and activate associated neural pathways before execution.",
+        citations: [
+          "Hatzigeorgiadis et al. (2011). Self-talk and sports performance: A meta-analysis. Perspectives on Psychological Science, 6(4), 348–356.",
+          "Hardy (2006). Speaking clearly: A critical review of the self-talk literature. Psychology of Sport and Exercise, 7(1), 81–97.",
+          "Theodorakis et al. (2000). Motivational vs. instructional self-talk effects on performance. The Sport Psychologist, 14(3), 253–272.",
+        ],
+        fileKey: null as string | null,
+      },
+    ],
+  },
 ];
 
-type ToolColor = "purple" | "amber" | "teal";
+type ToolColor = "purple" | "amber" | "teal" | "emerald";
 
 const COLOR_MAP: Record<ToolColor, {
   border: string; bg: string; icon: string; num: string; cite: string; player: string;
@@ -138,28 +158,41 @@ const COLOR_MAP: Record<ToolColor, {
     cite:    "text-teal-400/60",
     player:  "bg-teal-600 hover:bg-teal-500",
   },
+  emerald: {
+    border: "border-emerald-500/20",
+    bg:     "bg-emerald-500/[0.05]",
+    icon:   "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    num:    "text-emerald-400",
+    cite:   "text-emerald-400/60",
+    player: "bg-emerald-600 hover:bg-emerald-500",
+  },
 };
 
 // ── Visualization keywords ────────────────────────────────────────────────────
 
-function VizKeywords({ toolId }: { toolId: string }) {
-  const key = `viz-kw-${toolId}`;
-
-  const [keywords, setKeywords] = React.useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem(key) ?? "[]"); } catch { return []; }
-  });
+function VizKeywords({
+  toolId,
+  keywords,
+  onSave,
+}: {
+  toolId: string;
+  keywords: string[];
+  onSave: (kws: string[]) => Promise<void>;
+}) {
   const [editing, setEditing] = React.useState(false);
   const [drafts, setDrafts]   = React.useState(["", "", ""]);
+  const [saving, setSaving]   = React.useState(false);
 
   const openEdit = () => {
     setDrafts([keywords[0] ?? "", keywords[1] ?? "", keywords[2] ?? ""]);
     setEditing(true);
   };
 
-  const save = () => {
+  const save = async () => {
+    setSaving(true);
     const filtered = drafts.map((s) => s.trim()).filter(Boolean).slice(0, 3);
-    setKeywords(filtered);
-    localStorage.setItem(key, JSON.stringify(filtered));
+    await onSave(filtered);
+    setSaving(false);
     setEditing(false);
   };
 
@@ -192,10 +225,10 @@ function VizKeywords({ toolId }: { toolId: string }) {
           <button
             type="button"
             onClick={save}
-            disabled={drafts.every((s) => !s.trim())}
+            disabled={drafts.every((s) => !s.trim()) || saving}
             className="rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-4 py-1.5 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition"
           >
-            Save
+            {saving ? "Saving…" : "Save"}
           </button>
           {keywords.length > 0 && (
             <button
@@ -227,13 +260,97 @@ function VizKeywords({ toolId }: { toolId: string }) {
       </div>
       <div className="flex gap-1.5 flex-wrap">
         {keywords.map((kw, i) => (
-          <span
-            key={i}
-            className="rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-0.5 font-saira text-xs text-purple-300"
-          >
+          <span key={i} className="rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-0.5 font-saira text-xs text-purple-300">
             {kw}
           </span>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Affirmations inputs ───────────────────────────────────────────────────────
+
+function AffirmationsInputs({
+  affirmations,
+  onSave,
+}: {
+  affirmations: string[];
+  onSave: (a: string[]) => Promise<void>;
+}) {
+  const [drafts, setDrafts] = React.useState([
+    affirmations[0] ?? "",
+    affirmations[1] ?? "",
+    affirmations[2] ?? "",
+  ]);
+  const [saving, setSaving] = React.useState(false);
+  const [saved, setSaved]   = React.useState(false);
+  const [error, setError]   = React.useState<string | null>(null);
+
+  // Sync when parent affirmations change (on first profile load)
+  React.useEffect(() => {
+    setDrafts([affirmations[0] ?? "", affirmations[1] ?? "", affirmations[2] ?? ""]);
+  }, [affirmations.join(",")]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const hasAny = drafts.some((d) => d.trim().length > 0);
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const filtered = drafts.map((s) => s.trim()).filter(Boolean);
+      await onSave(filtered);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setError("Couldn't save — please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const placeholders = [
+    "e.g. I am strong and prepared for this",
+    "e.g. I trust my technique under pressure",
+    "e.g. I control what I can control",
+  ];
+
+  return (
+    <div className="space-y-3">
+      {[0, 1, 2].map((i) => (
+        <div key={i}>
+          <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
+            Affirmation {i + 1}{i > 0 ? " (optional)" : ""}
+          </label>
+          <input
+            type="text"
+            value={drafts[i]}
+            onChange={(e) => {
+              const next = [...drafts];
+              next[i] = e.target.value;
+              setDrafts(next);
+            }}
+            placeholder={placeholders[i]}
+            maxLength={120}
+            className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2.5 font-saira text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-emerald-500/50"
+          />
+        </div>
+      ))}
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!hasAny || saving}
+          className={`rounded-xl px-5 py-2.5 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition ${
+            saved
+              ? "bg-emerald-500"
+              : "bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40"
+          }`}
+        >
+          {saved ? "✓ Saved" : saving ? "Saving…" : "Save"}
+        </button>
+        {error && <p className="font-saira text-[11px] text-red-400">{error}</p>}
       </div>
     </div>
   );
@@ -401,9 +518,24 @@ export default function ToolsPage() {
   const [requestState, setRequestState] = React.useState<"idle" | "sending" | "sent" | "error">("idle");
   const [favoriteRelaxId, setFavoriteRelaxId] = React.useState<string | null>(null);
 
+  const [vizKeywordsMap, setVizKeywordsMap] = React.useState<Record<string, string[]>>({});
+  const [affirmations, setAffirmations]     = React.useState<string[]>([]);
+  const [profileLoaded, setProfileLoaded]   = React.useState(false);
+
   React.useEffect(() => {
     const stored = localStorage.getItem("relax-favorite");
     if (stored) setFavoriteRelaxId(stored);
+  }, []);
+
+  React.useEffect(() => {
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then((p) => {
+        setVizKeywordsMap(p.viz_keywords ?? {});
+        setAffirmations(Array.isArray(p.affirmations) ? p.affirmations : []);
+        setProfileLoaded(true);
+      })
+      .catch(() => setProfileLoaded(true));
   }, []);
 
   const toggle = (id: string) => {
@@ -415,6 +547,25 @@ export default function ToolsPage() {
     setFavoriteRelaxId(next);
     if (next) localStorage.setItem("relax-favorite", next);
     else localStorage.removeItem("relax-favorite");
+  };
+
+  const saveVizKeywords = async (toolId: string, kws: string[]) => {
+    const next = { ...vizKeywordsMap, [toolId]: kws };
+    setVizKeywordsMap(next);
+    await fetch("/api/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ viz_keywords: next }),
+    });
+  };
+
+  const saveAffirmations = async (a: string[]) => {
+    setAffirmations(a);
+    await fetch("/api/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ affirmations: a }),
+    });
   };
 
   const submitRequest = async () => {
@@ -484,7 +635,7 @@ export default function ToolsPage() {
                           <p className="font-saira text-sm font-semibold text-white">{tool.title}</p>
                           <p className="font-saira text-[11px] text-zinc-500">
                             {tool.tagline}
-                            <span className="ml-2 text-zinc-700">{tool.duration}</span>
+                            {tool.duration && <span className="ml-2 text-zinc-700">{tool.duration}</span>}
                           </p>
                         </div>
                         <span className={`font-saira text-sm text-zinc-600 transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
@@ -515,13 +666,7 @@ export default function ToolsPage() {
                     {open && (
                       <div className="px-5 pb-6">
                         <div className={`w-full h-px mb-4 border-t ${c.border}`} />
-
-                        {/* Intro */}
-                        <p className="font-saira text-[13px] text-zinc-300 leading-relaxed mb-3">
-                          {tool.intro}
-                        </p>
-
-                        {/* Citations */}
+                        <p className="font-saira text-[13px] text-zinc-300 leading-relaxed mb-3">{tool.intro}</p>
                         <ul className="space-y-1 mb-5">
                           {tool.citations.map((cite, i) => (
                             <li key={i} className="flex gap-2 items-baseline">
@@ -530,14 +675,20 @@ export default function ToolsPage() {
                             </li>
                           ))}
                         </ul>
-
-                        {/* Personal cues — visualizations only */}
-                        {section === "Visualizations" && (
-                          <VizKeywords toolId={tool.id} />
+                        {tool.id === "affirmations" ? (
+                          <AffirmationsInputs affirmations={affirmations} onSave={saveAffirmations} />
+                        ) : (
+                          <>
+                            {section === "Visualizations" && (
+                              <VizKeywords
+                                toolId={tool.id}
+                                keywords={vizKeywordsMap[tool.id] ?? []}
+                                onSave={(kws) => saveVizKeywords(tool.id, kws)}
+                              />
+                            )}
+                            <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
+                          </>
                         )}
-
-                        {/* Audio player */}
-                        <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
                       </div>
                     )}
                   </div>

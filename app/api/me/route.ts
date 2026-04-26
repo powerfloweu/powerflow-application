@@ -23,6 +23,8 @@ const SELECT_COLS = [
   "self_confidence_reg", "self_focus_fatigue", "self_handling_pressure",
   "self_competition_anxiety", "self_emotional_recovery",
   "expectations", "previous_tools", "anything_else",
+  // v4 — tools
+  "affirmations", "viz_keywords",
 ].join(",");
 
 export async function GET() {
@@ -73,6 +75,8 @@ export async function GET() {
       expectations: null,
       previous_tools: null,
       anything_else: null,
+      affirmations: [],
+      viz_keywords: {},
     } satisfies AthleteProfile);
   }
 
@@ -108,6 +112,8 @@ export async function PATCH(req: NextRequest) {
     "self_confidence_reg", "self_focus_fatigue", "self_handling_pressure",
     "self_competition_anxiety", "self_emotional_recovery",
     "expectations", "previous_tools", "anything_else",
+    // v4 — tools
+    "affirmations", "viz_keywords",
   ];
 
   const patch: Record<string, unknown> = {};

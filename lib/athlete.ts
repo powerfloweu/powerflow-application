@@ -78,6 +78,9 @@ export type AthleteProfile = {
   expectations: string | null;
   previous_tools: string | null;
   anything_else: string | null;
+  // v4 — tools
+  affirmations: string[];
+  viz_keywords: Record<string, string[]>;
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */

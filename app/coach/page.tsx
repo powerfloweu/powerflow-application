@@ -61,6 +61,8 @@ type AthleteRaw = {
   expectations: string | null;
   previous_tools: string | null;
   anything_else: string | null;
+  affirmations: string[] | null;
+  viz_keywords: Record<string, string[]> | null;
   // activity data
   entries: EntryRow[];
   sat: SatRow[];
@@ -192,6 +194,8 @@ function computeClient(a: AthleteRaw) {
       expectations: a.expectations,
       previous_tools: a.previous_tools,
       anything_else: a.anything_else,
+      affirmations: a.affirmations ?? [],
+      viz_keywords: a.viz_keywords ?? {},
     },
   };
 }
@@ -289,6 +293,49 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
 
   return (
     <div className="space-y-6">
+
+      {/* Mental tools */}
+      <div>
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-400 mb-3">
+          Mental tools
+        </p>
+        <div className="space-y-3">
+          {/* Affirmations */}
+          <div>
+            <p className="font-saira text-[10px] text-zinc-600 mb-1.5">Affirmations</p>
+            {profile.affirmations?.length ? (
+              <ol className="space-y-1">
+                {profile.affirmations.map((a, i) => (
+                  <li key={i} className="flex gap-2 items-start">
+                    <span className="font-saira text-[10px] text-purple-400 font-bold flex-shrink-0 mt-0.5">{i + 1}.</span>
+                    <span className="font-saira text-sm text-zinc-200">{a}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="font-saira text-sm text-zinc-600">Not set</p>
+            )}
+          </div>
+          {/* Viz keywords */}
+          {(["viz-squat", "viz-bench", "viz-deadlift"] as const).map((toolId) => {
+            const label = toolId === "viz-squat" ? "Squat cues" : toolId === "viz-bench" ? "Bench cues" : "Deadlift cues";
+            const kws = profile.viz_keywords?.[toolId] ?? [];
+            if (!kws.length) return null;
+            return (
+              <div key={toolId}>
+                <p className="font-saira text-[10px] text-zinc-600 mb-1.5">{label}</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {kws.map((kw, i) => (
+                    <span key={i} className="rounded-full border border-purple-500/25 bg-purple-500/10 px-2.5 py-0.5 font-saira text-xs text-purple-300">
+                      {kw}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Personal & sport */}
       {hasBio && (
