@@ -405,15 +405,6 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
         </div>
       )}
 
-      <div className="rounded-3xl border border-purple-500/15 bg-purple-500/5 p-5">
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400 mb-2">Coming soon</p>
-        <p className="font-saira text-xs text-zinc-400 leading-relaxed">
-          Connect your journal to your test results — see how your self-talk patterns relate to your DAS and SAT scores over time.
-        </p>
-        <Link href="/tests" className="mt-3 inline-block font-saira text-[11px] text-purple-300 underline underline-offset-2 hover:text-purple-200 transition">
-          Take a test →
-        </Link>
-      </div>
     </div>
   );
 }
