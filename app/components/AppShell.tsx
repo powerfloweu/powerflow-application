@@ -10,10 +10,9 @@ interface Props {
 }
 
 const NAV_LINKS = [
-  { href: "/today",   label: "Today"   },
+  { href: "/today",   label: "Home"    },
   { href: "/journal", label: "Journal" },
   { href: "/library", label: "Tools"   },
-  { href: "/course",  label: "Course"  },
   { href: "/you",     label: "You"     },
 ] as const;
 
