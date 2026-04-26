@@ -29,6 +29,8 @@ type UserRow = {
   coach_name: string | null;
   coach_code: string | null;
   course_access: boolean;
+  test_access: boolean;
+  ai_access: boolean;
   onboarding_complete: boolean;
   meet_date: string | null;
   created_at: string | null;
@@ -82,7 +84,7 @@ function generateCode(): string {
 
 function exportCsv(users: UserRow[]) {
   const headers = [
-    "Name", "Email", "Role", "Coach", "Course", "Activity",
+    "Name", "Email", "Role", "Coach", "Course", "Tests", "AI", "Activity",
     "Entries7d", "Checkins7d", "LastActive", "Onboarded",
     "MeetDate", "Gender", "BW_kg", "WeightCat", "Fed",
     "Squat", "Bench", "Deadlift",
@@ -90,7 +92,10 @@ function exportCsv(users: UserRow[]) {
   const rows = users.map((u) =>
     [
       u.display_name, u.email ?? "", u.role, u.coach_name ?? "",
-      u.course_access ? "yes" : "no", u.activity_status,
+      u.course_access ? "yes" : "no",
+      u.test_access ? "yes" : "no",
+      u.ai_access ? "yes" : "no",
+      u.activity_status,
       u.journal_count_7d, u.checkin_count_7d, u.last_active ?? "",
       u.onboarding_complete ? "yes" : "no", u.meet_date ?? "",
       u.gender ?? "", u.bodyweight_kg ?? "", u.weight_category ?? "",
@@ -464,6 +469,8 @@ function OverviewTab({ users }: { users: UserRow[] }) {
   const active = users.filter((u) => u.activity_status === "active");
   const dormantAthletes = athletes.filter((u) => u.activity_status === "dormant");
   const courseAccess = athletes.filter((u) => u.course_access);
+  const testAccess = athletes.filter((u) => u.test_access);
+  const aiAccess = athletes.filter((u) => u.ai_access);
   const onboarded = athletes.filter((u) => u.onboarding_complete);
 
   return (
@@ -475,7 +482,9 @@ function OverviewTab({ users }: { users: UserRow[] }) {
         <Stat label="Coaches" value={coaches.length} color="text-cyan-300" />
         <Stat label="Active 7d" value={active.length} color="text-green-400" />
         <Stat label="Dormant" value={dormantAthletes.length} color={dormantAthletes.length > 0 ? "text-red-400" : "text-white"} />
-        <Stat label="Course unlocked" value={courseAccess.length} color="text-yellow-400" />
+        <Stat label="Course" value={courseAccess.length} color="text-yellow-400" />
+        <Stat label="Tests" value={testAccess.length} color="text-sky-400" />
+        <Stat label="AI" value={aiAccess.length} color="text-emerald-400" />
         <Stat label="Onboarded" value={`${onboarded.length}/${athletes.length}`} />
       </div>
 
@@ -578,7 +587,6 @@ function UsersTab({
   users,
   coaches,
   sessionEmail,
-  onToggleCourse,
   onRelinkCoach,
   onPatchUser,
   onDeleteUser,
@@ -587,7 +595,6 @@ function UsersTab({
   users: UserRow[];
   coaches: UserRow[];
   sessionEmail: string | null;
-  onToggleCourse: (userId: string, current: boolean) => void;
   onRelinkCoach: (userId: string, coachId: string | null) => void;
   onPatchUser: (userId: string, patch: Record<string, unknown>) => void;
   onDeleteUser: (userId: string) => void;
@@ -666,7 +673,7 @@ function UsersTab({
       <div className="rounded-2xl border border-white/5 bg-[#17131F] overflow-hidden">
         {/* Header */}
         <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto_auto_auto_auto] gap-2 px-5 py-3 border-b border-white/5">
-          {["Name", "Email", "Role", "Coach / Athletes", "Course", "Activity (7d)", ""].map((h) => (
+          {["Name", "Email", "Role", "Coach / Athletes", "Access", "Activity (7d)", ""].map((h) => (
             <span
               key={h}
               className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500"
@@ -733,21 +740,29 @@ function UsersTab({
                   )}
                 </div>
 
-                {/* Course toggle (athletes only) */}
+                {/* Access toggles (course / tests / AI) */}
                 <div
-                  className="hidden sm:flex items-center gap-2"
+                  className="hidden sm:flex flex-col gap-1.5"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {user.role === "athlete" ? (
                     <>
-                      <Toggle
-                        on={user.course_access}
-                        disabled={saving[user.id] ?? false}
-                        onToggle={() => onToggleCourse(user.id, user.course_access)}
-                      />
-                      <span className="font-saira text-[10px] text-zinc-500">
-                        {user.course_access ? "On" : "Off"}
-                      </span>
+                      {(
+                        [
+                          ["course_access", "Course", user.course_access],
+                          ["test_access",   "Tests",  user.test_access],
+                          ["ai_access",     "AI",     user.ai_access],
+                        ] as [string, string, boolean][]
+                      ).map(([field, label, val]) => (
+                        <div key={field} className="flex items-center gap-1.5">
+                          <Toggle
+                            on={val}
+                            disabled={saving[user.id] ?? false}
+                            onToggle={() => onPatchUser(user.id, { [field]: !val })}
+                          />
+                          <span className="font-saira text-[9px] text-zinc-500 w-10">{label}</span>
+                        </div>
+                      ))}
                     </>
                   ) : (
                     <span className="font-saira text-[10px] text-zinc-600">—</span>
@@ -802,16 +817,23 @@ function UsersTab({
                   {user.journal_count_7d}j · {user.checkin_count_7d}c
                 </span>
                 {user.role === "athlete" && (
-                  <div
-                    className="flex items-center gap-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Toggle
-                      on={user.course_access}
-                      disabled={saving[user.id] ?? false}
-                      onToggle={() => onToggleCourse(user.id, user.course_access)}
-                    />
-                    <span className="font-saira text-[10px] text-zinc-500">Course</span>
+                  <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                    {(
+                      [
+                        ["course_access", "Course", user.course_access],
+                        ["test_access",   "Tests",  user.test_access],
+                        ["ai_access",     "AI",     user.ai_access],
+                      ] as [string, string, boolean][]
+                    ).map(([field, label, val]) => (
+                      <div key={field} className="flex items-center gap-1.5">
+                        <Toggle
+                          on={val}
+                          disabled={saving[user.id] ?? false}
+                          onToggle={() => onPatchUser(user.id, { [field]: !val })}
+                        />
+                        <span className="font-saira text-[10px] text-zinc-500">{label}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -1487,9 +1509,6 @@ export default function MasterAdminPage() {
     }
   }
 
-  function handleToggleCourse(userId: string, current: boolean) {
-    patchUser(userId, { course_access: !current });
-  }
 
   function handleRelinkCoach(athleteId: string, coachId: string | null) {
     patchUser(athleteId, { coach_id: coachId });
@@ -1629,7 +1648,6 @@ export default function MasterAdminPage() {
                 users={users}
                 coaches={coaches}
                 sessionEmail={sessionEmail}
-                onToggleCourse={handleToggleCourse}
                 onRelinkCoach={handleRelinkCoach}
                 onPatchUser={patchUser}
                 onDeleteUser={handleDeleteUser}
