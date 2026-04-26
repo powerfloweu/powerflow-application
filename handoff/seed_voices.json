@@ -1,0 +1,104 @@
+{
+  "_comment": "Seed data for development. Three voices drawn from Athlete 5's transcripts. user_id is a placeholder — replace with a real test user during seeding. Timestamps are fixtures.",
+  "voices": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "user_id": "REPLACE_WITH_TEST_USER_ID",
+      "name": "The Warrior",
+      "shape": "beam",
+      "shape_custom_description": null,
+      "color": "#34D399",
+      "size": 4,
+      "tone": 22,
+      "volume": 60,
+      "body_locations": ["chest", "core"],
+      "current_distance": "close",
+      "current_side": "front",
+      "desired_distance": "close",
+      "desired_side": "front",
+      "helps_when": [
+        "Preparing for a heavy single",
+        "Picking attempts",
+        "Catching mistakes mid-set"
+      ],
+      "helps_note": "When I walk out for an opener. When the room goes quiet and the bar is loaded. This is the one I want close.",
+      "thought_count": 8,
+      "created_at": "2025-09-12T10:14:00Z",
+      "updated_at": "2025-10-28T08:02:00Z"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "user_id": "REPLACE_WITH_TEST_USER_ID",
+      "name": "The Cheater",
+      "shape": "cloud",
+      "shape_custom_description": null,
+      "color": "#7DD3FC",
+      "size": 3,
+      "tone": 78,
+      "volume": 28,
+      "body_locations": ["left_shoulder", "chest"],
+      "current_distance": "close",
+      "current_side": "left",
+      "desired_distance": "meters",
+      "desired_side": "front",
+      "helps_when": [
+        "Reviewing technique",
+        "Catching mistakes mid-set"
+      ],
+      "helps_note": "When I need to be precise. But it gets noisy when I'm exhausted — that's when it should leave.",
+      "thought_count": 14,
+      "created_at": "2025-08-04T19:30:00Z",
+      "updated_at": "2025-10-29T17:11:00Z"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "user_id": "REPLACE_WITH_TEST_USER_ID",
+      "name": "The Quiet One",
+      "shape": "orb",
+      "shape_custom_description": null,
+      "color": "#A78BFA",
+      "size": 2,
+      "tone": 30,
+      "volume": 15,
+      "body_locations": ["back"],
+      "current_distance": "arm",
+      "current_side": "back",
+      "desired_distance": "arm",
+      "desired_side": "back",
+      "helps_when": [
+        "Coaching others",
+        "Recovery / rest days"
+      ],
+      "helps_note": "When I treat patients. Coaching others. The voice that listens before it speaks.",
+      "thought_count": 3,
+      "created_at": "2025-10-02T09:45:00Z",
+      "updated_at": "2025-10-25T20:00:00Z"
+    }
+  ],
+  "thought_entries_with_voice": [
+    {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "user_id": "REPLACE_WITH_TEST_USER_ID",
+      "text": "I only benched 80 because I was heavy.",
+      "sentiment": "neg",
+      "tag": "Post-training",
+      "voice_id": "00000000-0000-0000-0000-000000000002",
+      "reframe_text": "If I bench 80 in three weeks while I weigh 55, the Cheater was wrong. Search for those clues.",
+      "reframe_test_due": "2025-11-19",
+      "reframe_test_resolved": null,
+      "created_at": "2025-10-29T17:02:00Z"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000102",
+      "user_id": "REPLACE_WITH_TEST_USER_ID",
+      "text": "Bar speed was fine. My head lied to me.",
+      "sentiment": "neu",
+      "tag": "Reframe",
+      "voice_id": "00000000-0000-0000-0000-000000000001",
+      "reframe_text": null,
+      "reframe_test_due": null,
+      "reframe_test_resolved": null,
+      "created_at": "2025-10-26T20:10:00Z"
+    }
+  ]
+}

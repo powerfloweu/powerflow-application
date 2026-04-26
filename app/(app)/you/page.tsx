@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { computePhase } from "@/lib/phase";
 import { WEIGHT_CATEGORIES } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
+import type { SelfTalkMode } from "@/lib/voices";
 
 interface CoachOption {
   id: string;
@@ -57,6 +58,10 @@ export default function YouPage() {
   const [trainingDays, setTrainingDays]   = React.useState<number | null>(null);
   const [coachId, setCoachId]             = React.useState<string | null>(null);
 
+  // ── Practice mode (voice work) ─────────────────────────────
+  const [selfTalkMode, setSelfTalkMode]     = React.useState<SelfTalkMode>("classic");
+  const [savingMode, setSavingMode]         = React.useState(false);
+
   // ── Coach picker state ─────────────────────────────────────
   const [coaches, setCoaches]               = React.useState<CoachOption[]>([]);
   const [loadingCoaches, setLoadingCoaches] = React.useState(false);
@@ -85,6 +90,7 @@ export default function YouPage() {
         setMentalGoals([mg[0] ?? "", mg[1] ?? "", mg[2] ?? ""]);
         setTrainingDays(p.training_days_per_week ?? null);
         setCoachId(p.coach_id ?? null);
+        setSelfTalkMode(p.self_talk_mode ?? "classic");
         // If user already has a coach, fetch the coach list now so we can
         // display the coach's name in the static view (without making them
         // open the picker).
@@ -541,6 +547,65 @@ export default function YouPage() {
           );
         })()}
       </Section>
+
+      {/* ── Practice mode (ai_access gate) ─────────────────── */}
+      {profile?.ai_access && (
+        <Section
+          label="Practice mode"
+          summary={selfTalkMode === "beta_voice_work" ? "Voice work · Beta" : "Classic"}
+        >
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 mb-1">
+            Self-Talk Log
+          </p>
+          <p className="font-saira text-xs text-zinc-500 leading-relaxed mb-4">
+            Classic mode uses the standard journal for your thoughts.
+            Voice work maps the recurring voices in your head &mdash; naming
+            them, locating them, and giving each one a purpose.
+          </p>
+
+          {/* Segmented control */}
+          <div className="flex gap-2 mb-4">
+            {(["classic", "beta_voice_work"] as SelfTalkMode[]).map((mode) => {
+              const isActive = selfTalkMode === mode;
+              const label = mode === "classic" ? "Classic" : "Voice work · Beta";
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  disabled={savingMode}
+                  onClick={async () => {
+                    if (isActive) return;
+                    setSavingMode(true);
+                    setSelfTalkMode(mode);
+                    setProfile((p) => p ? { ...p, self_talk_mode: mode } : p);
+                    await fetch("/api/me", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ self_talk_mode: mode }),
+                    }).catch(() => {});
+                    setSavingMode(false);
+                  }}
+                  className={`flex-1 rounded-xl border py-2 font-saira text-xs font-semibold transition ${
+                    isActive
+                      ? "border-purple-500 bg-purple-600 text-white"
+                      : "border-white/10 bg-[#0D0B14] text-zinc-400 hover:border-purple-500/40 hover:text-white"
+                  } disabled:opacity-60`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Open log link */}
+          <Link
+            href={selfTalkMode === "beta_voice_work" ? "/voices" : "/journal"}
+            className="font-saira text-[11px] text-purple-400 hover:text-purple-300 underline underline-offset-2 transition"
+          >
+            Open log →
+          </Link>
+        </Section>
+      )}
 
       {/* ── Guide link ───────────────────────────────────────── */}
       <Link

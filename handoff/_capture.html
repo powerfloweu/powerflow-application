@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>STL handoff captures</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Saira+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  html,body { margin:0; padding:0; background:#1a1820; font-family:'Inter',system-ui,sans-serif; }
+  * { box-sizing:border-box; }
+  .stage { padding: 20px; }
+  .frame { width:402px; height:874px; border-radius:44px; overflow:hidden; position:relative;
+    box-shadow:0 0 0 8px #2a2630, 0 30px 60px rgba(0,0,0,0.6); background:#0D0B14; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="../src/shared.jsx"></script>
+<script type="text/babel" src="../src/direction_a.jsx"></script>
+<script type="text/babel" src="../src/direction_a2.jsx"></script>
+<script type="text/babel" src="../src/journal/self_talk_log_a.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const t = I18N.en;
+const user = SAMPLE_USERS.advanced;
+
+const SCREENS = [
+  ['classic',     <A.SelfTalkClassic    t={t} user={user} />],
+  ['beta-intro',  <A.SelfTalkBetaIntro  t={t} user={user} />],
+  ['beta-1-name', <A.SelfTalkBetaName   t={t} user={user} />],
+  ['beta-2-locate', <A.SelfTalkBetaLocate t={t} user={user} />],
+  ['beta-3-shape',  <A.SelfTalkBetaShape  t={t} user={user} />],
+  ['beta-4-place',  <A.SelfTalkBetaPlace  t={t} user={user} />],
+  ['beta-5-purpose',<A.SelfTalkBetaPurpose t={t} user={user} />],
+  ['beta-saved',  <A.SelfTalkBetaSummary t={t} user={user} />],
+  ['you-toggle',  <A.Progress t={t} user={user} />],
+];
+
+const params = new URLSearchParams(location.search);
+const screenId = params.get('screen') || 'classic';
+const found = SCREENS.find(([id]) => id === screenId);
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <div style={{padding: 20}}>
+    {found ? <div className="frame" data-screen={found[0]}>{found[1]}</div> : <div style={{color:'#fff'}}>Unknown screen: {screenId}</div>}
+  </div>
+);
+</script>
+<script>
+// AUTOSIZE — set body to exactly fit the single frame on screen
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const f = document.querySelector('.frame');
+    if (!f) return;
+    const r = f.getBoundingClientRect();
+    document.body.style.minHeight = (r.height + 40) + 'px';
+  }, 200);
+});
+</script>
+</body>
+</html>

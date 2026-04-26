@@ -83,6 +83,11 @@ export type AthleteProfile = {
   // v4 — tools
   affirmations: string[];
   viz_keywords: Record<string, string[]>;
+  // v5 — voice work
+  /** Whether AI-powered features (Voice Work beta) are unlocked for this user. */
+  ai_access: boolean;
+  /** Whether to use classic journal mode or the beta voice-work mode. */
+  self_talk_mode: 'classic' | 'beta_voice_work';
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */

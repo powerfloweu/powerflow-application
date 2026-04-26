@@ -18,6 +18,7 @@ type EntryRow = {
   sentiment: "positive" | "neutral" | "negative";
   context: string;
   themes: string[];
+  voice_id: string | null;
   created_at: string;
 };
 
@@ -33,7 +34,7 @@ export async function GET() {
     user_id: `eq.${user.id}`,
     order: "created_at.desc",
     limit: "500",
-    select: "id,user_id,content,sentiment,context,themes,created_at",
+    select: "id,user_id,content,sentiment,context,themes,voice_id,created_at",
   });
 
   return NextResponse.json(rows);

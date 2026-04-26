@@ -22,6 +22,8 @@ type UserProfile = {
   avatar_url: string | null;
   role: "athlete" | "coach";
   coach_id: string | null;
+  ai_access?: boolean;
+  self_talk_mode?: string;
 };
 
 type CoachFeedbackItem = {
@@ -556,6 +558,18 @@ export default function JournalPage() {
         </div>
 
         {profile && <UserHeader profile={profile} />}
+
+        {/* Voice work banner — shown when user is in beta_voice_work mode */}
+        {profile?.ai_access && profile.self_talk_mode === "beta_voice_work" && (
+          <a
+            href="/voices"
+            className="flex items-center justify-between gap-3 mb-4 rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-2.5 font-saira text-xs text-purple-300 hover:border-purple-500/40 hover:text-purple-200 transition"
+          >
+            <span>✦ Voice work mode &nbsp;·&nbsp; View your cast</span>
+            <span>→</span>
+          </a>
+        )}
+
         {showCoachPrompt && <CoachPromptBanner onDismiss={() => setCoachPromptDismissed(true)} />}
 
         <div className="flex flex-col lg:flex-row gap-6 items-start">

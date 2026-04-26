@@ -25,6 +25,8 @@ const SELECT_COLS = [
   "expectations", "previous_tools", "anything_else",
   // v4 — tools
   "affirmations", "viz_keywords",
+  // v5 — voice work
+  "ai_access", "self_talk_mode",
 ].join(",");
 
 export async function GET() {
@@ -78,6 +80,8 @@ export async function GET() {
       anything_else: null,
       affirmations: [],
       viz_keywords: {},
+      ai_access: false,
+      self_talk_mode: 'classic',
     } satisfies AthleteProfile);
   }
 
@@ -115,6 +119,8 @@ export async function PATCH(req: NextRequest) {
     "expectations", "previous_tools", "anything_else",
     // v4 — tools
     "affirmations", "viz_keywords",
+    // v5 — voice work
+    "self_talk_mode",
   ];
 
   const patch: Record<string, unknown> = {};
