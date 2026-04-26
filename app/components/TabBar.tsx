@@ -6,7 +6,7 @@ import React from "react";
 import { isCheckinDone, checkinKey } from "@/lib/checkinReminder";
 
 const TABS = [
-  { href: "/today",   label: "Today",   icon: TodayIcon   },
+  { href: "/today",   label: "Home",    icon: TodayIcon   },
   { href: "/journal", label: "Journal", icon: JournalIcon },
   { href: "/library", label: "Tools",   icon: LibraryIcon },
   { href: "/you",     label: "You",     icon: YouIcon     },

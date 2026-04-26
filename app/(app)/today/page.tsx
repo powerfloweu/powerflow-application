@@ -146,7 +146,7 @@ export default function TodayPage() {
       {/* ── Greeting ──────────────────────────────────────────── */}
       <div className="mb-8">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
-          POWERFLOW · TODAY
+          POWERFLOW · HOME
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-1">
           {greeting()}{profile ? `, ${firstName(profile.display_name)}` : ""}
@@ -284,7 +284,7 @@ function DayPickerScreen({
     <div className="min-h-screen flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-2 text-center">
-          POWERFLOW · TODAY
+          POWERFLOW · HOME
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-2 text-center">
           {new Date().toLocaleDateString("en-GB", { weekday: "long" })}
