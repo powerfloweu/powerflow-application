@@ -208,7 +208,10 @@ export default function YouPage() {
       )}
 
       {/* ── Meet date ───────────────────────────────────────── */}
-      <Section label="Next competition">
+      <Section
+        label="Next competition"
+        summary={meetDate ? new Date(meetDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Not set"}
+      >
         {phase && <p className="font-saira text-xs text-purple-300 mb-3">{phase.label}</p>}
         <div className="flex items-center gap-3">
           <input
@@ -233,7 +236,10 @@ export default function YouPage() {
       </Section>
 
       {/* ── Body ────────────────────────────────────────────── */}
-      <Section label="Body">
+      <Section
+        label="Body"
+        summary={[gender, bodyweight ? `${bodyweight} kg` : null, weightCat].filter(Boolean).join(" · ") || "Not set"}
+      >
         <div className="grid grid-cols-2 gap-3 mb-3">
           {/* Gender */}
           <div>
@@ -292,7 +298,12 @@ export default function YouPage() {
       </Section>
 
       {/* ── Strength goals ──────────────────────────────────── */}
-      <Section label="Strength goals">
+      <Section
+        label="Strength goals"
+        summary={[squatCurrent, benchCurrent, dlCurrent].some(Boolean)
+          ? [squatCurrent, benchCurrent, dlCurrent].map((v) => v ? `${v} kg` : "—").join(" / ")
+          : "Not set"}
+      >
         <div className="space-y-3 mb-3">
           {([
             ["Squat",    squatCurrent,  setSquatCurrent,  squatGoal,  setSquatGoal  ],
@@ -339,7 +350,10 @@ export default function YouPage() {
       </Section>
 
       {/* ── Mental goals ────────────────────────────────────── */}
-      <Section label="Mental goals (1–3)">
+      <Section
+        label="Mental goals"
+        summary={(() => { const n = mentalGoals.filter(Boolean).length; return n ? `${n} goal${n > 1 ? "s" : ""} set` : "Not set"; })()}
+      >
         <div className="space-y-2 mb-3">
           {mentalGoals.map((g, i) => (
             <div key={i} className="flex items-start gap-2">
@@ -371,7 +385,10 @@ export default function YouPage() {
       </Section>
 
       {/* ── Training schedule ───────────────────────────────── */}
-      <Section label="Training schedule">
+      <Section
+        label="Training schedule"
+        summary={trainingDays ? `${trainingDays}×/week` : "Not set"}
+      >
         <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-2">
           Training days per week
         </label>
@@ -399,7 +416,10 @@ export default function YouPage() {
       </Section>
 
       {/* ── Coach picker ─────────────────────────────────────── */}
-      <Section label="Coach">
+      <Section
+        label="Coach"
+        summary={coachId ? (coaches.find((c) => c.id === coachId)?.display_name ?? "Connected") : "Not connected"}
+      >
         {(() => {
           const currentCoach = coaches.find((c) => c.id === coachId);
           const showStatic = !showCoachPicker;
@@ -557,14 +577,56 @@ export default function YouPage() {
 
 // ── Small shared components ───────────────────────────────────────────────────
 
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
+function Section({
+  label,
+  summary,
+  children,
+  defaultOpen = false,
+}: {
+  label: string;
+  summary?: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = React.useState(defaultOpen);
   return (
-    <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-4">
-      <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-3">
-        {label}
-      </p>
-      {children}
+    <div className="rounded-2xl border border-white/5 bg-[#17131F] mb-4 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 flex-shrink-0">
+            {label}
+          </p>
+          {!open && summary && (
+            <span className="font-saira text-xs text-zinc-600 truncate">{summary}</span>
+          )}
+        </div>
+        <ChevronIcon open={open} />
+      </button>
+      {open && <div className="px-5 pb-5">{children}</div>}
     </div>
+  );
+}
+
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className={`w-4 h-4 flex-shrink-0 text-zinc-600 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d="M4 6l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
