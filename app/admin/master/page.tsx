@@ -5,13 +5,16 @@
  * Accessible only to the authenticated user whose email matches ADMIN_EMAIL.
  *
  * Tabs:
- *   Overview   — stat cards + dormant athletes list
- *   Users      — searchable table with expandable profile viewer + course toggle
+ *   Overview   — stat cards + growth chart + dormant athletes list
+ *   Users      — searchable table with expandable profile viewer + course/role/delete
  *   Coach Links — coach → athlete linking UI
+ *   Results    — SAT / ACSI / CSAI / DAS test results
+ *   Broadcast  — compose email to filtered user segments
  */
 
 import React from "react";
 import Link from "next/link";
+import type { SatRow, AcsiRow, CsaiRow, DasRow } from "@/app/api/admin/test-results/route";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -65,6 +68,46 @@ type UserRow = {
   last_active: string | null;
   activity_status: ActivityStatus;
 };
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function generateCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let out = "";
+  for (let i = 0; i < 8; i++) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
+
+function exportCsv(users: UserRow[]) {
+  const headers = [
+    "Name", "Email", "Role", "Coach", "Course", "Activity",
+    "Entries7d", "Checkins7d", "LastActive", "Onboarded",
+    "MeetDate", "Gender", "BW_kg", "WeightCat", "Fed",
+    "Squat", "Bench", "Deadlift",
+  ];
+  const rows = users.map((u) =>
+    [
+      u.display_name, u.email ?? "", u.role, u.coach_name ?? "",
+      u.course_access ? "yes" : "no", u.activity_status,
+      u.journal_count_7d, u.checkin_count_7d, u.last_active ?? "",
+      u.onboarding_complete ? "yes" : "no", u.meet_date ?? "",
+      u.gender ?? "", u.bodyweight_kg ?? "", u.weight_category ?? "",
+      u.federation ?? "", u.squat_current_kg ?? "", u.bench_current_kg ?? "", u.deadlift_current_kg ?? "",
+    ]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(","),
+  );
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `powerflow-users-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // ── Tiny sub-components ───────────────────────────────────────────────────────
 
@@ -324,6 +367,97 @@ function ExpandedProfile({ user }: { user: UserRow }) {
 
 // ── Overview Tab ──────────────────────────────────────────────────────────────
 
+function WeeklySignupsChart({ users }: { users: UserRow[] }) {
+  // Build 10-week buckets (Mon–Sun), most recent last
+  const buckets: { label: string; count: number; isCurrent: boolean }[] = [];
+  const now = new Date();
+  // Find Monday of current week
+  const dayOfWeek = now.getDay(); // 0=Sun
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const thisMonday = new Date(now);
+  thisMonday.setHours(0, 0, 0, 0);
+  thisMonday.setDate(now.getDate() + mondayOffset);
+
+  for (let i = 9; i >= 0; i--) {
+    const weekStart = new Date(thisMonday);
+    weekStart.setDate(thisMonday.getDate() - i * 7);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+
+    const count = users.filter((u) => {
+      if (!u.created_at) return false;
+      const d = new Date(u.created_at);
+      return d >= weekStart && d < weekEnd;
+    }).length;
+
+    buckets.push({
+      label: i === 0 ? "This wk" : `W-${i}`,
+      count,
+      isCurrent: i === 0,
+    });
+  }
+
+  const maxCount = Math.max(...buckets.map((b) => b.count), 1);
+  const chartH = 80;
+  const barW = 28;
+  const gap = 8;
+  const totalW = buckets.length * (barW + gap) - gap;
+
+  return (
+    <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5">
+      <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-purple-400 mb-4">
+        Weekly signups — last 10 weeks
+      </p>
+      <div className="overflow-x-auto">
+        <svg
+          width={totalW}
+          height={chartH + 32}
+          className="block"
+          style={{ minWidth: totalW }}
+        >
+          {buckets.map((b, i) => {
+            const barH = Math.max(2, Math.round((b.count / maxCount) * chartH));
+            const x = i * (barW + gap);
+            const y = chartH - barH;
+            return (
+              <g key={i}>
+                <rect
+                  x={x}
+                  y={y}
+                  width={barW}
+                  height={barH}
+                  rx={3}
+                  className={b.isCurrent ? "fill-purple-400" : "fill-purple-500/60"}
+                />
+                {b.count > 0 && (
+                  <text
+                    x={x + barW / 2}
+                    y={y - 4}
+                    textAnchor="middle"
+                    className="fill-zinc-300 font-saira"
+                    style={{ fontSize: 9, fontFamily: "inherit" }}
+                  >
+                    {b.count}
+                  </text>
+                )}
+                <text
+                  x={x + barW / 2}
+                  y={chartH + 16}
+                  textAnchor="middle"
+                  className="fill-zinc-500 font-saira"
+                  style={{ fontSize: 8, fontFamily: "inherit" }}
+                >
+                  {b.label}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 function OverviewTab({ users }: { users: UserRow[] }) {
   const athletes = users.filter((u) => u.role === "athlete");
   const coaches = users.filter((u) => u.role === "coach");
@@ -344,6 +478,9 @@ function OverviewTab({ users }: { users: UserRow[] }) {
         <Stat label="Course unlocked" value={courseAccess.length} color="text-yellow-400" />
         <Stat label="Onboarded" value={`${onboarded.length}/${athletes.length}`} />
       </div>
+
+      {/* Growth chart */}
+      <WeeklySignupsChart users={users} />
 
       {/* Coach summary */}
       <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5">
@@ -379,7 +516,7 @@ function OverviewTab({ users }: { users: UserRow[] }) {
       {dormantAthletes.length > 0 && (
         <div className="rounded-2xl border border-red-500/15 bg-red-500/5 p-5">
           <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-red-400 mb-4">
-            🔴 Dormant athletes — no activity in 7 days
+            Dormant athletes — no activity in 7 days
           </p>
           <div className="space-y-2">
             {dormantAthletes.map((u) => (
@@ -416,7 +553,7 @@ function OverviewTab({ users }: { users: UserRow[] }) {
         return (
           <div className="rounded-2xl border border-yellow-500/15 bg-yellow-500/5 p-5">
             <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-yellow-400 mb-4">
-              🟡 Monitor — low activity
+              Monitor — low activity
             </p>
             <div className="space-y-2">
               {monitorAthletes.map((u) => (
@@ -440,14 +577,20 @@ function OverviewTab({ users }: { users: UserRow[] }) {
 function UsersTab({
   users,
   coaches,
+  sessionEmail,
   onToggleCourse,
   onRelinkCoach,
+  onPatchUser,
+  onDeleteUser,
   saving,
 }: {
   users: UserRow[];
   coaches: UserRow[];
+  sessionEmail: string | null;
   onToggleCourse: (userId: string, current: boolean) => void;
   onRelinkCoach: (userId: string, coachId: string | null) => void;
+  onPatchUser: (userId: string, patch: Record<string, unknown>) => void;
+  onDeleteUser: (userId: string) => void;
   saving: Record<string, boolean>;
 }) {
   const [search, setSearch] = React.useState("");
@@ -467,10 +610,31 @@ function UsersTab({
     return true;
   });
 
+  function handleFlipRole(user: UserRow) {
+    const newRole = user.role === "athlete" ? "coach" : "athlete";
+    const ok = window.confirm(
+      `Change ${user.display_name} to ${newRole}? This affects their access and visibility.`,
+    );
+    if (!ok) return;
+    if (newRole === "coach") {
+      onPatchUser(user.id, { role: "coach", coach_code: generateCode() });
+    } else {
+      onPatchUser(user.id, { role: "athlete" });
+    }
+  }
+
+  function handleDelete(user: UserRow) {
+    const ok = window.confirm(
+      `Permanently delete ${user.display_name}? This cannot be undone.`,
+    );
+    if (!ok) return;
+    onDeleteUser(user.id);
+  }
+
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap items-center">
         <input
           type="text"
           placeholder="Search by name, email…"
@@ -490,6 +654,12 @@ function UsersTab({
             </button>
           ))}
         </div>
+        <button
+          onClick={() => exportCsv(filtered)}
+          className="border border-white/10 rounded-xl px-4 py-2 font-saira text-xs text-zinc-400 hover:text-white hover:border-white/30 transition"
+        >
+          Export CSV ↓
+        </button>
       </div>
 
       {/* Table */}
@@ -535,9 +705,19 @@ function UsersTab({
                   {user.email ?? "—"}
                 </p>
 
-                {/* Role */}
-                <div className="hidden sm:block">
+                {/* Role + flip button */}
+                <div
+                  className="hidden sm:flex items-center gap-1.5"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <RoleBadge role={user.role} />
+                  <button
+                    onClick={() => handleFlipRole(user)}
+                    disabled={saving[user.id] ?? false}
+                    className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-500 hover:text-white hover:border-white/30 transition disabled:opacity-40"
+                  >
+                    {user.role === "athlete" ? "→ Coach" : "→ Athlete"}
+                  </button>
                 </div>
 
                 {/* Coach / Athletes */}
@@ -548,7 +728,6 @@ function UsersTab({
                     </p>
                   ) : (
                     <p className="font-saira text-xs text-zinc-400">
-                      {/* Count athletes linked to this coach */}
                       {users.filter((u) => u.coach_id === user.id).length} athletes
                     </p>
                   )}
@@ -590,15 +769,30 @@ function UsersTab({
                   )}
                 </div>
 
-                {/* Expand */}
-                <div className="flex justify-end">
-                  <span className="font-saira text-zinc-500 text-xs">
+                {/* Actions: expand + delete */}
+                <div
+                  className="flex items-center justify-end gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {user.email !== sessionEmail && (
+                    <button
+                      onClick={() => handleDelete(user)}
+                      className="text-zinc-700 hover:text-rose-400 transition text-xs"
+                      title="Delete user"
+                    >
+                      ✕
+                    </button>
+                  )}
+                  <span
+                    className="font-saira text-zinc-500 text-xs cursor-pointer"
+                    onClick={() => setExpandedId(expandedId === user.id ? null : user.id)}
+                  >
                     {expandedId === user.id ? "▲" : "▼"}
                   </span>
                 </div>
               </div>
 
-              {/* Mobile extras (visible on small screens) */}
+              {/* Mobile extras */}
               <div className="sm:hidden flex flex-wrap gap-2 px-5 pb-3 -mt-1">
                 <RoleBadge role={user.role} />
                 {user.email && (
@@ -684,8 +878,6 @@ function CoachLinksTab({
 }) {
   const athletes = users.filter((u) => u.role === "athlete");
   const unlinked = athletes.filter((a) => !a.coach_id);
-
-  // Pending assignment for unlinked athletes
   const [pendingCoach, setPendingCoach] = React.useState<Record<string, string>>({});
 
   return (
@@ -696,7 +888,6 @@ function CoachLinksTab({
         </div>
       )}
 
-      {/* Per-coach card */}
       {coaches.map((coach) => {
         const myAthletes = athletes.filter((a) => a.coach_id === coach.id);
         return (
@@ -704,7 +895,6 @@ function CoachLinksTab({
             key={coach.id}
             className="rounded-2xl border border-white/5 bg-[#17131F] overflow-hidden"
           >
-            {/* Coach header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-cyan-500/5">
               <div>
                 <p className="font-saira text-sm font-bold text-cyan-300">
@@ -724,7 +914,6 @@ function CoachLinksTab({
               </span>
             </div>
 
-            {/* Athlete rows */}
             {myAthletes.length === 0 ? (
               <p className="font-saira text-xs text-zinc-600 px-5 py-4">
                 No athletes linked yet.
@@ -745,13 +934,10 @@ function CoachLinksTab({
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    {/* Reassign to different coach */}
                     <select
                       value={athlete.coach_id ?? ""}
                       disabled={saving[athlete.id] ?? false}
-                      onChange={(e) =>
-                        onRelinkCoach(athlete.id, e.target.value || null)
-                      }
+                      onChange={(e) => onRelinkCoach(athlete.id, e.target.value || null)}
                       className="rounded-lg border border-white/10 bg-[#0e0b15] px-2.5 py-1 font-saira text-xs text-white focus:outline-none focus:border-purple-500/50"
                     >
                       <option value="">Unlink</option>
@@ -772,7 +958,6 @@ function CoachLinksTab({
         );
       })}
 
-      {/* Unlinked athletes */}
       {unlinked.length > 0 && (
         <div className="rounded-2xl border border-orange-500/15 bg-orange-500/5 overflow-hidden">
           <div className="px-5 py-4 border-b border-white/5">
@@ -805,9 +990,7 @@ function CoachLinksTab({
                   ))}
                 </select>
                 <button
-                  disabled={
-                    !pendingCoach[athlete.id] || (saving[athlete.id] ?? false)
-                  }
+                  disabled={!pendingCoach[athlete.id] || (saving[athlete.id] ?? false)}
                   onClick={() => {
                     const coachId = pendingCoach[athlete.id];
                     if (coachId) onRelinkCoach(athlete.id, coachId);
@@ -825,9 +1008,422 @@ function CoachLinksTab({
   );
 }
 
+// ── Results Tab ───────────────────────────────────────────────────────────────
+
+type TestResultsData = {
+  sat: SatRow[];
+  acsi: AcsiRow[];
+  csai: CsaiRow[];
+  das: DasRow[];
+};
+
+type ResultSubTab = "sat" | "acsi" | "csai" | "das";
+
+function PaidChip({ paid }: { paid: boolean }) {
+  return paid ? (
+    <span className="inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold bg-green-500/15 text-green-400">
+      Paid
+    </span>
+  ) : (
+    <span className="inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold bg-zinc-500/15 text-zinc-500">
+      Unpaid
+    </span>
+  );
+}
+
+function ResultsTab() {
+  const [data, setData] = React.useState<TestResultsData | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [sub, setSub] = React.useState<ResultSubTab>("sat");
+  const fetched = React.useRef(false);
+
+  React.useEffect(() => {
+    if (fetched.current) return;
+    fetched.current = true;
+    setLoading(true);
+    fetch("/api/admin/test-results")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json() as Promise<TestResultsData>;
+      })
+      .then(setData)
+      .catch((e) => setError(String(e)))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleUnlock(table: string, id: string) {
+    await fetch("/api/admin/unlock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        resultId: id,
+        table,
+        password: process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "",
+      }),
+    });
+    // Update local state
+    setData((prev) => {
+      if (!prev) return prev;
+      const key = table.replace("_results", "") as ResultSubTab;
+      const updated = { ...prev };
+      if (key === "sat") updated.sat = prev.sat.map((r) => r.id === id ? { ...r, paid: true } : r);
+      else if (key === "acsi") updated.acsi = prev.acsi.map((r) => r.id === id ? { ...r, paid: true } : r);
+      else if (key === "csai") updated.csai = prev.csai.map((r) => r.id === id ? { ...r, paid: true } : r);
+      else if (key === "das") updated.das = prev.das.map((r) => r.id === id ? { ...r, paid: true } : r);
+      return updated;
+    });
+  }
+
+  const subTabs: { key: ResultSubTab; label: string }[] = [
+    { key: "sat", label: "SAT" },
+    { key: "acsi", label: "ACSI" },
+    { key: "csai", label: "CSAI" },
+    { key: "das", label: "DAS" },
+  ];
+
+  const counts = data
+    ? { sat: data.sat.length, acsi: data.acsi.length, csai: data.csai.length, das: data.das.length }
+    : { sat: 0, acsi: 0, csai: 0, das: 0 };
+
+  return (
+    <div className="space-y-5">
+      {/* Sub-tab pills */}
+      <div className="flex gap-2 flex-wrap">
+        {subTabs.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setSub(key)}
+            className={`px-3 py-1.5 rounded-lg font-saira text-[11px] font-bold uppercase tracking-wider border transition
+              ${sub === key
+                ? "border-purple-400/40 bg-purple-500/15 text-purple-300"
+                : "border-white/10 text-zinc-500 hover:text-zinc-300"}`}
+          >
+            {label} {data ? `(${counts[key]})` : ""}
+          </button>
+        ))}
+      </div>
+
+      {loading && (
+        <div className="flex justify-center py-16">
+          <div className="w-6 h-6 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+        </div>
+      )}
+
+      {error && (
+        <p className="font-saira text-sm text-red-400">{error}</p>
+      )}
+
+      {data && (
+        <div className="rounded-2xl border border-white/5 bg-[#17131F] overflow-hidden">
+          {/* Common header */}
+          <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
+            <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-purple-400">
+              {sub.toUpperCase()} Results
+            </p>
+            <span className="font-saira text-[10px] text-zinc-500">{counts[sub]} total</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            {sub === "sat" && (
+              <table className="w-full text-left text-xs font-saira">
+                <thead>
+                  <tr className="border-b border-white/5">
+                    {["Name", "Email", "Submitted", "Paid", "Score", "Valid", ""].map((h) => (
+                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.sat.map((r) => (
+                    <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
+                      <td className="px-4 py-2.5 text-white">{r.first_name}</td>
+                      <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
+                      <td className="px-4 py-2.5 text-zinc-500 whitespace-nowrap">
+                        {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                      </td>
+                      <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
+                      <td className="px-4 py-2.5 font-bold text-white">{r.sum_yes}</td>
+                      <td className="px-4 py-2.5">
+                        <span className={`inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold ${r.validity_reliable ? "bg-green-500/15 text-green-400" : "bg-rose-500/15 text-rose-400"}`}>
+                          {r.validity_reliable ? "Reliable" : "Unreliable"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {!r.paid && (
+                          <button
+                            onClick={() => handleUnlock("sat_results", r.id)}
+                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-500 hover:text-white hover:border-white/30 transition"
+                          >
+                            Unlock
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {sub === "acsi" && (
+              <table className="w-full text-left text-xs font-saira">
+                <thead>
+                  <tr className="border-b border-white/5">
+                    {["Name", "Email", "Submitted", "Paid", "Total", "Top subscale", ""].map((h) => (
+                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.acsi.map((r) => {
+                    const subscales: [string, number][] = [
+                      ["Coping", r.score_coping],
+                      ["Peaking", r.score_peaking],
+                      ["Goals", r.score_goal_setting],
+                      ["Concentration", r.score_concentration],
+                      ["Freedom", r.score_freedom],
+                      ["Confidence", r.score_confidence],
+                      ["Coachability", r.score_coachability],
+                    ];
+                    const top = subscales.reduce((a, b) => (b[1] > a[1] ? b : a));
+                    return (
+                      <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
+                        <td className="px-4 py-2.5 text-white">{r.first_name}</td>
+                        <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
+                        <td className="px-4 py-2.5 text-zinc-500 whitespace-nowrap">
+                          {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                        </td>
+                        <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
+                        <td className="px-4 py-2.5 font-bold text-white">{r.total_score}</td>
+                        <td className="px-4 py-2.5 text-zinc-400">{top[0]} ({top[1]})</td>
+                        <td className="px-4 py-2.5">
+                          {!r.paid && (
+                            <button
+                              onClick={() => handleUnlock("acsi_results", r.id)}
+                              className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-500 hover:text-white hover:border-white/30 transition"
+                            >
+                              Unlock
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+
+            {sub === "csai" && (
+              <table className="w-full text-left text-xs font-saira">
+                <thead>
+                  <tr className="border-b border-white/5">
+                    {["Name", "Email", "Submitted", "Paid", "Cog", "Som", "Conf", ""].map((h) => (
+                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.csai.map((r) => (
+                    <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
+                      <td className="px-4 py-2.5 text-white">{r.first_name}</td>
+                      <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
+                      <td className="px-4 py-2.5 text-zinc-500 whitespace-nowrap">
+                        {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                      </td>
+                      <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
+                      <td className="px-4 py-2.5 font-bold text-white">{r.score_cognitive}</td>
+                      <td className="px-4 py-2.5 font-bold text-white">{r.score_somatic}</td>
+                      <td className="px-4 py-2.5 font-bold text-white">{r.score_confidence}</td>
+                      <td className="px-4 py-2.5">
+                        {!r.paid && (
+                          <button
+                            onClick={() => handleUnlock("csai_results", r.id)}
+                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-500 hover:text-white hover:border-white/30 transition"
+                          >
+                            Unlock
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {sub === "das" && (
+              <table className="w-full text-left text-xs font-saira">
+                <thead>
+                  <tr className="border-b border-white/5">
+                    {["Name", "Email", "Submitted", "Paid", "Total", "Depr-prone", ""].map((h) => (
+                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.das.map((r) => (
+                    <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
+                      <td className="px-4 py-2.5 text-white">{r.first_name}</td>
+                      <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
+                      <td className="px-4 py-2.5 text-zinc-500 whitespace-nowrap">
+                        {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                      </td>
+                      <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
+                      <td className="px-4 py-2.5 font-bold text-white">{r.total_score}</td>
+                      <td className="px-4 py-2.5">
+                        <span className={`inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold ${r.depression_prone ? "bg-rose-500/15 text-rose-400" : "bg-zinc-500/15 text-zinc-500"}`}>
+                          {r.depression_prone ? "Yes" : "No"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {!r.paid && (
+                          <button
+                            onClick={() => handleUnlock("das_results", r.id)}
+                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-500 hover:text-white hover:border-white/30 transition"
+                          >
+                            Unlock
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Broadcast Tab ─────────────────────────────────────────────────────────────
+
+type BroadcastFilter = "all" | "athletes" | "coaches" | "dormant" | "nocoach";
+
+function BroadcastTab({ users }: { users: UserRow[] }) {
+  const [filter, setFilter] = React.useState<BroadcastFilter>("all");
+  const [subject, setSubject] = React.useState("");
+  const [body, setBody] = React.useState("");
+  const [copied, setCopied] = React.useState(false);
+
+  const allWithEmail = users.filter((u) => !!u.email);
+  const athletes = allWithEmail.filter((u) => u.role === "athlete");
+  const coaches = allWithEmail.filter((u) => u.role === "coach");
+  const dormant = athletes.filter((u) => u.activity_status === "dormant");
+  const noCoach = athletes.filter((u) => !u.coach_id);
+
+  const segments: { key: BroadcastFilter; label: string; count: number }[] = [
+    { key: "all", label: "All users", count: allWithEmail.length },
+    { key: "athletes", label: "Athletes only", count: athletes.length },
+    { key: "coaches", label: "Coaches only", count: coaches.length },
+    { key: "dormant", label: "Dormant athletes", count: dormant.length },
+    { key: "nocoach", label: "Athletes without a coach", count: noCoach.length },
+  ];
+
+  const segmentMap: Record<BroadcastFilter, UserRow[]> = {
+    all: allWithEmail,
+    athletes,
+    coaches,
+    dormant,
+    nocoach: noCoach,
+  };
+  const recipients = segmentMap[filter];
+  const emails = recipients.map((u) => u.email as string);
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(emails.join(", "));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleOpenMailClient() {
+    window.open(
+      `mailto:?bcc=${encodeURIComponent(emails.join(","))}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
+    );
+  }
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      {/* Filter */}
+      <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 space-y-3">
+        <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-purple-400 mb-1">
+          Filter recipients
+        </p>
+        {segments.map((s) => (
+          <label key={s.key} className="flex items-center gap-3 cursor-pointer group">
+            <input
+              type="radio"
+              name="broadcast-filter"
+              value={s.key}
+              checked={filter === s.key}
+              onChange={() => setFilter(s.key)}
+              className="accent-purple-500"
+            />
+            <span className="font-saira text-sm text-zinc-300 group-hover:text-white transition">
+              {s.label}
+            </span>
+            <span className="font-saira text-xs text-zinc-600 ml-auto">({s.count})</span>
+          </label>
+        ))}
+      </div>
+
+      {/* Compose */}
+      <div className="space-y-3">
+        <input
+          type="text"
+          placeholder="Subject"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          className="w-full rounded-xl border border-white/10 bg-[#17131F] px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
+        />
+        <textarea
+          placeholder="Email body…"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={5}
+          className="w-full rounded-xl border border-white/10 bg-[#17131F] px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
+        />
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-3 flex-wrap">
+        <button
+          onClick={handleCopy}
+          disabled={emails.length === 0}
+          className="border border-white/10 rounded-xl px-4 py-2 font-saira text-xs text-zinc-400 hover:text-white hover:border-white/30 transition disabled:opacity-40"
+        >
+          {copied ? "Copied!" : `Copy ${emails.length} emails`}
+        </button>
+        <button
+          onClick={handleOpenMailClient}
+          disabled={emails.length === 0}
+          className="border border-purple-500/30 bg-purple-500/10 rounded-xl px-4 py-2 font-saira text-xs font-semibold text-purple-300 hover:bg-purple-500/20 transition disabled:opacity-40"
+        >
+          Open in mail client →
+        </button>
+      </div>
+
+      {/* Preview list */}
+      {emails.length > 0 && (
+        <div className="space-y-1">
+          <p className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+            Recipients ({emails.length})
+          </p>
+          <div className="font-saira text-[11px] text-zinc-600 leading-relaxed">
+            {emails.slice(0, 10).join(", ")}
+            {emails.length > 10 && (
+              <span className="text-zinc-700"> … +{emails.length - 10} more</span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "coaches";
+type Tab = "overview" | "users" | "coaches" | "results" | "broadcast";
 
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -878,7 +1474,7 @@ export default function MasterAdminPage() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
+        throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
       }
       // Optimistic update
       setUsers((prev) =>
@@ -897,7 +1493,6 @@ export default function MasterAdminPage() {
 
   function handleRelinkCoach(athleteId: string, coachId: string | null) {
     patchUser(athleteId, { coach_id: coachId });
-    // Also update coach_name for display
     const coachName = coachId
       ? (users.find((u) => u.id === coachId)?.display_name ?? null)
       : null;
@@ -906,6 +1501,23 @@ export default function MasterAdminPage() {
         u.id === athleteId ? { ...u, coach_id: coachId, coach_name: coachName } : u,
       ),
     );
+  }
+
+  async function handleDeleteUser(userId: string) {
+    try {
+      const res = await fetch("/api/admin/delete-user", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
+      }
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    } catch (e) {
+      alert(`Delete failed: ${e}`);
+    }
   }
 
   // ── Render gates ─────────────────────────────────────────────────────────────
@@ -963,14 +1575,6 @@ export default function MasterAdminPage() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <a
-              href="/admin"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-saira text-[10px] font-semibold uppercase tracking-wider text-zinc-500 hover:text-purple-300 transition"
-            >
-              Test Results ↗
-            </a>
             <Link
               href="/you"
               className="font-saira text-[10px] font-semibold uppercase tracking-wider text-zinc-500 hover:text-purple-300 transition"
@@ -981,16 +1585,18 @@ export default function MasterAdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex gap-1 pb-0">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex gap-1 pb-0 overflow-x-auto">
           {([
             ["overview", "Overview"],
             ["users", `Users (${users.length})`],
             ["coaches", "Coach Links"],
+            ["results", "Test Results"],
+            ["broadcast", "Broadcast"],
           ] as [Tab, string][]).map(([tab, label]) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2.5 font-saira text-[11px] font-bold uppercase tracking-wider border-b-2 transition
+              className={`px-4 py-2.5 font-saira text-[11px] font-bold uppercase tracking-wider border-b-2 transition whitespace-nowrap
                 ${
                   activeTab === tab
                     ? "border-purple-400 text-white"
@@ -1022,8 +1628,11 @@ export default function MasterAdminPage() {
               <UsersTab
                 users={users}
                 coaches={coaches}
+                sessionEmail={sessionEmail}
                 onToggleCourse={handleToggleCourse}
                 onRelinkCoach={handleRelinkCoach}
+                onPatchUser={patchUser}
+                onDeleteUser={handleDeleteUser}
                 saving={saving}
               />
             )}
@@ -1035,6 +1644,8 @@ export default function MasterAdminPage() {
                 saving={saving}
               />
             )}
+            {activeTab === "results" && <ResultsTab />}
+            {activeTab === "broadcast" && <BroadcastTab users={users} />}
           </>
         )}
       </div>

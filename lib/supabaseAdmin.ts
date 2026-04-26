@@ -133,3 +133,20 @@ export async function dbDelete(
     console.error(`[supabaseAdmin] dbDelete ${table} failed ${res.status}`, text);
   }
 }
+
+/**
+ * Delete a user from auth.users via the GoTrue admin API.
+ * This cascades to profile + all related rows (if FK constraints are set up).
+ */
+export async function deleteAuthUser(userId: string): Promise<boolean> {
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  const res = await fetch(`${url}/auth/v1/admin/users/${userId}`, {
+    method: "DELETE",
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+    },
+  });
+  return res.ok;
+}

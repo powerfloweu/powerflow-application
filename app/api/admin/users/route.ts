@@ -172,7 +172,7 @@ export async function GET() {
 
 // ── PATCH ─────────────────────────────────────────────────────────────────────
 
-const ADMIN_PATCHABLE = ["course_access", "coach_id"] as const;
+const ADMIN_PATCHABLE = ["course_access", "coach_id", "role", "coach_code"] as const;
 type AdminPatchableKey = (typeof ADMIN_PATCHABLE)[number];
 
 export async function PATCH(req: NextRequest) {
