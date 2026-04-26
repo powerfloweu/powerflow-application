@@ -55,52 +55,44 @@ function AthleteGuide() {
         <Tip>If your coach shared an invite link, open it first. It automatically links your account to your coach when you sign in.</Tip>
       </GuideSection>
 
-      <GuideSection num="02" title="Setup wizard (6 steps)">
+      <GuideSection num="02" title="Setup wizard">
         <Tip><Highlight>Step 1 — About you</Highlight> Your name, Instagram, and gender. Name and gender are required.</Tip>
-        <Tip><Highlight>Step 2 — Powerlifting profile</Highlight> Years in the sport, federation, bodyweight, weight class, next competition date, and how many days per week you train.</Tip>
-        <Tip><Highlight>Step 3 — Your lifts</Highlight> Current bests and competition goals for squat, bench, and deadlift. All optional — you can fill these in later from the <Highlight>You</Highlight> tab.</Tip>
-        <Tip><Highlight>Step 4 — Mindset</Highlight> Four open questions about your mental barriers, confidence, overthinking, and previous mental coaching work. Then rate yourself 1–10 on five areas: confidence regulation, focus under fatigue, handling pressure, competition anxiety, and emotional recovery.</Tip>
-        <Tip><Highlight>Step 5 — Goals</Highlight> Three mental goals for the next 3 months. The first is required. Also share your expectations from coaching, what mental tools you&apos;ve tried, and anything else important.</Tip>
-        <Tip><Highlight>Step 6 — Your coach</Highlight> Pick your PowerFlow coach from the list. You can skip and connect later in the <Highlight>You</Highlight> tab.</Tip>
-        <Tip>At any point you can tap <Highlight>Skip setup</Highlight> in the top-right corner to go straight to the app — all your data is saved when you reach the last step.</Tip>
+        <Tip><Highlight>Step 2 — Powerlifting profile</Highlight> Years in the sport, federation, bodyweight, weight class, next competition date, and training days per week.</Tip>
+        <Tip><Highlight>Step 3 — Your lifts</Highlight> Current bests and competition goals for squat, bench, and deadlift. All optional — you can update from the <Highlight>You</Highlight> tab at any time.</Tip>
+        <Tip><Highlight>Step 4 — Mindset</Highlight> Four questions about your mental barriers, confidence, overthinking, and previous mental coaching work. Then rate yourself 1–10 on five areas: confidence regulation, focus under fatigue, handling pressure, competition anxiety, and emotional recovery.</Tip>
+        <Tip><Highlight>Step 5 — Goals</Highlight> Up to three mental goals for the next 3 months. Also share your expectations from coaching, mental tools you&apos;ve tried, and anything else relevant.</Tip>
+        <Tip><Highlight>Step 6 — Your coach</Highlight> Pick your PowerFlow coach from the list, or skip and connect later from the <Highlight>You</Highlight> tab.</Tip>
+        <Tip>Use the <Highlight>← Back</Highlight> button to revisit any step. Tap <Highlight>Skip setup</Highlight> in the top-right to go straight to the app — your progress is saved.</Tip>
       </GuideSection>
 
-      <GuideSection num="03" title="Today — daily check-in">
-        <Tip>Every day starts on the <Highlight>Today</Highlight> screen. The first card asks: training day or rest day?</Tip>
-        <Tip>Tap <Highlight>🏋️ Training Day</Highlight> or <Highlight>😴 Rest Day</Highlight> to open the check-in sheet.</Tip>
-        <Tip>On a <Highlight>training day</Highlight> you&apos;ll rate your mood 1–10 and answer four questions: thoughts before the session, how it went, what worked well, any frustrations, and what to focus on next session.</Tip>
-        <Tip>On a <Highlight>rest day</Highlight> just rate your mood and add any notes.</Tip>
-        <Tip>Already logged something? Tap <Highlight>Edit</Highlight> on the check-in card to update it.</Tip>
-        <Tip>The <Highlight>🔔 Reminders</Highlight> button on the check-in card enables browser notifications. You&apos;ll get a nudge at 7 pm if you haven&apos;t logged yet. The red dot on the Today tab also shows when your check-in is pending.</Tip>
+      <GuideSection num="03" title="Home — set your day type">
+        <Tip>Every day starts on the <Highlight>Home</Highlight> screen. The first time you open it each day, a full-screen prompt asks: training day or rest day?</Tip>
+        <Tip>Tap <Highlight>🏋️ Training Day</Highlight> or <Highlight>😴 Rest Day</Highlight> to log your choice. This takes one second — the detail goes in your journal.</Tip>
+        <Tip>Already logged? Home shows your current day type. Tap <Highlight>Change</Highlight> to switch it.</Tip>
+        <Tip>The red dot on the <Highlight>Home</Highlight> tab means you haven&apos;t set your day type yet.</Tip>
       </GuideSection>
 
-      <GuideSection num="04" title="Journal — capture your mindset">
-        <Tip>Tap the <Highlight>Journal</Highlight> tab at the bottom to write a free entry at any time.</Tip>
-        <Tip>Choose a <Highlight>context tag</Highlight>: General, Pre-competition, Post-competition, During session, or Rest day.</Tip>
-        <Tip>Write your thoughts. The AI automatically labels the sentiment (positive, neutral, negative) and detects themes (confidence, focus, anxiety, etc.). This feeds into your coach&apos;s dashboard.</Tip>
-        <Tip>All your past entries are listed below the input, newest first.</Tip>
+      <GuideSection num="04" title="Journal — write your session">
+        <Tip>Tap the <Highlight>Journal</Highlight> tab to write. On a <Highlight>training day</Highlight> you&apos;ll see five focused questions: pre-session thoughts, post-session reflection, what went well, frustrations, and next-session focus.</Tip>
+        <Tip>On a <Highlight>rest day</Highlight> the journal opens as a free-text prompt — write anything on your mind.</Tip>
+        <Tip>You can also log a general entry at any time using a <Highlight>context tag</Highlight>: General, Pre-competition, Post-competition, During session, or Rest day.</Tip>
+        <Tip>The AI automatically labels sentiment (positive, neutral, negative) and detects themes — this feeds your coach&apos;s dashboard.</Tip>
+        <Tip>If your coach leaves a note on one of your entries, it appears directly below that entry as a quoted comment — look for the purple line on the left side.</Tip>
       </GuideSection>
 
-      <GuideSection num="05" title="Tools — psychological assessments">
-        <Tip>The <Highlight>Tools</Highlight> tab contains four validated sport psychology tests you can complete at any time.</Tip>
-        <Tip><Highlight>SAT</Highlight> — Sport Anxiety Test. Measures your anxiety profile.</Tip>
-        <Tip><Highlight>ACSI</Highlight> — Athletic Coping Skills Inventory. Covers coping, concentration, confidence, and goal-setting.</Tip>
-        <Tip><Highlight>CSAI-2</Highlight> — Competitive State Anxiety Inventory. Cognitive vs. somatic anxiety.</Tip>
-        <Tip><Highlight>DAS</Highlight> — Depression, Anxiety, Stress scale adapted for athletes.</Tip>
-        <Tip>Some tests require a one-time payment to unlock results. Completed tests appear in your coach&apos;s dashboard automatically.</Tip>
+      <GuideSection num="05" title="Tools — mental performance toolkit">
+        <Tip>The <Highlight>Tools</Highlight> tab has four sections: Visualizations, Relaxation, Progressive Muscle Relaxation (PR), and Affirmations.</Tip>
+        <Tip><Highlight>Visualizations</Highlight> — guided audio for squat, bench, and deadlift. After your first listen, enter 1–3 personal cue words that resonate with you. These are saved and visible to your coach.</Tip>
+        <Tip><Highlight>Relaxation</Highlight> — two breathing tracks. Star your favourite with the ☆ icon so it&apos;s always at the top.</Tip>
+        <Tip><Highlight>PR (Progressive Muscle Relaxation)</Highlight> — a guided full-body tension-release session.</Tip>
+        <Tip><Highlight>Affirmations</Highlight> — write 1–3 personal self-talk sentences that prime your best mindset. Saved to your profile and visible to your coach.</Tip>
+        <Tip>The <Highlight>Tools</Highlight> tab also gives access to four validated psychological assessments: SAT, ACSI, CSAI-2, and DAS. These feed into your coach&apos;s Test Results tab.</Tip>
       </GuideSection>
 
-      <GuideSection num="06" title="Course — 16-week programme">
-        <Tip>The <Highlight>Course</Highlight> tab unlocks week-by-week mental preparation content tied to your competition date. Each week has a video, an exercise, and a short Q&amp;A.</Tip>
-        <Tip>If the course isn&apos;t unlocked yet, contact your coach — they can enable it for you.</Tip>
-        <Tip>The current week is also surfaced as a card on your <Highlight>Today</Highlight> screen so you never lose track.</Tip>
-      </GuideSection>
-
-      <GuideSection num="07" title="You — profile &amp; settings">
-        <Tip>The <Highlight>You</Highlight> tab lets you update everything from the setup wizard at any time: name, competition date, body stats, lifts, mental goals, training schedule, and coach connection.</Tip>
-        <Tip>Your GL Points (IPF Goodlift formula) calculate automatically from your total and bodyweight once you&apos;ve added your lifts and gender.</Tip>
-        <Tip>To change your coach, tap <Highlight>Change coach</Highlight> in the Coach section.</Tip>
-        <Tip>Sign out is at the bottom of this page.</Tip>
+      <GuideSection num="06" title="You — profile &amp; settings">
+        <Tip>The <Highlight>You</Highlight> tab lets you update everything from the setup wizard: name, competition date, body stats, lifts, mental goals, training schedule, and coach connection. Each section collapses — tap to expand.</Tip>
+        <Tip>To change or disconnect your coach, expand the <Highlight>Coach</Highlight> section and tap <Highlight>Change coach</Highlight>.</Tip>
+        <Tip>The guide link (this page) and sign-out are at the bottom.</Tip>
       </GuideSection>
     </>
   );
@@ -112,42 +104,63 @@ function CoachGuide() {
   return (
     <>
       <GuideSection num="01" title="Sign in as a coach">
-        <Tip>Open the app and tap <Highlight>Sign in as coach</Highlight> (or select the coach role before the Google sign-in). Role is set once — coaches cannot also be athletes in the same account.</Tip>
+        <Tip>Open the app and tap <Highlight>Sign in as coach</Highlight> (select the coach role before Google sign-in). Role is set once — coaches and athletes need separate accounts.</Tip>
         <Tip>After sign-in you land on the <Highlight>Coach Dashboard</Highlight> automatically.</Tip>
       </GuideSection>
 
       <GuideSection num="02" title="Invite your athletes">
-        <Tip>Your unique <Highlight>Coach Code</Highlight> is shown at the top of the dashboard. Share it with athletes — they enter it during onboarding or from their <Highlight>You</Highlight> tab to link their account to you.</Tip>
-        <Tip>You also have a direct <Highlight>Join Link</Highlight> athletes can click before signing in — it handles the link automatically.</Tip>
+        <Tip>Your unique <Highlight>Join Link</Highlight> is shown at the top of the dashboard. Share it — athletes who click it before signing in are automatically linked to you.</Tip>
+        <Tip>Athletes can also connect by selecting your name from the coach list during onboarding, or later from their <Highlight>You</Highlight> tab.</Tip>
         <Tip>New athletes appear on your dashboard within seconds of linking.</Tip>
       </GuideSection>
 
       <GuideSection num="03" title="Dashboard overview">
-        <Tip>Each athlete appears as a card. The header shows three key stats for the last 7 days: number of journal entries, percentage of positive sentiment, and a traffic-light flag.</Tip>
-        <Tip><Highlight>🟢 On-track</Highlight> = 55%+ positive entries. <Highlight>🟡 Monitor</Highlight> = 30–55%. <Highlight>🔴 Attention</Highlight> = below 30% — check in with this athlete.</Tip>
-        <Tip>Tap any athlete card to expand their full profile with three tabs: Recent Entries, Training Log, and Test Results.</Tip>
+        <Tip>Each athlete card shows: entries this week, 7-day positive sentiment %, a sparkline, and a traffic-light flag.</Tip>
+        <Tip><Highlight>🟢 On-track</Highlight> = 55%+ positive. <Highlight>🟡 Monitor</Highlight> = 30–55%. <Highlight>🔴 Attention</Highlight> = below 30% — reach out.</Tip>
+        <Tip>A <Highlight>rose banner</Highlight> appears at the top of the dashboard listing all athletes currently flagged as Attention, with a quick email link for each.</Tip>
+        <Tip>Use the search bar and sort options (Priority, Positive %, Activity, Name) to navigate a larger roster.</Tip>
+        <Tip>Tap any athlete card to expand it — six tabs are available: Analysis, Recent Entries, Test Scores, Training Log, Profile, and Notes.</Tip>
       </GuideSection>
 
-      <GuideSection num="04" title="Recent entries tab">
-        <Tip>Shows the athlete&apos;s latest journal entries with sentiment colour (🟢 positive · ⚪ neutral · 🔴 negative) and the context tag.</Tip>
-        <Tip>Scroll down to read the full text of any entry. Themes detected by AI are shown as chips — useful for spotting recurring patterns like confidence issues or competition anxiety.</Tip>
+      <GuideSection num="04" title="Analysis tab">
+        <Tip>Shows the athlete&apos;s dominant psychological theme this period (e.g. Perfectionism, Self-doubt, Confidence) with a short descriptor.</Tip>
+        <Tip>A 3-week sentiment trajectory (improving / declining / stable / volatile) helps you spot trends before they become problems.</Tip>
+        <Tip>Training-mood correlation: whether the athlete&apos;s mood is consistently higher or lower on training days.</Tip>
+        <Tip>Two or three <Highlight>conversation starters</Highlight> are suggested based on the current pattern — useful prompts for your next check-in call.</Tip>
+        <Tip>Switch between <Highlight>7d / 30d / 60d</Highlight> windows at the top of the tab to zoom in or out on the data.</Tip>
       </GuideSection>
 
-      <GuideSection num="05" title="Training log tab">
-        <Tip>Shows the current Mon–Sun training week. The mood sparkline displays a bar for each day the athlete logged a check-in.</Tip>
-        <Tip>🏋️ = training day · 💤 = rest day · no bar = no check-in logged yet.</Tip>
-        <Tip>Below the sparkline you can read the full daily log entries: pre-session thoughts, how it went, what worked, frustrations, and next-session focus.</Tip>
-        <Tip>Average mood for the week is shown at the top of the tab. Watch for sudden drops — they often precede confidence issues in competition.</Tip>
+      <GuideSection num="05" title="Recent entries tab">
+        <Tip>Shows the athlete&apos;s latest journal entries with sentiment colour and context tag. Tap an entry to read the full text.</Tip>
+        <Tip>To leave feedback on an entry, tap <Highlight>Add coach note</Highlight> below it. Type your comment and save — the athlete sees it immediately in their Journal, quoted in purple below the entry.</Tip>
+        <Tip>Existing notes show inline; tap the pencil icon to edit.</Tip>
       </GuideSection>
 
-      <GuideSection num="06" title="Test results tab">
-        <Tip>Displays the athlete&apos;s most recent scores on all four assessments: SAT, ACSI, CSAI-2, and DAS. Results only appear once the athlete has completed and unlocked a test.</Tip>
-        <Tip>Use these alongside journal sentiment to get a full picture — low ACSI concentration score combined with negative journal entries around competition is a strong signal.</Tip>
+      <GuideSection num="06" title="Training log tab">
+        <Tip>Shows the full training week (Mon–Sun) with a mood sparkline. Use the <Highlight>← →</Highlight> arrows to navigate up to 4 weeks back.</Tip>
+        <Tip>🏋️ = training day · 💤 = rest day · no bar = no entry that day.</Tip>
+        <Tip>Expand any day to read pre-session thoughts, post-session reflection, what went well, frustrations, and next-session focus.</Tip>
+        <Tip>The weekly brief at the bottom surfaces recurring pre/post-session themes and overall mood trend.</Tip>
       </GuideSection>
 
-      <GuideSection num="07" title="Your profile &amp; code">
-        <Tip>As a coach your <Highlight>You</Highlight> tab is minimal — it shows your name, role badge, and sign-out. The key asset is your coach code shown on the dashboard.</Tip>
-        <Tip>Coach codes never expire. If you need to disconnect an athlete, contact support — athlete unlinking isn&apos;t yet self-serve.</Tip>
+      <GuideSection num="07" title="Test scores tab">
+        <Tip>Displays the athlete&apos;s most recent scores on all four assessments: SAT, ACSI, CSAI-2, and DAS. Scores appear once the athlete completes and unlocks a test.</Tip>
+        <Tip>Cross-reference with journal sentiment — low ACSI concentration combined with negative entries around competition is a strong early warning signal.</Tip>
+      </GuideSection>
+
+      <GuideSection num="08" title="Profile tab">
+        <Tip>Full onboarding profile: physical stats, lifts (current and goal), self-rating scales, mindset assessment answers, mental goals, and coaching expectations.</Tip>
+        <Tip>The <Highlight>Mental tools</Highlight> section at the top shows the athlete&apos;s saved affirmations and their personal cue words for each lift (squat, bench, deadlift).</Tip>
+      </GuideSection>
+
+      <GuideSection num="09" title="Notes tab">
+        <Tip>Your private notepad for this athlete. Write session observations, follow-up items, patterns you&apos;ve noticed — anything you&apos;d want to remember before the next call.</Tip>
+        <Tip>Notes auto-save as you type. Only you can see them — athletes cannot read your coach notes.</Tip>
+      </GuideSection>
+
+      <GuideSection num="10" title="Your profile &amp; code">
+        <Tip>The <Highlight>You</Highlight> tab shows your name, role badge, and sign-out. Your join link and coach code are always visible at the top of the main dashboard.</Tip>
+        <Tip>Athletes can disconnect from you themselves via their <Highlight>You</Highlight> tab. You can also manage athlete-coach links from the admin dashboard if needed.</Tip>
       </GuideSection>
     </>
   );
