@@ -841,6 +841,46 @@ function NotesTab({
   );
 }
 
+// ── Training day card (coach activity feed) ───────────────────────────────────
+
+function CoachTrainingCard({ entry }: { entry: TrainingEntry }) {
+  const fields = [
+    { label: "Before top sets", value: entry.thoughts_before },
+    { label: "After top sets",  value: entry.thoughts_after },
+    { label: "Went well",       value: entry.what_went_well },
+    { label: "Frustrated by",   value: entry.frustrations },
+    { label: "Next session",    value: entry.next_session },
+  ].filter((f) => f.value);
+
+  if (!fields.length) return null;
+
+  const d = new Date(entry.entry_date + "T12:00:00");
+  const dateStr = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+
+  return (
+    <div className="rounded-2xl border border-sky-500/20 bg-sky-500/[0.06] p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-sm">🏋️</span>
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300">
+          Training day log
+        </p>
+        <span className="font-saira text-[10px] text-zinc-600 ml-1">{dateStr}</span>
+        {entry.mood_rating != null && (
+          <span className="ml-auto font-saira text-[10px] text-zinc-500">Mood {entry.mood_rating}/10</span>
+        )}
+      </div>
+      <div className="space-y-2.5">
+        {fields.map((f) => (
+          <div key={f.label}>
+            <p className="font-saira text-[10px] uppercase tracking-wider text-zinc-600 mb-0.5">{f.label}</p>
+            <p className="font-saira text-sm text-zinc-300 leading-relaxed">{f.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Entry Feedback ────────────────────────────────────────────────────────────
 
 function EntryFeedbackSection({
@@ -1109,7 +1149,7 @@ function ClientCard({
           <div className="flex gap-0 border-b border-white/5 px-5 sm:px-6 overflow-x-auto">
             {([
               { key: "analysis",  label: "Analysis" },
-              { key: "entries",   label: "Recent entries" },
+              { key: "entries",   label: "Activity" },
               { key: "scores",    label: "Test scores" },
               { key: "training",  label: "Training Log" },
               { key: "profile",   label: "Profile" },
@@ -1205,26 +1245,55 @@ function ClientCard({
               </div>
             )}
 
-            {/* ── Tab: Recent entries ── */}
-            {activeTab === "entries" && (
-              <div className="space-y-3">
-                {client.recentEntries.length === 0 ? (
-                  <p className="font-saira text-sm text-zinc-600 py-4 text-center">No entries yet.</p>
-                ) : (
-                  client.recentEntries.map((e) => (
-                    <div key={e.id}>
-                      <EntryCard entry={e} />
-                      <EntryFeedbackSection
-                        entryId={e.id}
-                        athleteId={client.id}
-                        existing={feedbackByEntry[e.id]}
-                        onSaved={(entryId, feedback) => onFeedbackSaved(client.id, entryId, feedback)}
-                      />
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
+            {/* ── Tab: Activity (journal + training logs merged) ── */}
+            {activeTab === "entries" && (() => {
+              type CoachFeedItem =
+                | { kind: "journal";  entry: EntryRow }
+                | { kind: "training"; entry: TrainingEntry };
+
+              const feedItems: CoachFeedItem[] = [
+                ...client.allEntries.map((e) => ({ kind: "journal" as const, entry: e })),
+                ...client.allTrainingEntries
+                  .filter((e) =>
+                    e.thoughts_before || e.thoughts_after || e.what_went_well || e.frustrations || e.next_session,
+                  )
+                  .map((e) => ({ kind: "training" as const, entry: e })),
+              ].sort((a, b) => {
+                const aDate = a.kind === "journal"
+                  ? new Date(a.entry.created_at).getTime()
+                  : new Date(a.entry.entry_date + "T12:00:00").getTime();
+                const bDate = b.kind === "journal"
+                  ? new Date(b.entry.created_at).getTime()
+                  : new Date(b.entry.entry_date + "T12:00:00").getTime();
+                return bDate - aDate;
+              });
+
+              if (feedItems.length === 0) {
+                return (
+                  <p className="font-saira text-sm text-zinc-600 py-4 text-center">No activity yet.</p>
+                );
+              }
+
+              return (
+                <div className="space-y-3">
+                  {feedItems.map((item) =>
+                    item.kind === "training" ? (
+                      <CoachTrainingCard key={`t-${item.entry.id}`} entry={item.entry} />
+                    ) : (
+                      <div key={item.entry.id}>
+                        <EntryCard entry={item.entry} />
+                        <EntryFeedbackSection
+                          entryId={item.entry.id}
+                          athleteId={client.id}
+                          existing={feedbackByEntry[item.entry.id]}
+                          onSaved={(entryId, feedback) => onFeedbackSaved(client.id, entryId, feedback)}
+                        />
+                      </div>
+                    ),
+                  )}
+                </div>
+              );
+            })()}
 
             {/* ── Tab: Test scores ── */}
             {activeTab === "scores" && (

@@ -1,6 +1,7 @@
 /**
  * GET  /api/training/entries?date=YYYY-MM-DD  — entry for that date (default: today)
  * GET  /api/training/entries?week=YYYY-MM-DD  — all entries for the Mon–Sun week
+ * GET  /api/training/entries?all=true         — all entries for the user (journal feed)
  * POST /api/training/entries                  — upsert entry
  */
 
@@ -26,6 +27,16 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const weekParam = searchParams.get("week");
   const dateParam = searchParams.get("date");
+
+  // All entries for journal feed
+  if (searchParams.get("all") === "true") {
+    const rows = await dbSelect<TrainingEntry>("training_entries", {
+      user_id: `eq.${user.id}`,
+      select: ENTRY_SELECT,
+      order: "entry_date.desc",
+    });
+    return NextResponse.json(rows);
+  }
 
   if (weekParam) {
     const ref = new Date(weekParam);

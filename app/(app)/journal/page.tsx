@@ -16,6 +16,11 @@ import { ymdLocal } from "@/lib/date";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+/** Unified feed item — either a quick journal entry or a training day log */
+type FeedItem =
+  | { kind: "journal";  entry: JournalEntry }
+  | { kind: "training"; entry: TrainingEntry };
+
 type UserProfile = {
   id: string;
   display_name: string;
@@ -51,8 +56,7 @@ function timeSinceJournal(iso: string): string {
   return `${diffD}d ago`;
 }
 
-function dayLabel(iso: string) {
-  const d = new Date(iso);
+function dayLabel(d: Date) {
   const today = new Date();
   const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
   if (d.toDateString() === today.toDateString())     return "Today";
@@ -60,15 +64,22 @@ function dayLabel(iso: string) {
   return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" });
 }
 
-function groupByDay(entries: JournalEntry[]): [string, JournalEntry[]][] {
-  const map = new Map<string, JournalEntry[]>();
-  const sorted = [...entries].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+/** Returns a date string for a feed item — used for grouping by day */
+function feedItemDate(item: FeedItem): Date {
+  if (item.kind === "journal") return new Date(item.entry.created_at);
+  // entry_date is YYYY-MM-DD local — parse at noon to avoid timezone edge cases
+  return new Date(item.entry.entry_date + "T12:00:00");
+}
+
+function groupByDay(items: FeedItem[]): [string, FeedItem[]][] {
+  const map = new Map<string, FeedItem[]>();
+  const sorted = [...items].sort(
+    (a, b) => feedItemDate(b).getTime() - feedItemDate(a).getTime(),
   );
-  for (const e of sorted) {
-    const key = new Date(e.created_at).toDateString();
+  for (const item of sorted) {
+    const key = feedItemDate(item).toDateString();
     if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(e);
+    map.get(key)!.push(item);
   }
   return Array.from(map.entries());
 }
@@ -349,6 +360,44 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
   );
 }
 
+// ── Training day card (feed) ───────────────────────────────────────────────────
+
+function TrainingDayCard({ entry }: { entry: TrainingEntry }) {
+  const fields = [
+    { label: "Before top sets",  value: entry.thoughts_before },
+    { label: "After top sets",   value: entry.thoughts_after },
+    { label: "Went well",        value: entry.what_went_well },
+    { label: "Frustrated by",    value: entry.frustrations },
+    { label: "Next session",     value: entry.next_session },
+  ].filter((f) => f.value);
+
+  if (!fields.length) return null;
+
+  return (
+    <div className="rounded-2xl border border-sky-500/20 bg-sky-500/[0.06] p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-sm">🏋️</span>
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-sky-300">
+          Training day log
+        </p>
+        {entry.mood_rating != null && (
+          <span className="ml-auto font-saira text-[10px] text-zinc-500">
+            Mood {entry.mood_rating}/10
+          </span>
+        )}
+      </div>
+      <div className="space-y-3">
+        {fields.map((f) => (
+          <div key={f.label}>
+            <p className="font-saira text-[10px] uppercase tracking-wider text-zinc-600 mb-0.5">{f.label}</p>
+            <p className="font-saira text-sm text-zinc-300 leading-relaxed">{f.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Weekly digest sidebar ──────────────────────────────────────────────────────
 
 function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
@@ -480,10 +529,11 @@ function UserHeader({ profile }: { profile: UserProfile }) {
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function JournalPage() {
-  const [entries, setEntries]         = React.useState<JournalEntry[]>([]);
-  const [profile, setProfile]         = React.useState<UserProfile | null>(null);
+  const [entries, setEntries]             = React.useState<JournalEntry[]>([]);
+  const [allTraining, setAllTraining]     = React.useState<TrainingEntry[]>([]);
+  const [profile, setProfile]             = React.useState<UserProfile | null>(null);
   const [todayTraining, setTodayTraining] = React.useState<TrainingEntry | null | undefined>(undefined);
-  const [ready, setReady]             = React.useState(false);
+  const [ready, setReady]                 = React.useState(false);
   const [coachPromptDismissed, setCoachPromptDismissed] = React.useState(false);
   const [coachFeedback, setCoachFeedback] = React.useState<Record<string, CoachFeedbackItem>>({});
 
@@ -492,14 +542,17 @@ export default function JournalPage() {
       const [profileRes, entriesRes, trainingRes, feedbackRes] = await Promise.all([
         fetch("/api/me"),
         fetch("/api/journal/entries"),
-        fetch(`/api/training/entries?date=${ymdLocal()}`),
+        fetch("/api/training/entries?all=true"),
         fetch("/api/journal/entry-feedback"),
       ]);
       if (profileRes.ok) setProfile(await profileRes.json());
       if (entriesRes.ok) setEntries(await entriesRes.json());
       if (trainingRes.ok) {
-        const t = await trainingRes.json();
-        setTodayTraining(t?.id ? (t as TrainingEntry) : null);
+        const all = (await trainingRes.json()) as TrainingEntry[];
+        setAllTraining(Array.isArray(all) ? all : []);
+        const today = ymdLocal();
+        const todayT = Array.isArray(all) ? all.find((e) => e.entry_date === today) : undefined;
+        setTodayTraining(todayT ?? null);
       } else {
         setTodayTraining(null);
       }
@@ -516,7 +569,21 @@ export default function JournalPage() {
     setEntries((prev) => prev.filter((e) => e.id !== id));
   };
 
-  const grouped = React.useMemo(() => groupByDay(entries), [entries]);
+  // Merge journal entries + training logs into one unified feed
+  const feedItems = React.useMemo((): FeedItem[] => {
+    const items: FeedItem[] = [
+      ...entries.map((e) => ({ kind: "journal" as const, entry: e })),
+      // Only include training entries that have at least one field filled in
+      ...allTraining
+        .filter((e) =>
+          e.thoughts_before || e.thoughts_after || e.what_went_well || e.frustrations || e.next_session,
+        )
+        .map((e) => ({ kind: "training" as const, entry: e })),
+    ];
+    return items.sort((a, b) => feedItemDate(b).getTime() - feedItemDate(a).getTime());
+  }, [entries, allTraining]);
+
+  const grouped = React.useMemo(() => groupByDay(feedItems), [feedItems]);
   const showCoachPrompt = !coachPromptDismissed && shouldPromptCoach(entries, profile);
 
   if (!ready) {
@@ -574,33 +641,37 @@ export default function JournalPage() {
               </div>
             ) : (
               <div className="space-y-8">
-                {grouped.map(([dateKey, dayEntries]) => (
+                {grouped.map(([dateKey, dayItems]) => (
                   <div key={dateKey}>
                     <div className="flex items-center gap-3 mb-3">
                       <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
-                        {dayLabel(dayEntries[0].created_at)}
+                        {dayLabel(feedItemDate(dayItems[0]))}
                       </span>
                       <div className="flex-1 h-px bg-white/5" />
                       <span className="font-saira text-[10px] text-zinc-700">
-                        {dayEntries.length} entr{dayEntries.length === 1 ? "y" : "ies"}
+                        {dayItems.length} entr{dayItems.length === 1 ? "y" : "ies"}
                       </span>
                     </div>
                     <div className="space-y-3">
-                      {dayEntries.map((e) => (
-                        <div key={e.id}>
-                          <EntryCard entry={e} onDelete={handleDelete} />
-                          {coachFeedback[e.id] && (
-                            <div className="mt-1.5 ml-2 pl-3 border-l-2 border-purple-500/20">
-                              <p className="font-saira text-xs text-zinc-400 italic leading-relaxed">
-                                &ldquo;{coachFeedback[e.id].content}&rdquo;
-                              </p>
-                              <p className="font-saira text-[10px] text-zinc-600 mt-0.5">
-                                — {coachFeedback[e.id].coach_name} (coach) · {timeSinceJournal(coachFeedback[e.id].created_at)}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                      {dayItems.map((item) =>
+                        item.kind === "training" ? (
+                          <TrainingDayCard key={item.entry.id} entry={item.entry} />
+                        ) : (
+                          <div key={item.entry.id}>
+                            <EntryCard entry={item.entry} onDelete={handleDelete} />
+                            {coachFeedback[item.entry.id] && (
+                              <div className="mt-1.5 ml-2 pl-3 border-l-2 border-purple-500/20">
+                                <p className="font-saira text-xs text-zinc-400 italic leading-relaxed">
+                                  &ldquo;{coachFeedback[item.entry.id].content}&rdquo;
+                                </p>
+                                <p className="font-saira text-[10px] text-zinc-600 mt-0.5">
+                                  — {coachFeedback[item.entry.id].coach_name} (coach) · {timeSinceJournal(coachFeedback[item.entry.id].created_at)}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ),
+                      )}
                     </div>
                   </div>
                 ))}
