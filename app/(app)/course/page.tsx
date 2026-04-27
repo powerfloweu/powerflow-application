@@ -5,6 +5,17 @@ import Link from "next/link";
 import { COURSE_WEEKS, weeksByTheme, type CoursePlan, type CourseWeek, type CourseProgressRow } from "@/lib/course";
 import { stepsComplete } from "@/lib/course";
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+/** These slugs are non-negotiable anchors — cannot be removed from the plan */
+const ANCHOR_SLUGS = new Set([
+  "w01-me-and-powerlifting",
+  "w09-visualization-basics",
+  "w10-mental-rehearsal",
+  "w11-cues",
+  "w15-meet-day",
+]);
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Profile = {
@@ -135,6 +146,7 @@ export default function CourseIndexPage() {
   const planWeeks = plan.slugs
     .map((slug) => COURSE_WEEKS.find((w) => w.slug === slug))
     .filter((w): w is CourseWeek => !!w);
+  const highlightSet = new Set(plan.highlights ?? []);
 
   const completedCount = planWeeks.filter((w) => !!progressMap[w.weekNumber]?.completed_at).length;
   const pct            = Math.round((completedCount / planWeeks.length) * 100);
@@ -225,6 +237,7 @@ export default function CourseIndexPage() {
             total={planWeeks.length}
             row={progressMap[w.weekNumber]}
             isCurrent={w === currentWeek}
+            isHighlighted={highlightSet.has(w.slug)}
           />
         ))}
       </div>
@@ -245,13 +258,14 @@ export default function CourseIndexPage() {
 // ── PlanWeekCard ──────────────────────────────────────────────────────────────
 
 function PlanWeekCard({
-  week, position, total, row, isCurrent,
+  week, position, total, row, isCurrent, isHighlighted,
 }: {
   week: CourseWeek;
   position: number;
   total: number;
   row: CourseProgressRow | undefined;
   isCurrent: boolean;
+  isHighlighted: boolean;
 }) {
   const done       = !!row?.completed_at;
   const hasStarted = !!row?.video_done_at || !!row?.quiz_done_at || !!row?.exercise_done_at;
@@ -264,6 +278,8 @@ function PlanWeekCard({
           ? "border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10"
           : isCurrent
           ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10"
+          : isHighlighted
+          ? "border-purple-500/20 bg-[#17131F] hover:bg-[#1e1828]"
           : "border-white/5 bg-[#17131F] hover:bg-[#1e1828]"
       }`}
     >
@@ -274,6 +290,8 @@ function PlanWeekCard({
             ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
             : isCurrent
             ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+            : isHighlighted
+            ? "bg-purple-500/10 text-purple-400 border border-purple-500/25"
             : "bg-white/5 text-zinc-500 border border-white/5"
         }`}
       >
@@ -282,11 +300,18 @@ function PlanWeekCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className={`font-saira text-sm font-semibold truncate transition ${
-          done ? "text-emerald-200" : "text-white group-hover:text-purple-300"
-        }`}>
-          {week.title}
-        </p>
+        <div className="flex items-center gap-2 mb-0.5">
+          <p className={`font-saira text-sm font-semibold truncate transition ${
+            done ? "text-emerald-200" : "text-white group-hover:text-purple-300"
+          }`}>
+            {week.title}
+          </p>
+          {isHighlighted && !done && (
+            <span className="flex-shrink-0 font-saira text-[8px] font-bold uppercase tracking-[0.2em] text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">
+              Core
+            </span>
+          )}
+        </div>
         {hasStarted && !done ? (
           <StepDots row={row} />
         ) : (
@@ -420,7 +445,8 @@ function PlanEditor({
   onSave: (plan: CoursePlan) => Promise<void>;
   onRegenerate: () => void;
 }) {
-  const [slugs, setSlugs]     = React.useState<string[]>(plan.slugs);
+  const [slugs, setSlugs]       = React.useState<string[]>(plan.slugs);
+  const highlightSet = React.useMemo(() => new Set(plan.highlights ?? []), [plan.highlights]);
   const [saving, setSaving]   = React.useState(false);
   const [addOpen, setAddOpen] = React.useState(false);
 
@@ -508,19 +534,36 @@ function PlanEditor({
         {slugs.map((slug, idx) => {
           const w = weekMap[slug];
           if (!w) return null;
+          const isHighlighted = highlightSet.has(slug);
+          const isAnchor      = ANCHOR_SLUGS.has(slug);
           return (
             <div
               key={slug}
-              className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#17131F] px-3 py-3"
+              className={`flex items-center gap-3 rounded-xl border px-3 py-3 ${
+                isHighlighted
+                  ? "border-purple-500/20 bg-purple-500/5"
+                  : "border-white/5 bg-[#17131F]"
+              }`}
             >
-              {/* Position */}
-              <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center font-saira text-xs text-zinc-500 flex-shrink-0">
+              {/* Position bubble */}
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center font-saira text-xs flex-shrink-0 ${
+                isHighlighted
+                  ? "bg-purple-500/15 text-purple-400 border border-purple-500/25"
+                  : "bg-white/5 text-zinc-500"
+              }`}>
                 {idx + 1}
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="font-saira text-sm font-semibold text-white truncate">{w.title}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="font-saira text-sm font-semibold text-white truncate">{w.title}</p>
+                  {isHighlighted && (
+                    <span className="flex-shrink-0 font-saira text-[8px] font-bold uppercase tracking-[0.2em] text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">
+                      Core
+                    </span>
+                  )}
+                </div>
                 <p className="font-saira text-[11px] text-zinc-600 truncate">{w.theme}</p>
               </div>
 
@@ -531,25 +574,19 @@ function PlanEditor({
                   disabled={idx === 0}
                   className="w-6 h-6 flex items-center justify-center text-zinc-600 hover:text-white disabled:opacity-20 transition rounded"
                   title="Move up"
-                >
-                  ↑
-                </button>
+                >↑</button>
                 <button
                   onClick={() => moveDown(idx)}
                   disabled={idx === slugs.length - 1}
                   className="w-6 h-6 flex items-center justify-center text-zinc-600 hover:text-white disabled:opacity-20 transition rounded"
                   title="Move down"
-                >
-                  ↓
-                </button>
+                >↓</button>
                 <button
                   onClick={() => remove(idx)}
-                  disabled={slugs.length <= 8}
-                  className="w-6 h-6 flex items-center justify-center text-zinc-700 hover:text-red-400 disabled:opacity-20 transition rounded ml-1"
-                  title={slugs.length <= 8 ? "Minimum 8 weeks" : "Remove"}
-                >
-                  ✕
-                </button>
+                  disabled={isAnchor || slugs.length <= 8}
+                  className="w-6 h-6 flex items-center justify-center text-zinc-700 hover:text-red-400 disabled:opacity-20 disabled:cursor-not-allowed transition rounded ml-1"
+                  title={isAnchor ? "Required week" : slugs.length <= 8 ? "Minimum 8 weeks" : "Remove"}
+                >✕</button>
               </div>
             </div>
           );

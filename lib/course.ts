@@ -611,6 +611,8 @@ export type CoursePlan = {
   slugs: string[];
   /** AI-generated explanation personalised to the athlete (type === 'ai') */
   rationale?: string;
+  /** Slugs that should be visually emphasised as priority/anchor weeks */
+  highlights?: string[];
   /** ISO timestamp */
   generatedAt: string;
   /** Coach user id, present when type === 'coach' */

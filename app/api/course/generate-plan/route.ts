@@ -191,11 +191,9 @@ function buildPlan(p: ProfileRow, themes: string[]): string[] {
   selected.add(ANCHOR_END);
 
   // 2. Anxiety / relaxation block
-  //    > 30  → full 4-week block
-  //    > 15  → first 2 weeks only (arousal control + breath work)
-  if (aScore > 30) {
-    for (const s of ANXIETY_BLOCK) selected.add(s);
-  } else if (aScore > 15) {
+  //    2 weeks of daily practice is sufficient — include w05 + w06 when
+  //    anxiety signals are present (score > 15), never the full 4-week block.
+  if (aScore > 15) {
     selected.add("w05-arousal-control");
     selected.add("w06-breath-and-body");
   }
@@ -303,9 +301,21 @@ Plan covers: ${selectedTitles}.`;
     // Non-critical — plan is still valid without rationale
   }
 
+  // Anchors are always highlighted; add the first week of each triggered block
+  const highlights: string[] = [
+    ANCHOR_START,
+    ...ANCHOR_VIZ,
+    ANCHOR_END,
+  ];
+  // Conditional blocks are only added to slugs when their signal threshold is met,
+  // so slug inclusion is equivalent to score-checking here.
+  if (slugs.includes("w05-arousal-control")) highlights.push("w05-arousal-control");
+  if (slugs.includes("w13-attention"))        highlights.push("w13-attention");
+
   const plan: CoursePlan = {
     type: "ai",
     slugs,
+    highlights,
     rationale,
     generatedAt: new Date().toISOString(),
   };
