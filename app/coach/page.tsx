@@ -96,6 +96,14 @@ function computeClient(a: AthleteRaw) {
   const weekEntries = a.entries.filter((e) => new Date(e.created_at) >= cutWeek);
   const prevEntries = a.entries.filter((e) => new Date(e.created_at) >= cutPrev && new Date(e.created_at) < cutWeek);
 
+  // Training logs with at least one content field filled in
+  const trainingLogsWithContent = a.all_training_entries.filter((e) =>
+    e.thoughts_before || e.thoughts_after || e.what_went_well || e.frustrations || e.next_session,
+  );
+  const weekTrainingLogs = trainingLogsWithContent.filter(
+    (e) => new Date(e.entry_date + "T12:00:00") >= cutWeek,
+  );
+
   const positiveRate = weekEntries.length
     ? Math.round((weekEntries.filter((e) => e.sentiment === "positive").length / weekEntries.length) * 100)
     : 0;
@@ -146,11 +154,15 @@ function computeClient(a: AthleteRaw) {
     return { label: def.label, count };
   }).filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
 
-  // Last active
-  const lastEntry = a.entries[0];
+  // Last active — whichever is more recent: journal entry or training log
+  const lastJournalTime  = a.entries[0] ? new Date(a.entries[0].created_at).getTime() : 0;
+  const lastTrainingTime = trainingLogsWithContent.length
+    ? Math.max(...trainingLogsWithContent.map((e) => new Date(e.updated_at).getTime()))
+    : 0;
+  const lastActivityTime = Math.max(lastJournalTime, lastTrainingTime);
   let lastActive = "Never";
-  if (lastEntry) {
-    const diffMs = now.getTime() - new Date(lastEntry.created_at).getTime();
+  if (lastActivityTime > 0) {
+    const diffMs = now.getTime() - lastActivityTime;
     const diffH  = Math.floor(diffMs / 3600000);
     const diffD  = Math.floor(diffMs / 86400000);
     lastActive = diffH < 1 ? "Just now"
@@ -168,8 +180,8 @@ function computeClient(a: AthleteRaw) {
     flag,
     positiveRate,
     trend,
-    entriesThisWeek: weekEntries.length,
-    entries7d: weekEntries.length,
+    entriesThisWeek: weekEntries.length + weekTrainingLogs.length,
+    entries7d: weekEntries.length + weekTrainingLogs.length,
     sentimentWeek,
     themes,
     allThemes,
