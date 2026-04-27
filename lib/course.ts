@@ -598,6 +598,25 @@ export function suggestedWeek(daysUntilMeet: number | null): CourseWeek {
   return getWeekByNum(suggestedWeekNum(daysUntilMeet)) ?? COURSE_WEEKS[0];
 }
 
+// ── Course Plan ───────────────────────────────────────────────────────────────
+
+/**
+ * A personalised course plan stored in profiles.course_plan (JSONB).
+ * Contains an ordered list of week slugs drawn from COURSE_WEEKS.
+ */
+export type CoursePlan = {
+  /** How the plan was created */
+  type: "ai" | "coach" | "default";
+  /** Ordered array of week slugs from COURSE_WEEKS */
+  slugs: string[];
+  /** AI-generated explanation personalised to the athlete (type === 'ai') */
+  rationale?: string;
+  /** ISO timestamp */
+  generatedAt: string;
+  /** Coach user id, present when type === 'coach' */
+  generatedBy?: string;
+};
+
 // ── DB row types (must match migration_course_v2.sql) ────────────────────────
 
 export type CourseProgressRow = {

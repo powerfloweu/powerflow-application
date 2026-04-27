@@ -4,11 +4,9 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PhaseBadge from "@/app/components/PhaseBadge";
-import EntryCard from "@/app/components/EntryCard";
 import { computePhase } from "@/lib/phase";
 import { computeGLPoints, currentTotal, goalTotal } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
-import type { JournalEntry } from "@/lib/journal";
 import { type TrainingEntry } from "@/lib/training";
 import { ymdLocal } from "@/lib/date";
 import { markCheckinDone } from "@/lib/checkinReminder";
@@ -44,7 +42,6 @@ function todayKey() {
 export default function TodayPage() {
   const router = useRouter();
   const [profile, setProfile]           = React.useState<AthleteProfile | null>(null);
-  const [entries, setEntries]           = React.useState<JournalEntry[]>([]);
   const [loading, setLoading]           = React.useState(true);
 
   // ── Day type state ─────────────────────────────────────────
@@ -54,10 +51,9 @@ export default function TodayPage() {
   React.useEffect(() => {
     Promise.all([
       fetch("/api/me").then((r) => r.json()),
-      fetch("/api/journal/entries?limit=3").then((r) => r.json()),
       fetch(`/api/training/entries?date=${todayKey()}`).then((r) => r.json()),
     ])
-      .then(([prof, ents, trainingEntry]) => {
+      .then(([prof, trainingEntry]) => {
         if (prof?.id) {
           setProfile(prof);
           if (prof.role === "athlete" && prof.onboarding_complete === false) {
@@ -65,7 +61,6 @@ export default function TodayPage() {
             return;
           }
         }
-        setEntries(Array.isArray(ents) ? ents.slice(0, 3) : []);
         if (trainingEntry?.id) {
           setTodayEntry(trainingEntry as TrainingEntry);
           markCheckinDone();
@@ -141,7 +136,7 @@ export default function TodayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto">
+    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-2xl">
 
       {/* ── Greeting ──────────────────────────────────────────── */}
       <div className="mb-8">
@@ -226,6 +221,38 @@ export default function TodayPage() {
       {/* ── Mental goals ─────────────────────────────────────── */}
       <MentalGoalsCard goals={profile?.mental_goals ?? []} />
 
+      {/* ── Affirmations ──────────────────────────────────────── */}
+      {(profile?.affirmations ?? []).length > 0 ? (
+        <div className="rounded-2xl border border-purple-500/20 bg-purple-500/5 px-5 py-4 mb-6">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400 mb-3">
+            Your affirmations
+          </p>
+          <ul className="space-y-2">
+            {profile!.affirmations.map((a, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-purple-400 mt-0.5 flex-shrink-0 text-xs">✦</span>
+                <p className="font-saira text-sm text-zinc-200 leading-relaxed">{a}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : profile && (
+        <div className="rounded-2xl border border-white/5 bg-[#17131F] px-5 py-4 mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="font-saira text-xs font-semibold text-zinc-400 mb-0.5">No affirmations set</p>
+            <p className="font-saira text-[11px] text-zinc-600 leading-relaxed">
+              Your self-talk sentences appear here every time you open the app.
+            </p>
+          </div>
+          <Link
+            href="/library#affirmations"
+            className="flex-shrink-0 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 font-saira text-[10px] uppercase tracking-[0.14em] text-purple-300 hover:bg-purple-500/20 transition"
+          >
+            Set up →
+          </Link>
+        </div>
+      )}
+
       {/* ── Coach badge ───────────────────────────────────────── */}
       {profile?.coach_id && (
         <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 mb-6">
@@ -234,39 +261,6 @@ export default function TodayPage() {
         </div>
       )}
 
-      {/* ── Recent entries ────────────────────────────────────── */}
-      {entries.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
-              Recent entries
-            </p>
-            <Link
-              href="/journal"
-              className="font-saira text-[10px] text-purple-400 hover:text-purple-300 uppercase tracking-[0.16em]"
-            >
-              See all →
-            </Link>
-          </div>
-          <div className="space-y-3">
-            {entries.map((e) => (
-              <EntryCard key={e.id} entry={e} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {entries.length === 0 && (
-        <div className="text-center py-10">
-          <p className="font-saira text-sm text-zinc-600 mb-3">No journal entries yet.</p>
-          <Link
-            href="/journal"
-            className="inline-block rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-2 font-saira text-xs text-purple-300 hover:bg-purple-500/20 transition"
-          >
-            Write your first entry →
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

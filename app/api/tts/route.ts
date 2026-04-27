@@ -28,10 +28,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { text, voiceId: bodyVoiceId } = body;
-  if (!text || typeof text !== "string") {
+  const { text: rawText, voiceId: bodyVoiceId } = body;
+  if (!rawText || typeof rawText !== "string") {
     return NextResponse.json({ error: "text is required" }, { status: 400 });
   }
+  // ElevenLabs streaming endpoint has a ~2500-char limit per request.
+  const text = rawText.slice(0, 2500);
 
   const voiceId =
     bodyVoiceId ??
@@ -55,6 +57,7 @@ export async function POST(req: NextRequest) {
           similarity_boost: 0.75,
           style: 0.0,
           use_speaker_boost: true,
+          speed: 0.80, // Slower pace — guided imagery needs processing time
         },
       }),
     }

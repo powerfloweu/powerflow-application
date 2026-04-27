@@ -64,6 +64,52 @@ export const THEME_CLS: Record<string, string> = {
   orange:  "border-orange-500/30 bg-orange-500/10 text-orange-300",
 };
 
+// ── Auto sentiment detection ──────────────────────────────────────────────────
+
+const NEGATIVE_SIGNALS = [
+  // Emotions
+  "fear", "afraid", "anxious", "anxiety", "nervous", "worried", "worry",
+  "stress", "stressed", "depressed", "sad", "frustrated", "frustrating",
+  "scared", "hopeless", "overwhelmed", "dread", "dreading", "angry", "anger",
+  // Physical problems
+  "hurt", "hurts", "pain", "injury", "injured", "injure", "injuring",
+  "pulled", "pull", "strain", "strained", "sore", "ache", "aching",
+  "sick", "exhausted", "weak", "fatigued", "fatigue",
+  // Negation + enjoyment / ability
+  "not enjoy", "don't enjoy", "do not enjoy", "didn't enjoy",
+  "cannot", "can not", "can't", "couldn't", "unable", "unable to",
+  "don't want", "do not want", "didn't want",
+  "not ready", "not confident", "not sure", "not feeling good",
+  // Performance failure
+  "failed", "fail", "failing", "miss", "missed", "bombed", "bomb",
+  "struggle", "struggling", "struggled", "difficult", "hard time",
+  "blocked", "can't block", "distracted", "can't concentrate",
+  "no motivation", "unmotivated", "burned out", "burnt out",
+  // Explicit negativity
+  "hate", "terrible", "awful", "horrible", "bad", "worst", "dread",
+  "never", "nothing works", "pointless", "useless",
+  // Doubt
+  "doubt", "self-doubt", "don't believe", "don't think i can",
+];
+
+const POSITIVE_SIGNALS = [
+  "great", "good", "amazing", "awesome", "solid", "strong", "confident",
+  "motivated", "excited", "proud", "happy", "crushed", "nailed", "hit",
+  "progress", "win", "pr", "record", "ready", "pumped", "believe", "trust",
+  "love", "best", "improved", "better", "coming back", "locked in", "dialed",
+  "enjoying", "enjoy", "fun", "fantastic", "excellent", "feel good",
+  "feeling good", "looking forward", "can't wait", "stoked",
+];
+
+export function detectSentiment(text: string): Sentiment {
+  const lower = text.toLowerCase();
+  const neg = NEGATIVE_SIGNALS.filter((w) => lower.includes(w)).length;
+  const pos = POSITIVE_SIGNALS.filter((w) => lower.includes(w)).length;
+  if (neg > pos) return "negative";
+  if (pos > neg) return "positive";
+  return "neutral";
+}
+
 export function detectThemes(entries: Pick<JournalEntry, "content">[]): string[] {
   return THEME_DEFS
     .filter((def) =>

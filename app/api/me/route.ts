@@ -27,6 +27,8 @@ const SELECT_COLS = [
   "affirmations", "viz_keywords",
   // v5 — voice work
   "ai_access", "self_talk_mode",
+  // v6 — adaptive course
+  "course_plan",
 ].join(",");
 
 export async function GET() {
@@ -82,6 +84,7 @@ export async function GET() {
       viz_keywords: {},
       ai_access: false,
       self_talk_mode: 'classic',
+      course_plan: null,
     } satisfies AthleteProfile);
   }
 

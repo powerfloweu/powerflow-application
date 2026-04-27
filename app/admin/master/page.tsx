@@ -1580,100 +1580,108 @@ export default function MasterAdminPage() {
 
   // ── Main admin layout ────────────────────────────────────────────────────────
 
+  const NAV_TABS: [Tab, string, string][] = [
+    ["overview",  "Overview",     "◎"],
+    ["users",     `Users (${users.length})`, "◻"],
+    ["coaches",   "Coach Links",  "⇄"],
+    ["results",   "Test Results", "✦"],
+    ["broadcast", "Broadcast",    "✉"],
+  ];
+
   return (
-    <div className="min-h-screen bg-[#050608] pb-16">
-      {/* Header */}
-      <div className="border-b border-white/5 bg-[#050608] sticky top-0 z-20 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div>
-            <p className="font-saira text-[9px] font-bold uppercase tracking-[0.3em] text-purple-400">
-              PowerFlow · Master Admin
-            </p>
-            <h1 className="font-saira text-lg font-extrabold uppercase tracking-tight text-white leading-none mt-0.5">
-              Dashboard
-            </h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/you"
-              className="font-saira text-[10px] font-semibold uppercase tracking-wider text-zinc-500 hover:text-purple-300 transition"
-            >
-              ← App
-            </Link>
-          </div>
+    <div className="flex h-screen bg-[#050608] text-white overflow-hidden">
+
+      {/* ── Left sidebar ── */}
+      <aside className="w-56 flex-shrink-0 border-r border-white/6 flex flex-col h-full bg-[#0D0B14]/90">
+
+        {/* Brand */}
+        <div className="px-5 pt-6 pb-5 border-b border-white/5">
+          <p className="font-saira text-[10px] font-bold uppercase tracking-[0.3em] text-purple-400 mb-0.5">
+            PowerFlow
+          </p>
+          <h1 className="font-saira text-lg font-extrabold uppercase tracking-tight text-white leading-none">
+            Master Admin
+          </h1>
         </div>
 
-        {/* Tabs */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex gap-1 pb-0 overflow-x-auto">
-          {([
-            ["overview", "Overview"],
-            ["users", `Users (${users.length})`],
-            ["coaches", "Coach Links"],
-            ["results", "Test Results"],
-            ["broadcast", "Broadcast"],
-          ] as [Tab, string][]).map(([tab, label]) => (
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+          {NAV_TABS.map(([tab, label, icon]) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2.5 font-saira text-[11px] font-bold uppercase tracking-wider border-b-2 transition whitespace-nowrap
-                ${
-                  activeTab === tab
-                    ? "border-purple-400 text-white"
-                    : "border-transparent text-zinc-500 hover:text-zinc-300"
-                }`}
+              className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-xs uppercase tracking-[0.14em] transition ${
+                activeTab === tab
+                  ? "bg-purple-500/15 text-purple-300 font-semibold"
+                  : "text-zinc-500 hover:text-zinc-200 hover:bg-white/5"
+              }`}
             >
+              <span className="text-sm leading-none">{icon}</span>
               {label}
             </button>
           ))}
+        </nav>
+
+        {/* Footer: admin email + back link */}
+        <div className="flex-shrink-0 px-5 py-4 border-t border-white/5 space-y-2">
+          <p className="font-saira text-[10px] text-zinc-600 truncate">{sessionEmail}</p>
+          <Link
+            href="/you"
+            className="font-saira text-xs text-zinc-500 hover:text-purple-300 transition"
+          >
+            ← Back to app
+          </Link>
         </div>
-      </div>
+      </aside>
 
-      {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
-        {error && (
-          <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
-            <p className="font-saira text-sm text-red-400">{error}</p>
-          </div>
-        )}
+      {/* ── Main content ── */}
+      <main className="flex-1 overflow-y-auto">
+        {/* Tab title bar */}
+        <div className="sticky top-0 z-10 border-b border-white/5 bg-[#050608]/95 backdrop-blur-md px-8 py-4">
+          <h2 className="font-saira text-sm font-bold uppercase tracking-[0.22em] text-white">
+            {NAV_TABS.find(([t]) => t === activeTab)?.[1] ?? ""}
+          </h2>
+        </div>
 
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-6 h-6 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
-          </div>
-        ) : (
-          <>
-            {activeTab === "overview" && <OverviewTab users={users} />}
-            {activeTab === "users" && (
-              <UsersTab
-                users={users}
-                coaches={coaches}
-                sessionEmail={sessionEmail}
-                onRelinkCoach={handleRelinkCoach}
-                onPatchUser={patchUser}
-                onDeleteUser={handleDeleteUser}
-                saving={saving}
-              />
-            )}
-            {activeTab === "coaches" && (
-              <CoachLinksTab
-                users={users}
-                coaches={coaches}
-                onRelinkCoach={handleRelinkCoach}
-                saving={saving}
-              />
-            )}
-            {activeTab === "results" && <ResultsTab />}
-            {activeTab === "broadcast" && <BroadcastTab users={users} />}
-          </>
-        )}
-      </div>
+        <div className="px-8 py-8">
+          {error && (
+            <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+              <p className="font-saira text-sm text-red-400">{error}</p>
+            </div>
+          )}
 
-      {/* Footer */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-10 text-center">
-        <p className="font-saira text-[10px] text-zinc-700">
-          PowerFlow Master Admin · {sessionEmail}
-        </p>
-      </div>
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <div className="w-6 h-6 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+            </div>
+          ) : (
+            <>
+              {activeTab === "overview" && <OverviewTab users={users} />}
+              {activeTab === "users" && (
+                <UsersTab
+                  users={users}
+                  coaches={coaches}
+                  sessionEmail={sessionEmail}
+                  onRelinkCoach={handleRelinkCoach}
+                  onPatchUser={patchUser}
+                  onDeleteUser={handleDeleteUser}
+                  saving={saving}
+                />
+              )}
+              {activeTab === "coaches" && (
+                <CoachLinksTab
+                  users={users}
+                  coaches={coaches}
+                  onRelinkCoach={handleRelinkCoach}
+                  saving={saving}
+                />
+              )}
+              {activeTab === "results" && <ResultsTab />}
+              {activeTab === "broadcast" && <BroadcastTab users={users} />}
+            </>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

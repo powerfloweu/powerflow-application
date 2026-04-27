@@ -591,7 +591,7 @@ export default function ToolsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-8 sm:px-6 max-w-lg mx-auto">
+    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-8 sm:px-6 max-w-lg mx-auto md:max-w-3xl">
 
       {/* ── Header ────────────────────────────────────────────── */}
       <div className="mb-8">
@@ -653,6 +653,7 @@ export default function ToolsPage() {
                 return (
                   <div
                     key={tool.id}
+                    id={tool.id}
                     className={`rounded-2xl border transition-colors ${
                       open ? `${c.border} ${c.bg}` : "border-white/5 bg-[#17131F]"
                     }`}

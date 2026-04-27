@@ -8,6 +8,7 @@ import { isCheckinDone, checkinKey } from "@/lib/checkinReminder";
 const TABS = [
   { href: "/today",   label: "Home",    icon: TodayIcon   },
   { href: "/journal", label: "Journal", icon: JournalIcon },
+  { href: "/course",  label: "Course",  icon: CourseIcon  },
   { href: "/library", label: "Tools",   icon: LibraryIcon },
   { href: "/you",     label: "You",     icon: YouIcon     },
 ] as const;

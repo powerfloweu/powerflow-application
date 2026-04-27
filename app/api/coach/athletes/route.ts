@@ -1,12 +1,11 @@
 /**
- * GET /api/coach/athletes
- * Returns all athletes linked to the authenticated coach, including their
- * journal entries (last 50) and test scores from all four tests.
+ * GET  /api/coach/athletes — returns all athletes for this coach
+ * PATCH /api/coach/athletes — coach updates affirmations or viz_keywords for one athlete
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
-import { dbSelect } from "@/lib/supabaseAdmin";
+import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
 import type { TrainingEntry } from "@/lib/training";
 import { mondayOfWeek, sundayOfWeek } from "@/lib/date";
 
@@ -198,4 +197,48 @@ export async function GET() {
   });
 
   return NextResponse.json(result);
+}
+
+// ── PATCH — coach edits athlete affirmations or viz_keywords ─────────────────
+
+export async function PATCH(req: NextRequest) {
+  if (!isConfigured) return NextResponse.json({ error: "Auth not configured" }, { status: 503 });
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Verify caller is a coach
+  const coaches = await dbSelect<{ id: string }>("profiles", {
+    id: `eq.${user.id}`,
+    role: "eq.coach",
+    select: "id",
+  });
+  if (!coaches.length) return NextResponse.json({ error: "Not a coach" }, { status: 403 });
+
+  let body: { athleteId: string; affirmations?: string[]; viz_keywords?: Record<string, string[]> };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { athleteId, affirmations, viz_keywords } = body;
+  if (!athleteId) return NextResponse.json({ error: "athleteId required" }, { status: 400 });
+
+  // Verify this athlete belongs to this coach
+  const athletes = await dbSelect<{ id: string }>("profiles", {
+    id: `eq.${athleteId}`,
+    coach_id: `eq.${user.id}`,
+    role: "eq.athlete",
+    select: "id",
+  });
+  if (!athletes.length) return NextResponse.json({ error: "Athlete not found" }, { status: 404 });
+
+  const patch: Record<string, unknown> = {};
+  if (affirmations !== undefined) patch.affirmations = affirmations;
+  if (viz_keywords  !== undefined) patch.viz_keywords  = viz_keywords;
+  if (!Object.keys(patch).length) return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+
+  await dbPatch("profiles", { id: athleteId }, patch);
+  return NextResponse.json({ ok: true });
 }

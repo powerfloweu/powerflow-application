@@ -12,23 +12,41 @@ type ChatMessage = {
   content: string;
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmtTime(s: number) {
+  const m = Math.floor(s / 60);
+  return `${m}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
+}
+
 // ── ScriptBlock ───────────────────────────────────────────────────────────────
 
 function ScriptBlock({
   content,
   blockId,
   playingId,
+  loadingId,
+  errorId,
+  audioTime,
   onPlay,
   onStop,
+  onSeekBy,
 }: {
   content: string;
   blockId: string;
   playingId: string | null;
+  loadingId: string | null;
+  errorId: string | null;
+  audioTime: { current: number; duration: number } | null;
   onPlay: (blockId: string, content: string) => void;
   onStop: () => void;
+  onSeekBy: (delta: number) => void;
 }) {
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
+  const isLoading = loadingId === blockId;
+  const hasError = errorId !== null && (errorId === blockId || errorId.startsWith(blockId + "||"));
+  const errorMsg = errorId?.startsWith(blockId + "||") ? errorId.split("||")[1] : "";
 
   // Extract title from first line if it's in [TITLE] format or ALL CAPS
   const lines = content.trim().split("\n");
@@ -41,6 +59,9 @@ function ScriptBlock({
 
   const suggestedTitle = title || "Script";
   const playing = playingId === blockId;
+  const pct = playing && audioTime && audioTime.duration > 0
+    ? Math.min((audioTime.current / audioTime.duration) * 100, 100)
+    : 0;
 
   const handleSave = async () => {
     const name = window.prompt("Name this script:", suggestedTitle);
@@ -71,16 +92,71 @@ function ScriptBlock({
       <p className="font-saira text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap mb-4">
         {body}
       </p>
-      <div className="flex items-center gap-3">
-        {playing ? (
-          <button
-            type="button"
-            onClick={onStop}
-            className="border border-purple-500/30 bg-purple-500/10 text-purple-300 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider animate-pulse"
-          >
-            ◼ Stop
-          </button>
-        ) : (
+
+      {/* Player */}
+      {isLoading ? (
+        <div className="space-y-2 mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin flex-shrink-0" />
+            <span className="font-saira text-xs text-zinc-400">Generating audio…</span>
+            <button
+              type="button"
+              onClick={onStop}
+              className="ml-auto font-saira text-[10px] uppercase tracking-wider text-zinc-600 hover:text-zinc-400 transition"
+            >
+              Cancel
+            </button>
+          </div>
+          <p className="font-saira text-[10px] text-zinc-600">
+            Keep this screen open — longer scripts take 10–30 s to generate.
+          </p>
+        </div>
+      ) : playing ? (
+        <div className="space-y-2 mb-3">
+          {/* Progress bar */}
+          <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-purple-400 rounded-full transition-all duration-200"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          {/* Time */}
+          {audioTime && audioTime.duration > 0 && (
+            <div className="flex justify-between font-saira text-[10px] text-zinc-600">
+              <span>{fmtTime(audioTime.current)}</span>
+              <span>{fmtTime(audioTime.duration)}</span>
+            </div>
+          )}
+          {/* Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onSeekBy(-10)}
+              className="rounded-lg border border-white/10 px-3 py-1.5 font-saira text-[11px] text-zinc-400 hover:text-white hover:border-white/30 transition"
+            >
+              ← 10s
+            </button>
+            <button
+              type="button"
+              onClick={onStop}
+              className="flex-1 rounded-xl border border-purple-500/30 bg-purple-500/10 py-2 font-saira text-xs uppercase tracking-wider text-purple-300 hover:bg-purple-500/20 transition"
+            >
+              ◼ Stop
+            </button>
+            <button
+              type="button"
+              onClick={() => onSeekBy(10)}
+              className="rounded-lg border border-white/10 px-3 py-1.5 font-saira text-[11px] text-zinc-400 hover:text-white hover:border-white/30 transition"
+            >
+              10s →
+            </button>
+          </div>
+          <p className="font-saira text-[10px] text-zinc-700 text-center">
+            🔔 No sound? Check your phone is not on silent.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-3 mb-0">
           <button
             type="button"
             onClick={() => onPlay(blockId, content)}
@@ -88,16 +164,21 @@ function ScriptBlock({
           >
             ▶ Play
           </button>
-        )}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="border border-white/10 text-zinc-400 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:text-white hover:border-white/30 transition disabled:opacity-50"
-        >
-          {saved ? "✓ Saved" : saving ? "Saving…" : "↓ Save to library"}
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="border border-white/10 text-zinc-400 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:text-white hover:border-white/30 transition disabled:opacity-50"
+          >
+            {saved ? "✓ Saved" : saving ? "Saving…" : "↓ Save to library"}
+          </button>
+          {hasError && (
+            <p className="w-full font-saira text-[10px] text-red-400 break-all">
+              {errorMsg || "Audio failed — try again."}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -110,8 +191,12 @@ function renderContent(
   text: string,
   scriptProps: {
     playingId: string | null;
+    loadingId: string | null;
+    errorId: string | null;
+    audioTime: { current: number; duration: number } | null;
     onPlay: (blockId: string, content: string) => void;
     onStop: () => void;
+    onSeekBy: (delta: number) => void;
   }
 ): React.ReactNode {
   // Split on fenced code blocks first
@@ -136,8 +221,12 @@ function renderContent(
             content={body.trim()}
             blockId={`script-${i}`}
             playingId={scriptProps.playingId}
+            loadingId={scriptProps.loadingId}
+            errorId={scriptProps.errorId}
+            audioTime={scriptProps.audioTime}
             onPlay={scriptProps.onPlay}
             onStop={scriptProps.onStop}
+            onSeekBy={scriptProps.onSeekBy}
           />
         );
       }
@@ -253,7 +342,19 @@ export default function ChatPage() {
 
   // ── Audio / script state ───────────────────────────────────────────────────
   const [playingScriptId, setPlayingScriptId] = React.useState<string | null>(null);
-  const currentAudio = React.useRef<HTMLAudioElement | null>(null);
+  const [loadingScriptId, setLoadingScriptId] = React.useState<string | null>(null);
+  const [ttsErrorId, setTtsErrorId] = React.useState<string | null>(null);
+  const [audioTime, setAudioTime] = React.useState<{ current: number; duration: number } | null>(null);
+  // AudioContext + AudioBufferSourceNode engine:
+  //   • decodeAudioData avoids HTMLAudio.play() so iOS autoplay never blocks it
+  //   • AudioContext output bypasses the hardware silent/mute switch on iOS
+  const audioCtxRef = React.useRef<AudioContext | null>(null);
+  const audioSrcRef = React.useRef<AudioBufferSourceNode | null>(null);
+  const audioBufRef = React.useRef<AudioBuffer | null>(null);
+  const playStartRef = React.useRef<number>(0);   // ctx.currentTime when playback started
+  const playOffsetRef = React.useRef<number>(0);  // buffer offset (for seeks)
+  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const abortRef = React.useRef<AbortController | null>(null);
 
   const bottomRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
@@ -309,59 +410,156 @@ export default function ChatPage() {
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   };
 
-  // ── Audio playback ─────────────────────────────────────────────────────────
+  // ── Stop audio on unmount (navigation away) ────────────────────────────────
+  React.useEffect(() => {
+    return () => { stopAudio(true); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Audio engine ─────────────────────────────────────────────────────────────
+  // Strategy: fetch TTS audio as ArrayBuffer → AudioContext.decodeAudioData →
+  // AudioBufferSourceNode.start(). This completely avoids HTMLAudio.play() so
+  // iOS autoplay policy never blocks us. The AudioContext is unlocked once by
+  // the synchronous ctx.resume() call inside the user-gesture handler, and all
+  // subsequent start() calls inherit that unlocked state.
+
+  const clearTimer = () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  };
+
+  const stopAudio = React.useCallback((silent = false) => {
+    clearTimer();
+    abortRef.current?.abort();
+    abortRef.current = null;
+    if (audioSrcRef.current) {
+      try { audioSrcRef.current.stop(); } catch { /* already stopped */ }
+      audioSrcRef.current.onended = null;
+      audioSrcRef.current = null;
+    }
+    audioBufRef.current = null;
+    audioCtxRef.current?.close().catch(() => {});
+    audioCtxRef.current = null;
+    if (!silent) { setPlayingScriptId(null); setLoadingScriptId(null); setAudioTime(null); }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePlay = async (blockId: string, content: string) => {
-    // Stop any current audio
-    if (currentAudio.current) {
-      currentAudio.current.pause();
-      currentAudio.current = null;
-      setPlayingScriptId(null);
-      // If clicking the same block, just stop
-      if (playingScriptId === blockId) return;
-    }
+    const isActive = playingScriptId === blockId || loadingScriptId === blockId;
+    stopAudio(true);
+    setPlayingScriptId(null);
+    setLoadingScriptId(null);
+    setAudioTime(null);
+    if (isActive) return; // toggle off
 
-    setPlayingScriptId(blockId);
+    setTtsErrorId(null);
+    setLoadingScriptId(blockId); // show buffering indicator
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const AudioCtx = window.AudioContext ?? (window as any).webkitAudioContext;
+    const ctx = new AudioCtx() as AudioContext;
+    audioCtxRef.current = ctx;
+    ctx.resume().catch(() => {});
+
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: content }),
+        signal: controller.signal,
       });
+      if (!res.ok) throw new Error(`TTS ${res.status}`);
 
-      if (!res.ok) throw new Error("TTS failed");
+      const arrayBuffer = await res.arrayBuffer();
+      if (audioCtxRef.current !== ctx) return; // stopped or superseded
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      currentAudio.current = audio;
+      ctx.resume().catch(() => {});
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      if (audioCtxRef.current !== ctx) return;
 
-      audio.onended = () => {
+      audioBufRef.current = audioBuffer;
+      playOffsetRef.current = 0;
+      playStartRef.current = ctx.currentTime;
+
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      audioSrcRef.current = source;
+
+      // Audio ready — swap loading → playing
+      setLoadingScriptId(null);
+      setPlayingScriptId(blockId);
+
+      // Progress ticker
+      timerRef.current = setInterval(() => {
+        if (!audioSrcRef.current || audioCtxRef.current !== ctx) return;
+        const elapsed = ctx.currentTime - playStartRef.current + playOffsetRef.current;
+        const dur = audioBufRef.current?.duration ?? 0;
+        setAudioTime({ current: Math.min(elapsed, dur), duration: dur });
+      }, 250);
+
+      source.onended = () => {
+        if (audioSrcRef.current !== source) return;
+        clearTimer();
         setPlayingScriptId(null);
-        currentAudio.current = null;
-        URL.revokeObjectURL(url);
-      };
-      audio.onerror = () => {
-        setPlayingScriptId(null);
-        currentAudio.current = null;
-        URL.revokeObjectURL(url);
+        setAudioTime(null);
+        audioSrcRef.current = null;
+        audioBufRef.current = null;
+        ctx.close().catch(() => {});
+        if (audioCtxRef.current === ctx) audioCtxRef.current = null;
       };
 
-      await audio.play();
-    } catch {
+      source.start(0, 0);
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") return; // user cancelled
+      const detail = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+      console.error("[TTS] error:", err);
       setPlayingScriptId(null);
-      currentAudio.current = null;
+      setLoadingScriptId(null);
+      setAudioTime(null);
+      setTtsErrorId(blockId + "||" + detail);
+      stopAudio(true);
     }
   };
 
-  const handleStop = () => {
-    if (currentAudio.current) {
-      currentAudio.current.pause();
-      currentAudio.current = null;
+  const seekBy = (delta: number) => {
+    const ctx = audioCtxRef.current;
+    const buf = audioBufRef.current;
+    if (!ctx || !buf) return;
+
+    const elapsed = ctx.currentTime - playStartRef.current + playOffsetRef.current;
+    const newOffset = Math.max(0, Math.min(elapsed + delta, buf.duration - 0.05));
+
+    // Stop current source and restart from the new offset
+    if (audioSrcRef.current) {
+      try { audioSrcRef.current.stop(); } catch { /* already stopped */ }
+      audioSrcRef.current.onended = null;
+      audioSrcRef.current = null;
     }
-    setPlayingScriptId(null);
+
+    const source = ctx.createBufferSource();
+    source.buffer = buf;
+    source.connect(ctx.destination);
+    playStartRef.current = ctx.currentTime;
+    playOffsetRef.current = newOffset;
+    audioSrcRef.current = source;
+
+    source.onended = () => {
+      if (audioSrcRef.current !== source) return;
+      clearTimer();
+      setPlayingScriptId(null);
+      setAudioTime(null);
+      audioSrcRef.current = null;
+      audioBufRef.current = null;
+      ctx.close().catch(() => {});
+      if (audioCtxRef.current === ctx) audioCtxRef.current = null;
+    };
+
+    source.start(0, newOffset);
   };
+
+  const handleStop = () => stopAudio();
 
   // ── Send message ───────────────────────────────────────────────────────────
 
@@ -492,8 +690,12 @@ export default function ChatPage() {
 
   const scriptRenderProps = {
     playingId: playingScriptId,
+    loadingId: loadingScriptId,
+    errorId: ttsErrorId,
+    audioTime,
     onPlay: handlePlay,
     onStop: handleStop,
+    onSeekBy: seekBy,
   };
 
   // ── Loading state ──────────────────────────────────────────────────────────
@@ -509,7 +711,7 @@ export default function ChatPage() {
   const hasMessages = messages.length > 0 || streaming;
 
   return (
-    <div className="flex flex-col h-screen bg-[#050608]">
+    <div className="chat-screen flex flex-col bg-[#050608]">
 
       {/* ── Sticky header ─────────────────────────────────────── */}
       <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/6 bg-[#050608]/95 backdrop-blur-sm">

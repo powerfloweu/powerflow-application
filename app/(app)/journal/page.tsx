@@ -7,9 +7,9 @@ import TagChip from "@/app/components/TagChip";
 import {
   type Sentiment,
   type JournalEntry,
-  SENT_CONFIG,
   THEME_DEFS,
   detectThemesWithCount,
+  detectSentiment,
 } from "@/lib/journal";
 import { TRAINING_QUESTIONS, type TrainingEntry } from "@/lib/training";
 import { ymdLocal } from "@/lib/date";
@@ -286,8 +286,7 @@ function TrainingJournalForm({
 // ── Quick entry form ───────────────────────────────────────────────────────────
 
 function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
-  const [text, setText]         = React.useState("");
-  const [sentiment, setSentiment] = React.useState<Sentiment>("neutral");
+  const [text, setText]             = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [submitted, setSubmitted]   = React.useState(false);
   const [error, setError]           = React.useState<string | null>(null);
@@ -298,17 +297,19 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
-    const themes = detectThemesForEntry(text, sentiment);
+    const trimmed = text.trim();
+    const sentiment = detectSentiment(trimmed);
+    const themes = detectThemesForEntry(trimmed, sentiment);
     try {
       const res = await fetch("/api/journal/entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: text.trim(), sentiment, context: "general", themes }),
+        body: JSON.stringify({ content: trimmed, sentiment, context: "general", themes }),
       });
       if (!res.ok) throw new Error("Save failed");
       const saved = await res.json() as { id: string };
-      onAdd({ id: saved.id, content: text.trim(), sentiment, context: "general", themes, created_at: new Date().toISOString() });
-      setText(""); setSentiment("neutral");
+      onAdd({ id: saved.id, content: trimmed, sentiment, context: "general", themes, created_at: new Date().toISOString() });
+      setText("");
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 1800);
     } catch {
@@ -331,23 +332,7 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
         className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-base sm:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
       />
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <div className="flex gap-1.5">
-          {(["positive", "neutral", "negative"] as Sentiment[]).map((s) => {
-            const cfg = SENT_CONFIG[s];
-            return (
-              <button key={s} type="button" onClick={() => setSentiment(s)}
-                className={`rounded-full border px-3 py-2 sm:py-1 font-saira text-[10px] font-semibold uppercase tracking-[0.18em] transition ${
-                  sentiment === s
-                    ? `${cfg.ring} ${cfg.bg} ${cfg.text}`
-                    : "border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-400"
-                }`}>
-                {cfg.icon} {cfg.label}
-              </button>
-            );
-          })}
-        </div>
-
+      <div className="mt-4 flex items-center">
         <button type="button" onClick={handleSubmit} disabled={!canSubmit}
           className={`ml-auto rounded-full px-5 py-2.5 sm:py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
             submitted ? "bg-emerald-500 text-white"

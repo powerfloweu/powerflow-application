@@ -212,6 +212,7 @@ function computeClient(a: AthleteRaw) {
       anything_else: a.anything_else,
       affirmations: a.affirmations ?? [],
       viz_keywords: a.viz_keywords ?? {},
+      athleteId: a.id,
     },
   };
 }
@@ -281,6 +282,168 @@ function ScaleBar({ label, value }: { label: string; value: number | null }) {
   );
 }
 
+function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClient>["profile"] }) {
+  const [editingAff, setEditingAff] = React.useState(false);
+  const [affDrafts, setAffDrafts]   = React.useState<[string, string, string]>(["", "", ""]);
+  const [editingKw, setEditingKw]   = React.useState(false);
+  const [kwDrafts, setKwDrafts]     = React.useState({ squat: "", bench: "", deadlift: "" });
+  const [saving, setSaving]         = React.useState(false);
+
+  const startEditAff = () => {
+    const a = profile.affirmations ?? [];
+    setAffDrafts([a[0] ?? "", a[1] ?? "", a[2] ?? ""]);
+    setEditingAff(true);
+  };
+
+  const startEditKw = () => {
+    const kw = profile.viz_keywords ?? {};
+    setKwDrafts({
+      squat:    (kw["viz-squat"]    ?? []).join(", "),
+      bench:    (kw["viz-bench"]    ?? []).join(", "),
+      deadlift: (kw["viz-deadlift"] ?? []).join(", "),
+    });
+    setEditingKw(true);
+  };
+
+  const saveAff = async () => {
+    setSaving(true);
+    const affirmations = affDrafts.map((s) => s.trim()).filter(Boolean);
+    await fetch("/api/coach/athletes", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ athleteId: profile.athleteId, affirmations }),
+    });
+    profile.affirmations = affirmations;
+    setSaving(false);
+    setEditingAff(false);
+  };
+
+  const saveKw = async () => {
+    setSaving(true);
+    const parse = (s: string) => s.split(",").map((t) => t.trim()).filter(Boolean);
+    const viz_keywords = {
+      ...(profile.viz_keywords ?? {}),
+      "viz-squat":    parse(kwDrafts.squat),
+      "viz-bench":    parse(kwDrafts.bench),
+      "viz-deadlift": parse(kwDrafts.deadlift),
+    };
+    await fetch("/api/coach/athletes", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ athleteId: profile.athleteId, viz_keywords }),
+    });
+    profile.viz_keywords = viz_keywords;
+    setSaving(false);
+    setEditingKw(false);
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Affirmations */}
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="font-saira text-[10px] text-zinc-600">Affirmations</p>
+          {!editingAff && (
+            <button onClick={startEditAff} className="font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
+              Edit
+            </button>
+          )}
+        </div>
+        {editingAff ? (
+          <div className="space-y-1.5">
+            {([0, 1, 2] as const).map((i) => (
+              <input
+                key={i}
+                value={affDrafts[i]}
+                onChange={(e) => { const d = [...affDrafts] as [string,string,string]; d[i] = e.target.value; setAffDrafts(d); }}
+                placeholder={`Affirmation ${i + 1}`}
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-purple-400/50"
+              />
+            ))}
+            <div className="flex gap-2 pt-1">
+              <button onClick={saveAff} disabled={saving} className="rounded-lg bg-purple-500 px-3 py-1 font-saira text-[10px] uppercase tracking-wider text-white hover:bg-purple-400 disabled:opacity-50 transition">
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button onClick={() => setEditingAff(false)} className="font-saira text-[10px] text-zinc-500 hover:text-zinc-300 transition">
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : profile.affirmations?.length ? (
+          <ol className="space-y-1">
+            {profile.affirmations.map((a, i) => (
+              <li key={i} className="flex gap-2 items-start">
+                <span className="font-saira text-[10px] text-purple-400 font-bold flex-shrink-0 mt-0.5">{i + 1}.</span>
+                <span className="font-saira text-sm text-zinc-200">{a}</span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="font-saira text-sm text-zinc-600">Not set</p>
+        )}
+      </div>
+
+      {/* Viz keywords */}
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="font-saira text-[10px] text-zinc-600">SBD cue words</p>
+          {!editingKw && (
+            <button onClick={startEditKw} className="font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
+              Edit
+            </button>
+          )}
+        </div>
+        {editingKw ? (
+          <div className="space-y-2">
+            {(["squat", "bench", "deadlift"] as const).map((lift) => (
+              <div key={lift}>
+                <label className="block font-saira text-[10px] text-zinc-600 mb-1 capitalize">{lift} cues <span className="text-zinc-700">(comma-separated)</span></label>
+                <input
+                  value={kwDrafts[lift]}
+                  onChange={(e) => setKwDrafts((p) => ({ ...p, [lift]: e.target.value }))}
+                  placeholder={`e.g. locked, chest up`}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-purple-400/50"
+                />
+              </div>
+            ))}
+            <div className="flex gap-2 pt-1">
+              <button onClick={saveKw} disabled={saving} className="rounded-lg bg-purple-500 px-3 py-1 font-saira text-[10px] uppercase tracking-wider text-white hover:bg-purple-400 disabled:opacity-50 transition">
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button onClick={() => setEditingKw(false)} className="font-saira text-[10px] text-zinc-500 hover:text-zinc-300 transition">
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {(["viz-squat", "viz-bench", "viz-deadlift"] as const).map((toolId) => {
+              const label = toolId === "viz-squat" ? "Squat" : toolId === "viz-bench" ? "Bench" : "Deadlift";
+              const kws = profile.viz_keywords?.[toolId] ?? [];
+              return (
+                <div key={toolId}>
+                  <p className="font-saira text-[10px] text-zinc-700 mb-1">{label}</p>
+                  {kws.length ? (
+                    <div className="flex gap-1.5 flex-wrap">
+                      {kws.map((kw, i) => (
+                        <span key={i} className="rounded-full border border-purple-500/25 bg-purple-500/10 px-2.5 py-0.5 font-saira text-xs text-purple-300">
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="font-saira text-xs text-zinc-700">Not set</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["profile"] }) {
   const goals = profile.mental_goals.filter(Boolean);
   const hasLifts =
@@ -314,42 +477,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-400 mb-3">
           Mental tools
         </p>
-        <div className="space-y-3">
-          {/* Affirmations */}
-          <div>
-            <p className="font-saira text-[10px] text-zinc-600 mb-1.5">Affirmations</p>
-            {profile.affirmations?.length ? (
-              <ol className="space-y-1">
-                {profile.affirmations.map((a, i) => (
-                  <li key={i} className="flex gap-2 items-start">
-                    <span className="font-saira text-[10px] text-purple-400 font-bold flex-shrink-0 mt-0.5">{i + 1}.</span>
-                    <span className="font-saira text-sm text-zinc-200">{a}</span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="font-saira text-sm text-zinc-600">Not set</p>
-            )}
-          </div>
-          {/* Viz keywords */}
-          {(["viz-squat", "viz-bench", "viz-deadlift"] as const).map((toolId) => {
-            const label = toolId === "viz-squat" ? "Squat cues" : toolId === "viz-bench" ? "Bench cues" : "Deadlift cues";
-            const kws = profile.viz_keywords?.[toolId] ?? [];
-            if (!kws.length) return null;
-            return (
-              <div key={toolId}>
-                <p className="font-saira text-[10px] text-zinc-600 mb-1.5">{label}</p>
-                <div className="flex gap-1.5 flex-wrap">
-                  {kws.map((kw, i) => (
-                    <span key={i} className="rounded-full border border-purple-500/25 bg-purple-500/10 px-2.5 py-0.5 font-saira text-xs text-purple-300">
-                      {kw}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <MentalToolsEditor profile={profile} />
       </div>
 
       {/* Personal & sport */}
@@ -831,6 +959,7 @@ function ClientCard({
   onFeedbackSaved,
   sentimentWindow,
   onSentimentWindowChange,
+  forceOpen = false,
 }: {
   client: Client;
   coachNote: string;
@@ -841,8 +970,10 @@ function ClientCard({
   onFeedbackSaved: (athleteId: string, entryId: string, feedback: { id: string; content: string; created_at: string }) => void;
   sentimentWindow: 7 | 30 | 60;
   onSentimentWindowChange: (athleteId: string, w: 7 | 30 | 60) => void;
+  forceOpen?: boolean;
 }) {
   const [expanded, setExpanded] = React.useState(false);
+  const isOpen = forceOpen || expanded;
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("analysis");
   const [trainingWeekOffset, setTrainingWeekOffset] = React.useState(0);
   const flag = FLAG_CONFIG[client.flag];
@@ -907,7 +1038,8 @@ function ClientCard({
     <div className={`rounded-3xl border bg-[#0C0E13] overflow-hidden transition ${
       client.flag === "attention" ? "border-rose-500/20" : "border-white/6"
     }`}>
-      {/* ── Collapsed header ── */}
+      {/* ── Collapsed header (hidden when forceOpen) ── */}
+      {!forceOpen && (
       <div
         className="flex flex-wrap items-center gap-4 p-5 sm:p-6 cursor-pointer hover:bg-white/[0.015] transition"
         onClick={() => setExpanded((v) => !v)}
@@ -965,12 +1097,13 @@ function ClientCard({
             {flag.label}
           </span>
 
-          <span className="font-saira text-[11px] text-zinc-600">{expanded ? "▲" : "▼"}</span>
+          <span className="font-saira text-[11px] text-zinc-600">{isOpen ? "▲" : "▼"}</span>
         </div>
       </div>
+      )} {/* end !forceOpen */}
 
       {/* ── Expanded body ── */}
-      {expanded && (
+      {isOpen && (
         <div className="border-t border-white/5" onClick={(e) => e.stopPropagation()}>
           {/* Tab bar */}
           <div className="flex gap-0 border-b border-white/5 px-5 sm:px-6 overflow-x-auto">
@@ -1666,6 +1799,65 @@ function sortClients(clients: Client[], sort: SortKey): Client[] {
   });
 }
 
+// ── Compact athlete row (desktop sidebar roster) ───────────────────────────────
+
+function CompactAthleteRow({
+  client,
+  selected,
+  onClick,
+}: {
+  client: Client;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  const flag = FLAG_CONFIG[client.flag];
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left flex items-center gap-3 px-4 py-3.5 transition border-l-2 ${
+        selected
+          ? "bg-purple-500/15 border-purple-400"
+          : "border-transparent hover:bg-white/[0.03] hover:border-white/10"
+      }`}
+    >
+      {/* Avatar */}
+      {client.avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={client.avatarUrl}
+          alt={client.name}
+          className="flex-shrink-0 w-9 h-9 rounded-full border border-white/10"
+        />
+      ) : (
+        <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-saira text-xs font-bold ${
+          client.flag === "attention" ? "bg-rose-500/20 text-rose-300" :
+          client.flag === "monitor"   ? "bg-amber-500/20 text-amber-300" :
+          "bg-purple-500/20 text-purple-300"
+        }`}>
+          {client.initials}
+        </div>
+      )}
+      {/* Name + meta */}
+      <div className="flex-1 min-w-0">
+        <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{client.name}</p>
+        <p className="font-saira text-xs text-zinc-500 mt-0.5">
+          {client.entriesThisWeek} entries · {client.lastActive}
+        </p>
+      </div>
+      {/* Flag dot + positive % */}
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+        <span className={`inline-block w-2 h-2 rounded-full ${flag.dot}`} />
+        <span className={`font-saira text-xs font-semibold ${
+          client.positiveRate >= 60 ? "text-emerald-400" :
+          client.positiveRate >= 40 ? "text-amber-400" :
+          "text-rose-400"
+        }`}>{client.positiveRate}%</span>
+      </div>
+    </button>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function CoachPage() {
@@ -1689,6 +1881,9 @@ export default function CoachPage() {
 
   // Feature 4: Sentiment window per athlete
   const [sentimentWindows, setSentimentWindows] = React.useState<Record<string, 7 | 30 | 60>>({});
+
+  // Desktop two-panel: selected athlete
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     (async () => {
@@ -1795,6 +1990,11 @@ export default function CoachPage() {
     [clients],
   );
 
+  const selectedClient = React.useMemo(
+    () => clients.find((c) => c.id === selectedId) ?? null,
+    [clients, selectedId],
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050608] flex items-center justify-center">
@@ -1804,131 +2004,357 @@ export default function CoachPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#050608] pt-24 pb-20 text-white">
+    <div className="relative bg-[#050608] text-white">
+      {/* Background gradient */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.11),transparent_55%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      {/* ══ MOBILE layout (stacked cards) ══════════════════════════════════════ */}
+      <div className="md:hidden relative z-10 min-h-screen pt-24 pb-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 
-        {/* Page header */}
-        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">
-              PowerFlow · Coach
-            </p>
-            <h1 className="mt-2 font-saira text-3xl font-extrabold uppercase tracking-[0.12em] sm:text-4xl">
-              Athlete Overview
-            </h1>
-            <p className="mt-3 font-saira text-sm text-zinc-400 max-w-xl">
-              Monitor your athletes&apos; mental state, self-talk patterns, and test results in one place.
-            </p>
-          </div>
-          <div className="flex gap-3 self-start mt-1">
-            <Link href="/journal" className="rounded-full border border-white/10 px-4 py-2 font-saira text-[11px] text-zinc-400 hover:border-purple-400/50 hover:text-zinc-200 transition">
-              My journal
-            </Link>
-            <Link href="/tests" className="rounded-full border border-white/10 px-4 py-2 font-saira text-[11px] text-zinc-400 hover:border-purple-400/50 hover:text-zinc-200 transition">
-              Tests
-            </Link>
-          </div>
-        </div>
-
-        {/* Coach profile header */}
-        {profile && <CoachHeader profile={profile} />}
-
-        {/* Error */}
-        {error && (
-          <div className="mb-8 rounded-2xl border border-red-500/20 bg-red-500/5 px-5 py-4">
-            <p className="font-saira text-sm text-red-300">{error}</p>
-          </div>
-        )}
-
-        {/* Invite link */}
-        {profile?.coach_code && <InvitePanel coachCode={profile.coach_code} />}
-
-        {/* Roster summary */}
-        {clients.length > 0 && <RosterSummary clients={clients} />}
-
-        {/* Feature 5: Attention alerts banner */}
-        <AttentionBanner attentionAthletes={attentionAthletes} />
-
-        {/* Empty state */}
-        {!error && clients.length === 0 && (
-          <div className="rounded-3xl border border-white/5 bg-[#0F1117] p-14 text-center mb-8">
-            <p className="font-saira text-3xl mb-4">&#128101;</p>
-            <p className="font-saira text-sm font-semibold text-zinc-300 mb-2">No athletes connected yet</p>
-            <p className="font-saira text-xs text-zinc-600 max-w-xs mx-auto mb-6">
-              Share your invite link above with athletes. Once they accept and log in, their journal and test data will appear here.
-            </p>
-            {profile?.coach_code && (
-              <p className="font-saira text-xs text-purple-400 font-mono">/join/{profile.coach_code}</p>
-            )}
-          </div>
-        )}
-
-        {/* Controls */}
-        {clients.length > 0 && (
-          <div className="flex flex-wrap items-center gap-3 mb-5">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search athletes…"
-              className="rounded-xl border border-zinc-700/70 bg-[#13151A] px-4 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30 w-52"
-            />
-            <div className="flex gap-1.5 ml-auto">
-              <span className="font-saira text-[10px] text-zinc-600 self-center mr-1 uppercase tracking-[0.18em]">Sort</span>
-              {([
-                { key: "flag",     label: "Priority" },
-                { key: "positive", label: "Positive %" },
-                { key: "entries",  label: "Activity" },
-                { key: "name",     label: "Name" },
-              ] as { key: SortKey; label: string }[]).map((s) => (
-                <button
-                  key={s.key}
-                  type="button"
-                  onClick={() => setSort(s.key)}
-                  className={`rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.13em] transition ${
-                    sort === s.key
-                      ? "border-purple-400 bg-purple-500/20 text-white"
-                      : "border-zinc-700 text-zinc-500 hover:border-zinc-500"
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
+          {/* Page header */}
+          <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">
+                PowerFlow · Coach
+              </p>
+              <h1 className="mt-2 font-saira text-3xl font-extrabold uppercase tracking-[0.12em]">
+                Athlete Overview
+              </h1>
+              <p className="mt-3 font-saira text-sm text-zinc-400 max-w-xl">
+                Monitor your athletes&apos; mental state, self-talk patterns, and test results in one place.
+              </p>
+            </div>
+            <div className="flex gap-3 self-start mt-1">
+              <Link href="/journal" className="rounded-full border border-white/10 px-4 py-2 font-saira text-[11px] text-zinc-400 hover:border-purple-400/50 hover:text-zinc-200 transition">
+                My journal
+              </Link>
+              <Link href="/tests" className="rounded-full border border-white/10 px-4 py-2 font-saira text-[11px] text-zinc-400 hover:border-purple-400/50 hover:text-zinc-200 transition">
+                Tests
+              </Link>
             </div>
           </div>
-        )}
 
-        {/* Client list */}
-        <div className="space-y-4">
-          {filtered.map((client) => (
-            <ClientCard
-              key={client.id}
-              client={client}
-              coachNote={coachNotes[client.id] ?? ""}
-              noteSavedAt={notesSavedAt[client.id] ?? null}
-              noteSaving={notesSaving[client.id] ?? false}
-              onNoteChange={handleNoteChange}
-              feedbackByEntry={feedbackByAthlete[client.id] ?? {}}
-              onFeedbackSaved={handleFeedbackSaved}
-              sentimentWindow={sentimentWindows[client.id] ?? 7}
-              onSentimentWindowChange={handleSentimentWindowChange}
-            />
-          ))}
-          {clients.length > 0 && filtered.length === 0 && (
-            <p className="font-saira text-sm text-zinc-600 text-center py-10">No athletes match your search.</p>
+          {/* Coach header */}
+          {profile && <CoachHeader profile={profile} />}
+
+          {/* Error */}
+          {error && (
+            <div className="mb-8 rounded-2xl border border-red-500/20 bg-red-500/5 px-5 py-4">
+              <p className="font-saira text-sm text-red-300">{error}</p>
+            </div>
           )}
-        </div>
 
-        {/* Footer */}
-        <div className="mt-12 text-center">
-          <Link href="/journal" className="font-saira text-[11px] text-zinc-700 underline decoration-zinc-700 hover:text-zinc-400 transition">
-            Open your own journal →
-          </Link>
+          {/* Invite link */}
+          {profile?.coach_code && <InvitePanel coachCode={profile.coach_code} />}
+
+          {/* Roster summary */}
+          {clients.length > 0 && <RosterSummary clients={clients} />}
+
+          {/* Attention banner */}
+          <AttentionBanner attentionAthletes={attentionAthletes} />
+
+          {/* Empty state */}
+          {!error && clients.length === 0 && (
+            <div className="rounded-3xl border border-white/5 bg-[#0F1117] p-14 text-center mb-8">
+              <p className="font-saira text-3xl mb-4">&#128101;</p>
+              <p className="font-saira text-sm font-semibold text-zinc-300 mb-2">No athletes connected yet</p>
+              <p className="font-saira text-xs text-zinc-600 max-w-xs mx-auto mb-6">
+                Share your invite link above with athletes. Once they accept and log in, their journal and test data will appear here.
+              </p>
+              {profile?.coach_code && (
+                <p className="font-saira text-xs text-purple-400 font-mono">/join/{profile.coach_code}</p>
+              )}
+            </div>
+          )}
+
+          {/* Controls */}
+          {clients.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3 mb-5">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search athletes…"
+                className="rounded-xl border border-zinc-700/70 bg-[#13151A] px-4 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30 w-52"
+              />
+              <div className="flex gap-1.5 ml-auto">
+                <span className="font-saira text-[10px] text-zinc-600 self-center mr-1 uppercase tracking-[0.18em]">Sort</span>
+                {([
+                  { key: "flag",     label: "Priority" },
+                  { key: "positive", label: "Positive %" },
+                  { key: "entries",  label: "Activity" },
+                  { key: "name",     label: "Name" },
+                ] as { key: SortKey; label: string }[]).map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setSort(s.key)}
+                    className={`rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.13em] transition ${
+                      sort === s.key
+                        ? "border-purple-400 bg-purple-500/20 text-white"
+                        : "border-zinc-700 text-zinc-500 hover:border-zinc-500"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Client list */}
+          <div className="space-y-4">
+            {filtered.map((client) => (
+              <ClientCard
+                key={client.id}
+                client={client}
+                coachNote={coachNotes[client.id] ?? ""}
+                noteSavedAt={notesSavedAt[client.id] ?? null}
+                noteSaving={notesSaving[client.id] ?? false}
+                onNoteChange={handleNoteChange}
+                feedbackByEntry={feedbackByAthlete[client.id] ?? {}}
+                onFeedbackSaved={handleFeedbackSaved}
+                sentimentWindow={sentimentWindows[client.id] ?? 7}
+                onSentimentWindowChange={handleSentimentWindowChange}
+              />
+            ))}
+            {clients.length > 0 && filtered.length === 0 && (
+              <p className="font-saira text-sm text-zinc-600 text-center py-10">No athletes match your search.</p>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="mt-12 text-center">
+            <Link href="/journal" className="font-saira text-[11px] text-zinc-700 underline decoration-zinc-700 hover:text-zinc-400 transition">
+              Open your own journal →
+            </Link>
+          </div>
         </div>
+      </div>
+
+      {/* ══ DESKTOP two-panel layout ════════════════════════════════════════════ */}
+      <div className="hidden md:flex h-screen relative z-10 overflow-hidden">
+
+        {/* ── Left panel: roster sidebar ── */}
+        <aside className="w-80 flex-shrink-0 border-r border-white/6 flex flex-col h-full bg-[#0D0B14]/90 overflow-hidden">
+
+          {/* Brand */}
+          <div className="flex-shrink-0 px-5 py-4 border-b border-white/5">
+            <span className="font-saira text-sm font-bold uppercase tracking-[0.22em] text-purple-300">
+              PowerFlow · Coach
+            </span>
+          </div>
+
+          {/* Coach identity */}
+          {profile && (
+            <div className="flex-shrink-0 px-4 py-3.5 border-b border-white/5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {profile.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.avatar_url} alt={profile.display_name} className="w-8 h-8 flex-shrink-0 rounded-full border border-white/10" />
+                ) : (
+                  <div className="w-8 h-8 flex-shrink-0 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-saira text-xs font-bold text-purple-300">
+                    {profile.display_name.slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-saira text-sm font-semibold text-zinc-200 truncate">{profile.display_name}</p>
+                  <p className="font-saira text-xs text-zinc-600">Coach</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <Link href="/guide" className="font-saira text-xs text-zinc-600 hover:text-purple-300 transition">Guide</Link>
+                <a href="/auth/sign-out" className="font-saira text-xs text-zinc-700 hover:text-zinc-400 transition">Sign out</a>
+              </div>
+            </div>
+          )}
+
+          {/* Invite link (compact) */}
+          {profile?.coach_code && (
+            <div className="flex-shrink-0 px-4 py-3 border-b border-white/5">
+              <p className="font-saira text-xs uppercase tracking-[0.16em] text-zinc-600 mb-1.5">Athlete invite</p>
+              <div className="flex items-center gap-2">
+                <code className="font-saira text-xs text-purple-400 font-mono truncate flex-1 leading-none">
+                  /join/{profile.coach_code}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `${window.location.origin}/join/${profile.coach_code}`;
+                    navigator.clipboard.writeText(url).catch(() => {});
+                  }}
+                  className="flex-shrink-0 font-saira text-xs text-zinc-500 border border-zinc-700 rounded-lg px-2.5 py-1 hover:border-purple-500/40 hover:text-purple-300 transition"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Mini roster stats */}
+          {clients.length > 0 && (
+            <div className="flex-shrink-0 px-4 py-4 border-b border-white/5">
+              <div className="flex items-center gap-5">
+                <div className="text-center">
+                  <p className="font-saira text-2xl font-extrabold text-zinc-100">{clients.length}</p>
+                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-500 mt-0.5">Athletes</p>
+                </div>
+                <div className="w-px h-8 bg-white/10" />
+                <div className="text-center">
+                  <p className="font-saira text-2xl font-extrabold text-rose-300">
+                    {clients.filter((c) => c.flag === "attention").length}
+                  </p>
+                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-500 mt-0.5">Attention</p>
+                </div>
+                <div className="w-px h-8 bg-white/10" />
+                <div className="text-center">
+                  <p className="font-saira text-2xl font-extrabold text-purple-300">
+                    {Math.round(clients.reduce((s, c) => s + c.positiveRate, 0) / clients.length)}%
+                  </p>
+                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-500 mt-0.5">Avg +</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className="flex-shrink-0 mx-4 mt-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+              <p className="font-saira text-xs text-red-300">{error}</p>
+            </div>
+          )}
+
+          {/* Search + sort */}
+          {clients.length > 0 && (
+            <div className="flex-shrink-0 px-4 py-3 border-b border-white/5 space-y-2.5">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search athletes…"
+                className="w-full rounded-xl border border-zinc-700/70 bg-[#13151A] px-3 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30"
+              />
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-saira text-xs text-zinc-600 mr-0.5 uppercase tracking-[0.1em]">Sort</span>
+                {([
+                  { key: "flag",     label: "Priority" },
+                  { key: "positive", label: "+" },
+                  { key: "entries",  label: "Activity" },
+                  { key: "name",     label: "A–Z" },
+                ] as { key: SortKey; label: string }[]).map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setSort(s.key)}
+                    className={`rounded-full border px-2.5 py-0.5 font-saira text-xs uppercase tracking-[0.1em] transition ${
+                      sort === s.key
+                        ? "border-purple-400 bg-purple-500/20 text-white"
+                        : "border-zinc-700 text-zinc-500 hover:border-zinc-500"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Roster list */}
+          <div className="flex-1 overflow-y-auto">
+            {clients.length === 0 ? (
+              <div className="px-5 py-10 text-center">
+                <p className="font-saira text-2xl mb-3">&#128101;</p>
+                <p className="font-saira text-sm text-zinc-500 mb-1">No athletes yet</p>
+                <p className="font-saira text-xs text-zinc-700 leading-relaxed">
+                  Share your invite link with athletes to get started.
+                </p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <p className="font-saira text-sm text-zinc-600 text-center py-10">No athletes match your search.</p>
+            ) : (
+              filtered.map((client) => (
+                <CompactAthleteRow
+                  key={client.id}
+                  client={client}
+                  selected={selectedId === client.id}
+                  onClick={() => setSelectedId(selectedId === client.id ? null : client.id)}
+                />
+              ))
+            )}
+          </div>
+
+        </aside>
+
+        {/* ── Right panel: athlete detail ── */}
+        <main className="flex-1 overflow-y-auto bg-[#050608]">
+          {selectedClient ? (
+            <div className="p-8">
+              {/* Athlete name header */}
+              <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/5">
+                {selectedClient.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={selectedClient.avatarUrl}
+                    alt={selectedClient.name}
+                    className={`w-12 h-12 rounded-full border ${
+                      selectedClient.flag === "attention" ? "border-rose-500/40" :
+                      selectedClient.flag === "monitor"   ? "border-amber-500/40" :
+                      "border-purple-500/30"
+                    }`}
+                  />
+                ) : (
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-saira text-base font-bold ${
+                    selectedClient.flag === "attention" ? "bg-rose-500/20 text-rose-200 border border-rose-500/30" :
+                    selectedClient.flag === "monitor"   ? "bg-amber-500/20 text-amber-200 border border-amber-500/30" :
+                    "bg-purple-500/20 text-purple-200 border border-purple-500/30"
+                  }`}>
+                    {selectedClient.initials}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-saira text-xl font-bold text-white leading-none">{selectedClient.name}</h2>
+                  <p className="font-saira text-sm text-zinc-500 mt-1">
+                    Last active {selectedClient.lastActive} · {selectedClient.entriesThisWeek} entries this week · {selectedClient.positiveRate}% positive
+                  </p>
+                </div>
+                {selectedClient.flag === "attention" && (
+                  <a
+                    href={`mailto:?subject=Checking in — ${selectedClient.displayName}&body=Hi ${selectedClient.displayName.split(" ")[0]},%0A%0AI noticed you've had a tough week. Wanted to check in — how are you doing?%0A%0ABest`}
+                    className="flex-shrink-0 font-saira text-sm uppercase tracking-[0.12em] text-rose-400 border border-rose-500/20 rounded-xl px-4 py-2 hover:bg-rose-500/10 transition"
+                  >
+                    ⚠ Email
+                  </a>
+                )}
+              </div>
+              <ClientCard
+                key={selectedClient.id}
+                client={selectedClient}
+                forceOpen={true}
+                coachNote={coachNotes[selectedClient.id] ?? ""}
+                noteSavedAt={notesSavedAt[selectedClient.id] ?? null}
+                noteSaving={notesSaving[selectedClient.id] ?? false}
+                onNoteChange={handleNoteChange}
+                feedbackByEntry={feedbackByAthlete[selectedClient.id] ?? {}}
+                onFeedbackSaved={handleFeedbackSaved}
+                sentimentWindow={sentimentWindows[selectedClient.id] ?? 7}
+                onSentimentWindowChange={handleSentimentWindowChange}
+              />
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center px-8 max-w-sm">
+                <p className="text-5xl mb-6">👈</p>
+                <p className="font-saira text-base font-semibold text-zinc-400">Select an athlete</p>
+                <p className="font-saira text-sm text-zinc-600 mt-2 leading-relaxed">
+                  Click any athlete in the roster to view their full dashboard here.
+                </p>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

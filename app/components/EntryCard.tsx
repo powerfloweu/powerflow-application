@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { SENT_CONFIG, CTX_CONFIG, type JournalEntry } from "@/lib/journal";
+import { SENT_CONFIG, detectSentiment, type JournalEntry } from "@/lib/journal";
 
 /** Clock time for same-day entries; relative label for older ones */
 function smartTime(iso: string): string {
@@ -25,8 +25,8 @@ export default function EntryCard({ entry, onDelete }: Props) {
   const [confirm, setConfirm] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
 
-  const s = SENT_CONFIG[entry.sentiment];
-  const c = CTX_CONFIG[entry.context];
+  // Re-detect from content so old entries stored with wrong sentiment are corrected
+  const s = SENT_CONFIG[detectSentiment(entry.content)];
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -35,30 +35,11 @@ export default function EntryCard({ entry, onDelete }: Props) {
 
   return (
     <div className={`rounded-2xl border ${s.ring} ${s.bg} p-4 group transition hover:brightness-110`}>
-      <div className="flex items-start gap-3">
-        <div
-          className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${s.text} bg-white/5`}
-        >
-          {s.icon}
-        </div>
-        <p className="flex-1 font-saira text-sm leading-relaxed text-zinc-200">
-          {entry.content}
-        </p>
-      </div>
+      <p className="font-saira text-sm leading-relaxed text-zinc-200">
+        {entry.content}
+      </p>
 
       <div className="mt-3 flex items-center gap-2 flex-wrap">
-        {/* Sentiment chip */}
-        <span
-          className={`rounded-full border px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.16em] ${s.ring} ${s.text}`}
-        >
-          {s.label}
-        </span>
-
-        {/* Context */}
-        <span className="font-saira text-[10px] text-zinc-500">
-          {c.icon} {c.label}
-        </span>
-
         {/* Time */}
         <span className="ml-auto font-saira text-[10px] text-zinc-600">
           {smartTime(entry.created_at)}

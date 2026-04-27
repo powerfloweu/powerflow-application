@@ -88,6 +88,9 @@ export type AthleteProfile = {
   ai_access: boolean;
   /** Whether to use classic journal mode or the beta voice-work mode. */
   self_talk_mode: 'classic' | 'beta_voice_work';
+  // v6 — adaptive course
+  /** Personalised course plan (stored as JSONB). Null = not yet generated. */
+  course_plan: import("@/lib/course").CoursePlan | null;
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */

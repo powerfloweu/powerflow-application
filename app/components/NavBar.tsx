@@ -5,7 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 /** Routes that render the app shell — suppress the marketing NavBar on these. */
-const APP_ROUTES = ["/today", "/journal", "/library", "/course", "/you", "/coach", "/auth", "/join", "/admin", "/voices"];
+const APP_ROUTES = [
+  "/today", "/journal", "/library", "/course", "/you", "/coach",
+  "/auth", "/join", "/admin", "/voices",
+  "/onboarding", "/guide", "/chat", "/scripts",
+];
 
 export default function NavBar() {
   const pathname = usePathname();
