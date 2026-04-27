@@ -7,9 +7,11 @@ import Link from "next/link";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ChatMessage = {
-  id: string;
+  id: string;       // local temp UUID
+  dbId?: string;    // actual DB UUID — set after persistence, used for ratings
   role: "user" | "assistant";
   content: string;
+  created_at?: string; // set for messages loaded from history
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -340,6 +342,9 @@ export default function ChatPage() {
   const [showClearConfirm, setShowClearConfirm] = React.useState(false);
   const [clearing, setClearing] = React.useState(false);
 
+  // Message ratings: dbId → "good" | "bad"
+  const [ratings, setRatings] = React.useState<Record<string, "good" | "bad">>({});
+
   // ── Audio / script state ───────────────────────────────────────────────────
   const [playingScriptId, setPlayingScriptId] = React.useState<string | null>(null);
   const [loadingScriptId, setLoadingScriptId] = React.useState<string | null>(null);
@@ -371,16 +376,24 @@ export default function ChatPage() {
           router.replace("/library");
           return;
         }
-        if (Array.isArray(history)) {
-          setMessages(
-            history.map(
-              (m: { id: string; role: "user" | "assistant"; content: string }) => ({
-                id: m.id,
-                role: m.role,
-                content: m.content,
-              })
-            )
+        if (Array.isArray(history) && history.length > 0) {
+          const loaded = history.map(
+            (m: { id: string; role: "user" | "assistant"; content: string; created_at: string }) => ({
+              id: m.id,
+              dbId: m.id, // from DB — they're the same
+              role: m.role,
+              content: m.content,
+              created_at: m.created_at,
+            })
           );
+          setMessages(loaded);
+
+          // If the last message is from a previous day, trigger background summarization
+          const lastDate = loaded[loaded.length - 1]?.created_at?.split("T")[0];
+          const today = new Date().toISOString().split("T")[0];
+          if (lastDate && lastDate < today) {
+            fetch("/api/chat/summarize", { method: "POST" }).catch(() => {});
+          }
         }
       })
       .catch(() => router.replace("/library"))
@@ -583,12 +596,17 @@ export default function ChatPage() {
     setStreaming(true);
     setStreamingContent("");
 
-    // Persist user message
+    // Persist user message — capture DB id to enable ratings
     fetch("/api/chat/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: "user", content: text }),
-    }).catch(() => {});
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((row) => {
+        if (row?.id) setMessages((prev) => prev.map((m) => m.id === userMsg.id ? { ...m, dbId: row.id } : m));
+      })
+      .catch(() => {});
 
     // Build conversation history for the API
     const conversationHistory = [...messages, userMsg].map((m) => ({
@@ -628,12 +646,17 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, assistantMsg]);
       setStreamingContent("");
 
-      // Persist assistant message
+      // Persist assistant message — capture DB id to enable ratings
       fetch("/api/chat/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: "assistant", content: fullResponse }),
-      }).catch(() => {});
+      })
+        .then((r) => r.ok ? r.json() : null)
+        .then((row) => {
+          if (row?.id) setMessages((prev) => prev.map((m) => m.id === assistantMsg.id ? { ...m, dbId: row.id } : m));
+        })
+        .catch(() => {});
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -684,6 +707,21 @@ export default function ChatPage() {
         inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 200)}px`;
       }
     }, 0);
+  };
+
+  // ── Rate an AI message ─────────────────────────────────────────────────────
+
+  const handleRate = (dbId: string, rating: "good" | "bad") => {
+    setRatings((prev) => {
+      const next = { ...prev, [dbId]: rating };
+      // Optimistic update — fire-and-forget persist
+      fetch("/api/chat/rate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message_id: dbId, rating }),
+      }).catch(() => {});
+      return next;
+    });
   };
 
   // ── Script render props (stable references via useCallback) ────────────────
@@ -788,16 +826,43 @@ export default function ChatPage() {
                 key={msg.id}
                 className={`flex mb-4 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <div
-                  className={`font-saira text-sm text-zinc-200 px-4 py-3 max-w-[85%] ${
-                    msg.role === "user"
-                      ? "bg-purple-500/20 border border-purple-500/30 rounded-2xl rounded-tr-sm"
-                      : "bg-[#17131F] border border-white/8 rounded-2xl rounded-tl-sm"
-                  }`}
-                >
-                  {msg.role === "assistant"
-                    ? renderContent(msg.content, scriptRenderProps)
-                    : msg.content}
+                <div className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"} max-w-[85%]`}>
+                  <div
+                    className={`font-saira text-sm text-zinc-200 px-4 py-3 w-full ${
+                      msg.role === "user"
+                        ? "bg-purple-500/20 border border-purple-500/30 rounded-2xl rounded-tr-sm"
+                        : "bg-[#17131F] border border-white/8 rounded-2xl rounded-tl-sm"
+                    }`}
+                  >
+                    {msg.role === "assistant"
+                      ? renderContent(msg.content, scriptRenderProps)
+                      : msg.content}
+                  </div>
+                  {/* Rating buttons — only for persisted AI messages */}
+                  {msg.role === "assistant" && msg.dbId && (
+                    <div className="flex items-center gap-1.5 mt-1 ml-1">
+                      <button
+                        type="button"
+                        onClick={() => handleRate(msg.dbId!, "good")}
+                        className={`text-base leading-none transition-opacity ${
+                          ratings[msg.dbId] === "good" ? "opacity-100" : "opacity-20 hover:opacity-50"
+                        }`}
+                        title="Helpful"
+                      >
+                        👍
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRate(msg.dbId!, "bad")}
+                        className={`text-base leading-none transition-opacity ${
+                          ratings[msg.dbId] === "bad" ? "opacity-100" : "opacity-20 hover:opacity-50"
+                        }`}
+                        title="Not helpful"
+                      >
+                        👎
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

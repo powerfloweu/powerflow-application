@@ -34,11 +34,19 @@ type TrainingEntryContext = {
 
 // ── System prompt builder ─────────────────────────────────────────────────────
 
+type SessionSummary = {
+  session_date: string;
+  summary: string;
+  techniques_used: string[];
+  resonated: string | null;
+};
+
 function buildSystemPrompt(
   profile: AthleteProfile,
   entries: JournalEntryContext[],
   voices: Voice[],
   training: TrainingEntryContext[],
+  summaries: SessionSummary[],
 ): string {
   // Collect all themes from recent entries
   const allThemes = entries.flatMap((e) => e.themes ?? []);
@@ -307,7 +315,20 @@ Main barrier: ${mainBarrier}
 Self-ratings: confidence ${conf}/10 · focus ${focus}/10 · pressure ${pressure}/10 · anxiety ${anxiety}/10
 
 Recent journal entries (for context, not to quote back verbatim):
-${recentEntriesText}`;
+${recentEntriesText}
+${summaries.length > 0 ? `
+## Memory: previous sessions
+
+${summaries
+  .map((s) => {
+    const lines = [`[${s.session_date}] ${s.summary}`];
+    if (s.techniques_used?.length) lines.push(`Techniques used: ${s.techniques_used.join(", ")}`);
+    if (s.resonated) lines.push(`What resonated: ${s.resonated}`);
+    return lines.join("\n");
+  })
+  .join("\n\n")}
+
+Use this memory to avoid re-covering ground, build on what worked, and acknowledge progress the athlete may not be seeing themselves. Never read summaries back verbatim — use them as silent context.` : ""}`;
 }
 
 // ── POST ──────────────────────────────────────────────────────────────────────
@@ -353,7 +374,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch context in parallel
-  const [entries, voices, training] = await Promise.all([
+  const [entries, voices, training, summaries] = await Promise.all([
     dbSelect<JournalEntryContext>("journal_entries", {
       user_id: `eq.${user.id}`,
       select: "content,sentiment,themes,created_at",
@@ -371,9 +392,15 @@ export async function POST(req: NextRequest) {
       order: "entry_date.desc",
       limit: "7",
     }),
+    dbSelect<SessionSummary>("conversation_summaries", {
+      user_id: `eq.${user.id}`,
+      select: "session_date,summary,techniques_used,resonated",
+      order: "session_date.desc",
+      limit: "5",
+    }),
   ]);
 
-  const systemPrompt = buildSystemPrompt(profile, entries, voices, training);
+  const systemPrompt = buildSystemPrompt(profile, entries, voices, training, summaries);
 
   // Limit to last 20 messages
   const messages = body.messages.slice(-20).map((m) => ({

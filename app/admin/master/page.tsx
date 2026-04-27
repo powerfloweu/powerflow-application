@@ -1318,6 +1318,144 @@ function ResultsTab() {
   );
 }
 
+// ── Conversations Tab ─────────────────────────────────────────────────────────
+
+type ConvStat = {
+  userId: string;
+  displayName: string;
+  role: string;
+  messageCount: number;
+  sessionCount: number;
+  lastMessageAt: string;
+  summaries: Array<{
+    session_date: string;
+    summary: string;
+    techniques_used: string[];
+    themes: string[];
+    resonated: string | null;
+    message_count: number;
+  }>;
+};
+
+type ThreadMsg = { id: string; role: string; content: string; created_at: string };
+
+function ConversationsTab() {
+  const [stats, setStats]             = React.useState<ConvStat[]>([]);
+  const [loadingStats, setLoadingStats] = React.useState(true);
+  const [selectedId, setSelectedId]   = React.useState<string | null>(null);
+  const [thread, setThread]           = React.useState<ThreadMsg[]>([]);
+  const [loadingThread, setLoadingThread] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch("/api/admin/conversations")
+      .then((r) => r.json())
+      .then((data) => Array.isArray(data) ? setStats(data) : setStats([]))
+      .catch(() => setStats([]))
+      .finally(() => setLoadingStats(false));
+  }, []);
+
+  const toggleThread = async (userId: string) => {
+    if (selectedId === userId) { setSelectedId(null); setThread([]); return; }
+    setSelectedId(userId);
+    setLoadingThread(true);
+    try {
+      const data = await fetch(`/api/admin/conversations?athlete_id=${userId}`).then((r) => r.json());
+      setThread(Array.isArray(data) ? data : []);
+    } finally {
+      setLoadingThread(false);
+    }
+  };
+
+  if (loadingStats) return (
+    <div className="flex justify-center py-10">
+      <div className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+    </div>
+  );
+
+  if (!stats.length) return (
+    <p className="font-saira text-sm text-zinc-600 py-4">No conversations yet.</p>
+  );
+
+  return (
+    <div className="space-y-3 max-w-3xl">
+      {stats.map((stat) => (
+        <div key={stat.userId} className="rounded-2xl border border-white/5 bg-[#17131F] overflow-hidden">
+
+          {/* Header row */}
+          <button
+            onClick={() => toggleThread(stat.userId)}
+            className="w-full text-left px-4 py-3.5 flex items-center gap-4 hover:bg-white/[0.02] transition"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-saira text-sm font-semibold text-white">{stat.displayName}</p>
+                <span className="font-saira text-[9px] uppercase tracking-wider border border-white/10 rounded-full px-1.5 py-0.5 text-zinc-500">
+                  {stat.role}
+                </span>
+              </div>
+              <p className="font-saira text-xs text-zinc-500 mt-0.5">
+                {stat.messageCount} messages · {stat.sessionCount} session{stat.sessionCount !== 1 ? "s" : ""} · Last: {new Date(stat.lastMessageAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+              </p>
+            </div>
+            <span className="font-saira text-xs text-zinc-600 flex-shrink-0">
+              {selectedId === stat.userId ? "▲ hide" : "▼ thread"}
+            </span>
+          </button>
+
+          {/* Session summaries */}
+          {stat.summaries.length > 0 && (
+            <div className="border-t border-white/5 px-4 py-3 space-y-2">
+              <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
+                Session summaries
+              </p>
+              {stat.summaries.map((s) => (
+                <div key={s.session_date} className="rounded-xl border border-white/5 bg-[#0D0B14] px-3 py-2.5">
+                  <p className="font-saira text-[10px] text-purple-400 mb-1">{s.session_date} · {s.message_count} msgs</p>
+                  <p className="font-saira text-xs text-zinc-300 leading-relaxed">{s.summary}</p>
+                  {s.techniques_used?.length > 0 && (
+                    <p className="font-saira text-[10px] text-zinc-600 mt-1">
+                      Techniques: {s.techniques_used.join(", ")}
+                    </p>
+                  )}
+                  {s.resonated && (
+                    <p className="font-saira text-[10px] text-zinc-500 mt-1 italic">{s.resonated}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Thread */}
+          {selectedId === stat.userId && (
+            <div className="border-t border-white/5 px-4 py-4 max-h-[480px] overflow-y-auto space-y-2.5">
+              {loadingThread ? (
+                <div className="flex justify-center py-4">
+                  <div className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+                </div>
+              ) : thread.length === 0 ? (
+                <p className="font-saira text-xs text-zinc-600 text-center py-2">No messages.</p>
+              ) : thread.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[85%] px-3 py-2 rounded-xl font-saira text-xs leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-purple-500/10 border border-purple-500/15 text-zinc-300"
+                      : "bg-white/[0.03] border border-white/5 text-zinc-400"
+                  }`}>
+                    <p>{msg.content.length > 600 ? msg.content.slice(0, 600) + "…" : msg.content}</p>
+                    <p className="font-saira text-[9px] text-zinc-700 mt-1">
+                      {new Date(msg.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} {new Date(msg.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Broadcast Tab ─────────────────────────────────────────────────────────────
 
 type BroadcastRow = {
@@ -1487,7 +1625,7 @@ function BroadcastTab({ users }: { users: UserRow[] }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "coaches" | "results" | "broadcast";
+type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations";
 
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -1623,11 +1761,12 @@ export default function MasterAdminPage() {
   // ── Main admin layout ────────────────────────────────────────────────────────
 
   const NAV_TABS: [Tab, string, string][] = [
-    ["overview",  "Overview",     "◎"],
-    ["users",     `Users (${users.length})`, "◻"],
-    ["coaches",   "Coach Links",  "⇄"],
-    ["results",   "Test Results", "✦"],
-    ["broadcast", "Broadcast",    "✉"],
+    ["overview",       "Overview",        "◎"],
+    ["users",          `Users (${users.length})`, "◻"],
+    ["coaches",        "Coach Links",     "⇄"],
+    ["results",        "Test Results",    "✦"],
+    ["broadcast",      "Broadcast",       "✉"],
+    ["conversations",  "Conversations",   "💬"],
   ];
 
   return (
@@ -1720,6 +1859,7 @@ export default function MasterAdminPage() {
               )}
               {activeTab === "results" && <ResultsTab />}
               {activeTab === "broadcast" && <BroadcastTab users={users} />}
+              {activeTab === "conversations" && <ConversationsTab />}
             </>
           )}
         </div>
