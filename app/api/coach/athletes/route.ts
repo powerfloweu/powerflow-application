@@ -125,7 +125,8 @@ export async function GET() {
 
   const monday = getMondayOfWeek(new Date());
   const sunday = getSundayOfWeek(new Date());
-  const twentyEightDaysAgo = daysAgoYmd(28);
+  const twentyEightDaysAgo  = daysAgoYmd(28);
+  const oneEightyDaysAgo    = daysAgoYmd(180);
 
   // Fetch entries, test results and training entries for all athletes in parallel
   const [entries, sat, acsi, csai, das, trainingEntriesRaw, allFeedback] = await Promise.all([
@@ -155,10 +156,10 @@ export async function GET() {
       order: "submitted_at.desc",
       select: "id,user_id,total_score,depression_prone,submitted_at,paid",
     }),
-    // Extended to last 28 days for week navigation
+    // Extended to last 180 days: 28 days for week navigation + full activity feed
     dbSelect<TrainingEntry>("training_entries", {
       user_id: `in.${idList}`,
-      entry_date: `gte.${twentyEightDaysAgo}`,
+      entry_date: `gte.${oneEightyDaysAgo}`,
       order: "entry_date.asc",
       select: "id,user_id,entry_date,is_training_day,mood_rating,thoughts_before,thoughts_after,what_went_well,frustrations,next_session,created_at,updated_at",
     }),

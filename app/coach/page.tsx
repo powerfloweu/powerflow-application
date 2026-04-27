@@ -1059,6 +1059,31 @@ function ClientCard({
     : trainingWeekOffset === 1 ? "Last week"
     : `${trainingWeekOffset} weeks ago`;
 
+  // Unified activity feed: journal entries + training day logs merged by date
+  type ActivityItem =
+    | { kind: "journal";  entry: EntryRow }
+    | { kind: "training"; entry: TrainingEntry };
+
+  const activityFeed = React.useMemo((): ActivityItem[] => {
+    const items: ActivityItem[] = [
+      ...client.allEntries.map((e) => ({ kind: "journal" as const, entry: e })),
+      ...client.allTrainingEntries
+        .filter((e) =>
+          e.thoughts_before || e.thoughts_after || e.what_went_well || e.frustrations || e.next_session,
+        )
+        .map((e) => ({ kind: "training" as const, entry: e })),
+    ];
+    return items.sort((a, b) => {
+      const aT = a.kind === "journal"
+        ? new Date(a.entry.created_at).getTime()
+        : new Date(a.entry.entry_date + "T12:00:00").getTime();
+      const bT = b.kind === "journal"
+        ? new Date(b.entry.created_at).getTime()
+        : new Date(b.entry.entry_date + "T12:00:00").getTime();
+      return bT - aT;
+    });
+  }, [client.allEntries, client.allTrainingEntries]);
+
   // Week days for the currently selected offset week
   const offsetWeekDays = React.useMemo(() => {
     const days: string[] = [];
@@ -1246,37 +1271,12 @@ function ClientCard({
             )}
 
             {/* ── Tab: Activity (journal + training logs merged) ── */}
-            {activeTab === "entries" && (() => {
-              type CoachFeedItem =
-                | { kind: "journal";  entry: EntryRow }
-                | { kind: "training"; entry: TrainingEntry };
-
-              const feedItems: CoachFeedItem[] = [
-                ...client.allEntries.map((e) => ({ kind: "journal" as const, entry: e })),
-                ...client.allTrainingEntries
-                  .filter((e) =>
-                    e.thoughts_before || e.thoughts_after || e.what_went_well || e.frustrations || e.next_session,
-                  )
-                  .map((e) => ({ kind: "training" as const, entry: e })),
-              ].sort((a, b) => {
-                const aDate = a.kind === "journal"
-                  ? new Date(a.entry.created_at).getTime()
-                  : new Date(a.entry.entry_date + "T12:00:00").getTime();
-                const bDate = b.kind === "journal"
-                  ? new Date(b.entry.created_at).getTime()
-                  : new Date(b.entry.entry_date + "T12:00:00").getTime();
-                return bDate - aDate;
-              });
-
-              if (feedItems.length === 0) {
-                return (
+            {activeTab === "entries" && (
+              <div className="space-y-3">
+                {activityFeed.length === 0 ? (
                   <p className="font-saira text-sm text-zinc-600 py-4 text-center">No activity yet.</p>
-                );
-              }
-
-              return (
-                <div className="space-y-3">
-                  {feedItems.map((item) =>
+                ) : (
+                  activityFeed.map((item) =>
                     item.kind === "training" ? (
                       <CoachTrainingCard key={`t-${item.entry.id}`} entry={item.entry} />
                     ) : (
@@ -1290,10 +1290,10 @@ function ClientCard({
                         />
                       </div>
                     ),
-                  )}
-                </div>
-              );
-            })()}
+                  )
+                )}
+              </div>
+            )}
 
             {/* ── Tab: Test scores ── */}
             {activeTab === "scores" && (
