@@ -12,7 +12,7 @@ import type { TrainingEntry } from "@/lib/training";
 import { ymdLocal, mondayOfWeek, sundayOfWeek } from "@/lib/date";
 
 const ENTRY_SELECT =
-  "id,user_id,entry_date,is_training_day,mood_rating,thoughts_before,thoughts_after,what_went_well,frustrations,next_session,created_at,updated_at";
+  "id,user_id,entry_date,is_training_day,mood_rating,thoughts_before,thoughts_after,what_went_well,frustrations,next_session,coach_note,created_at,updated_at";
 
 const todayISO    = (): string         => ymdLocal();
 const getMondayOf = (d: Date): string  => mondayOfWeek(d);

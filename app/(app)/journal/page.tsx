@@ -394,6 +394,14 @@ function TrainingDayCard({ entry }: { entry: TrainingEntry }) {
           </div>
         ))}
       </div>
+      {entry.coach_note && (
+        <div className="mt-3 pl-3 border-l-2 border-purple-500/20">
+          <p className="font-saira text-xs text-zinc-400 italic leading-relaxed">
+            &ldquo;{entry.coach_note}&rdquo;
+          </p>
+          <p className="font-saira text-[10px] text-zinc-600 mt-0.5">Coach note</p>
+        </div>
+      )}
     </div>
   );
 }

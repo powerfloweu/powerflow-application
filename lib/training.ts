@@ -9,6 +9,7 @@ export type TrainingEntry = {
   what_went_well: string | null;
   frustrations: string | null;
   next_session: string | null;
+  coach_note?: string | null;
   created_at: string;
   updated_at: string;
 };

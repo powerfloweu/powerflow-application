@@ -161,7 +161,7 @@ export async function GET() {
       user_id: `in.${idList}`,
       entry_date: `gte.${oneEightyDaysAgo}`,
       order: "entry_date.asc",
-      select: "id,user_id,entry_date,is_training_day,mood_rating,thoughts_before,thoughts_after,what_went_well,frustrations,next_session,created_at,updated_at",
+      select: "id,user_id,entry_date,is_training_day,mood_rating,thoughts_before,thoughts_after,what_went_well,frustrations,next_session,coach_note,created_at,updated_at",
     }),
     // Coach entry feedback for all athletes
     dbSelect<FeedbackRow>("entry_feedback", {

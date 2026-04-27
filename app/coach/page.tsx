@@ -997,6 +997,109 @@ function EntryFeedbackSection({
   );
 }
 
+// ── Training entry feedback ────────────────────────────────────────────────────
+
+function TrainingFeedbackSection({
+  trainingEntryId,
+  athleteId,
+  existing,
+  onSaved,
+}: {
+  trainingEntryId: string;
+  athleteId: string;
+  existing?: string;
+  onSaved: (note: string) => void;
+}) {
+  const [open, setOpen]           = React.useState(false);
+  const [draft, setDraft]         = React.useState(existing ?? "");
+  const [saving, setSaving]       = React.useState(false);
+  const [localNote, setLocalNote] = React.useState<string | null>(existing ?? null);
+
+  const handleSave = async () => {
+    if (!draft.trim() || saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/coach/training-note", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ training_entry_id: trainingEntryId, athlete_id: athleteId, content: draft.trim() }),
+      });
+      if (res.ok) {
+        setLocalNote(draft.trim());
+        onSaved(draft.trim());
+        setOpen(false);
+      }
+    } catch { /* ignore */ }
+    finally { setSaving(false); }
+  };
+
+  if (localNote && !open) {
+    return (
+      <div className="mt-2 pl-3 border-l-2 border-purple-500/20">
+        <div className="flex items-start gap-2">
+          <p className="font-saira text-[10px] text-zinc-400 flex-1 italic leading-relaxed">
+            &ldquo;{localNote}&rdquo;
+          </p>
+          <button
+            type="button"
+            onClick={() => { setDraft(localNote); setOpen(true); }}
+            className="font-saira text-[9px] text-zinc-600 hover:text-purple-300 transition flex-shrink-0"
+            title="Edit note"
+          >
+            ✎
+          </button>
+        </div>
+        <p className="font-saira text-[9px] text-zinc-600 mt-0.5">Coach note</p>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-2 font-saira text-[10px] text-zinc-600 hover:text-purple-300 transition"
+      >
+        + Add coach note
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-2 space-y-2">
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={2}
+        placeholder="Add a coaching observation for this session..."
+        className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 font-saira text-xs text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50"
+      />
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!draft.trim() || saving}
+          className={`rounded-full px-3 py-1 font-saira text-[10px] font-semibold transition ${
+            draft.trim() && !saving
+              ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30"
+              : "bg-white/5 text-zinc-600 cursor-not-allowed"
+          }`}
+        >
+          {saving ? "Saving..." : "Save"}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setOpen(false); setDraft(existing ?? ""); }}
+          className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 transition"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Client card ────────────────────────────────────────────────────────────────
 
 type ActiveTab = "analysis" | "entries" | "scores" | "training" | "profile" | "notes";
@@ -1009,6 +1112,8 @@ function ClientCard({
   onNoteChange,
   feedbackByEntry,
   onFeedbackSaved,
+  trainingNoteByEntry,
+  onTrainingNoteSaved,
   sentimentWindow,
   onSentimentWindowChange,
   forceOpen = false,
@@ -1020,6 +1125,8 @@ function ClientCard({
   onNoteChange: (athleteId: string, value: string) => void;
   feedbackByEntry: Record<string, { id: string; content: string; created_at: string }>;
   onFeedbackSaved: (athleteId: string, entryId: string, feedback: { id: string; content: string; created_at: string }) => void;
+  trainingNoteByEntry: Record<string, string>;
+  onTrainingNoteSaved: (athleteId: string, entryId: string, note: string) => void;
   sentimentWindow: 7 | 30 | 60;
   onSentimentWindowChange: (athleteId: string, w: 7 | 30 | 60) => void;
   forceOpen?: boolean;
@@ -1290,7 +1397,15 @@ function ClientCard({
                 ) : (
                   activityFeed.map((item) =>
                     item.kind === "training" ? (
-                      <CoachTrainingCard key={`t-${item.entry.id}`} entry={item.entry} />
+                      <div key={`t-${item.entry.id}`}>
+                        <CoachTrainingCard entry={item.entry} />
+                        <TrainingFeedbackSection
+                          trainingEntryId={item.entry.id}
+                          athleteId={client.id}
+                          existing={trainingNoteByEntry[item.entry.id] ?? (item.entry.coach_note ?? undefined)}
+                          onSaved={(note) => onTrainingNoteSaved(client.id, item.entry.id, note)}
+                        />
+                      </div>
                     ) : (
                       <div key={item.entry.id}>
                         <EntryCard entry={item.entry} />
@@ -1960,6 +2075,11 @@ export default function CoachPage() {
     Record<string, Record<string, { id: string; content: string; created_at: string }>>
   >({});
 
+  // Feature 5: Training entry coach notes (athleteId -> trainingEntryId -> note)
+  const [trainingNoteByAthlete, setTrainingNoteByAthlete] = React.useState<
+    Record<string, Record<string, string>>
+  >({});
+
   // Feature 4: Sentiment window per athlete
   const [sentimentWindows, setSentimentWindows] = React.useState<Record<string, 7 | 30 | 60>>({});
 
@@ -2053,6 +2173,17 @@ export default function CoachPage() {
     setFeedbackByAthlete((prev) => ({
       ...prev,
       [athleteId]: { ...(prev[athleteId] ?? {}), [entryId]: feedback },
+    }));
+  }, []);
+
+  const handleTrainingNoteSaved = React.useCallback((
+    athleteId: string,
+    entryId: string,
+    note: string,
+  ) => {
+    setTrainingNoteByAthlete((prev) => ({
+      ...prev,
+      [athleteId]: { ...(prev[athleteId] ?? {}), [entryId]: note },
     }));
   }, []);
 
@@ -2198,6 +2329,8 @@ export default function CoachPage() {
                 onNoteChange={handleNoteChange}
                 feedbackByEntry={feedbackByAthlete[client.id] ?? {}}
                 onFeedbackSaved={handleFeedbackSaved}
+                trainingNoteByEntry={trainingNoteByAthlete[client.id] ?? {}}
+                onTrainingNoteSaved={handleTrainingNoteSaved}
                 sentimentWindow={sentimentWindows[client.id] ?? 7}
                 onSentimentWindowChange={handleSentimentWindowChange}
               />
@@ -2420,6 +2553,8 @@ export default function CoachPage() {
                 onNoteChange={handleNoteChange}
                 feedbackByEntry={feedbackByAthlete[selectedClient.id] ?? {}}
                 onFeedbackSaved={handleFeedbackSaved}
+                trainingNoteByEntry={trainingNoteByAthlete[selectedClient.id] ?? {}}
+                onTrainingNoteSaved={handleTrainingNoteSaved}
                 sentimentWindow={sentimentWindows[selectedClient.id] ?? 7}
                 onSentimentWindowChange={handleSentimentWindowChange}
               />
