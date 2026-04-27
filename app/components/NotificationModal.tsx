@@ -8,13 +8,14 @@
  */
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import BottomSheet from "./BottomSheet";
 import { DEVLOG, CURRENT_DEVLOG_VERSION } from "@/lib/devlog";
 import type { BroadcastRow } from "@/app/api/notifications/route";
 
 // ── Link renderer ─────────────────────────────────────────────────────────────
 
-function renderBody(text: string): React.ReactNode[] {
+function renderBody(text: string, onLinkClick?: (href: string) => void): React.ReactNode[] {
   // Convert [Link text](/path) → <a> elements; split on newlines for paragraphs
   const linkRe = /\[([^\]]+)\]\(([^)]+)\)/g;
   const lines = text.split("\n").filter((l) => l.trim());
@@ -27,10 +28,12 @@ function renderBody(text: string): React.ReactNode[] {
 
     while ((match = linkRe.exec(line)) !== null) {
       if (match.index > last) parts.push(line.slice(last, match.index));
+      const href = match[2];
       parts.push(
         <a
           key={match.index}
-          href={match[2]}
+          href={href}
+          onClick={onLinkClick ? (e) => { e.preventDefault(); onLinkClick(href); } : undefined}
           className="text-purple-300 underline underline-offset-2 hover:text-purple-200 transition"
         >
           {match[1]}
@@ -57,9 +60,10 @@ function BroadcastPanel({
   broadcast: BroadcastRow;
   onDismiss: () => void;
 }) {
+  const router = useRouter();
   const [dismissing, setDismissing] = React.useState(false);
 
-  async function handleDismiss() {
+  async function dismiss() {
     setDismissing(true);
     await fetch("/api/notifications", {
       method: "POST",
@@ -67,6 +71,12 @@ function BroadcastPanel({
       body: JSON.stringify({ type: "broadcast", id: broadcast.id }),
     });
     onDismiss();
+  }
+
+  // Dismiss then navigate — so the modal doesn't reappear on the next page
+  async function handleLinkClick(href: string) {
+    await dismiss();
+    router.push(href);
   }
 
   return (
@@ -82,10 +92,10 @@ function BroadcastPanel({
         {broadcast.title}
       </h2>
 
-      <div className="space-y-2">{renderBody(broadcast.body)}</div>
+      <div className="space-y-2">{renderBody(broadcast.body, handleLinkClick)}</div>
 
       <button
-        onClick={handleDismiss}
+        onClick={dismiss}
         disabled={dismissing}
         className="w-full mt-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-3 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition"
       >
