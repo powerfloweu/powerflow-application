@@ -13,9 +13,20 @@ export type DevLogEntry = {
   items: string[];
 };
 
-export const CURRENT_DEVLOG_VERSION = "2026-04-27";
+export const CURRENT_DEVLOG_VERSION = "2026-04-27.2";
 
 export const DEVLOG: DevLogEntry[] = [
+  {
+    version: "2026-04-27.2",
+    date: "27 Apr 2026",
+    title: "In-app broadcasts · dev log",
+    items: [
+      "Broadcasts are now delivered inside the app — you'll see them as a modal on your next login, no email needed.",
+      "Broadcast body supports links: write [Guide →](/guide) and it becomes a clickable link.",
+      "Dev log added — coaches see it on login after any broadcast, athletes find it in You → What's new.",
+      "Admin panel broadcast tab rebuilt: publish to everyone, athletes only, or coaches only; deactivate old broadcasts without deleting them.",
+    ],
+  },
   {
     version: "2026-04-27",
     date: "27 Apr 2026",
