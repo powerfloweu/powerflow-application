@@ -7,6 +7,7 @@ import { computePhase } from "@/lib/phase";
 import { WEIGHT_CATEGORIES } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
 import type { SelfTalkMode } from "@/lib/voices";
+import { DevLogViewer } from "@/app/components/NotificationModal";
 
 interface CoachOption {
   id: string;
@@ -625,6 +626,11 @@ export default function YouPage() {
         </div>
         <span className="text-zinc-600 group-hover:text-purple-400 transition">→</span>
       </Link>
+
+      {/* ── What's new ───────────────────────────────────────── */}
+      <Section label="What's new">
+        <DevLogViewer />
+      </Section>
 
       {/* ── Sign out ─────────────────────────────────────────── */}
       <button

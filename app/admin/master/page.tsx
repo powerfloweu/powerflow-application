@@ -1320,123 +1320,165 @@ function ResultsTab() {
 
 // ── Broadcast Tab ─────────────────────────────────────────────────────────────
 
-type BroadcastFilter = "all" | "athletes" | "coaches" | "dormant" | "nocoach";
+type BroadcastRow = {
+  id: string;
+  title: string;
+  body: string;
+  target_role: string;
+  active: boolean;
+  created_at: string;
+};
 
 function BroadcastTab({ users }: { users: UserRow[] }) {
-  const [filter, setFilter] = React.useState<BroadcastFilter>("all");
-  const [subject, setSubject] = React.useState("");
-  const [body, setBody] = React.useState("");
-  const [copied, setCopied] = React.useState(false);
+  const [broadcasts, setBroadcasts]   = React.useState<BroadcastRow[]>([]);
+  const [title, setTitle]             = React.useState("");
+  const [body, setBody]               = React.useState("");
+  const [targetRole, setTargetRole]   = React.useState<"all" | "athlete" | "coach">("all");
+  const [sending, setSending]         = React.useState(false);
+  const [sent, setSent]               = React.useState(false);
 
+  // ── Email segment helpers (kept for email copy) ──────────────────────────
   const allWithEmail = users.filter((u) => !!u.email);
-  const athletes = allWithEmail.filter((u) => u.role === "athlete");
-  const coaches = allWithEmail.filter((u) => u.role === "coach");
-  const dormant = athletes.filter((u) => u.activity_status === "dormant");
-  const noCoach = athletes.filter((u) => !u.coach_id);
+  const athletes     = allWithEmail.filter((u) => u.role === "athlete");
+  const coaches      = allWithEmail.filter((u) => u.role === "coach");
 
-  const segments: { key: BroadcastFilter; label: string; count: number }[] = [
-    { key: "all", label: "All users", count: allWithEmail.length },
-    { key: "athletes", label: "Athletes only", count: athletes.length },
-    { key: "coaches", label: "Coaches only", count: coaches.length },
-    { key: "dormant", label: "Dormant athletes", count: dormant.length },
-    { key: "nocoach", label: "Athletes without a coach", count: noCoach.length },
-  ];
-
-  const segmentMap: Record<BroadcastFilter, UserRow[]> = {
-    all: allWithEmail,
-    athletes,
-    coaches,
-    dormant,
-    nocoach: noCoach,
+  const emailMap: Record<string, string[]> = {
+    all:     allWithEmail.map((u) => u.email as string),
+    athlete: athletes.map((u) => u.email as string),
+    coach:   coaches.map((u) => u.email as string),
   };
-  const recipients = segmentMap[filter];
-  const emails = recipients.map((u) => u.email as string);
+  const previewEmails = emailMap[targetRole];
 
-  async function handleCopy() {
-    await navigator.clipboard.writeText(emails.join(", "));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  React.useEffect(() => {
+    fetch("/api/admin/broadcasts")
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => Array.isArray(data) ? setBroadcasts(data) : setBroadcasts([]));
+  }, []);
+
+  async function handleSend() {
+    if (!title.trim() || !body.trim()) return;
+    setSending(true);
+    const res = await fetch("/api/admin/broadcasts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: title.trim(), body: body.trim(), target_role: targetRole }),
+    });
+    if (res.ok) {
+      const newBcast = await res.json() as BroadcastRow;
+      setBroadcasts((prev) => [newBcast, ...prev]);
+      setTitle(""); setBody("");
+      setSent(true); setTimeout(() => setSent(false), 2500);
+    }
+    setSending(false);
   }
 
-  function handleOpenMailClient() {
-    window.open(
-      `mailto:?bcc=${encodeURIComponent(emails.join(","))}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
-    );
+  async function toggleActive(id: string, active: boolean) {
+    await fetch(`/api/admin/broadcasts?id=${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active: !active }),
+    });
+    setBroadcasts((prev) => prev.map((b) => b.id === id ? { ...b, active: !active } : b));
   }
 
   return (
     <div className="space-y-6 max-w-2xl">
-      {/* Filter */}
-      <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 space-y-3">
-        <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-purple-400 mb-1">
-          Filter recipients
-        </p>
-        {segments.map((s) => (
-          <label key={s.key} className="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="radio"
-              name="broadcast-filter"
-              value={s.key}
-              checked={filter === s.key}
-              onChange={() => setFilter(s.key)}
-              className="accent-purple-500"
-            />
-            <span className="font-saira text-sm text-zinc-300 group-hover:text-white transition">
-              {s.label}
-            </span>
-            <span className="font-saira text-xs text-zinc-600 ml-auto">({s.count})</span>
-          </label>
-        ))}
-      </div>
 
-      {/* Compose */}
-      <div className="space-y-3">
+      {/* ── Compose ──────────────────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 space-y-4">
+        <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-purple-400">
+          New broadcast
+        </p>
+
+        {/* Target */}
+        <div className="flex gap-2">
+          {(["all", "athlete", "coach"] as const).map((r) => (
+            <button
+              key={r}
+              onClick={() => setTargetRole(r)}
+              className={`rounded-full px-3 py-1 font-saira text-[11px] uppercase tracking-[0.14em] border transition ${
+                targetRole === r
+                  ? "border-purple-500/40 bg-purple-500/15 text-purple-300"
+                  : "border-white/10 text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {r === "all" ? "Everyone" : r === "athlete" ? "Athletes" : "Coaches"}
+              <span className="ml-1.5 text-zinc-600">({emailMap[r].length})</span>
+            </button>
+          ))}
+        </div>
+
         <input
           type="text"
-          placeholder="Subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          className="w-full rounded-xl border border-white/10 bg-[#17131F] px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
         />
-        <textarea
-          placeholder="Email body…"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={5}
-          className="w-full rounded-xl border border-white/10 bg-[#17131F] px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
-        />
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-3 flex-wrap">
-        <button
-          onClick={handleCopy}
-          disabled={emails.length === 0}
-          className="border border-white/10 rounded-xl px-4 py-2 font-saira text-xs text-zinc-400 hover:text-white hover:border-white/30 transition disabled:opacity-40"
-        >
-          {copied ? "Copied!" : `Copy ${emails.length} emails`}
-        </button>
-        <button
-          onClick={handleOpenMailClient}
-          disabled={emails.length === 0}
-          className="border border-purple-500/30 bg-purple-500/10 rounded-xl px-4 py-2 font-saira text-xs font-semibold text-purple-300 hover:bg-purple-500/20 transition disabled:opacity-40"
-        >
-          Open in mail client →
-        </button>
-      </div>
-
-      {/* Preview list */}
-      {emails.length > 0 && (
-        <div className="space-y-1">
-          <p className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-            Recipients ({emails.length})
+        <div>
+          <textarea
+            placeholder={"Message body…\n\nTip: add links with [Link text](/path) — e.g. [Open the guide](/guide)"}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            rows={5}
+            className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
+          />
+          <p className="font-saira text-[10px] text-zinc-700 mt-1">
+            Links: [Guide →](/guide) · [Course →](/course) · any /path works
           </p>
-          <div className="font-saira text-[11px] text-zinc-600 leading-relaxed">
-            {emails.slice(0, 10).join(", ")}
-            {emails.length > 10 && (
-              <span className="text-zinc-700"> … +{emails.length - 10} more</span>
-            )}
-          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSend}
+            disabled={sending || !title.trim() || !body.trim()}
+            className="rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-2.5 font-saira text-sm font-semibold uppercase tracking-[0.14em] text-white transition"
+          >
+            {sent ? "✓ Published" : sending ? "Publishing…" : "Publish broadcast →"}
+          </button>
+          <p className="font-saira text-[10px] text-zinc-600">
+            {previewEmails.length} recipient{previewEmails.length !== 1 ? "s" : ""} · shown on next login
+          </p>
+        </div>
+      </div>
+
+      {/* ── Published broadcasts ─────────────────────────────────────────────── */}
+      {broadcasts.length > 0 && (
+        <div className="space-y-2">
+          <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500">
+            Published
+          </p>
+          {broadcasts.map((b) => (
+            <div
+              key={b.id}
+              className={`rounded-xl border p-4 flex items-start gap-4 ${
+                b.active ? "border-purple-500/20 bg-purple-500/5" : "border-white/5 bg-[#17131F] opacity-50"
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-saira text-sm font-semibold text-white truncate">{b.title}</p>
+                  <span className="flex-shrink-0 font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-500 border border-white/10 rounded-full px-1.5 py-0.5">
+                    {b.target_role}
+                  </span>
+                </div>
+                <p className="font-saira text-xs text-zinc-500 truncate">{b.body.slice(0, 80)}{b.body.length > 80 ? "…" : ""}</p>
+                <p className="font-saira text-[10px] text-zinc-700 mt-1">
+                  {new Date(b.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </p>
+              </div>
+              <button
+                onClick={() => toggleActive(b.id, b.active)}
+                className={`flex-shrink-0 rounded-full px-3 py-1 font-saira text-[10px] uppercase tracking-[0.14em] border transition ${
+                  b.active
+                    ? "border-rose-500/30 text-rose-400 hover:bg-rose-500/10"
+                    : "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                }`}
+              >
+                {b.active ? "Deactivate" : "Reactivate"}
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>

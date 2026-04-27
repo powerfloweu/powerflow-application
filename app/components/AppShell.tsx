@@ -1,9 +1,11 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import TabBar from "./TabBar";
 import CheckinReminderScheduler from "./CheckinReminderScheduler";
+import NotificationModal, { type NotificationState } from "./NotificationModal";
 
 interface Props {
   children: React.ReactNode;
@@ -24,6 +26,19 @@ const NAV_LINKS = [
  */
 export default function AppShell({ children }: Props) {
   const pathname = usePathname();
+  const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
+
+  // Fetch pending notifications once on mount
+  React.useEffect(() => {
+    fetch("/api/notifications")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data && (data.broadcast || data.devlogNew)) {
+          setNotifications(data as NotificationState);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#050608] pt-[env(safe-area-inset-top)]">
@@ -77,6 +92,14 @@ export default function AppShell({ children }: Props) {
 
       {/* ── Daily check-in reminder (invisible, schedules notification) ── */}
       <CheckinReminderScheduler />
+
+      {/* ── In-app broadcast + devlog modal ────────────────────────── */}
+      {notifications && (
+        <NotificationModal
+          state={notifications}
+          onDone={() => setNotifications(null)}
+        />
+      )}
     </div>
   );
 }
