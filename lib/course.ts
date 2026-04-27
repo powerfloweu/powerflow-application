@@ -1,20 +1,28 @@
 /**
- * PowerFlow — 16-Week Mental Performance Course
+ * PowerFlow — Modular Mental Performance Course
  *
- * Week + question definitions live here (not in DB). This keeps content
- * versionable and editable without a migration. User state (progress +
- * reflection answers) lives in Supabase.
+ * Module definitions live here (not in DB). This keeps content versionable
+ * and editable without a migration. User state (progress + reflection answers)
+ * lives in Supabase, keyed on module slug.
  *
- * The course is structured around 7 themes totalling 15 weeks (Week 0 is the
- * intake / baseline week → 16 total touchpoints).
+ * Two module types:
  *
- *   Theme 1 — Self Knowledge               (2 weeks)
- *   Theme 2 — Goal Setting                 (1 week)
- *   Theme 3 — Athlete-Coach Relationship   (1 week)
- *   Theme 4 — Altered State of Mind        (4 weeks)
- *   Theme 5 — Visualization & Mental Train (4 weeks)
- *   Theme 6 — Focus                        (2 weeks)
- *   Theme 7 — Performance                  (1 week)
+ *   "insight"  — one focused session: watch, reflect, complete. No daily
+ *                practice required. Next module unlocks immediately after.
+ *
+ *   "practice" — content done once, then a daily practice log until the
+ *                athlete hits practiceTarget sessions. Next module becomes
+ *                accessible immediately (soft gate) but the module stays
+ *                "in progress" until the target is reached.
+ *
+ * Themes:
+ *   1 — Self Knowledge               insight  × 2
+ *   2 — Goal Setting                 insight  × 1
+ *   3 — Athlete-Coach Relationship   insight  × 1
+ *   4 — Altered State of Mind        practice × 4
+ *   5 — Visualization & Mental Train practice × 4
+ *   6 — Focus                        practice × 2
+ *   7 — Performance                  insight  × 1
  */
 
 import type { TrainingPhase } from "@/app/components/PhaseBadge";
@@ -42,31 +50,52 @@ export type CourseQuestion = {
   journalMirror?: boolean;
 };
 
-export type CourseWeek = {
-  /** Stable URL-safe identifier, used in routes & DB */
+/**
+ * "insight"  — complete in one session; next module unlocks immediately.
+ * "practice" — content done once, then log daily practice until practiceTarget.
+ *              Next module is accessible (soft gate) but this stays in-progress.
+ */
+export type ModuleType = "insight" | "practice";
+
+export type CourseModule = {
+  /** Stable URL-safe identifier — used in routes & DB (replaces week_num) */
   slug: string;
-  /** 1-indexed week number shown in the UI */
+  /**
+   * Legacy week number — kept only for migrating existing progress rows.
+   * Do not use for routing or display.
+   * @deprecated use slug
+   */
   weekNumber: number;
   theme: CourseTheme;
-  /** Short headline ("Me & Powerlifting") */
+  /** Short headline */
   title: string;
-  /** Subtitle / tagline shown under title */
+  /** Subtitle / tagline */
   subtitle?: string;
-  /** Training phase this week is designed for (rough mapping) */
+  /** Training phase this module is designed for */
   suggestedPhase: TrainingPhase;
-  /** 1-2 sentence overview of what this week is about */
+  /** 1-2 sentence overview */
   overview: string;
-  /** Optional Vidyard video UUID (from share URL) */
+  /** Module type — drives the completion model */
+  moduleType: ModuleType;
+  /**
+   * For practice modules: number of logged sessions before the module is
+   * considered complete. Undefined for insight modules.
+   */
+  practiceTarget?: number;
+  /** Optional Vidyard video UUID */
   vidyardUuid?: string;
-  /** Optional audio URL (mp3/wav) — player is rendered if set */
+  /** Optional audio URL */
   audioUrl?: string;
-  /** ≤ 3 practical takeaways, shown as a bullet list */
+  /** ≤ 3 practical takeaways */
   keyPoints: string[];
-  /** The reflection prompts for this week */
+  /** Reflection prompts */
   questions: CourseQuestion[];
-  /** Optional practical exercise — shown in the "Practise" block */
+  /** Optional practical exercise */
   exercise?: { title: string; body: string };
 };
+
+/** @deprecated Use CourseModule */
+export type CourseWeek = CourseModule;
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 //
@@ -74,7 +103,7 @@ export type CourseWeek = {
 // originally provided. Replace individual `vidyardUuid` values as the real
 // assignments are confirmed — the player accepts any valid Vidyard UUID.
 
-export const COURSE_WEEKS: CourseWeek[] = [
+export const COURSE_MODULES: CourseModule[] = [
   // ── Theme 1 — Self Knowledge ────────────────────────────────────────────
   {
     slug: "w01-me-and-powerlifting",
@@ -83,6 +112,7 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Me & Powerlifting",
     subtitle: "Where you're starting from",
     suggestedPhase: "Foundation",
+    moduleType: "insight",
     overview:
       "Before we can train the mind, we have to map it. This week is an honest audit of why you lift, what the sport gives you, and what it costs you.",
     vidyardUuid: "uzfLhVxMTKLmwnuQ9haJFS",
@@ -122,6 +152,7 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Who Am I As An Athlete?",
     subtitle: "Strengths, triggers, and the story you tell yourself",
     suggestedPhase: "Foundation",
+    moduleType: "insight",
     overview:
       "Athletes with accurate self-knowledge recover faster from bad sessions and capitalise on good ones. This week you build that map.",
     vidyardUuid: "8s5ALpWJ388ZQJS7pQfSFV",
@@ -156,6 +187,7 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Goals That Actually Pull You",
     subtitle: "Outcome, performance, and process",
     suggestedPhase: "Foundation",
+    moduleType: "insight",
     overview:
       "Most lifters set outcome goals (a number on the bar). Champions set all three layers — outcome, performance, process — and know which one to focus on today.",
     vidyardUuid: "QHTXHxz61eEGGosXzHH7Pa",
@@ -194,6 +226,7 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "The Athlete-Coach Relationship",
     subtitle: "Trust, communication, autonomy",
     suggestedPhase: "Foundation",
+    moduleType: "insight",
     overview:
       "Whether you're coached or self-coached, the quality of your working relationship with whoever programs your training is the single biggest predictor of long-term progress.",
     vidyardUuid: "ewTR1eickVpzMtNQWoPpmk",
@@ -226,6 +259,8 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Arousal Control",
     subtitle: "Finding your optimal state",
     suggestedPhase: "Build",
+    moduleType: "practice",
+    practiceTarget: 10,
     overview:
       "Every lifter has an optimal arousal zone. Too low, you're flat. Too high, you're shaky. This week you learn to read and adjust it.",
     vidyardUuid: "9kAdtx7bQ52CCaheAJRUcY",
@@ -262,6 +297,8 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Breath & Body",
     subtitle: "Using the body to change the mind",
     suggestedPhase: "Build",
+    moduleType: "practice",
+    practiceTarget: 10,
     overview:
       "The fastest way into a state is through the body. Posture, breath, and face all send signals the brain obeys.",
     vidyardUuid: "FQEvTLER7oZdDRj6aXGFXF",
@@ -288,6 +325,8 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Training Under Pressure",
     subtitle: "Make the room smaller",
     suggestedPhase: "Build",
+    moduleType: "practice",
+    practiceTarget: 10,
     overview:
       "Pressure exists on the platform. If you never train it, meet day is the first time you meet it — and that's too late.",
     vidyardUuid: "BeiAtWCyo4f2uDmcfV9DhC",
@@ -314,6 +353,8 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Finding Flow",
     subtitle: "When the bar feels light",
     suggestedPhase: "Build",
+    moduleType: "practice",
+    practiceTarget: 10,
     overview:
       "Flow isn't magic — it's the intersection of skill and challenge when attention is fully engaged. You can set the conditions for it.",
     vidyardUuid: "oqYyALnSkD7mpWBD5ANuz6",
@@ -343,6 +384,8 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Visualization Basics",
     subtitle: "Rehearsing the lift before it happens",
     suggestedPhase: "Build",
+    moduleType: "practice",
+    practiceTarget: 14,
     overview:
       "Elite athletes visualise. Not because it's magic, but because the brain partially can't tell the difference between vivid rehearsal and real reps.",
     vidyardUuid: "2mizuQmGN1jcmvFsfm7jYo",
@@ -374,6 +417,8 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Mental Rehearsal",
     subtitle: "From session to meet day",
     suggestedPhase: "Peak",
+    moduleType: "practice",
+    practiceTarget: 14,
     overview:
       "Mental rehearsal is visualisation applied to a specific performance moment — a session, an attempt, a whole meet — with full sensory detail.",
     vidyardUuid: "eosWqyDenTbc9C2SYZhHi7",
@@ -400,6 +445,8 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Cues That Stick",
     subtitle: "One word, one execution",
     suggestedPhase: "Peak",
+    moduleType: "practice",
+    practiceTarget: 21,
     overview:
       "Under load there's no time for a paragraph. One short cue, anchored to one correct feeling, is worth more than a whole technique lecture.",
     vidyardUuid: "TF5sVvNTRZddYKfmzBmWtQ",
@@ -430,6 +477,8 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Self-Talk",
     subtitle: "The voice in your head is coachable",
     suggestedPhase: "Peak",
+    moduleType: "practice",
+    practiceTarget: 10,
     overview:
       "You talk to yourself constantly. Most of it you don't notice. This week you audit it and rewrite the worst lines.",
     vidyardUuid: "YYMSKvZF1nfm1Dy3m1SQsW",
@@ -460,6 +509,8 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Attention Under Pressure",
     subtitle: "What you look at, you become",
     suggestedPhase: "Peak",
+    moduleType: "practice",
+    practiceTarget: 14,
     overview:
       "Focus isn't effort — it's direction. Under stress, attention narrows. The question is: does it narrow onto the right thing, or the wrong one?",
     vidyardUuid: "YyHSt8pUVdW3fn4YUCHF5K",
@@ -486,6 +537,8 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Refocus Routines",
     subtitle: "Coming back after a miss",
     suggestedPhase: "Meet week",
+    moduleType: "practice",
+    practiceTarget: 14,
     overview:
       "Every lifter loses focus sometimes. Champions have a pre-built routine for getting it back that doesn't require willpower in the moment.",
     vidyardUuid: "BJHkBRWhpUEyUweLfHsjuu",
@@ -520,6 +573,7 @@ export const COURSE_WEEKS: CourseWeek[] = [
     title: "Meet Day",
     subtitle: "Trust the work. Execute.",
     suggestedPhase: "Meet week",
+    moduleType: "insight",
     overview:
       "The work is done. Meet day isn't where you build — it's where you express. This week is about protecting what you've built.",
     // No video for final week — "the work is done"
@@ -549,18 +603,26 @@ export const COURSE_WEEKS: CourseWeek[] = [
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Lookup a week by its slug (used internally). */
-export function getWeek(slug: string): CourseWeek | undefined {
-  return COURSE_WEEKS.find((w) => w.slug === slug);
+/** Backward-compat alias — prefer COURSE_MODULES in new code */
+export const COURSE_WEEKS = COURSE_MODULES;
+
+/** Lookup a module by slug — primary identifier for all new code */
+export function getModule(slug: string): CourseModule | undefined {
+  return COURSE_MODULES.find((m) => m.slug === slug);
 }
 
-/** Lookup a week by its 1-indexed number (used in /course/w/[week] routes). */
-export function getWeekByNum(weekNum: number): CourseWeek | undefined {
-  return COURSE_WEEKS.find((w) => w.weekNumber === weekNum);
+/** @deprecated Use getModule(slug) instead */
+export function getWeek(slug: string): CourseModule | undefined {
+  return getModule(slug);
 }
 
-/** Group weeks by theme, preserving the order defined above. */
-export function weeksByTheme(): Array<{ theme: CourseTheme; weeks: CourseWeek[] }> {
+/** @deprecated Lookup by legacy week number — only for migrating old data */
+export function getWeekByNum(weekNum: number): CourseModule | undefined {
+  return COURSE_MODULES.find((m) => m.weekNumber === weekNum);
+}
+
+/** Group modules by theme */
+export function weeksByTheme(): Array<{ theme: CourseTheme; weeks: CourseModule[] }> {
   const themeOrder: CourseTheme[] = [
     "Self Knowledge",
     "Goal Setting",
@@ -572,12 +634,12 @@ export function weeksByTheme(): Array<{ theme: CourseTheme; weeks: CourseWeek[] 
   ];
   return themeOrder.map((theme) => ({
     theme,
-    weeks: COURSE_WEEKS.filter((w) => w.theme === theme),
+    weeks: COURSE_MODULES.filter((m) => m.theme === theme),
   }));
 }
 
-/** How many weeks total in the course */
-export const TOTAL_WEEKS = COURSE_WEEKS.length;
+/** Total modules in the library */
+export const TOTAL_WEEKS = COURSE_MODULES.length;
 
 /**
  * Pick the suggested week number based on days-to-meet.
@@ -623,17 +685,25 @@ export type CoursePlan = {
 
 export type CourseProgressRow = {
   user_id: string;
+  /** Primary key — module slug (replaces week_num) */
+  module_slug: string;
+  /** @deprecated kept for migration only */
   week_num: number;
   video_done_at: string | null;
   exercise_done_at: string | null;
   quiz_done_at: string | null;
   completed_at: string | null;
+  /** Number of practice sessions logged (practice modules only) */
+  practice_count: number;
   updated_at: string;
 };
 
 export type CourseAnswerRow = {
   id: string;
   user_id: string;
+  /** Module slug (replaces week_num) */
+  module_slug: string;
+  /** @deprecated kept for migration only */
   week_num: number;
   question_id: string;
   text: string | null;
@@ -645,17 +715,43 @@ export type CourseAnswerRow = {
 
 // ── Step helpers ─────────────────────────────────────────────────────────────
 
-export type ProgressStep = "video" | "exercise" | "quiz";
+export type ProgressStep = "video" | "exercise" | "quiz" | "practice";
 
-export function stepsComplete(row: CourseProgressRow | undefined): {
+export function stepsComplete(
+  row: CourseProgressRow | undefined,
+  mod?: CourseModule,
+): {
   video: boolean;
   exercise: boolean;
   quiz: boolean;
+  /** For practice modules: have they hit the practiceTarget? */
+  practiceGoal: boolean;
+  practiceCount: number;
+  practiceTarget: number;
+  /** Content steps (video + exercise + quiz) all done */
+  contentDone: boolean;
+  /** Fully done: content + practice (for insight = same as contentDone) */
   all: boolean;
 } {
-  if (!row) return { video: false, exercise: false, quiz: false, all: false };
-  const video    = !!row.video_done_at;
-  const exercise = !!row.exercise_done_at;
-  const quiz     = !!row.quiz_done_at;
-  return { video, exercise, quiz, all: video && exercise && quiz };
+  const video    = !!row?.video_done_at;
+  const exercise = !!row?.exercise_done_at;
+  const quiz     = !!row?.quiz_done_at;
+  const contentDone = video && exercise && quiz;
+
+  const practiceCount  = row?.practice_count ?? 0;
+  const practiceTarget = mod?.practiceTarget ?? 0;
+  const practiceGoal   = mod?.moduleType === "practice"
+    ? practiceCount >= practiceTarget
+    : true; // insight modules have no practice requirement
+
+  return {
+    video,
+    exercise,
+    quiz,
+    practiceGoal,
+    practiceCount,
+    practiceTarget,
+    contentDone,
+    all: contentDone && practiceGoal,
+  };
 }

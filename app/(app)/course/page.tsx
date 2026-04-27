@@ -2,8 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { COURSE_WEEKS, weeksByTheme, type CoursePlan, type CourseWeek, type CourseProgressRow } from "@/lib/course";
-import { stepsComplete } from "@/lib/course";
+import { COURSE_MODULES, weeksByTheme, stepsComplete, type CoursePlan, type CourseModule, type CourseProgressRow } from "@/lib/course";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -67,8 +66,8 @@ export default function CourseIndexPage() {
 
   // ── Progress index ────────────────────────────────────────────────────────
   const progressMap = React.useMemo(() => {
-    const m: Record<number, CourseProgressRow> = {};
-    for (const row of progress) m[row.week_num] = row;
+    const m: Record<string, CourseProgressRow> = {};
+    for (const row of progress) if (row.module_slug) m[row.module_slug] = row;
     return m;
   }, [progress]);
 
@@ -144,15 +143,25 @@ export default function CourseIndexPage() {
   // ── Plan view ─────────────────────────────────────────────────────────────
   const plan = uiStage.plan;
   const planWeeks = plan.slugs
-    .map((slug) => COURSE_WEEKS.find((w) => w.slug === slug))
-    .filter((w): w is CourseWeek => !!w);
+    .map((slug) => COURSE_MODULES.find((m) => m.slug === slug))
+    .filter((w): w is CourseModule => !!w);
   const highlightSet = new Set(plan.highlights ?? []);
 
-  const completedCount = planWeeks.filter((w) => !!progressMap[w.weekNumber]?.completed_at).length;
+  const completedCount = planWeeks.filter((w) => !!progressMap[w.slug]?.completed_at).length;
   const pct            = Math.round((completedCount / planWeeks.length) * 100);
 
-  // First incomplete week in plan order
-  const currentWeek = planWeeks.find((w) => !progressMap[w.weekNumber]?.completed_at);
+  // Sequential unlock: a module is accessible if it's the first, completed, or the one after a completed
+  const unlockedSlugs = new Set<string>();
+  for (let i = 0; i < planWeeks.length; i++) {
+    const w = planWeeks[i];
+    if (i === 0 || progressMap[planWeeks[i - 1].slug]?.completed_at) {
+      unlockedSlugs.add(w.slug);
+    }
+    if (progressMap[w.slug]?.completed_at) unlockedSlugs.add(w.slug);
+  }
+
+  // Current = first incomplete unlocked module
+  const currentWeek = planWeeks.find((w) => unlockedSlugs.has(w.slug) && !progressMap[w.slug]?.completed_at);
   const currentPos  = currentWeek ? planWeeks.indexOf(currentWeek) + 1 : null;
 
   return (
@@ -193,7 +202,7 @@ export default function CourseIndexPage() {
       {/* ── Current step CTA ────────────────────────────────────────────────── */}
       {currentWeek && (
         <Link
-          href={`/course/w/${currentWeek.weekNumber}`}
+          href={`/course/m/${currentWeek.slug}`}
           className="block rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-600/20 to-purple-900/10 p-5 mb-6 hover:border-purple-400/50 transition group"
         >
           <div className="flex items-center justify-between mb-2">
@@ -210,7 +219,7 @@ export default function CourseIndexPage() {
           {currentWeek.subtitle && (
             <p className="font-saira text-xs text-zinc-400 mb-3">{currentWeek.subtitle}</p>
           )}
-          <StepDots row={progressMap[currentWeek.weekNumber]} />
+          <StepDots row={progressMap[currentWeek.slug]} />
           <p className="mt-3 font-saira text-xs text-purple-300 group-hover:text-white transition">
             Continue →
           </p>
@@ -235,9 +244,10 @@ export default function CourseIndexPage() {
             week={w}
             position={idx + 1}
             total={planWeeks.length}
-            row={progressMap[w.weekNumber]}
+            row={progressMap[w.slug]}
             isCurrent={w === currentWeek}
             isHighlighted={highlightSet.has(w.slug)}
+            isUnlocked={unlockedSlugs.has(w.slug)}
           />
         ))}
       </div>
@@ -258,77 +268,101 @@ export default function CourseIndexPage() {
 // ── PlanWeekCard ──────────────────────────────────────────────────────────────
 
 function PlanWeekCard({
-  week, position, total, row, isCurrent, isHighlighted,
+  week, position, total, row, isCurrent, isHighlighted, isUnlocked,
 }: {
-  week: CourseWeek;
+  week: CourseModule;
   position: number;
   total: number;
   row: CourseProgressRow | undefined;
   isCurrent: boolean;
   isHighlighted: boolean;
+  isUnlocked: boolean;
 }) {
-  const done       = !!row?.completed_at;
-  const hasStarted = !!row?.video_done_at || !!row?.quiz_done_at || !!row?.exercise_done_at;
+  const done        = !!row?.completed_at;
+  const hasStarted  = !!row?.video_done_at || !!row?.quiz_done_at || !!row?.exercise_done_at;
+  const isPractice  = week.moduleType === "practice";
+  const practiceCount  = row?.practice_count ?? 0;
+  const practiceTarget = week.practiceTarget ?? 0;
 
-  return (
-    <Link
-      href={`/course/w/${week.weekNumber}`}
-      className={`flex items-center gap-4 rounded-xl border p-4 transition group ${
-        done
-          ? "border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10"
-          : isCurrent
-          ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10"
-          : isHighlighted
-          ? "border-purple-500/20 bg-[#17131F] hover:bg-[#1e1828]"
-          : "border-white/5 bg-[#17131F] hover:bg-[#1e1828]"
-      }`}
-    >
+  const inner = (
+    <>
       {/* Step bubble */}
-      <div
-        className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-xs font-bold ${
-          done
-            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-            : isCurrent
-            ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-            : isHighlighted
-            ? "bg-purple-500/10 text-purple-400 border border-purple-500/25"
-            : "bg-white/5 text-zinc-500 border border-white/5"
-        }`}
-      >
-        {done ? "✓" : position}
+      <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-xs font-bold ${
+        done
+          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+          : isCurrent
+          ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+          : isHighlighted
+          ? "bg-purple-500/10 text-purple-400 border border-purple-500/25"
+          : isUnlocked
+          ? "bg-white/5 text-zinc-400 border border-white/5"
+          : "bg-white/[0.02] text-zinc-700 border border-white/[0.04]"
+      }`}>
+        {done ? "✓" : isUnlocked ? position : "🔒"}
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <p className={`font-saira text-sm font-semibold truncate transition ${
-            done ? "text-emerald-200" : "text-white group-hover:text-purple-300"
+            done ? "text-emerald-200"
+            : !isUnlocked ? "text-zinc-700"
+            : "text-white group-hover:text-purple-300"
           }`}>
             {week.title}
           </p>
-          {isHighlighted && !done && (
+          {isHighlighted && !done && isUnlocked && (
             <span className="flex-shrink-0 font-saira text-[8px] font-bold uppercase tracking-[0.2em] text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">
               Core
             </span>
           )}
         </div>
         {hasStarted && !done ? (
-          <StepDots row={row} />
+          <>
+            <StepDots row={row} />
+            {isPractice && practiceTarget > 0 && (
+              <p className="font-saira text-[10px] text-zinc-600 mt-0.5">
+                {practiceCount}/{practiceTarget} practice sessions
+              </p>
+            )}
+          </>
         ) : (
-          <p className="font-saira text-[11px] text-zinc-600 truncate">
-            {week.theme}
+          <p className={`font-saira text-[11px] truncate ${isUnlocked ? "text-zinc-600" : "text-zinc-800"}`}>
+            {isPractice ? `${week.theme} · ${practiceTarget} sessions` : week.theme}
           </p>
         )}
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="font-saira text-[10px] text-zinc-700">
-          {position}/{total}
-        </span>
-        <span className="font-saira text-sm text-zinc-600 group-hover:text-purple-400 transition">
-          →
-        </span>
+        <span className="font-saira text-[10px] text-zinc-700">{position}/{total}</span>
+        {isUnlocked && (
+          <span className={`font-saira text-sm transition flex-shrink-0 ${
+            done ? "text-emerald-500" : "text-zinc-600 group-hover:text-purple-400"
+          }`}>→</span>
+        )}
       </div>
+    </>
+  );
+
+  const sharedClass = `flex items-center gap-4 rounded-xl border p-4 transition group ${
+    done
+      ? "border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10"
+      : isCurrent
+      ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10"
+      : isHighlighted && isUnlocked
+      ? "border-purple-500/20 bg-[#17131F] hover:bg-[#1e1828]"
+      : isUnlocked
+      ? "border-white/5 bg-[#17131F] hover:bg-[#1e1828]"
+      : "border-white/[0.03] bg-[#0e0c14] cursor-default"
+  }`;
+
+  if (!isUnlocked) {
+    return <div className={sharedClass}>{inner}</div>;
+  }
+
+  return (
+    <Link href={`/course/m/${week.slug}`} className={sharedClass}>
+      {inner}
     </Link>
   );
 }
@@ -451,13 +485,13 @@ function PlanEditor({
   const [addOpen, setAddOpen] = React.useState(false);
 
   const weekMap = React.useMemo(() => {
-    const m: Record<string, CourseWeek> = {};
-    for (const w of COURSE_WEEKS) m[w.slug] = w;
+    const m: Record<string, CourseModule> = {};
+    for (const w of COURSE_MODULES) m[w.slug] = w;
     return m;
   }, []);
 
-  // Weeks not yet in the plan (available to add)
-  const available = COURSE_WEEKS.filter((w) => !slugs.includes(w.slug));
+  // Modules not yet in the plan (available to add)
+  const available = COURSE_MODULES.filter((w) => !slugs.includes(w.slug));
 
   function moveUp(idx: number) {
     if (idx === 0) return;
