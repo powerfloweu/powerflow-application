@@ -497,7 +497,7 @@ function PlanEditor({
       {plan.rationale && (
         <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3 mb-5">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400 mb-1">
-            Why Claude chose this
+            Your journey · personalised
           </p>
           <p className="font-saira text-xs text-zinc-300 leading-relaxed">{plan.rationale}</p>
         </div>
