@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import { isCheckinDone, checkinKey } from "@/lib/checkinReminder";
 import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
+import { useT } from "@/lib/i18n";
 
 const TABS = [
-  { href: "/today",   label: "Home",    icon: TodayIcon   },
-  { href: "/journal", label: "Journal", icon: JournalIcon },
-  { href: "/course",  label: "Course",  icon: CourseIcon  },
-  { href: "/library", label: "Tools",   icon: LibraryIcon },
-  { href: "/you",     label: "You",     icon: YouIcon     },
+  { href: "/today",   labelKey: "nav.home",    icon: TodayIcon   },
+  { href: "/journal", labelKey: "nav.journal", icon: JournalIcon },
+  { href: "/course",  labelKey: "nav.course",  icon: CourseIcon  },
+  { href: "/library", labelKey: "nav.tools",   icon: LibraryIcon },
+  { href: "/you",     labelKey: "nav.you",     icon: YouIcon     },
 ] as const;
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
 
 export default function TabBar({ planTier = "pr" }: Props) {
   const pathname = usePathname();
+  const { t } = useT();
   const [checkinDone, setCheckinDone] = React.useState(true); // optimistic: no badge flash on load
 
   // Read localStorage after mount (avoids SSR mismatch)
@@ -45,7 +47,7 @@ export default function TabBar({ planTier = "pr" }: Props) {
       <div className="absolute inset-0 bg-[#0D0B14]/90 backdrop-blur-md border-t border-white/8" />
 
       <div className="relative flex items-stretch justify-around px-1">
-        {TABS.map(({ href, label, icon: Icon }) => {
+        {TABS.map(({ href, labelKey, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           const showBadge = href === "/today" && !checkinDone && !active;
           const locked =
@@ -75,7 +77,7 @@ export default function TabBar({ planTier = "pr" }: Props) {
                 )}
               </div>
               <span className="font-saira text-[9px] uppercase tracking-[0.16em]">
-                {label}
+                {t(labelKey)}
               </span>
             </Link>
           );

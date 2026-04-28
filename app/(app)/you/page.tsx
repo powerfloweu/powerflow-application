@@ -8,6 +8,8 @@ import { WEIGHT_CATEGORIES } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
 import type { SelfTalkMode } from "@/lib/voices";
 import { DevLogViewer } from "@/app/components/NotificationModal";
+import LanguageSwitcher from "@/app/components/LanguageSwitcher";
+import { useT } from "@/lib/i18n";
 
 interface CoachOption {
   id: string;
@@ -627,22 +629,33 @@ export default function YouPage() {
         <span className="text-zinc-600 group-hover:text-purple-400 transition">→</span>
       </Link>
 
+      {/* ── Language ─────────────────────────────────────────── */}
+      <LanguageSwitcher />
+
       {/* ── What's new ───────────────────────────────────────── */}
       <Section label="What's new">
         <DevLogViewer />
       </Section>
 
       {/* ── Sign out ─────────────────────────────────────────── */}
-      <button
-        onClick={async () => {
-          await fetch("/auth/sign-out", { method: "POST" });
-          router.replace("/auth/sign-in");
-        }}
-        className="w-full mt-2 rounded-2xl border border-white/5 bg-[#17131F] py-4 font-saira text-sm text-zinc-500 hover:text-rose-400 hover:border-rose-500/20 transition"
-      >
-        Sign out
-      </button>
+      <SignOutButton />
     </div>
+  );
+}
+
+function SignOutButton() {
+  const router = useRouter();
+  const { t } = useT();
+  return (
+    <button
+      onClick={async () => {
+        await fetch("/auth/sign-out", { method: "POST" });
+        router.replace("/auth/sign-in");
+      }}
+      className="w-full mt-2 rounded-2xl border border-white/5 bg-[#17131F] py-4 font-saira text-sm text-zinc-500 hover:text-rose-400 hover:border-rose-500/20 transition"
+    >
+      {t("auth.signOut")}
+    </button>
   );
 }
 

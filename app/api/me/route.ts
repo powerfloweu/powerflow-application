@@ -31,6 +31,8 @@ const SELECT_COLS = [
   "course_plan",
   // v7 — plan tier
   "plan_tier",
+  // v8 — i18n
+  "language",
 ].join(",");
 
 export async function GET() {
@@ -88,6 +90,7 @@ export async function GET() {
       self_talk_mode: 'classic',
       course_plan: null,
       plan_tier: 'opener',
+      language: 'en',
     } satisfies AthleteProfile);
   }
 
@@ -134,6 +137,8 @@ export async function PATCH(req: NextRequest) {
     "affirmations", "viz_keywords",
     // v5 — voice work
     "self_talk_mode",
+    // v8 — i18n
+    "language",
   ];
 
   const patch: Record<string, unknown> = {};

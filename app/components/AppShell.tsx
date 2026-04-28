@@ -7,17 +7,18 @@ import TabBar from "./TabBar";
 import CheckinReminderScheduler from "./CheckinReminderScheduler";
 import NotificationModal, { type NotificationState } from "./NotificationModal";
 import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
+import { useT } from "@/lib/i18n";
 
 interface Props {
   children: React.ReactNode;
 }
 
 const NAV_LINKS = [
-  { href: "/today",   label: "Home",    icon: HomeIcon    },
-  { href: "/journal", label: "Journal", icon: JournalIcon },
-  { href: "/course",  label: "Course",  icon: CourseIcon  },
-  { href: "/library", label: "Tools",   icon: ToolsIcon   },
-  { href: "/you",     label: "You",     icon: YouIcon     },
+  { href: "/today",   labelKey: "nav.home",    icon: HomeIcon    },
+  { href: "/journal", labelKey: "nav.journal", icon: JournalIcon },
+  { href: "/course",  labelKey: "nav.course",  icon: CourseIcon  },
+  { href: "/library", labelKey: "nav.tools",   icon: ToolsIcon   },
+  { href: "/you",     labelKey: "nav.you",     icon: YouIcon     },
 ] as const;
 
 /**
@@ -27,6 +28,7 @@ const NAV_LINKS = [
  */
 export default function AppShell({ children }: Props) {
   const pathname = usePathname();
+  const { t } = useT();
   const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
   const [planTier, setPlanTier] = React.useState<PlanTier>("pr"); // optimistic: show all until we know
 
@@ -57,13 +59,13 @@ export default function AppShell({ children }: Props) {
         {/* Brand */}
         <div className="px-5 pt-7 pb-6 border-b border-white/5">
           <span className="font-saira text-[11px] font-bold uppercase tracking-[0.32em] text-purple-300">
-            PowerFlow
+            {t("brand.name")}
           </span>
         </div>
 
         {/* Nav links */}
         <nav className="flex-1 py-4 px-3 space-y-0.5">
-          {NAV_LINKS.map(({ href, label, icon: Icon }) => {
+          {NAV_LINKS.map(({ href, labelKey, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             const locked =
               (href === "/library" && !canAccessTools(planTier)) ||
@@ -82,7 +84,7 @@ export default function AppShell({ children }: Props) {
                 }`}
               >
                 <Icon active={active} />
-                {label}
+                {t(labelKey)}
                 {locked && (
                   <svg viewBox="0 0 16 16" className="w-3 h-3 ml-auto text-zinc-600" fill="none">
                     <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
@@ -97,7 +99,7 @@ export default function AppShell({ children }: Props) {
         {/* Version/footer */}
         <div className="px-5 pb-6 pt-3 border-t border-white/5">
           <p className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-700">
-            Mental performance
+            {t("brand.tagline")}
           </p>
         </div>
       </aside>

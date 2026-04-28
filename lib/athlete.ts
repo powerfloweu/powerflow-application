@@ -94,6 +94,9 @@ export type AthleteProfile = {
   // v7 — plan tiers
   /** Subscription tier: opener (free) | second (tools) | pr (all-access). */
   plan_tier: import("@/lib/plan").PlanTier;
+  // v8 — i18n
+  /** UI language preference. Falls back to 'en' if unset. */
+  language: import("@/lib/i18n").Locale;
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */
