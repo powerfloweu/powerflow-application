@@ -29,6 +29,8 @@ const SELECT_COLS = [
   "ai_access", "self_talk_mode",
   // v6 — adaptive course
   "course_plan",
+  // v7 — plan tier
+  "plan_tier",
 ].join(",");
 
 export async function GET() {
@@ -85,12 +87,20 @@ export async function GET() {
       ai_access: false,
       self_talk_mode: 'classic',
       course_plan: null,
+      plan_tier: 'opener',
     } satisfies AthleteProfile);
   }
 
   const row = rows[0];
+  // plan_tier may be absent if PostgREST schema cache hasn't picked up the new
+  // column yet. Fall back to inferring from legacy access flags so the UI works
+  // immediately; once the cache refreshes (project pause/resume) the real DB
+  // value takes over automatically.
+  const rawTier = (row as Record<string, unknown>).plan_tier as string | undefined;
+  const planTier: string = rawTier ?? (row.course_access || row.ai_access ? "pr" : "opener");
+
   // Normalise: mental_goals may come back as null from DB
-  return NextResponse.json({ ...row, mental_goals: row.mental_goals ?? [] });
+  return NextResponse.json({ ...row, mental_goals: row.mental_goals ?? [], plan_tier: planTier });
 }
 
 export async function PATCH(req: NextRequest) {

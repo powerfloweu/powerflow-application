@@ -364,7 +364,7 @@ export default function ChatPage() {
   const bottomRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
 
-  // ── On mount: verify ai_access + load history ──────────────────────────────
+  // ── On mount: verify PR tier access + load history ────────────────────────
 
   React.useEffect(() => {
     Promise.all([
@@ -372,8 +372,9 @@ export default function ChatPage() {
       fetch("/api/chat/messages?limit=50").then((r) => r.json()),
     ])
       .then(([profile, history]) => {
-        if (!profile?.ai_access) {
-          router.replace("/library");
+        const tier = profile?.plan_tier ?? "opener";
+        if (tier !== "pr") {
+          router.replace("/upgrade");
           return;
         }
         if (Array.isArray(history) && history.length > 0) {
@@ -396,7 +397,7 @@ export default function ChatPage() {
           }
         }
       })
-      .catch(() => router.replace("/library"))
+      .catch(() => router.replace("/upgrade"))
       .finally(() => setLoadingHistory(false));
   }, [router]);
 

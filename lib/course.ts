@@ -57,9 +57,35 @@ export type CourseQuestion = {
  */
 export type ModuleType = "insight" | "practice";
 
+/** A downloadable worksheet attached to a module */
+export type CourseDownload = {
+  /** Button label */
+  label: string;
+  /** Path under /public — e.g. "/downloads/swot.pdf" */
+  url: string;
+  /** One-line description shown below the button */
+  description?: string;
+};
+
+/** A link from a course module to a library tool */
+export type CourseToolLink = {
+  /** Display name of the tool */
+  label: string;
+  /** Route — e.g. "/library#pmr" */
+  href: string;
+  /** One-line context for why this tool is relevant here */
+  description?: string;
+};
+
 export type CourseModule = {
   /** Stable URL-safe identifier — used in routes & DB (replaces week_num) */
   slug: string;
+  /**
+   * If true, this module is outside the main plan sequence.
+   * It won't appear in plan generation, plan editor, or the plan week list.
+   * Accessed directly via /course/m/[slug].
+   */
+  bonus?: boolean;
   /**
    * Legacy week number — kept only for migrating existing progress rows.
    * Do not use for routing or display.
@@ -92,6 +118,10 @@ export type CourseModule = {
   questions: CourseQuestion[];
   /** Optional practical exercise */
   exercise?: { title: string; body: string };
+  /** Optional downloadable worksheets (PDFs hosted in /public) */
+  downloads?: CourseDownload[];
+  /** Optional links to library tools relevant to this module */
+  toolLinks?: CourseToolLink[];
 };
 
 /** @deprecated Use CourseModule */
@@ -154,7 +184,7 @@ export const COURSE_MODULES: CourseModule[] = [
     suggestedPhase: "Foundation",
     moduleType: "insight",
     overview:
-      "Athletes with accurate self-knowledge recover faster from bad sessions and capitalise on good ones. This week you build that map.",
+      "Athletes with accurate self-knowledge recover faster from bad sessions and capitalise on good ones. This week you build that map — through your own eyes and through the eyes of people who know your lifting.",
     vidyardUuid: "8s5ALpWJ388ZQJS7pQfSFV",
     keyPoints: [
       "Your biggest mental strengths are usually invisible to you — others see them first.",
@@ -175,6 +205,30 @@ export const COURSE_MODULES: CourseModule[] = [
         id: "identity-story",
         prompt: "Finish the sentence: 'I am the kind of lifter who…'",
         journalMirror: true,
+      },
+      {
+        id: "swot-strengths",
+        prompt: "SWOT — Strengths: What did others say are your best qualities as an athlete? (personality, physical, mentality)",
+        placeholder: "Share the SWOT template with your coach and 2–3 training partners, then record their answers here.",
+      },
+      {
+        id: "swot-weaknesses",
+        prompt: "SWOT — Weaknesses: What did they say you should work on most to become better?",
+      },
+      {
+        id: "swot-opportunities",
+        prompt: "SWOT — Opportunities: What are you not doing that would potentially help you become a stronger athlete?",
+      },
+      {
+        id: "swot-threats",
+        prompt: "SWOT — Threats: What happens if you don't work on those weaknesses?",
+      },
+    ],
+    downloads: [
+      {
+        label: "Download SWOT template",
+        url: "/downloads/swot.pdf",
+        description: "Share with your coach and 2–3 people who know your lifting. Collect their answers before filling in the questions above.",
       },
     ],
   },
@@ -216,6 +270,13 @@ export const COURSE_MODULES: CourseModule[] = [
       body:
         "Write all three goals on an index card. Stick it where you see it before you train. At the end of the week, come back and rate honestly how aligned your sessions were.",
     },
+    downloads: [
+      {
+        label: "Download SMART worksheet",
+        url: "/downloads/smart.pdf",
+        description: "A printable version to fill out, post somewhere visible, and bring to coach check-ins.",
+      },
+    ],
   },
 
   // ── Theme 3 — Athlete-Coach Relationship ────────────────────────────────
@@ -247,6 +308,32 @@ export const COURSE_MODULES: CourseModule[] = [
       {
         id: "coachable",
         prompt: "On a scale of 1–10, how coachable are you right now? Why that number?",
+      },
+      {
+        id: "contract-results",
+        prompt: "Contract — Results: What are the SMART goal(s) you want to work towards with your coach's support?",
+        placeholder: "Be as specific as possible — totals, attempts, milestones.",
+      },
+      {
+        id: "contract-communication",
+        prompt: "Contract — Communication: How often, on which platform, and in what style will you communicate with your coach?",
+        placeholder: "e.g. Weekly WhatsApp voice note after sessions, written program update every 3 weeks…",
+      },
+      {
+        id: "contract-actions",
+        prompt: "Contract — Actions: What is required of each party for this to work?",
+        placeholder: "What do you commit to? What do you need from your coach?",
+      },
+      {
+        id: "contract-accountability",
+        prompt: "Contract — Accountability: How often do you need feedback, and what are the key milestones to review together?",
+      },
+    ],
+    downloads: [
+      {
+        label: "Download contract template",
+        url: "/downloads/contract.pdf",
+        description: "Print, fill out together with your coach, and sign. Keep a copy each.",
       },
     ],
   },
@@ -289,6 +376,18 @@ export const COURSE_MODULES: CourseModule[] = [
       body:
         "Before your next top set: inhale 4s, hold 4s, exhale 4s, hold 4s. Four rounds. Notice whether it dialled you up or down, and log it.",
     },
+    toolLinks: [
+      {
+        label: "Progressive Muscle Relaxation",
+        href: "/library#pmr",
+        description: "Use PMR to dial down pre-lift tension and regulate your arousal state before heavy attempts.",
+      },
+      {
+        label: "Autogenic Training",
+        href: "/library#autogenic-training",
+        description: "Self-induced deep relaxation — ideal for resetting between sessions or the night before a meet.",
+      },
+    ],
   },
   {
     slug: "w06-breath-and-body",
@@ -315,6 +414,18 @@ export const COURSE_MODULES: CourseModule[] = [
       {
         id: "body-reset",
         prompt: "What's one physical cue that reliably brings you back to centre?",
+      },
+    ],
+    toolLinks: [
+      {
+        label: "Progressive Muscle Relaxation",
+        href: "/library#pmr",
+        description: "Combines breath and body — systematically tense and release to reset your physical state.",
+      },
+      {
+        label: "Autogenic Training",
+        href: "/library#autogenic-training",
+        description: "Use warmth and heaviness formulas to anchor body-based calm on demand.",
       },
     ],
   },
@@ -345,6 +456,13 @@ export const COURSE_MODULES: CourseModule[] = [
         prompt: "How will you manufacture pressure in training this week?",
       },
     ],
+    toolLinks: [
+      {
+        label: "Barrier",
+        href: "/library#barrier",
+        description: "Build a psychological barrier to external distractions — essential for performing under competition pressure.",
+      },
+    ],
   },
   {
     slug: "w08-flow",
@@ -372,6 +490,13 @@ export const COURSE_MODULES: CourseModule[] = [
       {
         id: "flow-ritual",
         prompt: "What's your pre-lift ritual? (walk-up, breath, cue) Is it consistent?",
+      },
+    ],
+    toolLinks: [
+      {
+        label: "Resource Activation",
+        href: "/library#resource-activation",
+        description: "Anchor your peak flow state to a physical cue — access it on demand before any attempt.",
       },
     ],
   },
@@ -409,6 +534,23 @@ export const COURSE_MODULES: CourseModule[] = [
       body:
         "Every night this week, 2 minutes: visualise tomorrow's heaviest set from the walkout to rack. First person. Include the breath.",
     },
+    toolLinks: [
+      {
+        label: "Squat Visualization",
+        href: "/library#viz-squat",
+        description: "Guided 6-minute first-person squat rehearsal — set your keywords to personalise it.",
+      },
+      {
+        label: "Bench Visualization",
+        href: "/library#viz-bench",
+        description: "Guided 6-minute first-person bench press rehearsal.",
+      },
+      {
+        label: "Deadlift Visualization",
+        href: "/library#viz-deadlift",
+        description: "Guided 6-minute first-person deadlift rehearsal.",
+      },
+    ],
   },
   {
     slug: "w10-mental-rehearsal",
@@ -435,6 +577,21 @@ export const COURSE_MODULES: CourseModule[] = [
       {
         id: "contingency",
         prompt: "What's one thing that might go wrong on meet day, and how will you respond?",
+      },
+    ],
+    toolLinks: [
+      {
+        label: "Squat Visualization",
+        href: "/library#viz-squat",
+        description: "Apply meet-day scenario rehearsal — walk through weigh-in, warm-ups, and each attempt in sequence.",
+      },
+      {
+        label: "Bench Visualization",
+        href: "/library#viz-bench",
+      },
+      {
+        label: "Deadlift Visualization",
+        href: "/library#viz-deadlift",
       },
     ],
   },
@@ -469,6 +626,21 @@ export const COURSE_MODULES: CourseModule[] = [
         prompt: "What's your one cue for deadlift?",
       },
     ],
+    toolLinks: [
+      {
+        label: "Squat Visualization",
+        href: "/library#viz-squat",
+        description: "Embed your new cues directly into guided visualization — repetition locks them in under load.",
+      },
+      {
+        label: "Bench Visualization",
+        href: "/library#viz-bench",
+      },
+      {
+        label: "Deadlift Visualization",
+        href: "/library#viz-deadlift",
+      },
+    ],
   },
   {
     slug: "w12-self-talk",
@@ -499,6 +671,13 @@ export const COURSE_MODULES: CourseModule[] = [
         journalMirror: true,
       },
     ],
+    toolLinks: [
+      {
+        label: "Self-Talk Affirmations",
+        href: "/library#affirmations",
+        description: "Write your inner-coach statements as personal affirmations and rehearse them before every session.",
+      },
+    ],
   },
 
   // ── Theme 6 — Focus ─────────────────────────────────────────────────────
@@ -527,6 +706,13 @@ export const COURSE_MODULES: CourseModule[] = [
       {
         id: "attention-anchor",
         prompt: "What's your anchor — one thing you can return attention to, reliably?",
+      },
+    ],
+    toolLinks: [
+      {
+        label: "Barrier",
+        href: "/library#barrier",
+        description: "Train selective attention with a guided audio that builds an internal boundary against distractions.",
       },
     ],
   },
@@ -563,6 +749,13 @@ export const COURSE_MODULES: CourseModule[] = [
       body:
         "In training this week, after any failed rep, run your 3-step routine before touching the bar again. Build it into muscle memory.",
     },
+    toolLinks: [
+      {
+        label: "Barrier",
+        href: "/library#barrier",
+        description: "Use the Barrier audio to train rapid re-focus — build the habit before you need it on the platform.",
+      },
+    ],
   },
 
   // ── Theme 7 — Performance ───────────────────────────────────────────────
@@ -598,6 +791,66 @@ export const COURSE_MODULES: CourseModule[] = [
       body:
         "Two weeks out: simulate meet timing as closely as you can. Same breakfast, same warm-up timing, same order of lifts with commands. One opener, one second attempt per lift.",
     },
+    toolLinks: [
+      {
+        label: "Competition Day Mental Training",
+        href: "/library#comp-day-viz",
+        description: "12-minute guided walkthrough of your entire meet — from wake-up to final deadlift — personalized to your focus cues.",
+      },
+      {
+        label: "Resource Activation",
+        href: "/library#resource-activation",
+        description: "Access your peak performance state between attempts with a single anchor cue.",
+      },
+    ],
+  },
+
+  // ── Bonus — Post-Meet Reflection (not part of the plan sequence) ────────
+  {
+    slug: "w16-post-meet",
+    weekNumber: 16,
+    bonus: true,
+    theme: "Performance",
+    title: "Post-Meet Reflection",
+    subtitle: "Close the loop. Start the next one.",
+    suggestedPhase: "Foundation",
+    moduleType: "insight",
+    overview:
+      "The competition is over. This is where the real learning happens. Without deliberate reflection, meets become experiences. With it, they become data.",
+    keyPoints: [
+      "The gap between what you expected and what happened is the most valuable feedback you have.",
+      "Good performances and bad ones both deserve honest analysis.",
+      "What you write down here becomes the foundation of your next prep.",
+    ],
+    questions: [
+      {
+        id: "post-meet-overall",
+        prompt: "How do you feel about your competition overall? What's your honest first reaction?",
+        journalMirror: true,
+      },
+      {
+        id: "post-meet-win",
+        prompt: "What was your biggest victory — on the platform or off it?",
+      },
+      {
+        id: "post-meet-lesson",
+        prompt: "What is the single most valuable thing you learned about yourself in this prep?",
+        journalMirror: true,
+      },
+      {
+        id: "post-meet-mental",
+        prompt: "Rate your mental preparation out of 10. What earned that score?",
+      },
+      {
+        id: "post-meet-next",
+        prompt: "What is the one thing you'll do differently next prep?",
+      },
+    ],
+    exercise: {
+      title: "Post-meet letter",
+      body:
+        "Write a short letter to yourself before your next competition. Based on what you've just learned, what do you want future-you to remember when it matters most?",
+    },
   },
 ];
 
@@ -606,7 +859,13 @@ export const COURSE_MODULES: CourseModule[] = [
 /** Backward-compat alias — prefer COURSE_MODULES in new code */
 export const COURSE_WEEKS = COURSE_MODULES;
 
-/** Lookup a module by slug — primary identifier for all new code */
+/**
+ * Only the modules that belong in a plan (no bonus modules).
+ * Use this everywhere plan generation and plan editing happens.
+ */
+export const PLAN_MODULES = COURSE_MODULES.filter((m) => !m.bonus);
+
+/** Lookup a module by slug — includes bonus modules */
 export function getModule(slug: string): CourseModule | undefined {
   return COURSE_MODULES.find((m) => m.slug === slug);
 }

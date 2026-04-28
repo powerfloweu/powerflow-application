@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import TabBar from "./TabBar";
 import CheckinReminderScheduler from "./CheckinReminderScheduler";
 import NotificationModal, { type NotificationState } from "./NotificationModal";
+import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
 
 interface Props {
   children: React.ReactNode;
@@ -27,8 +28,9 @@ const NAV_LINKS = [
 export default function AppShell({ children }: Props) {
   const pathname = usePathname();
   const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
+  const [planTier, setPlanTier] = React.useState<PlanTier>("pr"); // optimistic: show all until we know
 
-  // Fetch pending notifications once on mount
+  // Fetch notifications + plan tier on mount
   React.useEffect(() => {
     fetch("/api/notifications")
       .then((r) => r.ok ? r.json() : null)
@@ -36,6 +38,13 @@ export default function AppShell({ children }: Props) {
         if (data && (data.broadcast || data.devlogNew)) {
           setNotifications(data as NotificationState);
         }
+      })
+      .catch(() => {});
+
+    fetch("/api/me")
+      .then((r) => r.ok ? r.json() : null)
+      .then((p) => {
+        if (p?.plan_tier) setPlanTier(p.plan_tier as PlanTier);
       })
       .catch(() => {});
   }, []);
@@ -56,18 +65,30 @@ export default function AppShell({ children }: Props) {
         <nav className="flex-1 py-4 px-3 space-y-0.5">
           {NAV_LINKS.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
+            const locked =
+              (href === "/library" && !canAccessTools(planTier)) ||
+              (href === "/course" && !canAccessPR(planTier));
+            const dest = locked ? "/upgrade" : href;
             return (
               <Link
                 key={href}
-                href={href}
+                href={dest}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-[11px] uppercase tracking-[0.16em] transition ${
                   active
                     ? "bg-purple-500/15 text-purple-300 font-semibold"
+                    : locked
+                    ? "text-zinc-700 hover:text-zinc-500 hover:bg-white/5"
                     : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
                 }`}
               >
                 <Icon active={active} />
                 {label}
+                {locked && (
+                  <svg viewBox="0 0 16 16" className="w-3 h-3 ml-auto text-zinc-600" fill="none">
+                    <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                    <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                )}
               </Link>
             );
           })}
@@ -88,7 +109,7 @@ export default function AppShell({ children }: Props) {
       </main>
 
       {/* ── Mobile bottom tab bar ───────────────────────────────── */}
-      <TabBar />
+      <TabBar planTier={planTier} />
 
       {/* ── Daily check-in reminder (invisible, schedules notification) ── */}
       <CheckinReminderScheduler />

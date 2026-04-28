@@ -46,8 +46,10 @@ export default function ModuleDetailPage() {
       fetch("/api/course/progress").then((r) => r.json()),
       fetch(`/api/course/answers?slug=${encodeURIComponent(slug)}`).then((r) => r.json()),
     ])
-      .then(([profile, prog, ans]: [{ course_access?: boolean }, CourseProgressRow[], CourseAnswerRow[]]) => {
-        if (!profile?.course_access) { router.replace("/course"); return; }
+      .then(([profile, prog, ans]: [{ course_access?: boolean; plan_tier?: string }, CourseProgressRow[], CourseAnswerRow[]]) => {
+        const tier = profile?.plan_tier ?? "opener";
+        const hasAccess = profile?.course_access || tier === "pr";
+        if (!hasAccess) { router.replace("/course"); return; }
         const row = Array.isArray(prog)
           ? prog.find((p) => p.module_slug === slug) ?? null
           : null;
@@ -280,6 +282,70 @@ export default function ModuleDetailPage() {
             })}
           </div>
         </section>
+
+        {/* ── Downloads ─────────────────────────────────────────────────────── */}
+        {mod.downloads && mod.downloads.length > 0 && (
+          <section className="mb-6">
+            <SectionLabel icon="↓" label="Worksheets" />
+            <div className="space-y-3">
+              {mod.downloads.map((dl) => (
+                <div key={dl.url} className="rounded-2xl border border-white/8 bg-[#17131F] p-4">
+                  {dl.description && (
+                    <p className="font-saira text-[12px] text-zinc-400 leading-relaxed mb-3">
+                      {dl.description}
+                    </p>
+                  )}
+                  <a
+                    href={dl.url}
+                    download
+                    className="inline-flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 px-4 py-2.5 font-saira text-[11px] uppercase tracking-[0.18em] text-purple-300 transition-colors"
+                  >
+                    <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 flex-shrink-0" fill="none">
+                      <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M3 12h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                    </svg>
+                    {dl.label}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Use this tool ─────────────────────────────────────────────────── */}
+        {mod.toolLinks && mod.toolLinks.length > 0 && (
+          <section className="mb-6">
+            <SectionLabel icon="→" label="Use this tool" />
+            <div className="space-y-2">
+              {mod.toolLinks.map((tl) => (
+                <a
+                  key={tl.href}
+                  href={tl.href}
+                  className="flex items-start gap-4 rounded-xl border border-purple-500/15 bg-purple-500/[0.04] hover:bg-purple-500/[0.08] p-4 transition-colors group"
+                >
+                  <div className="w-8 h-8 flex-shrink-0 rounded-lg border border-purple-500/25 bg-purple-500/10 flex items-center justify-center mt-0.5">
+                    <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-purple-400" fill="none">
+                      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-saira text-sm font-semibold text-purple-200 group-hover:text-white transition">
+                      {tl.label}
+                    </p>
+                    {tl.description && (
+                      <p className="font-saira text-[11px] text-zinc-500 mt-0.5 leading-snug">
+                        {tl.description}
+                      </p>
+                    )}
+                  </div>
+                  <span className="font-saira text-xs text-zinc-600 group-hover:text-purple-400 transition flex-shrink-0 mt-0.5">
+                    Open →
+                  </span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ── Practise (exercise) ───────────────────────────────────────────── */}
         {mod.exercise && (

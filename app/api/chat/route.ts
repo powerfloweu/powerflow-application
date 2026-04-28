@@ -10,6 +10,7 @@ import { dbSelect } from "@/lib/supabaseAdmin";
 import Anthropic from "@anthropic-ai/sdk";
 import type { AthleteProfile } from "@/lib/athlete";
 import type { Voice } from "@/lib/voices";
+import { canAccessPR } from "@/lib/plan";
 
 export const runtime = "nodejs";
 
@@ -364,13 +365,13 @@ export async function POST(req: NextRequest) {
       "mental_goals", "main_barrier",
       "self_confidence_reg", "self_focus_fatigue", "self_handling_pressure",
       "self_competition_anxiety", "self_emotional_recovery",
-      "viz_keywords", "affirmations", "ai_access",
+      "viz_keywords", "affirmations", "ai_access", "plan_tier", "role",
     ].join(","),
   });
 
   const profile = profiles[0] as AthleteProfile | undefined;
-  if (!profile || !profile.ai_access) {
-    return NextResponse.json({ error: "AI access not enabled" }, { status: 403 });
+  if (!profile || !canAccessPR(profile?.plan_tier ?? "opener")) {
+    return NextResponse.json({ error: "PR tier required for AI coach" }, { status: 403 });
   }
 
   // Fetch context in parallel

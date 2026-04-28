@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { COURSE_MODULES, weeksByTheme, stepsComplete, type CoursePlan, type CourseModule, type CourseProgressRow } from "@/lib/course";
+import { COURSE_MODULES, PLAN_MODULES, weeksByTheme, stepsComplete, type CoursePlan, type CourseModule, type CourseProgressRow } from "@/lib/course";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -22,6 +22,8 @@ type Profile = {
   display_name: string;
   meet_date: string | null;
   course_access: boolean;
+  plan_tier: string | null;
+  role: string | null;
   course_plan: CoursePlan | null;
 };
 
@@ -53,7 +55,9 @@ export default function CourseIndexPage() {
         setProfile(p);
         setProgress(Array.isArray(prog) ? prog : []);
 
-        if (!p.course_access) {
+        const tier = p.plan_tier ?? "opener";
+        const hasAccess = p.course_access || tier === "pr";
+        if (!hasAccess) {
           setUiStage({ stage: "locked" });
         } else if (p.course_plan?.slugs?.length) {
           setUiStage({ stage: "plan", plan: p.course_plan });
@@ -143,7 +147,7 @@ export default function CourseIndexPage() {
   // ── Plan view ─────────────────────────────────────────────────────────────
   const plan = uiStage.plan;
   const planWeeks = plan.slugs
-    .map((slug) => COURSE_MODULES.find((m) => m.slug === slug))
+    .map((slug) => PLAN_MODULES.find((m) => m.slug === slug))
     .filter((w): w is CourseModule => !!w);
   const highlightSet = new Set(plan.highlights ?? []);
 
@@ -260,6 +264,30 @@ export default function CourseIndexPage() {
         >
           Edit or regenerate plan
         </button>
+      </div>
+
+      {/* ── Bonus: post-meet module ──────────────────────────────────────────── */}
+      <div className="mt-8 pt-8 border-t border-white/5">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-600 mb-3">
+          After your meet
+        </p>
+        <Link
+          href="/course/m/w16-post-meet"
+          className="flex items-start gap-4 rounded-2xl border border-white/5 bg-[#17131F] hover:bg-[#1e1828] p-4 transition group"
+        >
+          <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-lg bg-purple-500/10 border border-purple-500/20">
+            🏆
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-saira text-sm font-semibold text-white group-hover:text-purple-300 transition">
+              Post-Meet Reflection
+            </p>
+            <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
+              Close the loop. Start the next prep right.
+            </p>
+          </div>
+          <span className="font-saira text-zinc-600 group-hover:text-purple-400 transition mt-0.5">→</span>
+        </Link>
       </div>
     </div>
   );
@@ -486,12 +514,12 @@ function PlanEditor({
 
   const weekMap = React.useMemo(() => {
     const m: Record<string, CourseModule> = {};
-    for (const w of COURSE_MODULES) m[w.slug] = w;
+    for (const w of PLAN_MODULES) m[w.slug] = w;
     return m;
   }, []);
 
-  // Modules not yet in the plan (available to add)
-  const available = COURSE_MODULES.filter((w) => !slugs.includes(w.slug));
+  // Plan-eligible modules not yet in the plan (available to add) — no bonus modules
+  const available = PLAN_MODULES.filter((w) => !slugs.includes(w.slug));
 
   function moveUp(idx: number) {
     if (idx === 0) return;

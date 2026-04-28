@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
 import { isCheckinDone, checkinKey } from "@/lib/checkinReminder";
+import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
 
 const TABS = [
   { href: "/today",   label: "Home",    icon: TodayIcon   },
@@ -13,7 +14,11 @@ const TABS = [
   { href: "/you",     label: "You",     icon: YouIcon     },
 ] as const;
 
-export default function TabBar() {
+interface Props {
+  planTier?: PlanTier;
+}
+
+export default function TabBar({ planTier = "pr" }: Props) {
   const pathname = usePathname();
   const [checkinDone, setCheckinDone] = React.useState(true); // optimistic: no badge flash on load
 
@@ -43,18 +48,30 @@ export default function TabBar() {
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           const showBadge = href === "/today" && !checkinDone && !active;
+          const locked =
+            (href === "/library" && !canAccessTools(planTier)) ||
+            (href === "/course" && !canAccessPR(planTier));
+          const dest = locked ? "/upgrade" : href;
           return (
             <Link
               key={href}
-              href={href}
+              href={dest}
               className={`relative flex flex-col items-center justify-center gap-1 flex-1 py-2.5 transition-colors ${
-                active ? "text-purple-300" : "text-zinc-600 hover:text-zinc-400"
+                active ? "text-purple-300" : locked ? "text-zinc-700" : "text-zinc-600 hover:text-zinc-400"
               }`}
             >
               <div className="relative">
                 <Icon active={active} />
                 {showBadge && (
                   <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 ring-1 ring-[#0D0B14]" />
+                )}
+                {locked && (
+                  <span className="absolute -top-0.5 -right-1.5">
+                    <svg viewBox="0 0 10 12" className="w-2.5 h-2.5 text-zinc-600" fill="none">
+                      <rect x="1" y="5" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                      <path d="M3 5V3.5a2 2 0 0 1 4 0V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                    </svg>
+                  </span>
                 )}
               </div>
               <span className="font-saira text-[9px] uppercase tracking-[0.16em]">

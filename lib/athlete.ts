@@ -91,6 +91,9 @@ export type AthleteProfile = {
   // v6 — adaptive course
   /** Personalised course plan (stored as JSONB). Null = not yet generated. */
   course_plan: import("@/lib/course").CoursePlan | null;
+  // v7 — plan tiers
+  /** Subscription tier: opener (free) | second (tools) | pr (all-access). */
+  plan_tier: import("@/lib/plan").PlanTier;
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */

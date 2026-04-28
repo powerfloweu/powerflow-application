@@ -2,79 +2,34 @@
 
 import React from "react";
 import Link from "next/link";
+import { hasAccess, type PlanTier } from "@/lib/plan";
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
-// audioUrl: swap null for the hosted file URL when recordings are ready.
+// Sections are ordered by minTier so unlocked content always appears first.
+// fileKey: filename in the Supabase "tools" storage bucket.
 
-const TOOLS = [
-  {
-    section: "Visualizations",
-    items: [
-      {
-        id: "viz-squat",
-        title: "Squat",
-        tagline: "Mental rehearsal · Squat",
-        icon: "S",
-        color: "purple",
-        duration: "~6 min",
-        intro: "Mental imagery activates the same motor pathways as physical execution, reinforcing technique and building confidence without adding physical load. Consistent pre-lift rehearsal has been shown to improve performance accuracy and reduce competition anxiety — most effective when the imagery is vivid, first-person, and felt in the body rather than watched from the outside.",
-        citations: [
-          "Holmes & Collins (2001). The PETTLEP approach to motor imagery. Journal of Applied Sport Psychology, 13(1), 60–83.",
-          "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
-        ],
-        fileKey: "Visualization_Squat_EN_fin.m4a" as string | null,
-      },
-      {
-        id: "viz-bench",
-        title: "Bench",
-        tagline: "Mental rehearsal · Bench Press",
-        icon: "B",
-        color: "purple",
-        duration: "~6 min",
-        intro: "Visualising the bench press with high sensory detail — including proprioception, timing, and force — primes the neuromuscular system for execution. Multi-sensory imagery has been shown to improve both technical precision and attentional focus under pressure, with the greatest gains seen when imagery closely matches the real performance environment.",
-        citations: [
-          "Ranganathan et al. (2004). From mental power to muscle power. Neuropsychologia, 42(7), 944–956.",
-          "Holmes & Collins (2001). The PETTLEP approach to motor imagery. Journal of Applied Sport Psychology, 13(1), 60–83.",
-        ],
-        fileKey: "Visualization_Bench_EN_fin.m4a" as string | null,
-      },
-      {
-        id: "viz-deadlift",
-        title: "Deadlift",
-        tagline: "Mental rehearsal · Deadlift",
-        icon: "D",
-        color: "purple",
-        duration: "~6 min",
-        intro: "The deadlift demands maximal tension from the first pull. Mental rehearsal helps establish the correct internal focus cues — brace, slack out, leg press — before getting under the bar, reducing error rates on heavy attempts. Research shows imagery is most effective when rehearsed at the actual speed of the movement.",
-        citations: [
-          "Guillot & Collet (2008). Construction of the motor imagery integrative model in sport. International Review of Sport and Exercise Psychology, 1(1), 31–44.",
-          "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
-        ],
-        fileKey: "Visualization_Deadlift_EN_fin.m4a" as string | null,
-      },
-    ],
-  },
-  {
-    section: "Activation",
-    items: [
-      {
-        id: "resource-activation",
-        title: "Resource Activation",
-        tagline: "Anchor your peak state",
-        icon: "⚡",
-        color: "amber",
-        duration: "~8 min",
-        intro: "Anchoring links a physical cue — such as a finger squeeze — to a rehearsed emotional state through classical conditioning. Repeated pairing of the cue with peak-state recall allows athletes to rapidly access optimal confidence and arousal on demand, reducing variability in psychological readiness across competition attempts.",
-        citations: [
-          "Cotterill (2010). Pre-performance routines in sport. International Review of Sport and Exercise Psychology, 3(2), 132–153.",
-          "Lidor & Singer (2000). Teaching pre-performance routines to beginners. Journal of Physical Education, Recreation & Dance, 71(7), 34–36.",
-        ],
-        fileKey: "SikerPillanata_EN_fin.m4a" as string | null,
-      },
-    ],
-  },
+const TOOLS: Array<{
+  section: string;
+  /** Minimum plan tier required to use this section */
+  minTier: PlanTier;
+  items: Array<{
+    id: string;
+    title: string;
+    tagline: string;
+    icon: string;
+    color: string;
+    duration: string;
+    intro: string;
+    citations: string[];
+    fileKey: string | null;
+    /** If true, shows the VizKeywords personalisation UI when expanded */
+    usesVizKeywords?: boolean;
+  }>;
+}> = [
+  // ── Opener+ (available to all tiers) ─────────────────────────────────────
   {
     section: "Relaxation",
+    minTier: "opener",
     items: [
       {
         id: "pmr",
@@ -108,8 +63,82 @@ const TOOLS = [
       },
     ],
   },
+
+  // ── Second+ ───────────────────────────────────────────────────────────────
+  {
+    section: "Visualizations",
+    minTier: "second",
+    items: [
+      {
+        id: "viz-squat",
+        title: "Squat",
+        tagline: "Mental rehearsal · Squat",
+        icon: "S",
+        color: "purple",
+        duration: "~6 min",
+        intro: "Mental imagery activates the same motor pathways as physical execution, reinforcing technique and building confidence without adding physical load. Consistent pre-lift rehearsal has been shown to improve performance accuracy and reduce competition anxiety — most effective when the imagery is vivid, first-person, and felt in the body rather than watched from the outside.",
+        citations: [
+          "Holmes & Collins (2001). The PETTLEP approach to motor imagery. Journal of Applied Sport Psychology, 13(1), 60–83.",
+          "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
+        ],
+        fileKey: "Visualization_Squat_EN_fin.m4a" as string | null,
+        usesVizKeywords: true,
+      },
+      {
+        id: "viz-bench",
+        title: "Bench",
+        tagline: "Mental rehearsal · Bench Press",
+        icon: "B",
+        color: "purple",
+        duration: "~6 min",
+        intro: "Visualising the bench press with high sensory detail — including proprioception, timing, and force — primes the neuromuscular system for execution. Multi-sensory imagery has been shown to improve both technical precision and attentional focus under pressure, with the greatest gains seen when imagery closely matches the real performance environment.",
+        citations: [
+          "Ranganathan et al. (2004). From mental power to muscle power. Neuropsychologia, 42(7), 944–956.",
+          "Holmes & Collins (2001). The PETTLEP approach to motor imagery. Journal of Applied Sport Psychology, 13(1), 60–83.",
+        ],
+        fileKey: "Visualization_Bench_EN_fin.m4a" as string | null,
+        usesVizKeywords: true,
+      },
+      {
+        id: "viz-deadlift",
+        title: "Deadlift",
+        tagline: "Mental rehearsal · Deadlift",
+        icon: "D",
+        color: "purple",
+        duration: "~6 min",
+        intro: "The deadlift demands maximal tension from the first pull. Mental rehearsal helps establish the correct internal focus cues — brace, slack out, leg press — before getting under the bar, reducing error rates on heavy attempts. Research shows imagery is most effective when rehearsed at the actual speed of the movement.",
+        citations: [
+          "Guillot & Collet (2008). Construction of the motor imagery integrative model in sport. International Review of Sport and Exercise Psychology, 1(1), 31–44.",
+          "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
+        ],
+        fileKey: "Visualization_Deadlift_EN_fin.m4a" as string | null,
+        usesVizKeywords: true,
+      },
+    ],
+  },
+  {
+    section: "Activation",
+    minTier: "second",
+    items: [
+      {
+        id: "resource-activation",
+        title: "Resource Activation",
+        tagline: "Anchor your peak state",
+        icon: "⚡",
+        color: "amber",
+        duration: "~8 min",
+        intro: "Anchoring links a physical cue — such as a finger squeeze — to a rehearsed emotional state through classical conditioning. Repeated pairing of the cue with peak-state recall allows athletes to rapidly access optimal confidence and arousal on demand, reducing variability in psychological readiness across competition attempts.",
+        citations: [
+          "Cotterill (2010). Pre-performance routines in sport. International Review of Sport and Exercise Psychology, 3(2), 132–153.",
+          "Lidor & Singer (2000). Teaching pre-performance routines to beginners. Journal of Physical Education, Recreation & Dance, 71(7), 34–36.",
+        ],
+        fileKey: "SikerPillanata_EN_fin.m4a" as string | null,
+      },
+    ],
+  },
   {
     section: "Affirmations",
+    minTier: "second",
     items: [
       {
         id: "affirmations",
@@ -125,6 +154,67 @@ const TOOLS = [
           "Theodorakis et al. (2000). Motivational vs. instructional self-talk effects on performance. The Sport Psychologist, 14(3), 253–272.",
         ],
         fileKey: null as string | null,
+      },
+    ],
+  },
+
+  // ── PR only ───────────────────────────────────────────────────────────────
+  {
+    section: "Focus",
+    minTier: "pr",
+    items: [
+      {
+        id: "barrier",
+        title: "Barrier",
+        tagline: "Block distractions · Stay present",
+        icon: "▣",
+        color: "amber",
+        duration: "~8 min",
+        intro: "Competition environments are filled with distractions — noise, other lifters, scoreboards, crowd. The Barrier audio uses guided imagery to build a psychological boundary between you and everything outside the platform. Personalized to your focus cues, it trains selective attention so that when the bar is loaded, only the lift exists.",
+        citations: [
+          "Moran (1996). The Psychology of Concentration in Sport Performers. Psychology Press.",
+          "Nideffer (1976). Test of attentional and interpersonal style. Journal of Personality and Social Psychology, 34(3), 394–404.",
+          "Schmid & Peper (1993). Strategies for training concentration. In J. Williams (Ed.), Applied Sport Psychology (pp. 262–273).",
+        ],
+        fileKey: "Barriers_EN_Final.m4a" as string | null,
+        usesVizKeywords: true,
+      },
+      {
+        id: "hibajavitas",
+        title: "Cinema Screening Room",
+        tagline: "Mental error correction · Replay & rewrite",
+        icon: "◫",
+        color: "purple",
+        duration: "~10 min",
+        intro: "The cinema screening technique uses guided imagery to replay a performance from the vantage point of a projection room — watching yourself on screen, pausing the film, and deliberately replacing errors with correct executions. The re-edited mental film is stored as a new memory, reducing the probability of repeating the same mistake under competition load.",
+        citations: [
+          "Orlick (2000). In Pursuit of Excellence. Human Kinetics.",
+          "Vealey & Greenleaf (2010). Seeing is believing: Understanding and using imagery in sport. In J. Williams (Ed.), Applied Sport Psychology: Personal Growth to Peak Performance (pp. 267–304).",
+          "Munroe-Chandler & Hall (2004). The effects of a mental skills training program on hockey players. The Sport Psychologist, 18(4), 399–409.",
+        ],
+        fileKey: "Hibajavitas_EN_Final.m4a" as string | null,
+      },
+    ],
+  },
+  {
+    section: "Competition",
+    minTier: "pr",
+    items: [
+      {
+        id: "comp-day-viz",
+        title: "Competition Day",
+        tagline: "Full meet walkthrough · Personalized",
+        icon: "CM",
+        color: "purple",
+        duration: "~12 min",
+        intro: "A guided 12-minute rehearsal of your entire competition day — from the moment you wake up through each of your nine attempts. Personalized using your focus cues, the audio walks you through weigh-in, warm-ups, waiting, the calls, and each lift in sequence. Full-scenario mental rehearsal significantly reduces meet-day anxiety and primes readiness to perform.",
+        citations: [
+          "Calmels et al. (2004). The use of mental imagery among elite sport performers. Journal of Applied Sport Psychology, 16(2), 157–177.",
+          "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
+          "Jordet (2005). Perceptual training in soccer: An imagery intervention study with elite players. Journal of Applied Sport Psychology, 17(2), 140–156.",
+        ],
+        fileKey: "Verseny_MentalTraining_EN_fin.m4a" as string | null,
+        usesVizKeywords: true,
       },
     ],
   },
@@ -523,6 +613,7 @@ export default function ToolsPage() {
   const [affirmations, setAffirmations]     = React.useState<string[]>([]);
   const [profileLoaded, setProfileLoaded]   = React.useState(false);
   const [aiAccess, setAiAccess]             = React.useState(false);
+  const [planTier, setPlanTier]             = React.useState<PlanTier>("pr"); // optimistic
 
   React.useEffect(() => {
     const stored = localStorage.getItem("relax-favorite");
@@ -536,6 +627,7 @@ export default function ToolsPage() {
         setVizKeywordsMap(p.viz_keywords ?? {});
         setAffirmations(Array.isArray(p.affirmations) ? p.affirmations : []);
         setAiAccess(!!p.ai_access);
+        setPlanTier((p?.plan_tier ?? "opener") as PlanTier);
         setProfileLoaded(true);
       })
       .catch(() => setProfileLoaded(true));
@@ -590,6 +682,8 @@ export default function ToolsPage() {
     }
   };
 
+  // No early paywall — opener tier gets Relaxation tools; other sections show a locked preview.
+
   return (
     <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-8 sm:px-6 max-w-lg mx-auto md:max-w-3xl">
 
@@ -606,8 +700,8 @@ export default function ToolsPage() {
         </p>
       </div>
 
-      {/* ── AI Coach card (ai_access only) ────────────────────── */}
-      {profileLoaded && aiAccess && (
+      {/* ── AI Coach card (PR tier only) ──────────────────────── */}
+      {profileLoaded && (aiAccess || planTier === "pr") && (
         <div className="mb-8">
           <div className="rounded-2xl border border-purple-500/25 bg-purple-500/5 px-5 py-4 flex items-center justify-between gap-4">
             <div className="min-w-0">
@@ -641,99 +735,141 @@ export default function ToolsPage() {
 
       {/* ── Tool sections ─────────────────────────────────────── */}
       <div className="space-y-8">
-        {TOOLS.map(({ section, items }) => (
-          <div key={section}>
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-500 mb-3">
-              {section}
-            </p>
-            <div className="space-y-2">
-              {items.map((tool) => {
-                const c    = COLOR_MAP[tool.color as ToolColor];
-                const open = openId === tool.id;
-                return (
-                  <div
-                    key={tool.id}
-                    id={tool.id}
-                    className={`rounded-2xl border transition-colors ${
-                      open ? `${c.border} ${c.bg}` : "border-white/5 bg-[#17131F]"
-                    }`}
-                  >
-                    {/* Header row */}
-                    <div className="flex items-center">
-                      <button
-                        type="button"
-                        onClick={() => toggle(tool.id)}
-                        className="flex-1 flex items-center gap-4 pl-5 pr-3 py-4 text-left"
-                      >
-                        <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-saira text-[11px] font-bold border ${c.icon}`}>
+        {TOOLS.map(({ section, minTier, items }) => {
+          const sectionUnlocked = !profileLoaded || hasAccess(planTier, minTier);
+
+          return (
+            <div key={section}>
+              <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-500 mb-3">
+                {section}
+              </p>
+
+              {/* ── Locked section preview ─────────────────── */}
+              {!sectionUnlocked ? (
+                <div className="rounded-2xl border border-white/5 bg-[#0D0B14] p-4">
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-saira text-sm text-zinc-600">🔒</span>
+                      <p className="font-saira text-xs text-zinc-500">
+                        {items.length} tool{items.length !== 1 ? "s" : ""} ·{" "}
+                        <span className="text-zinc-400">
+                          {minTier === "pr" ? "PR tier" : "Second tier"} required
+                        </span>
+                      </p>
+                    </div>
+                    <Link
+                      href="/upgrade"
+                      className="flex-shrink-0 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 font-saira text-[10px] uppercase tracking-[0.16em] text-purple-300 transition"
+                    >
+                      Upgrade →
+                    </Link>
+                  </div>
+                  <div className="space-y-1.5 select-none pointer-events-none opacity-[0.22]">
+                    {items.map((tool) => (
+                      <div key={tool.id} className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#17131F] px-4 py-3">
+                        <div className="w-9 h-9 rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center font-saira text-[10px] font-bold text-zinc-500">
                           {tool.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-saira text-sm font-semibold text-white">{tool.title}</p>
-                          <p className="font-saira text-[11px] text-zinc-500">
-                            {tool.tagline}
-                            {tool.duration && <span className="ml-2 text-zinc-700">{tool.duration}</span>}
-                          </p>
+                          <p className="font-saira text-sm font-semibold text-zinc-400">{tool.title}</p>
+                          <p className="font-saira text-[11px] text-zinc-600">{tool.tagline}</p>
                         </div>
-                        <span className={`font-saira text-sm text-zinc-600 transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
-                          →
-                        </span>
-                      </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* ── Unlocked section ─────────────────────── */
+                <div className="space-y-2">
+                  {items.map((tool) => {
+                    const c    = COLOR_MAP[tool.color as ToolColor];
+                    const open = openId === tool.id;
+                    return (
+                      <div
+                        key={tool.id}
+                        id={tool.id}
+                        className={`rounded-2xl border transition-colors ${
+                          open ? `${c.border} ${c.bg}` : "border-white/5 bg-[#17131F]"
+                        }`}
+                      >
+                        {/* Header row */}
+                        <div className="flex items-center">
+                          <button
+                            type="button"
+                            onClick={() => toggle(tool.id)}
+                            className="flex-1 flex items-center gap-4 pl-5 pr-3 py-4 text-left"
+                          >
+                            <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-saira text-[11px] font-bold border ${c.icon}`}>
+                              {tool.icon}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-saira text-sm font-semibold text-white">{tool.title}</p>
+                              <p className="font-saira text-[11px] text-zinc-500">
+                                {tool.tagline}
+                                {tool.duration && <span className="ml-2 text-zinc-700">{tool.duration}</span>}
+                              </p>
+                            </div>
+                            <span className={`font-saira text-sm text-zinc-600 transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
+                              →
+                            </span>
+                          </button>
 
-                      {/* Star — relaxation tools only */}
-                      {section === "Relaxation" && (
-                        <button
-                          type="button"
-                          onClick={() => toggleFavorite(tool.id)}
-                          aria-label={favoriteRelaxId === tool.id ? "Remove favourite" : "Mark as favourite"}
-                          className="pr-5 pl-2 py-4 flex-shrink-0 transition-colors"
-                        >
-                          <span className={`text-lg leading-none ${
-                            favoriteRelaxId === tool.id
-                              ? "text-amber-400"
-                              : "text-zinc-700 hover:text-zinc-400"
-                          }`}>
-                            {favoriteRelaxId === tool.id ? "★" : "☆"}
-                          </span>
-                        </button>
-                      )}
-                    </div>
+                          {/* Star — relaxation tools only */}
+                          {section === "Relaxation" && (
+                            <button
+                              type="button"
+                              onClick={() => toggleFavorite(tool.id)}
+                              aria-label={favoriteRelaxId === tool.id ? "Remove favourite" : "Mark as favourite"}
+                              className="pr-5 pl-2 py-4 flex-shrink-0 transition-colors"
+                            >
+                              <span className={`text-lg leading-none ${
+                                favoriteRelaxId === tool.id
+                                  ? "text-amber-400"
+                                  : "text-zinc-700 hover:text-zinc-400"
+                              }`}>
+                                {favoriteRelaxId === tool.id ? "★" : "☆"}
+                              </span>
+                            </button>
+                          )}
+                        </div>
 
-                    {/* Expanded */}
-                    {open && (
-                      <div className="px-5 pb-6">
-                        <div className={`w-full h-px mb-4 border-t ${c.border}`} />
-                        <p className="font-saira text-[13px] text-zinc-300 leading-relaxed mb-3">{tool.intro}</p>
-                        <ul className="space-y-1 mb-5">
-                          {tool.citations.map((cite, i) => (
-                            <li key={i} className="flex gap-2 items-baseline">
-                              <span className={`text-[9px] flex-shrink-0 ${c.cite}`}>■</span>
-                              <span className={`font-saira text-[10px] leading-snug italic ${c.cite}`}>{cite}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        {tool.id === "affirmations" ? (
-                          <AffirmationsInputs affirmations={affirmations} onSave={saveAffirmations} />
-                        ) : (
-                          <>
-                            {section === "Visualizations" && (
-                              <VizKeywords
-                                toolId={tool.id}
-                                keywords={vizKeywordsMap[tool.id] ?? []}
-                                onSave={(kws) => saveVizKeywords(tool.id, kws)}
-                              />
+                        {/* Expanded */}
+                        {open && (
+                          <div className="px-5 pb-6">
+                            <div className={`w-full h-px mb-4 border-t ${c.border}`} />
+                            <p className="font-saira text-[13px] text-zinc-300 leading-relaxed mb-3">{tool.intro}</p>
+                            <ul className="space-y-1 mb-5">
+                              {tool.citations.map((cite, i) => (
+                                <li key={i} className="flex gap-2 items-baseline">
+                                  <span className={`text-[9px] flex-shrink-0 ${c.cite}`}>■</span>
+                                  <span className={`font-saira text-[10px] leading-snug italic ${c.cite}`}>{cite}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {tool.id === "affirmations" ? (
+                              <AffirmationsInputs affirmations={affirmations} onSave={saveAffirmations} />
+                            ) : (
+                              <>
+                                {tool.usesVizKeywords && (
+                                  <VizKeywords
+                                    toolId={tool.id}
+                                    keywords={vizKeywordsMap[tool.id] ?? []}
+                                    onSave={(kws) => saveVizKeywords(tool.id, kws)}
+                                  />
+                                )}
+                                <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
+                              </>
                             )}
-                            <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
-                          </>
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* ── Suggest a tool ───────────────────────────────────── */}
         <div>

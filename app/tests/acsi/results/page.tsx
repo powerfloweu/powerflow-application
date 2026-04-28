@@ -258,11 +258,13 @@ export default function AcsiResultsPage() {
               });
           }
 
-          // Check 4: profile-level test_access flag
+          // Check 4: profile-level test_access flag OR second/pr tier
           fetch("/api/me")
             .then((r) => r.ok ? r.json() : null)
             .then((profile) => {
-              if (profile?.test_access === true) setUnlocked(true);
+              const tier = profile?.plan_tier ?? "opener";
+              const tierOk = tier === "second" || tier === "pr";
+              if (profile?.test_access === true || tierOk) setUnlocked(true);
             })
             .catch(() => {});
         }

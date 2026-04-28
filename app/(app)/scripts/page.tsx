@@ -52,15 +52,17 @@ export default function ScriptsPage() {
       fetch("/api/scripts").then((r) => r.json()),
     ])
       .then(([profile, data]) => {
-        if (!profile?.ai_access) {
-          router.replace("/library");
+        const tier = profile?.plan_tier ?? "opener";
+        const tierOk = tier === "second" || tier === "pr";
+        if (!tierOk) {
+          router.replace("/upgrade");
           return;
         }
         if (Array.isArray(data)) {
           setScripts(data);
         }
       })
-      .catch(() => router.replace("/library"))
+      .catch(() => router.replace("/upgrade"))
       .finally(() => setLoading(false));
   }, [router]);
 

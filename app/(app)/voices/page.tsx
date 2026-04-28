@@ -52,9 +52,11 @@ export default function VoicesCastPage() {
 
       if (meRes.ok) {
         const p: AthleteProfile = await meRes.json();
-        // Gate: require ai_access + beta_voice_work mode
-        if (!p?.ai_access || p.self_talk_mode !== "beta_voice_work") {
-          router.replace("/you");
+        // Gate: require Second tier (or above) + beta_voice_work mode enabled
+        const tier = p?.plan_tier ?? "opener";
+        const tierOk = tier === "second" || tier === "pr";
+        if (!tierOk || p.self_talk_mode !== "beta_voice_work") {
+          router.replace(!tierOk ? "/upgrade" : "/you");
           return;
         }
         setProfile(p);

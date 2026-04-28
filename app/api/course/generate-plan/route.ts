@@ -67,6 +67,8 @@ const TARGET_MIN = 12;
 type ProfileRow = {
   id: string;
   course_access: boolean;
+  plan_tier: string | null;
+  role: string | null;
   mental_goals: string[] | null;
   main_barrier: string | null;
   confidence_break: string | null;
@@ -244,7 +246,7 @@ export async function POST() {
   const profileRows = await dbSelect<ProfileRow>("profiles", {
     id: `eq.${user.id}`,
     select: [
-      "id", "course_access", "mental_goals", "main_barrier", "confidence_break",
+      "id", "course_access", "plan_tier", "role", "mental_goals", "main_barrier", "confidence_break",
       "overthinking_focus", "self_confidence_reg", "self_focus_fatigue",
       "self_handling_pressure", "self_competition_anxiety", "self_emotional_recovery",
       "years_powerlifting", "meet_date", "coach_id",
@@ -254,8 +256,13 @@ export async function POST() {
   if (!profileRows.length) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   const profile = profileRows[0];
 
-  if (!profile.course_access) {
-    return NextResponse.json({ error: "Course access required" }, { status: 403 });
+  // Need PR tier or legacy course_access flag
+  const { canAccessPR } = await import("@/lib/plan");
+  const hasCourseAccess =
+    profile.course_access ||
+    canAccessPR((profile.plan_tier ?? "opener") as import("@/lib/plan").PlanTier);
+  if (!hasCourseAccess) {
+    return NextResponse.json({ error: "PR tier required for course" }, { status: 403 });
   }
 
   // Fetch recent journal themes (last 20 entries)
