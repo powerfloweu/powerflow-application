@@ -3,8 +3,10 @@
 import React from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useT } from "@/lib/i18n";
 
 function SignInContent() {
+  const { t } = useT();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/today";
   const role = searchParams.get("role") ?? (next.startsWith("/coach") ? "coach" : "athlete");
@@ -49,13 +51,13 @@ function SignInContent() {
         {/* Logo / wordmark */}
         <div className="mb-8 text-center">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.36em] text-purple-300 mb-2">
-            PowerFlow
+            {t("brand.name")}
           </p>
           <h1 className="font-saira text-2xl font-extrabold uppercase tracking-[0.1em] text-white">
-            Welcome back
+            {t("auth.welcomeBack")}
           </h1>
           <p className="mt-2 font-saira text-sm text-zinc-500">
-            Sign in to access your journal and coaching tools.
+            {t("auth.welcomeSubtitle")}
           </p>
         </div>
 
@@ -74,12 +76,12 @@ function SignInContent() {
             ) : (
               <GoogleIcon />
             )}
-            {loading === "athlete" ? "Redirecting…" : "Sign in as Athlete"}
+            {loading === "athlete" ? t("auth.redirecting") : t("auth.signInAsAthlete")}
           </button>
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-white/5" />
-            <span className="font-saira text-[10px] text-zinc-700 uppercase tracking-[0.2em]">or</span>
+            <span className="font-saira text-[10px] text-zinc-700 uppercase tracking-[0.2em]">{t("auth.or")}</span>
             <div className="flex-1 h-px bg-white/5" />
           </div>
 
@@ -95,7 +97,7 @@ function SignInContent() {
             ) : (
               <GoogleIcon />
             )}
-            {loading === "coach" ? "Redirecting…" : "Sign in as Coach"}
+            {loading === "coach" ? t("auth.redirecting") : t("auth.signInAsCoach")}
           </button>
 
           {error && (
@@ -105,9 +107,9 @@ function SignInContent() {
 
         {/* Footer note */}
         <p className="mt-6 text-center font-saira text-[11px] text-zinc-700 leading-relaxed">
-          Your data is private. Athletes see only their own journal.
+          {t("auth.privacyNote")}
           <br />
-          Coaches see their invited athletes only.
+          {t("auth.privacyNote2")}
         </p>
       </div>
     </div>
