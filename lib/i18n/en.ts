@@ -149,7 +149,7 @@ export const en = {
     inProgress: "In progress",
     locked: "Locked",
     unlocks: "Unlocks next",
-    practiceCount: "{count}/{target} sessions",
+    practiceCount: "{count} / {target} sessions",
     targetReached: "Target reached — keep going if you like",
     sessionsRemaining: "{count} more to complete this module",
     goalMet: "Goal met ✓",
@@ -171,6 +171,12 @@ export const en = {
     sectionUseTool: "Use this tool",
     sectionPractise: "Practise",
     sectionDailyPractice: "Daily practice",
+
+    pillVideo: "Video",
+    pillExercise: "Exercise",
+    pillReflect: "Reflect",
+    pillPractice: "{count}/{target} practice",
+    backToCourseShort: "← Back to course",
 
     // Reflection bottom sheet
     reflectionTextTab: "Text",

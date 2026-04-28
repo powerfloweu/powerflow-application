@@ -13,11 +13,13 @@ import {
   type CourseProgressRow,
   type CourseAnswerRow,
 } from "@/lib/course";
+import { useT } from "@/lib/i18n";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ModuleDetailPage() {
   const router = useRouter();
+  const { t } = useT();
   const { slug } = useParams<{ slug: string }>();
   const mod = getModule(slug);
 
@@ -164,9 +166,9 @@ export default function ModuleDetailPage() {
   if (!loading && !mod) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-6">
-        <p className="font-saira text-sm text-zinc-400">Module not found.</p>
+        <p className="font-saira text-sm text-zinc-400">{t("course.moduleNotFound")}</p>
         <button onClick={() => router.push("/course")}
-          className="font-saira text-xs text-purple-300 underline">← Back to course</button>
+          className="font-saira text-xs text-purple-300 underline">{t("course.backToCourseShort")}</button>
       </div>
     );
   }
@@ -186,7 +188,7 @@ export default function ModuleDetailPage() {
         {/* ── Back ──────────────────────────────────────────────────────────── */}
         <button type="button" onClick={() => router.push("/course")}
           className="mb-4 font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.18em] transition">
-          ← Course
+          {t("course.backToCourse")}
         </button>
 
         {/* ── Hero ──────────────────────────────────────────────────────────── */}
@@ -201,7 +203,7 @@ export default function ModuleDetailPage() {
                 ? "border-purple-500/30 bg-purple-500/10 text-purple-400"
                 : "border-white/10 bg-white/5 text-zinc-500"
             }`}>
-              {isPractice ? "Practice" : "Insight"}
+              {isPractice ? t("course.modulePractice") : t("course.moduleInsight")}
             </span>
           </div>
           <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-1">
@@ -213,13 +215,13 @@ export default function ModuleDetailPage() {
 
           {/* Step pills */}
           <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <StepPill done={steps.video}    label="Video"    />
-            <StepPill done={steps.exercise} label="Exercise" />
-            <StepPill done={steps.quiz}     label="Reflect"  />
+            <StepPill done={steps.video}    label={t("course.pillVideo")}    />
+            <StepPill done={steps.exercise} label={t("course.pillExercise")} />
+            <StepPill done={steps.quiz}     label={t("course.pillReflect")}  />
             {isPractice && (
               <StepPill
                 done={steps.practiceGoal}
-                label={`${steps.practiceCount}/${steps.practiceTarget} practice`}
+                label={t("course.pillPractice", { count: steps.practiceCount, target: steps.practiceTarget })}
               />
             )}
           </div>
@@ -227,7 +229,7 @@ export default function ModuleDetailPage() {
 
         {/* ── Watch ─────────────────────────────────────────────────────────── */}
         <section className="mb-6">
-          <SectionLabel icon="▶" label="Watch" />
+          <SectionLabel icon="▶" label={t("course.sectionWatch")} />
           <VidyardPlayer uuid={mod.vidyardUuid ?? ""} title={mod.title} onPlay={markVideoDone} />
         </section>
 
@@ -248,7 +250,7 @@ export default function ModuleDetailPage() {
 
         {/* ── Reflect ───────────────────────────────────────────────────────── */}
         <section className="mb-6">
-          <SectionLabel icon="?" label="Reflect" />
+          <SectionLabel icon="?" label={t("course.sectionReflect")} />
           <div className="space-y-2">
             {mod.questions.map((q) => {
               const answered = !!(answers[q.id]?.trim());
@@ -275,7 +277,7 @@ export default function ModuleDetailPage() {
                     )}
                   </div>
                   <span className="font-saira text-sm text-zinc-600 group-hover:text-purple-400 transition flex-shrink-0 mt-0.5">
-                    {answered ? "Edit" : "→"}
+                    {answered ? t("common.edit") : "→"}
                   </span>
                 </button>
               );
@@ -286,7 +288,7 @@ export default function ModuleDetailPage() {
         {/* ── Downloads ─────────────────────────────────────────────────────── */}
         {mod.downloads && mod.downloads.length > 0 && (
           <section className="mb-6">
-            <SectionLabel icon="↓" label="Worksheets" />
+            <SectionLabel icon="↓" label={t("course.sectionWorksheets")} />
             <div className="space-y-3">
               {mod.downloads.map((dl) => (
                 <div key={dl.url} className="rounded-2xl border border-white/8 bg-[#17131F] p-4">
@@ -315,7 +317,7 @@ export default function ModuleDetailPage() {
         {/* ── Use this tool ─────────────────────────────────────────────────── */}
         {mod.toolLinks && mod.toolLinks.length > 0 && (
           <section className="mb-6">
-            <SectionLabel icon="→" label="Use this tool" />
+            <SectionLabel icon="→" label={t("course.sectionUseTool")} />
             <div className="space-y-2">
               {mod.toolLinks.map((tl) => (
                 <a
@@ -350,7 +352,7 @@ export default function ModuleDetailPage() {
         {/* ── Practise (exercise) ───────────────────────────────────────────── */}
         {mod.exercise && (
           <section className="mb-6">
-            <SectionLabel icon="◐" label="Practise" />
+            <SectionLabel icon="◐" label={t("course.sectionPractise")} />
             <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.04] p-5">
               <p className="font-saira text-sm font-semibold text-purple-200 mb-1">{mod.exercise.title}</p>
               <p className="font-saira text-[13px] text-zinc-300 leading-relaxed mb-4">{mod.exercise.body}</p>
@@ -371,22 +373,22 @@ export default function ModuleDetailPage() {
         {/* ── Practice log (practice modules only) ──────────────────────────── */}
         {isPractice && (
           <section className="mb-6">
-            <SectionLabel icon="◆" label="Daily practice" />
+            <SectionLabel icon="◆" label={t("course.sectionDailyPractice")} />
             <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="font-saira text-sm text-white font-semibold">
-                    {steps.practiceCount} / {steps.practiceTarget} sessions
+                    {t("course.practiceCount", { count: steps.practiceCount, target: steps.practiceTarget })}
                   </p>
                   <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
                     {steps.practiceGoal
-                      ? "Target reached — keep going if you like"
-                      : `${steps.practiceTarget - steps.practiceCount} more to complete this module`}
+                      ? t("course.targetReached")
+                      : t("course.sessionsRemaining", { count: steps.practiceTarget - steps.practiceCount })}
                   </p>
                 </div>
                 {steps.practiceGoal && (
                   <span className="font-saira text-[10px] text-emerald-400 border border-emerald-500/30 rounded-full px-2 py-0.5">
-                    Goal met ✓
+                    {t("course.goalMet")}
                   </span>
                 )}
               </div>
@@ -412,8 +414,8 @@ export default function ModuleDetailPage() {
                 {practiceLogging
                   ? <span className="w-4 h-4 rounded-full border-2 border-purple-400/30 border-t-purple-400 animate-spin" />
                   : practiceJustLogged
-                  ? "Logged ✓"
-                  : "Log today's practice"}
+                  ? t("course.logged")
+                  : t("course.logPractice")}
               </button>
             </div>
           </section>
@@ -422,18 +424,18 @@ export default function ModuleDetailPage() {
         {/* ── Complete / status ──────────────────────────────────────────────── */}
         {progress?.completed_at ? (
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-center">
-            <p className="font-saira text-sm font-semibold text-emerald-300 mb-1">Module complete ✓</p>
+            <p className="font-saira text-sm font-semibold text-emerald-300 mb-1">{t("course.moduleComplete")}</p>
             <p className="font-saira text-xs text-zinc-500">
               {isPractice && !steps.practiceGoal
-                ? "Content done — keep logging practice sessions."
-                : "Great work. Head back to your plan for the next module."}
+                ? t("course.contentDoneKeepPracticing")
+                : t("course.greatWork")}
             </p>
             <button
               type="button"
               onClick={() => router.push("/course")}
               className="mt-3 font-saira text-xs text-purple-300 hover:text-white transition underline underline-offset-2"
             >
-              Back to plan →
+              {t("course.backToPlan")}
             </button>
           </div>
         ) : (
@@ -442,15 +444,15 @@ export default function ModuleDetailPage() {
             onClick={markComplete}
             disabled={completing || !steps.contentDone}
             className="w-full rounded-2xl py-4 font-saira text-sm font-semibold uppercase tracking-[0.16em] transition bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-40 disabled:cursor-not-allowed"
-            title={!steps.contentDone ? "Complete the video, exercise and reflections first" : undefined}
+            title={!steps.contentDone ? t("course.completeContentFirst") : undefined}
           >
-            {completing ? "…" : isPractice ? "Mark content complete" : "Mark module complete"}
+            {completing ? "…" : isPractice ? t("course.markContentComplete") : t("course.markComplete")}
           </button>
         )}
 
         {isPractice && !progress?.completed_at && steps.contentDone && !steps.practiceGoal && (
           <p className="font-saira text-[11px] text-zinc-600 text-center mt-2">
-            Marking content complete unlocks the next module. Keep logging practice sessions in parallel.
+            {t("course.keepLoggingPractice")}
           </p>
         )}
       </div>
@@ -465,7 +467,7 @@ export default function ModuleDetailPage() {
             <button type="button" onClick={saveAnswer}
               disabled={sheetSaving || !sheetText.trim()}
               className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-3 font-saira text-xs font-semibold uppercase tracking-[0.16em] text-white transition">
-              {sheetSaving ? "Saving…" : sheetSaved ? "Saved ✓" : "Save reflection"}
+              {sheetSaving ? t("common.saving") : sheetSaved ? t("common.saved") : t("course.saveReflection")}
             </button>
           ) : undefined
         }
@@ -478,7 +480,7 @@ export default function ModuleDetailPage() {
                   className={`flex-1 rounded-lg py-2 font-saira text-xs uppercase tracking-[0.16em] transition ${
                     sheetTab === tab ? "bg-purple-600 text-white" : "text-zinc-500 hover:text-zinc-300"
                   }`}>
-                  {tab === "text" ? "Text" : "Voice"}
+                  {tab === "text" ? t("course.reflectionTextTab") : t("course.reflectionVoiceTab")}
                 </button>
               ))}
             </div>
@@ -486,7 +488,7 @@ export default function ModuleDetailPage() {
               <textarea
                 value={sheetText}
                 onChange={(e) => { setSheetText(e.target.value); setSheetSaved(false); }}
-                placeholder={activeQ.placeholder ?? "Write your reflection…"}
+                placeholder={activeQ.placeholder ?? t("course.reflectionPlaceholder")}
                 rows={6}
                 autoFocus
                 className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark]"
@@ -494,12 +496,12 @@ export default function ModuleDetailPage() {
             ) : (
               <div className="flex flex-col items-center gap-4 py-8 text-center">
                 <div className="w-14 h-14 rounded-full border border-purple-500/30 bg-purple-500/10 flex items-center justify-center text-2xl">🎙</div>
-                <p className="font-saira text-sm font-semibold text-white">Voice answers coming soon</p>
+                <p className="font-saira text-sm font-semibold text-white">{t("course.voiceAnswersComing")}</p>
                 <p className="font-saira text-xs text-zinc-500 max-w-[260px]">
-                  Audio recording will be available in the next update. Use text for now.
+                  {t("course.voiceAnswersHint")}
                 </p>
                 <button type="button" onClick={() => setSheetTab("text")}
-                  className="font-saira text-xs text-purple-300 underline">Switch to text</button>
+                  className="font-saira text-xs text-purple-300 underline">{t("course.switchToText")}</button>
               </div>
             )}
           </div>

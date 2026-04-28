@@ -149,7 +149,7 @@ export const de: Dict = {
     inProgress: "In Bearbeitung",
     locked: "Gesperrt",
     unlocks: "Schaltet als Nächstes frei",
-    practiceCount: "{count}/{target} Sessions",
+    practiceCount: "{count} / {target} Sessions",
     targetReached: "Ziel erreicht — mach gerne weiter",
     sessionsRemaining: "Noch {count} bis zum Abschluss dieses Moduls",
     goalMet: "Ziel erreicht ✓",
@@ -170,6 +170,12 @@ export const de: Dict = {
     sectionUseTool: "Dieses Tool nutzen",
     sectionPractise: "Üben",
     sectionDailyPractice: "Tägliche Praxis",
+
+    pillVideo: "Video",
+    pillExercise: "Übung",
+    pillReflect: "Reflexion",
+    pillPractice: "{count}/{target} Übungen",
+    backToCourseShort: "← Zurück zum Kurs",
 
     reflectionTextTab: "Text",
     reflectionVoiceTab: "Sprache",
