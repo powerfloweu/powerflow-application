@@ -25,11 +25,14 @@ function initials(name: string): string {
     .join("");
 }
 
+// text-base (16px) on mobile prevents iOS Safari from auto-zooming when the
+// input is focused. We drop to text-sm at sm: breakpoint where the keyboard
+// behaviour doesn't apply.
 const inputCls =
-  "w-full rounded-xl border border-purple-500/25 bg-[#0D0B14] px-3 py-3 font-saira text-sm text-white focus:outline-none focus:border-purple-500/60 placeholder-zinc-600";
+  "w-full rounded-xl border border-purple-500/25 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white focus:outline-none focus:border-purple-500/60 placeholder-zinc-600 [color-scheme:dark]";
 
 const textareaCls =
-  "w-full rounded-xl border border-purple-500/25 bg-[#0D0B14] px-3 py-3 font-saira text-sm text-white focus:outline-none focus:border-purple-500/60 placeholder-zinc-600 resize-none";
+  "w-full rounded-xl border border-purple-500/25 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white focus:outline-none focus:border-purple-500/60 placeholder-zinc-600 resize-none [color-scheme:dark]";
 
 const pillCls = (active: boolean) =>
   `flex-1 rounded-xl border py-3 font-saira text-sm font-semibold transition ${
@@ -48,11 +51,12 @@ const dayBtnCls = (active: boolean) =>
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function ProgressBar({ step, total }: { step: number; total: number }) {
+  const { t } = useT();
   return (
-    <div className="mb-8">
+    <div className="mb-6 sm:mb-8">
       <div className="flex items-center justify-between mb-2">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400">
-          Step {step} of {total}
+          {t("onboarding.stepOf", { step, total })}
         </p>
         <p className="font-saira text-[10px] text-zinc-500">
           {Math.round((step / total) * 100)}%
@@ -88,13 +92,15 @@ function ScaleSelector({
   return (
     <div className="space-y-2">
       <SectionLabel>{label}</SectionLabel>
-      <div className="flex flex-wrap gap-1.5">
+      {/* grid-cols-10 forces all 10 buttons onto a single row that scales
+          with the container — no wrap, no horizontal overflow on small phones */}
+      <div className="grid grid-cols-10 gap-1 sm:gap-1.5">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
           <button
             key={n}
             type="button"
             onClick={() => onChange(n)}
-            className={`w-9 h-9 rounded-xl border font-saira text-sm font-semibold transition ${
+            className={`aspect-square rounded-lg sm:rounded-xl border font-saira text-xs sm:text-sm font-semibold transition ${
               value === n
                 ? "border-purple-500 bg-purple-600 text-white"
                 : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
@@ -804,18 +810,34 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050608] flex flex-col">
+    /*
+     * Layout strategy (mobile-first):
+     *   - Outer div uses normal page scroll (NO `flex flex-col` + internal
+     *     `overflow-y-auto`). Internal-scroll patterns fight iOS Safari's
+     *     keyboard-aware scroll-into-view, which caused two symptoms before:
+     *       1. Tapping any field jumped the scroll position to the last input.
+     *       2. The keyboard covered focused fields without auto-correcting.
+     *   - Footer is `fixed` at bottom-0 with safe-area inset padding so it
+     *     stays glued to the bottom across iOS notch / Android nav bar.
+     *   - Content gets `pb-32` to leave room above the fixed footer.
+     */
+    <div
+      className="min-h-screen bg-[#050608]"
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+      }}
+    >
       {/* Header */}
-      <div className="px-5 pt-12 pb-0 max-w-lg mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400">
+      <div className="px-5 pt-8 sm:pt-12 max-w-lg mx-auto w-full">
+        <div className="flex items-center justify-between mb-5 sm:mb-6 gap-3">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 truncate">
             {t("brand.name").toUpperCase()} · {t("onboarding.pageLabel")}
           </p>
           <button
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="font-saira text-xs font-semibold text-zinc-300 hover:text-white border border-white/15 hover:border-white/30 rounded-lg px-3 py-1.5 transition disabled:opacity-40"
+            className="font-saira text-xs font-semibold text-zinc-300 hover:text-white border border-white/15 hover:border-white/30 rounded-lg px-3 py-1.5 transition disabled:opacity-40 flex-shrink-0"
           >
             {t("onboarding.skipSetup")}
           </button>
@@ -823,8 +845,8 @@ export default function OnboardingPage() {
         <ProgressBar step={step} total={TOTAL_STEPS} />
       </div>
 
-      {/* Step content */}
-      <div className="flex-1 px-5 pb-4 max-w-lg mx-auto w-full overflow-y-auto">
+      {/* Step content — `pb-32` keeps the last field clear of the fixed footer */}
+      <div className="px-5 pb-32 max-w-lg mx-auto w-full">
         {step === 1 && (
           <Step1
             displayName={displayName} setDisplayName={setDisplayName}
@@ -884,9 +906,17 @@ export default function OnboardingPage() {
         )}
       </div>
 
-      {/* Footer buttons */}
-      <div className="px-5 pb-10 pt-4 max-w-lg mx-auto w-full">
-        <div className="flex gap-3">
+      {/* Footer buttons — fixed to viewport bottom so the user always knows
+          where to tap "next". Safe-area inset accounts for the iPhone home
+          indicator. The translucent backdrop + blur keeps content readable
+          when scrolling under it. */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-30 bg-[#050608]/90 backdrop-blur-md border-t border-white/5 px-5 pt-4"
+        style={{
+          paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
+        }}
+      >
+        <div className="max-w-lg mx-auto w-full flex gap-3">
           {step > 1 && (
             <button
               type="button"

@@ -267,6 +267,26 @@ export default function PowerFlowApplicationPage() {
   const goNext = () => setStep((s) => Math.min(s + 1, totalSteps - 1));
   const goBack = () => setStep((s) => Math.max(s - 1, 0));
 
+  // Scroll the form section to the top of the viewport whenever the step
+  // changes. Without this, mobile users see the new step rendered "wherever
+  // their finger was" — typically deep inside the section, making it look
+  // like the form jumped to the last question they filled.
+  //
+  // We do this in an effect (not inside goNext/goBack) so the scroll runs
+  // AFTER React has committed the new step's DOM. Skip the very first render
+  // (step === 0) so loading the page doesn't auto-scroll to the form.
+  const isFirstStepEffect = React.useRef(true);
+  React.useEffect(() => {
+    if (isFirstStepEffect.current) {
+      isFirstStepEffect.current = false;
+      return;
+    }
+    if (typeof window === "undefined") return;
+    const el = document.getElementById("application-form");
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [step]);
+
   const handleFinalSubmit = async () => {
     if (step !== totalSteps - 1) return;
     if (!formRef.current) return;
@@ -520,10 +540,13 @@ export default function PowerFlowApplicationPage() {
           <div className="mt-8 w-full max-w-3xl overflow-hidden rounded-3xl border border-purple-500/25 bg-gradient-to-br from-purple-600/20 via-fuchsia-500/15 to-transparent px-6 py-8 shadow-[0_30px_120px_rgba(126,34,206,0.25)] sm:px-10 sm:py-10">
             <div className="pointer-events-none absolute left-1/2 top-12 h-40 w-40 -translate-x-1/2 rounded-full bg-purple-500/25 blur-3xl" />
             <div className="pointer-events-none absolute right-10 bottom-8 h-36 w-36 rounded-full bg-fuchsia-400/20 blur-3xl" />
-            <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-200/90">
+            <p className="font-saira text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] sm:tracking-[0.28em] text-purple-200/90">
               {t.heroTagline}
             </p>
-            <h1 className="mt-4 font-saira text-4xl font-extrabold uppercase tracking-[0.16em] sm:text-5xl">
+            {/* Tighter tracking + smaller size on mobile so the title never
+                overflows the gradient card on narrow phones. break-words
+                prevents long compound German words from breaking the layout. */}
+            <h1 className="mt-4 font-saira text-3xl font-extrabold uppercase tracking-[0.08em] sm:text-5xl sm:tracking-[0.16em] break-words">
               {t.heroTitle}
             </h1>
             <p className="mt-5 max-w-2xl font-saira text-sm text-zinc-100 sm:text-base">
@@ -549,7 +572,9 @@ export default function PowerFlowApplicationPage() {
       {/* Form */}
       <section
         id="application-form"
-        className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8"
+        // scroll-mt offsets the fixed NavBar (≈56px) when scrollIntoView
+        // aligns the section to the viewport top, so the heading isn't hidden.
+        className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16 lg:px-8 scroll-mt-20"
       >
         {submitted ? (
           <div className="space-y-6 rounded-3xl border border-purple-500/25 bg-gradient-to-br from-purple-600/20 via-fuchsia-500/10 to-transparent p-8 text-center shadow-[0_30px_120px_rgba(126,34,206,0.25)]">
@@ -665,11 +690,13 @@ type FormCardProps = {
 
 function FormCard({ title, children }: FormCardProps) {
   return (
-    <section className="rounded-2xl border border-white/5 bg-[#13151A] p-6 shadow-[0_18px_50px_rgba(0,0,0,0.55)] sm:p-8">
-      <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
+    <section className="rounded-2xl border border-white/5 bg-[#13151A] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.55)] sm:p-8">
+      {/* tracking-[0.28em] was overflowing on narrow phones with longer
+          German titles. Tighter tracking on mobile, full tracking from sm: up. */}
+      <h2 className="font-saira text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] sm:tracking-[0.28em] text-purple-300">
         {title}
       </h2>
-      <div className="mt-6 space-y-5">{children}</div>
+      <div className="mt-5 sm:mt-6 space-y-5">{children}</div>
     </section>
   );
 }
@@ -725,7 +752,10 @@ function TextField({
           required={required}
           onChange={onChange}
           value={value}
-          className="w-full rounded-xl border border-zinc-700/70 bg-[#0D0F14] px-3 py-2.5 font-saira text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40"
+          // text-base on mobile (16px) prevents iOS Safari from auto-zooming
+          // the page when the input gains focus. Drops to text-sm at sm: where
+          // the keyboard-zoom behaviour does not apply.
+          className="w-full rounded-xl border border-zinc-700/70 bg-[#0D0F14] px-3 py-2.5 font-saira text-base sm:text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40 [color-scheme:dark]"
         />
         {type === "date" && showPickerButton && (
           <button
@@ -769,7 +799,8 @@ function TextareaField({
         name={id}
         required={required}
         rows={4}
-        className="w-full rounded-xl border border-zinc-700/70 bg-[#0D0F14] px-3 py-2.5 font-saira text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40"
+        // text-base on mobile prevents iOS Safari focus-zoom (see TextField)
+        className="w-full rounded-xl border border-zinc-700/70 bg-[#0D0F14] px-3 py-2.5 font-saira text-base sm:text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40 resize-y"
       />
     </div>
   );
@@ -785,13 +816,15 @@ type FieldLabelProps = {
 function FieldLabel({ label, description, required, hint }: FieldLabelProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="flex items-center gap-2 font-saira text-xs font-semibold uppercase tracking-[0.18em] text-zinc-200">
-        <span>{label}</span>
+      {/* flex-wrap ensures long labels (German compounds) wrap cleanly instead
+          of pushing the hint icon off-screen */}
+      <label className="flex flex-wrap items-center gap-x-2 gap-y-1 font-saira text-xs font-semibold uppercase tracking-[0.14em] sm:tracking-[0.18em] text-zinc-200">
+        <span className="break-words">{label}</span>
+        {required && <span className="text-purple-300">*</span>}
         {hint && <Hint text={hint} />}
-        {required && <span className="ml-1 text-purple-300">*</span>}
       </label>
       {description && (
-        <p className="font-saira text-[11px] text-zinc-500">{description}</p>
+        <p className="font-saira text-[11px] leading-snug text-zinc-500">{description}</p>
       )}
     </div>
   );
@@ -803,7 +836,13 @@ function Hint({ text }: { text: string }) {
       <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-purple-400/60 bg-white/5 text-[10px] text-purple-200">
         i
       </span>
-      <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 hidden w-max max-w-[220px] -translate-x-1/2 rounded-md bg-[#0B0C10] px-3 py-2 text-[11px] text-zinc-100 shadow-lg ring-1 ring-purple-500/50 group-hover:block group-focus-within:block">
+      {/*
+       * Anchor the tooltip to the LEFT edge of the icon (not centered) so it
+       * never overflows the right side of the screen on mobile. Cap width at
+       * 80vw on phones so it always fits within the viewport regardless of
+       * where the icon sits horizontally.
+       */}
+      <span className="pointer-events-none absolute left-0 top-full z-10 mt-2 hidden w-max max-w-[80vw] sm:max-w-[260px] rounded-md bg-[#0B0C10] px-3 py-2 text-[11px] leading-snug text-zinc-100 shadow-lg ring-1 ring-purple-500/50 group-hover:block group-focus-within:block">
         {text}
       </span>
     </span>
@@ -872,11 +911,13 @@ function ScaleRow({ name, label, description }: ScaleRowProps) {
           <span>10</span>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
+      {/* grid-cols-10 keeps all 10 buttons on a single row that scales with
+          the container — eliminates the awkward 2-row wrap on small phones. */}
+      <div className="grid grid-cols-10 gap-1 sm:gap-2">
         {scale.map((value) => (
           <label
             key={value}
-            className="inline-flex cursor-pointer"
+            className="flex cursor-pointer items-center justify-center"
           >
             <input
               type="radio"
@@ -884,7 +925,7 @@ function ScaleRow({ name, label, description }: ScaleRowProps) {
               value={value}
               className="peer sr-only"
             />
-            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700/80 bg-[#0D0F14] text-[11px] font-saira text-zinc-100 transition hover:border-purple-400 peer-checked:scale-110 peer-checked:border-purple-400 peer-checked:bg-purple-500 peer-checked:text-white peer-checked:shadow-[0_0_25px_rgba(168,85,247,0.35)]">
+            <span className="flex aspect-square w-full items-center justify-center rounded-full border border-zinc-700/80 bg-[#0D0F14] text-[11px] sm:text-xs font-saira text-zinc-100 transition hover:border-purple-400 peer-checked:scale-110 peer-checked:border-purple-400 peer-checked:bg-purple-500 peer-checked:text-white peer-checked:shadow-[0_0_25px_rgba(168,85,247,0.35)]">
               {value}
             </span>
           </label>
