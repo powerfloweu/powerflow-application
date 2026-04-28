@@ -10,18 +10,25 @@ import type { AthleteProfile } from "@/lib/athlete";
 import { type TrainingEntry } from "@/lib/training";
 import { ymdLocal } from "@/lib/date";
 import { markCheckinDone } from "@/lib/checkinReminder";
+import { useT } from "@/lib/i18n";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function greeting(): string {
+function greetingKey(): "today.greetingMorning" | "today.greetingAfternoon" | "today.greetingEvening" {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "today.greetingMorning";
+  if (h < 17) return "today.greetingAfternoon";
+  return "today.greetingEvening";
 }
 
-function formatDate(): string {
-  return new Date().toLocaleDateString("en-GB", {
+function localeForDate(loc: string): string {
+  if (loc === "de") return "de-DE";
+  if (loc === "hu") return "hu-HU";
+  return "en-GB";
+}
+
+function formatDate(loc: string): string {
+  return new Date().toLocaleDateString(localeForDate(loc), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -41,6 +48,7 @@ function todayKey() {
 
 export default function TodayPage() {
   const router = useRouter();
+  const { t, locale } = useT();
   const [profile, setProfile]           = React.useState<AthleteProfile | null>(null);
   const [loading, setLoading]           = React.useState(true);
 
@@ -141,24 +149,24 @@ export default function TodayPage() {
       {/* ── Greeting ──────────────────────────────────────────── */}
       <div className="mb-8">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
-          POWERFLOW · HOME
+          {t("brand.name").toUpperCase()} · {t("today.pageLabel")}
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-1">
-          {greeting()}{profile ? `, ${firstName(profile.display_name)}` : ""}
+          {t(greetingKey())}{profile ? `, ${firstName(profile.display_name)}` : ""}
         </h1>
-        <p className="font-saira text-sm text-zinc-500">{formatDate()}</p>
+        <p className="font-saira text-sm text-zinc-500">{formatDate(locale)}</p>
       </div>
 
       {/* ── Today ✓ card ──────────────────────────────────────── */}
       <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 mb-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="font-saira text-xs font-semibold text-emerald-300">Today ✓</span>
+          <span className="font-saira text-xs font-semibold text-emerald-300">{t("today.todayDone")}</span>
           <span className={`rounded-full border px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] ${
             todayEntry.is_training_day
               ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
               : "border-zinc-600/40 bg-zinc-600/10 text-zinc-400"
           }`}>
-            {todayEntry.is_training_day ? "Training" : "Rest"}
+            {todayEntry.is_training_day ? t("today.training") : t("today.rest")}
           </span>
         </div>
         <button
@@ -166,7 +174,7 @@ export default function TodayPage() {
           onClick={() => setTodayEntry(null)}
           className="flex-shrink-0 font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
         >
-          Change
+          {t("today.change")}
         </button>
       </div>
 
@@ -176,7 +184,7 @@ export default function TodayPage() {
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
               <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-2">
-                Training phase
+                {t("today.trainingPhase")}
               </p>
               <PhaseBadge phase={phase.phase} />
             </div>
@@ -185,7 +193,7 @@ export default function TodayPage() {
                 {phase.daysUntil}
               </p>
               <p className="font-saira text-[10px] text-zinc-500 uppercase tracking-[0.14em]">
-                days to go
+                {t("today.daysToGo")}
               </p>
             </div>
           </div>
@@ -205,10 +213,10 @@ export default function TodayPage() {
         >
           <div>
             <p className="font-saira text-sm font-semibold text-purple-300 group-hover:text-white transition mb-0.5">
-              Set your next competition
+              {t("today.setNextCompetition")}
             </p>
             <p className="font-saira text-xs text-zinc-500">
-              Unlock phase tracking and periodisation
+              {t("today.unlockPhaseTracking")}
             </p>
           </div>
           <span className="text-purple-400 text-lg">→</span>
@@ -225,7 +233,7 @@ export default function TodayPage() {
       {(profile?.affirmations ?? []).length > 0 ? (
         <div className="rounded-2xl border border-purple-500/20 bg-purple-500/5 px-5 py-4 mb-6">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400 mb-3">
-            Your affirmations
+            {t("today.yourAffirmations")}
           </p>
           <ul className="space-y-2">
             {profile!.affirmations.map((a, i) => (
@@ -239,16 +247,16 @@ export default function TodayPage() {
       ) : profile && (
         <div className="rounded-2xl border border-white/5 bg-[#17131F] px-5 py-4 mb-6 flex items-center justify-between gap-4">
           <div>
-            <p className="font-saira text-xs font-semibold text-zinc-400 mb-0.5">No affirmations set</p>
+            <p className="font-saira text-xs font-semibold text-zinc-400 mb-0.5">{t("today.noAffirmations")}</p>
             <p className="font-saira text-[11px] text-zinc-600 leading-relaxed">
-              Your self-talk sentences appear here every time you open the app.
+              {t("today.selfTalkAppears")}
             </p>
           </div>
           <Link
             href="/library#affirmations"
             className="flex-shrink-0 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 font-saira text-[10px] uppercase tracking-[0.14em] text-purple-300 hover:bg-purple-500/20 transition"
           >
-            Set up →
+            {t("today.setUpArrow")}
           </Link>
         </div>
       )}
@@ -257,7 +265,7 @@ export default function TodayPage() {
       {profile?.coach_id && (
         <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 mb-6">
           <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-          <p className="font-saira text-xs text-emerald-300">Connected to your coach</p>
+          <p className="font-saira text-xs text-emerald-300">{t("today.connectedToCoach")}</p>
         </div>
       )}
 
@@ -274,17 +282,18 @@ function DayPickerScreen({
   onSelect: (mode: "training" | "rest") => void;
   saving: boolean;
 }) {
+  const { t, locale } = useT();
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-2 text-center">
-          POWERFLOW · HOME
+          {t("brand.name").toUpperCase()} · {t("today.pageLabel")}
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-2 text-center">
-          {new Date().toLocaleDateString("en-GB", { weekday: "long" })}
+          {new Date().toLocaleDateString(localeForDate(locale), { weekday: "long" })}
         </h1>
         <p className="font-saira text-sm text-zinc-500 mb-10 text-center">
-          How&apos;s today looking?
+          {t("today.howsTodayLooking")}
         </p>
         <div className="space-y-3">
           <button
@@ -293,7 +302,7 @@ function DayPickerScreen({
             disabled={saving}
             className="w-full rounded-2xl border border-purple-500/40 bg-purple-600/15 hover:bg-purple-600/25 disabled:opacity-50 py-5 font-saira text-base font-bold text-white transition"
           >
-            {saving ? "Saving…" : "🏋️ Training Day"}
+            {saving ? t("common.saving") : t("today.trainingDayBtn")}
           </button>
           <button
             type="button"
@@ -301,7 +310,7 @@ function DayPickerScreen({
             disabled={saving}
             className="w-full rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50 py-5 font-saira text-base font-bold text-zinc-300 transition"
           >
-            {saving ? "…" : "😴 Rest Day"}
+            {saving ? "…" : t("today.restDayBtn")}
           </button>
         </div>
       </div>
@@ -351,6 +360,7 @@ function StrengthCard({
   profile: AthleteProfile | null;
   glPoints: number | null;
 }) {
+  const { t } = useT();
   const hasAnyLift =
     profile?.squat_current_kg ||
     profile?.bench_current_kg ||
@@ -363,21 +373,21 @@ function StrengthCard({
     <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-4">
       <div className="flex items-center justify-between mb-4">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
-          Strength goals
+          {t("today.strengthGoals")}
         </p>
         {glPoints !== null ? (
           <div className="text-right">
             <p className="font-saira text-lg font-bold text-purple-300 tabular-nums leading-none">
               {glPoints}
             </p>
-            <p className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-600">GL pts</p>
+            <p className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-600">{t("today.glPts")}</p>
           </div>
         ) : (
           <Link
             href="/you"
             className="font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
           >
-            + add weight
+            {t("today.addWeight")}
           </Link>
         )}
       </div>
@@ -386,9 +396,9 @@ function StrengthCard({
         <div className="space-y-3">
           {(
             [
-              ["Squat",     profile?.squat_current_kg,     profile?.squat_goal_kg     ],
-              ["Bench",     profile?.bench_current_kg,     profile?.bench_goal_kg     ],
-              ["Deadlift",  profile?.deadlift_current_kg,  profile?.deadlift_goal_kg  ],
+              [t("you.squat"),     profile?.squat_current_kg,     profile?.squat_goal_kg     ],
+              [t("you.bench"),     profile?.bench_current_kg,     profile?.bench_goal_kg     ],
+              [t("you.deadlift"),  profile?.deadlift_current_kg,  profile?.deadlift_goal_kg  ],
             ] as [string, number | null | undefined, number | null | undefined][]
           ).map(([label, current, goal]) => (
             <LiftRow key={label} label={label} current={current ?? null} goal={goal ?? null} />
@@ -396,7 +406,7 @@ function StrengthCard({
           {(ct || gt) && (
             <div className="pt-2 mt-2 border-t border-white/5 flex items-center justify-between">
               <span className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-                Total
+                {t("today.total")}
               </span>
               <div className="flex items-center gap-2">
                 {ct !== null && (
@@ -415,12 +425,12 @@ function StrengthCard({
         </div>
       ) : (
         <div className="flex items-center justify-between">
-          <p className="font-saira text-sm text-zinc-500">No lifts recorded yet.</p>
+          <p className="font-saira text-sm text-zinc-500">{t("today.noLiftsYet")}</p>
           <Link
             href="/you"
             className="font-saira text-xs text-purple-300 hover:text-purple-200 transition"
           >
-            Set goals →
+            {t("today.setGoalsArrow")}
           </Link>
         </div>
       )}
@@ -463,19 +473,20 @@ function LiftRow({
 // ── Mental goals card ─────────────────────────────────────────────────────────
 
 function MentalGoalsCard({ goals }: { goals: string[] }) {
+  const { t } = useT();
   const filtered = goals.filter(Boolean);
 
   return (
     <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-5">
       <div className="flex items-center justify-between mb-3">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
-          Mental goals
+          {t("today.mentalGoals")}
         </p>
         <Link
           href="/you"
           className="font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
         >
-          {filtered.length ? "Edit" : "Set goals"}
+          {filtered.length ? t("common.edit") : t("today.setGoals")}
         </Link>
       </div>
       {filtered.length ? (
@@ -491,9 +502,9 @@ function MentalGoalsCard({ goals }: { goals: string[] }) {
         </ul>
       ) : (
         <p className="font-saira text-sm text-zinc-500">
-          Set 1–3 mental goals for your next meet.{" "}
+          {t("today.setMentalGoalsHint")}{" "}
           <Link href="/you" className="text-purple-300 hover:text-purple-200 transition underline">
-            Add now →
+            {t("today.addNowArrow")}
           </Link>
         </p>
       )}

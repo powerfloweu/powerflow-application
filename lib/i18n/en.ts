@@ -52,6 +52,7 @@ export const en = {
 
   // Today / home page
   today: {
+    pageLabel: "HOME",
     greetingMorning: "Good morning",
     greetingAfternoon: "Good afternoon",
     greetingEvening: "Good evening",
@@ -71,6 +72,34 @@ export const en = {
     seeAll: "See all",
     noJournalYet: "No entries yet",
     startWriting: "Start writing",
+
+    todayDone: "Today ✓",
+    training: "Training",
+    rest: "Rest",
+    change: "Change",
+    trainingPhase: "Training phase",
+    daysToGo: "days to go",
+    setNextCompetition: "Set your next competition",
+    unlockPhaseTracking: "Unlock phase tracking and periodisation",
+    yourAffirmations: "Your affirmations",
+    noAffirmations: "No affirmations set",
+    selfTalkAppears: "Your self-talk sentences appear here every time you open the app.",
+    setUpArrow: "Set up →",
+    connectedToCoach: "Connected to your coach",
+    howsTodayLooking: "How's today looking?",
+    trainingDayBtn: "🏋️ Training Day",
+    restDayBtn: "😴 Rest Day",
+    reminders: "🔔 Reminders",
+    strengthGoals: "Strength goals",
+    glPts: "GL pts",
+    addWeight: "+ add weight",
+    noLiftsYet: "No lifts recorded yet.",
+    setGoalsArrow: "Set goals →",
+    total: "Total",
+    mentalGoals: "Mental goals",
+    setGoals: "Set goals",
+    setMentalGoalsHint: "Set 1–3 mental goals for your next meet.",
+    addNowArrow: "Add now →",
   },
 
   // Journal page
@@ -251,36 +280,47 @@ export const en = {
 
   // Upgrade / pricing page
   upgrade: {
-    title: "Choose your plan",
-    subtitle: "Mental performance, scaled to where you are.",
+    pageLabel: "PLANS",
+    title: "Train your mind like you train your body",
+    subtitle: "Start free. Unlock your tools when you're ready. Go all-in when you want the full programme.",
+    bestValue: "Best value",
     currentPlan: "Current plan",
-    perMonth: "/mo",
-    free: "Free",
-
-    openerName: "Opener Tier",
-    openerSubtitle: "Free",
-    openerDesc: "Journal your sessions and track your training.",
-
-    secondName: "Second Tier",
-    secondSubtitle: "Tools",
-    secondDesc: "The full mental performance toolkit.",
-
-    prName: "PR Tier",
-    prSubtitle: "All-access",
-    prDesc: "Every tool, the full course, and your AI coach.",
-
-    cta: "Choose plan",
-    youHaveThis: "Your current plan",
-    contactNote: "Stripe checkout coming soon. Email trainer.pod@gmail.com to upgrade in the meantime.",
-    coachNote: "Coaches: billing handled separately — contact your account manager.",
+    upgradeToSecond: "Upgrade to Second",
+    upgradeToPR: "Upgrade to PR",
+    downgrade: "Downgrade",
+    coachQuestion: "Are you a coach?",
+    coachLink: "Coaches are billed per active athlete",
+    coachNote: "and have full access to all features.",
+    backToApp: "← Back to app",
+    priceFree: "Free",
+    priceSecond: "€9 / mo",
+    pricePR: "€19 / mo",
   },
 
   // Paywall on a locked page
   paywall: {
-    title: "Upgrade to unlock",
+    title: "Upgrade to unlock this",
     onCurrent: "You're on",
     upgradeTo: "Upgrade to",
-    seePlans: "See plans →",
+    seePlans: "See Plans",
+    currentPlan: "Current plan",
+    // Tier descriptions surfaced under the title
+    descOpener: "Journal your sessions and track your training.",
+    descSecond: "The full mental performance toolkit.",
+    descPR: "Every tool, the full course, and your AI coach.",
+    // Feature lists — newline-separated for now
+    featuresOpener_1: "Daily journal & training log",
+    featuresOpener_2: "Athlete profile",
+    featuresOpener_3: "Check-in reminders",
+    featuresSecond_1: "Everything in Opener",
+    featuresSecond_2: "Resource library",
+    featuresSecond_3: "Mental performance scripts",
+    featuresSecond_4: "Voice work sessions",
+    featuresSecond_5: "Psychological test reports",
+    featuresPR_1: "Everything in Second",
+    featuresPR_2: "16-week mental performance course",
+    featuresPR_3: "AI coaching chat",
+    featuresPR_4: "Personalised course plan",
   },
 
   // Auth

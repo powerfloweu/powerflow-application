@@ -3,6 +3,16 @@
 import React from "react";
 import Link from "next/link";
 import { hasAccess, type PlanTier } from "@/lib/plan";
+import { useT } from "@/lib/i18n";
+
+const SECTION_KEY: Record<string, string> = {
+  Relaxation: "library.sectionRelaxation",
+  Visualizations: "library.sectionVisualizations",
+  Activation: "library.sectionActivation",
+  Affirmations: "library.sectionAffirmations",
+  Focus: "library.sectionFocus",
+  Competition: "library.sectionCompetition",
+};
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
 // Sections are ordered by minTier so unlocked content always appears first.
@@ -604,6 +614,7 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ToolsPage() {
+  const { t } = useT();
   const [openId, setOpenId]             = React.useState<string | null>(null);
   const [requestText, setRequestText]   = React.useState("");
   const [requestState, setRequestState] = React.useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -690,13 +701,13 @@ export default function ToolsPage() {
       {/* ── Header ────────────────────────────────────────────── */}
       <div className="mb-8">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
-          POWERFLOW · TOOLS
+          {t("brand.name").toUpperCase()} · {t("nav.tools").toUpperCase()}
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-2">
-          Mental Tools
+          {t("library.title")}
         </h1>
         <p className="font-saira text-sm text-zinc-500">
-          Guided audio sessions · tap to expand
+          {t("library.subtitle")}
         </p>
       </div>
 
@@ -708,18 +719,18 @@ export default function ToolsPage() {
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-purple-400 text-sm">✦</span>
                 <p className="font-saira text-sm font-semibold text-white uppercase tracking-[0.1em]">
-                  AI Coach
+                  {t("library.aiCoachTitle")}
                 </p>
               </div>
               <p className="font-saira text-xs text-zinc-400 leading-snug">
-                Talk to the coaching brain. Get personalized scripts and guidance.
+                {t("library.aiCoachDesc")}
               </p>
             </div>
             <Link
               href="/chat"
               className="flex-shrink-0 rounded-xl bg-purple-600 hover:bg-purple-500 px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition whitespace-nowrap"
             >
-              Open →
+              {t("library.aiCoachOpen")}
             </Link>
           </div>
           <div className="mt-2 text-center">
@@ -727,7 +738,7 @@ export default function ToolsPage() {
               href="/scripts"
               className="font-saira text-xs text-zinc-500 hover:text-zinc-300 transition"
             >
-              📜 My saved scripts →
+              {t("library.savedScripts")}
             </Link>
           </div>
         </div>
@@ -741,7 +752,7 @@ export default function ToolsPage() {
           return (
             <div key={section}>
               <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-500 mb-3">
-                {section}
+                {t(SECTION_KEY[section] ?? `library.section${section}`)}
               </p>
 
               {/* ── Locked section preview ─────────────────── */}
@@ -751,17 +762,14 @@ export default function ToolsPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-saira text-sm text-zinc-600">🔒</span>
                       <p className="font-saira text-xs text-zinc-500">
-                        {items.length} tool{items.length !== 1 ? "s" : ""} ·{" "}
-                        <span className="text-zinc-400">
-                          {minTier === "pr" ? "PR tier" : "Second tier"} required
-                        </span>
+                        {t(minTier === "pr" ? "library.toolsCountPR" : "library.toolsCountSecond", { count: items.length })}
                       </p>
                     </div>
                     <Link
                       href="/upgrade"
                       className="flex-shrink-0 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 px-3 py-1.5 font-saira text-[10px] uppercase tracking-[0.16em] text-purple-300 transition"
                     >
-                      Upgrade →
+                      {t("common.upgradeArrow")}
                     </Link>
                   </div>
                   <div className="space-y-1.5 select-none pointer-events-none opacity-[0.22]">
@@ -874,7 +882,7 @@ export default function ToolsPage() {
         {/* ── Suggest a tool ───────────────────────────────────── */}
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-500 mb-3">
-            Suggest a Tool
+            {t("library.suggestATool")}
           </p>
           <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5">
             {requestState === "sent" ? (
@@ -882,27 +890,27 @@ export default function ToolsPage() {
                 <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-lg">
                   ✓
                 </div>
-                <p className="font-saira text-sm font-semibold text-emerald-300">Request sent</p>
+                <p className="font-saira text-sm font-semibold text-emerald-300">{t("library.requestSent")}</p>
                 <p className="font-saira text-xs text-zinc-500 max-w-[240px]">
-                  Thank you — we review every suggestion and add the most-requested tools.
+                  {t("library.requestThanks")}
                 </p>
                 <button
                   type="button"
                   onClick={() => setRequestState("idle")}
                   className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-600 hover:text-zinc-400 underline transition"
                 >
-                  Submit another
+                  {t("library.submitAnother")}
                 </button>
               </div>
             ) : (
               <>
                 <p className="font-saira text-xs text-zinc-400 mb-3">
-                  Is there a mental skill or technique you'd like to see added? Let us know.
+                  {t("library.suggestQuestion")}
                 </p>
                 <textarea
                   value={requestText}
                   onChange={(e) => setRequestText(e.target.value)}
-                  placeholder="e.g. A pre-meet focus routine, self-talk scripts, handling nerves on the platform…"
+                  placeholder={t("library.suggestPlaceholder")}
                   rows={4}
                   maxLength={500}
                   className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark] mb-3"
@@ -917,7 +925,7 @@ export default function ToolsPage() {
                     disabled={!requestText.trim() || requestState === "sending"}
                     className="rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 px-5 py-2.5 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition"
                   >
-                    {requestState === "sending" ? "Sending…" : requestState === "error" ? "Try again" : "Send request"}
+                    {requestState === "sending" ? t("common.sending") : requestState === "error" ? t("common.retry") : t("library.sendRequest")}
                   </button>
                 </div>
               </>
