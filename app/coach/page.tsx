@@ -264,14 +264,25 @@ function SentimentSparkline({ data }: { data: number[] }) {
 
 // ── Profile tab helpers ────────────────────────────────────────────────────────
 
-function ProfileField({ label, value }: { label: string; value: string | number | null | undefined }) {
+function ProfileField({ label, value, href }: { label: string; value: string | number | null | undefined; href?: string }) {
   if (value === null || value === undefined || value === "") return null;
   return (
     <div>
       <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-0.5">
         {label}
       </p>
-      <p className="font-saira text-xs text-zinc-300 leading-relaxed">{String(value)}</p>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-saira text-xs text-purple-400 hover:text-purple-300 transition"
+        >
+          {String(value)}
+        </a>
+      ) : (
+        <p className="font-saira text-xs text-zinc-300 leading-relaxed">{String(value)}</p>
+      )}
     </div>
   );
 }
@@ -500,7 +511,11 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <ProfileField label="Gender" value={profile.gender} />
-            <ProfileField label="Instagram" value={profile.instagram ? `@${profile.instagram}` : null} />
+            <ProfileField
+              label="Instagram"
+              value={profile.instagram ? `@${profile.instagram.replace(/^@/, "")}` : null}
+              href={profile.instagram ? `https://instagram.com/${profile.instagram.replace(/^@/, "")}` : undefined}
+            />
             <ProfileField label="Federation" value={profile.federation} />
             <ProfileField label="Years in sport" value={profile.years_powerlifting} />
             <ProfileField label="Bodyweight" value={profile.bodyweight_kg ? `${profile.bodyweight_kg} kg` : null} />

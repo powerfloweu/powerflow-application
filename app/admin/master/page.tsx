@@ -185,14 +185,25 @@ function Toggle({
   );
 }
 
-function Field({ label, value }: { label: string; value: string | number | null | undefined }) {
+function Field({ label, value, href }: { label: string; value: string | number | null | undefined; href?: string }) {
   if (value === null || value === undefined || value === "") return null;
   return (
     <div>
       <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-0.5">
         {label}
       </p>
-      <p className="font-saira text-xs text-zinc-300 leading-relaxed">{String(value)}</p>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-saira text-xs text-purple-400 hover:text-purple-300 transition"
+        >
+          {String(value)}
+        </a>
+      ) : (
+        <p className="font-saira text-xs text-zinc-300 leading-relaxed">{String(value)}</p>
+      )}
     </div>
   );
 }
@@ -262,7 +273,11 @@ function ExpandedProfile({ user }: { user: UserRow }) {
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Field label="Email" value={user.email} />
-          <Field label="Instagram" value={user.instagram ? `@${user.instagram}` : null} />
+          <Field
+            label="Instagram"
+            value={user.instagram ? `@${user.instagram.replace(/^@/, "")}` : null}
+            href={user.instagram ? `https://instagram.com/${user.instagram.replace(/^@/, "")}` : undefined}
+          />
           <Field label="Gender" value={user.gender} />
           <Field label="Onboarding" value={user.onboarding_complete ? "Complete" : "Incomplete"} />
           <Field
@@ -704,7 +719,13 @@ function UsersTab({
                       {user.display_name}
                     </p>
                     {user.instagram && (
-                      <p className="font-saira text-[10px] text-zinc-600">@{user.instagram}</p>
+                      <a
+                        href={`https://instagram.com/${user.instagram.replace(/^@/, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-saira text-[10px] text-zinc-600 hover:text-purple-400 transition"
+                      >@{user.instagram.replace(/^@/, "")}</a>
                     )}
                   </div>
                 </div>
