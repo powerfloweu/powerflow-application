@@ -297,6 +297,7 @@ export const en = {
 
   // You / Settings page
   you: {
+    pageLabel: "YOU",
     title: "You",
     profileSection: "Profile",
     statsSection: "Lift stats",
@@ -304,6 +305,30 @@ export const en = {
     meetSection: "Meet",
     settingsSection: "Settings",
     coachSection: "Coach",
+
+    sectionNextCompetition: "Next competition",
+    sectionBody: "Body",
+    sectionStrengthGoals: "Strength goals",
+    sectionMentalGoals: "Mental goals",
+    sectionTrainingSchedule: "Training schedule",
+    sectionCoach: "Coach",
+    sectionPracticeMode: "Practice mode",
+    sectionWhatsNew: "What's new",
+
+    notSet: "Not set",
+    notConnected: "Not connected",
+    connected: "Connected",
+    saveFailed: "Save failed — please try again.",
+    namePlaceholder: "Your name",
+    currentKg: "Current (kg)",
+    goalKg: "Goal (kg)",
+    timesPerWeek: "×/week",
+    goalsCount: "{n} goal set",
+    goalsCountPlural: "{n} goals set",
+    voiceWorkLabel: "Voice work · Beta",
+    classicLabel: "Classic",
+    changeCoach: "Change coach",
+    chooseCoach: "Choose a coach",
 
     name: "Name",
     email: "Email",

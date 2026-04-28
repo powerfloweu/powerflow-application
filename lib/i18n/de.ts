@@ -291,6 +291,7 @@ export const de: Dict = {
   },
 
   you: {
+    pageLabel: "DU",
     title: "Du",
     profileSection: "Profil",
     statsSection: "Lift-Statistiken",
@@ -298,6 +299,30 @@ export const de: Dict = {
     meetSection: "Wettkampf",
     settingsSection: "Einstellungen",
     coachSection: "Coach",
+
+    sectionNextCompetition: "Nächster Wettkampf",
+    sectionBody: "Körper",
+    sectionStrengthGoals: "Kraft-Ziele",
+    sectionMentalGoals: "Mentale Ziele",
+    sectionTrainingSchedule: "Trainings-Zeitplan",
+    sectionCoach: "Coach",
+    sectionPracticeMode: "Praxis-Modus",
+    sectionWhatsNew: "Was ist neu",
+
+    notSet: "Nicht gesetzt",
+    notConnected: "Nicht verbunden",
+    connected: "Verbunden",
+    saveFailed: "Speichern fehlgeschlagen — bitte erneut versuchen.",
+    namePlaceholder: "Dein Name",
+    currentKg: "Aktuell (kg)",
+    goalKg: "Ziel (kg)",
+    timesPerWeek: "×/Woche",
+    goalsCount: "{n} Ziel gesetzt",
+    goalsCountPlural: "{n} Ziele gesetzt",
+    voiceWorkLabel: "Voice-Work · Beta",
+    classicLabel: "Klassisch",
+    changeCoach: "Coach ändern",
+    chooseCoach: "Coach wählen",
 
     name: "Name",
     email: "E-Mail",

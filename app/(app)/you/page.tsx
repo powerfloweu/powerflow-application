@@ -11,6 +11,12 @@ import { DevLogViewer } from "@/app/components/NotificationModal";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n";
 
+function localeForDate(loc: string): string {
+  if (loc === "de") return "de-DE";
+  if (loc === "hu") return "hu-HU";
+  return "en-GB";
+}
+
 interface CoachOption {
   id: string;
   display_name: string;
@@ -37,6 +43,7 @@ function kgField(val: number | null | undefined): string {
 
 export default function YouPage() {
   const router = useRouter();
+  const { t, locale } = useT();
   const [profile, setProfile] = React.useState<AthleteProfile | null>(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -126,7 +133,7 @@ export default function YouPage() {
     setSavingSection(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setSaveError(data.error ?? "Save failed — please try again.");
+      setSaveError(data.error ?? t("you.saveFailed"));
       setTimeout(() => setSaveError(null), 5000);
       return;
     }
@@ -136,7 +143,7 @@ export default function YouPage() {
   };
 
   const btnLabel = (section: string) =>
-    savingSection === section ? "…" : savedSection === section ? "Saved ✓" : "Save";
+    savingSection === section ? "…" : savedSection === section ? t("common.saved") : t("common.save");
 
   const phase = profile ? computePhase(profile.meet_date) : null;
 
@@ -156,16 +163,16 @@ export default function YouPage() {
         href="/today"
         className="inline-block mb-5 font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.18em] transition"
       >
-        ← Today
+        ← {t("nav.home")}
       </Link>
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="mb-8">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
-          POWERFLOW · YOU
+          {t("brand.name").toUpperCase()} · {t("you.pageLabel")}
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white">
-          Profile
+          {t("you.profileSection")}
         </h1>
       </div>
 
@@ -196,7 +203,7 @@ export default function YouPage() {
             </span>
           </div>
           <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
-            Display name
+            {t("you.name")}
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -204,7 +211,7 @@ export default function YouPage() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               maxLength={80}
-              placeholder="Your name"
+              placeholder={t("you.namePlaceholder")}
               className="flex-1 rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
             />
             <SaveButton
@@ -218,8 +225,8 @@ export default function YouPage() {
 
       {/* ── Meet date ───────────────────────────────────────── */}
       <Section
-        label="Next competition"
-        summary={meetDate ? new Date(meetDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Not set"}
+        label={t("you.sectionNextCompetition")}
+        summary={meetDate ? new Date(meetDate).toLocaleDateString(localeForDate(locale), { day: "numeric", month: "short", year: "numeric" }) : t("you.notSet")}
       >
         {phase && <p className="font-saira text-xs text-purple-300 mb-3">{phase.label}</p>}
         <div className="flex items-center gap-3">
@@ -246,14 +253,14 @@ export default function YouPage() {
 
       {/* ── Body ────────────────────────────────────────────── */}
       <Section
-        label="Body"
-        summary={[gender, bodyweight ? `${bodyweight} kg` : null, weightCat].filter(Boolean).join(" · ") || "Not set"}
+        label={t("you.sectionBody")}
+        summary={[gender, bodyweight ? `${bodyweight} kg` : null, weightCat].filter(Boolean).join(" · ") || t("you.notSet")}
       >
         <div className="grid grid-cols-2 gap-3 mb-3">
           {/* Gender */}
           <div>
             <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
-              Gender
+              {t("you.gender")}
             </label>
             <select
               value={gender}
@@ -261,14 +268,14 @@ export default function YouPage() {
               className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
             >
               <option value="">—</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
+              <option value="male">{t("you.male")}</option>
+              <option value="female">{t("you.female")}</option>
             </select>
           </div>
           {/* Bodyweight */}
           <div>
             <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
-              Bodyweight (kg)
+              {t("you.bodyweight")} (kg)
             </label>
             <input
               type="number" step="0.1" min="30" max="300"
@@ -282,7 +289,7 @@ export default function YouPage() {
         {/* Weight category */}
         <div className="mb-3">
           <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
-            Weight category (next meet)
+            {t("you.weightCategory")}
           </label>
           <select
             value={weightCat}
@@ -308,16 +315,16 @@ export default function YouPage() {
 
       {/* ── Strength goals ──────────────────────────────────── */}
       <Section
-        label="Strength goals"
+        label={t("you.sectionStrengthGoals")}
         summary={[squatCurrent, benchCurrent, dlCurrent].some(Boolean)
           ? [squatCurrent, benchCurrent, dlCurrent].map((v) => v ? `${v} kg` : "—").join(" / ")
-          : "Not set"}
+          : t("you.notSet")}
       >
         <div className="space-y-3 mb-3">
           {([
-            ["Squat",    squatCurrent,  setSquatCurrent,  squatGoal,  setSquatGoal  ],
-            ["Bench",    benchCurrent,  setBenchCurrent,  benchGoal,  setBenchGoal  ],
-            ["Deadlift", dlCurrent,     setDlCurrent,     dlGoal,     setDlGoal     ],
+            [t("you.squat"),    squatCurrent,  setSquatCurrent,  squatGoal,  setSquatGoal  ],
+            [t("you.bench"),    benchCurrent,  setBenchCurrent,  benchGoal,  setBenchGoal  ],
+            [t("you.deadlift"), dlCurrent,     setDlCurrent,     dlGoal,     setDlGoal     ],
           ] as [string, string, React.Dispatch<React.SetStateAction<string>>, string, React.Dispatch<React.SetStateAction<string>>][]).map(
             ([label, cur, setCur, goal, setGoal]) => (
               <div key={label}>
@@ -329,14 +336,14 @@ export default function YouPage() {
                     type="number" step="0.5" min="0" max="1000"
                     value={cur}
                     onChange={(e) => setCur(e.target.value)}
-                    placeholder="Current (kg)"
+                    placeholder={t("you.currentKg")}
                     className="rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
                   />
                   <input
                     type="number" step="0.5" min="0" max="1000"
                     value={goal}
                     onChange={(e) => setGoal(e.target.value)}
-                    placeholder="Goal (kg)"
+                    placeholder={t("you.goalKg")}
                     className="rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
                   />
                 </div>
@@ -360,8 +367,12 @@ export default function YouPage() {
 
       {/* ── Mental goals ────────────────────────────────────── */}
       <Section
-        label="Mental goals"
-        summary={(() => { const n = mentalGoals.filter(Boolean).length; return n ? `${n} goal${n > 1 ? "s" : ""} set` : "Not set"; })()}
+        label={t("you.sectionMentalGoals")}
+        summary={(() => {
+          const n = mentalGoals.filter(Boolean).length;
+          if (!n) return t("you.notSet");
+          return t(n === 1 ? "you.goalsCount" : "you.goalsCountPlural", { n });
+        })()}
       >
         <div className="space-y-2 mb-3">
           {mentalGoals.map((g, i) => (
@@ -395,11 +406,11 @@ export default function YouPage() {
 
       {/* ── Training schedule ───────────────────────────────── */}
       <Section
-        label="Training schedule"
-        summary={trainingDays ? `${trainingDays}×/week` : "Not set"}
+        label={t("you.sectionTrainingSchedule")}
+        summary={trainingDays ? `${trainingDays}${t("you.timesPerWeek")}` : t("you.notSet")}
       >
         <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-2">
-          Training days per week
+          {t("you.trainingDaysWeek")}
         </label>
         <div className="flex gap-2 mb-3">
           {[1, 2, 3, 4, 5, 6, 7].map((n) => (
@@ -426,8 +437,8 @@ export default function YouPage() {
 
       {/* ── Coach picker ─────────────────────────────────────── */}
       <Section
-        label="Coach"
-        summary={coachId ? (coaches.find((c) => c.id === coachId)?.display_name ?? "Connected") : "Not connected"}
+        label={t("you.sectionCoach")}
+        summary={coachId ? (coaches.find((c) => c.id === coachId)?.display_name ?? t("you.connected")) : t("you.notConnected")}
       >
         {(() => {
           const currentCoach = coaches.find((c) => c.id === coachId);
@@ -473,7 +484,7 @@ export default function YouPage() {
                   onClick={openPicker}
                   className="rounded-xl border border-white/10 bg-[#0D0B14] hover:border-purple-500/40 hover:text-white px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400 transition"
                 >
-                  {coachId ? "Change coach" : "Choose a coach"}
+                  {coachId ? t("you.changeCoach") : t("you.chooseCoach")}
                 </button>
               </>
             );
@@ -544,7 +555,7 @@ export default function YouPage() {
                 onClick={() => setShowCoachPicker(false)}
                 className="mt-3 font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </>
           );
@@ -554,8 +565,8 @@ export default function YouPage() {
       {/* ── Practice mode (ai_access gate) ─────────────────── */}
       {profile?.ai_access && (
         <Section
-          label="Practice mode"
-          summary={selfTalkMode === "beta_voice_work" ? "Voice work · Beta" : "Classic"}
+          label={t("you.sectionPracticeMode")}
+          summary={selfTalkMode === "beta_voice_work" ? t("you.voiceWorkLabel") : t("you.classicLabel")}
         >
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 mb-1">
             Self-Talk Log
@@ -570,7 +581,7 @@ export default function YouPage() {
           <div className="flex gap-2 mb-4">
             {(["classic", "beta_voice_work"] as SelfTalkMode[]).map((mode) => {
               const isActive = selfTalkMode === mode;
-              const label = mode === "classic" ? "Classic" : "Voice work · Beta";
+              const label = mode === "classic" ? t("you.classicLabel") : t("you.voiceWorkLabel");
               return (
                 <button
                   key={mode}
@@ -633,7 +644,7 @@ export default function YouPage() {
       <LanguageSwitcher />
 
       {/* ── What's new ───────────────────────────────────────── */}
-      <Section label="What's new">
+      <Section label={t("you.sectionWhatsNew")}>
         <DevLogViewer />
       </Section>
 
