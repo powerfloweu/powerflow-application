@@ -453,6 +453,69 @@ export const en = {
     completeSetup: "Complete setup →",
     submitting: "Setting up…",
     stepOf: "Step {step} of {total}",
+
+    // Step subtitles
+    step1Subtitle: "Tell us the basics so we can personalise your experience.",
+    step2Subtitle: "Your experience and competition details.",
+    step3Subtitle: "Current bests and competition goals. All optional.",
+    step4Subtitle: "Help us understand where you are mentally right now.",
+    step5Subtitle: "What you want to achieve in the next 3 months.",
+    step6Subtitle: "Is your coach on PowerFlow? Select them below. If not — or if you train solo — just skip.",
+
+    // Step 1 labels
+    labelName: "Your name",
+    placeholderName: "Full name",
+    labelInstagram: "Instagram (optional)",
+    labelGender: "Gender",
+
+    // Step 2 labels
+    labelYearsPl: "Years in powerlifting",
+    labelFederation: "Federation",
+    labelBodyweight: "Bodyweight (kg)",
+    labelWeightCat: "Weight category",
+    labelMeetDate: "Next competition date (optional)",
+    labelTrainingDays: "Training days per week",
+    selectGenderFirst: "Gender first",
+
+    // Step 3 labels
+    labelCurrent: "Current (kg)",
+    labelGoal: "Goal (kg)",
+
+    // Step 4 labels
+    q4Barrier: "What holds your performance back the most right now?",
+    q4BarrierPlaceholder: "Describe your biggest mental barrier…",
+    q4Confidence: "In which situations does your confidence break?",
+    q4ConfidencePlaceholder: "e.g. Heavy attempts, meets, training slumps…",
+    q4Overthinking: "When do you start to overthink or lose focus?",
+    q4OverthinkingPlaceholder: "e.g. Before big sets, during warm-up, competition day…",
+    q4PreviousWork: "Have you worked with a mental coach or sports psychologist before?",
+    q4PreviousWorkPlaceholder: "What helped, what didn't…",
+    selfAssessmentHeader: "Self-assessment (1 = very low · 10 = very high)",
+    scaleLabelConfidenceReg: "Confidence regulation",
+    scaleLabelFocusFatigue: "Focus under fatigue",
+    scaleLabelPressure: "Handling pressure",
+    scaleLabelAnxiety: "Competition anxiety",
+    scaleLabelRecovery: "Emotional recovery after bad sessions or meets",
+    scaleVeryLow: "Very low",
+    scaleVeryHigh: "Very high",
+
+    // Step 5 labels
+    labelMentalGoals: "Three mental goals for the next 3 months",
+    goalRequired: "Goal {n} (required)",
+    goalOptional: "Goal {n} (optional)",
+    goalPlaceholder1: "e.g. Stay composed under heavy loads",
+    goalPlaceholder2: "e.g. Trust my training on meet day",
+    goalPlaceholder3: "e.g. Visualise each lift beforehand",
+    labelExpectations: "What do you expect from the coaching process?",
+    expectationsPlaceholder: "What you expect from us as a team…",
+    labelPreviousTools: "What mental strategies have you used so far?",
+    previousToolsPlaceholder: "How did they work for you…",
+    labelAnythingElse: "Anything else you'd like us to know?",
+    anythingElsePlaceholder: "Optional — anything important we should know…",
+
+    // Step 6 labels
+    noCoachLabel: "No coach / skip for now",
+    noCoachDesc: "Training solo, or your coach isn't on PowerFlow yet",
   },
 
   // Notifications modal

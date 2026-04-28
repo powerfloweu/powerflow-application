@@ -89,6 +89,7 @@ function ScaleSelector({
   value: number | null;
   onChange: (v: number) => void;
 }) {
+  const { t } = useT();
   return (
     <div className="space-y-2">
       <SectionLabel>{label}</SectionLabel>
@@ -111,8 +112,8 @@ function ScaleSelector({
         ))}
       </div>
       <div className="flex justify-between font-saira text-[9px] text-zinc-600 px-0.5">
-        <span>Very low</span>
-        <span>Very high</span>
+        <span>{t("onboarding.scaleVeryLow")}</span>
+        <span>{t("onboarding.scaleVeryHigh")}</span>
       </div>
     </div>
   );
@@ -137,23 +138,23 @@ function Step1({
           {t("onboarding.step1Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
-          Tell us the basics so we can personalise your experience.
+          {t("onboarding.step1Subtitle")}
         </p>
       </div>
 
       <div>
-        <SectionLabel>Your name *</SectionLabel>
+        <SectionLabel>{t("onboarding.labelName")} *</SectionLabel>
         <input
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="Full name"
+          placeholder={t("onboarding.placeholderName")}
           className={inputCls}
         />
       </div>
 
       <div>
-        <SectionLabel>Instagram (optional)</SectionLabel>
+        <SectionLabel>{t("onboarding.labelInstagram")}</SectionLabel>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 font-saira text-sm text-zinc-500">@</span>
           <input
@@ -167,13 +168,13 @@ function Step1({
       </div>
 
       <div>
-        <SectionLabel>Gender *</SectionLabel>
+        <SectionLabel>{t("onboarding.labelGender")} *</SectionLabel>
         <div className="flex gap-3">
           <button type="button" onClick={() => setGender("male")} className={pillCls(gender === "male")}>
-            Male
+            {t("you.male")}
           </button>
           <button type="button" onClick={() => setGender("female")} className={pillCls(gender === "female")}>
-            Female
+            {t("you.female")}
           </button>
         </div>
       </div>
@@ -210,13 +211,13 @@ function Step2({
           {t("onboarding.step2Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
-          Your experience and competition details.
+          {t("onboarding.step2Subtitle")}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <SectionLabel>Years in powerlifting</SectionLabel>
+          <SectionLabel>{t("onboarding.labelYearsPl")}</SectionLabel>
           <input
             type="text"
             value={yearsPl}
@@ -226,7 +227,7 @@ function Step2({
           />
         </div>
         <div>
-          <SectionLabel>Federation</SectionLabel>
+          <SectionLabel>{t("onboarding.labelFederation")}</SectionLabel>
           <input
             type="text"
             value={federation}
@@ -239,7 +240,7 @@ function Step2({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <SectionLabel>Bodyweight (kg)</SectionLabel>
+          <SectionLabel>{t("onboarding.labelBodyweight")}</SectionLabel>
           <input
             type="number"
             inputMode="decimal"
@@ -251,21 +252,21 @@ function Step2({
           />
         </div>
         <div>
-          <SectionLabel>Weight category</SectionLabel>
+          <SectionLabel>{t("onboarding.labelWeightCat")}</SectionLabel>
           <select
             value={weightCat}
             onChange={(e) => setWeightCat(e.target.value)}
             disabled={!gender}
             className={`${inputCls} disabled:opacity-40 appearance-none`}
           >
-            <option value="">{gender ? "Select" : "Gender first"}</option>
+            <option value="">{gender ? t("common.select") : t("onboarding.selectGenderFirst")}</option>
             {cats.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
       </div>
 
       <div>
-        <SectionLabel>Next competition date (optional)</SectionLabel>
+        <SectionLabel>{t("onboarding.labelMeetDate")}</SectionLabel>
         <input
           type="date"
           value={meetDate}
@@ -275,7 +276,7 @@ function Step2({
       </div>
 
       <div>
-        <SectionLabel>Training days per week</SectionLabel>
+        <SectionLabel>{t("onboarding.labelTrainingDays")}</SectionLabel>
         <div className="flex gap-2 flex-wrap">
           {[1, 2, 3, 4, 5, 6, 7].map((d) => (
             <button
@@ -324,7 +325,7 @@ function Step3({
           {t("onboarding.step3Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
-          Current bests and competition goals. All optional.
+          {t("onboarding.step3Subtitle")}
         </p>
       </div>
 
@@ -334,7 +335,7 @@ function Step3({
             <SectionLabel>{label}</SectionLabel>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="font-saira text-[10px] text-zinc-600 mb-1">Current (kg)</p>
+                <p className="font-saira text-[10px] text-zinc-600 mb-1">{t("onboarding.labelCurrent")}</p>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -346,7 +347,7 @@ function Step3({
                 />
               </div>
               <div>
-                <p className="font-saira text-[10px] text-zinc-600 mb-1">Goal (kg)</p>
+                <p className="font-saira text-[10px] text-zinc-600 mb-1">{t("onboarding.labelGoal")}</p>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -396,50 +397,50 @@ function Step4({
           {t("onboarding.step4Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
-          Help us understand where you are mentally right now.
+          {t("onboarding.step4Subtitle")}
         </p>
       </div>
 
       <div>
-        <SectionLabel>What holds your performance back the most right now? *</SectionLabel>
+        <SectionLabel>{t("onboarding.q4Barrier")} *</SectionLabel>
         <textarea
           rows={3}
           value={mainBarrier}
           onChange={(e) => setMainBarrier(e.target.value)}
-          placeholder="Describe your biggest mental barrier…"
+          placeholder={t("onboarding.q4BarrierPlaceholder")}
           className={textareaCls}
         />
       </div>
 
       <div>
-        <SectionLabel>In which situations does your confidence break?</SectionLabel>
+        <SectionLabel>{t("onboarding.q4Confidence")}</SectionLabel>
         <textarea
           rows={3}
           value={confidenceBreak}
           onChange={(e) => setConfidenceBreak(e.target.value)}
-          placeholder="e.g. Heavy attempts, meets, training slumps…"
+          placeholder={t("onboarding.q4ConfidencePlaceholder")}
           className={textareaCls}
         />
       </div>
 
       <div>
-        <SectionLabel>When do you start to overthink or lose focus?</SectionLabel>
+        <SectionLabel>{t("onboarding.q4Overthinking")}</SectionLabel>
         <textarea
           rows={3}
           value={overthinkingFocus}
           onChange={(e) => setOverthinkingFocus(e.target.value)}
-          placeholder="e.g. Before big sets, during warm-up, competition day…"
+          placeholder={t("onboarding.q4OverthinkingPlaceholder")}
           className={textareaCls}
         />
       </div>
 
       <div>
-        <SectionLabel>Have you worked with a mental coach or sports psychologist before?</SectionLabel>
+        <SectionLabel>{t("onboarding.q4PreviousWork")}</SectionLabel>
         <textarea
           rows={3}
           value={previousMentalWork}
           onChange={(e) => setPreviousMentalWork(e.target.value)}
-          placeholder="What helped, what didn't…"
+          placeholder={t("onboarding.q4PreviousWorkPlaceholder")}
           className={textareaCls}
         />
       </div>
@@ -447,14 +448,14 @@ function Step4({
       {/* Self-assessment scales */}
       <div className="pt-2 border-t border-white/5">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400 mb-4">
-          Self-assessment (1 = very low · 10 = very high)
+          {t("onboarding.selfAssessmentHeader")}
         </p>
         <div className="space-y-5">
-          <ScaleSelector label="Confidence regulation" value={selfConfidenceReg} onChange={setSelfConfidenceReg} />
-          <ScaleSelector label="Focus under fatigue" value={selfFocusFatigue} onChange={setSelfFocusFatigue} />
-          <ScaleSelector label="Handling pressure" value={selfHandlingPressure} onChange={setSelfHandlingPressure} />
-          <ScaleSelector label="Competition anxiety" value={selfCompetitionAnxiety} onChange={setSelfCompetitionAnxiety} />
-          <ScaleSelector label="Emotional recovery after bad sessions or meets" value={selfEmotionalRecovery} onChange={setSelfEmotionalRecovery} />
+          <ScaleSelector label={t("onboarding.scaleLabelConfidenceReg")} value={selfConfidenceReg} onChange={setSelfConfidenceReg} />
+          <ScaleSelector label={t("onboarding.scaleLabelFocusFatigue")} value={selfFocusFatigue} onChange={setSelfFocusFatigue} />
+          <ScaleSelector label={t("onboarding.scaleLabelPressure")} value={selfHandlingPressure} onChange={setSelfHandlingPressure} />
+          <ScaleSelector label={t("onboarding.scaleLabelAnxiety")} value={selfCompetitionAnxiety} onChange={setSelfCompetitionAnxiety} />
+          <ScaleSelector label={t("onboarding.scaleLabelRecovery")} value={selfEmotionalRecovery} onChange={setSelfEmotionalRecovery} />
         </div>
       </div>
     </div>
@@ -488,29 +489,31 @@ function Step5({
           {t("onboarding.step5Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
-          What you want to achieve in the next 3 months.
+          {t("onboarding.step5Subtitle")}
         </p>
       </div>
 
       <div>
-        <SectionLabel>Three mental goals for the next 3 months *</SectionLabel>
+        <SectionLabel>{t("onboarding.labelMentalGoals")} *</SectionLabel>
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
             <div key={i}>
               <p className="font-saira text-[10px] text-zinc-600 mb-1">
-                Goal {i + 1} {i === 0 ? "(required)" : "(optional)"}
+                {i === 0
+                  ? t("onboarding.goalRequired", { n: i + 1 })
+                  : t("onboarding.goalOptional", { n: i + 1 })}
               </p>
               <input
                 type="text"
                 value={mentalGoals[i] ?? ""}
                 onChange={(e) => updateGoal(i, e.target.value)}
-                placeholder={
+                placeholder={t(
                   i === 0
-                    ? "e.g. Stay composed under heavy loads"
+                    ? "onboarding.goalPlaceholder1"
                     : i === 1
-                    ? "e.g. Trust my training on meet day"
-                    : "e.g. Visualise each lift beforehand"
-                }
+                    ? "onboarding.goalPlaceholder2"
+                    : "onboarding.goalPlaceholder3"
+                )}
                 className={inputCls}
               />
             </div>
@@ -519,34 +522,34 @@ function Step5({
       </div>
 
       <div>
-        <SectionLabel>What do you expect from the coaching process?</SectionLabel>
+        <SectionLabel>{t("onboarding.labelExpectations")}</SectionLabel>
         <textarea
           rows={3}
           value={expectations}
           onChange={(e) => setExpectations(e.target.value)}
-          placeholder="What you expect from us as a team…"
+          placeholder={t("onboarding.expectationsPlaceholder")}
           className={textareaCls}
         />
       </div>
 
       <div>
-        <SectionLabel>What mental strategies have you used so far?</SectionLabel>
+        <SectionLabel>{t("onboarding.labelPreviousTools")}</SectionLabel>
         <textarea
           rows={3}
           value={previousTools}
           onChange={(e) => setPreviousTools(e.target.value)}
-          placeholder="How did they work for you…"
+          placeholder={t("onboarding.previousToolsPlaceholder")}
           className={textareaCls}
         />
       </div>
 
       <div>
-        <SectionLabel>Anything else you&apos;d like us to know?</SectionLabel>
+        <SectionLabel>{t("onboarding.labelAnythingElse")}</SectionLabel>
         <textarea
           rows={3}
           value={anythingElse}
           onChange={(e) => setAnythingElse(e.target.value)}
-          placeholder="Optional — anything important we should know…"
+          placeholder={t("onboarding.anythingElsePlaceholder")}
           className={textareaCls}
         />
       </div>
@@ -575,7 +578,7 @@ function Step6({
           {t("onboarding.step6Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
-          Is your coach on PowerFlow? Select them below. If not — or if you train solo — just skip.
+          {t("onboarding.step6Subtitle")}
         </p>
       </div>
 
@@ -598,8 +601,8 @@ function Step6({
               <span className="font-saira text-lg text-zinc-400">–</span>
             </div>
             <div>
-              <p className="font-saira text-sm font-semibold text-white">No coach / skip for now</p>
-              <p className="font-saira text-xs text-zinc-500">Training solo, or your coach isn&apos;t on PowerFlow yet</p>
+              <p className="font-saira text-sm font-semibold text-white">{t("onboarding.noCoachLabel")}</p>
+              <p className="font-saira text-xs text-zinc-500">{t("onboarding.noCoachDesc")}</p>
             </div>
             {selectedCoachId === null && (
               <span className="ml-auto text-purple-400 text-sm">✓</span>
