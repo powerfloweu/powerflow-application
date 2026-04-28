@@ -28,6 +28,7 @@ type UserRow = {
   coach_id: string | null;
   coach_name: string | null;
   coach_code: string | null;
+  plan_tier: "opener" | "second" | "pr" | null;
   course_access: boolean;
   test_access: boolean;
   ai_access: boolean;
@@ -84,7 +85,7 @@ function generateCode(): string {
 
 function exportCsv(users: UserRow[]) {
   const headers = [
-    "Name", "Email", "Role", "Coach", "Course", "Tests", "AI", "Activity",
+    "Name", "Email", "Role", "Coach", "Tier", "Course", "Tests", "AI", "Activity",
     "Entries7d", "Checkins7d", "LastActive", "Onboarded",
     "MeetDate", "Gender", "BW_kg", "WeightCat", "Fed",
     "Squat", "Bench", "Deadlift",
@@ -92,6 +93,7 @@ function exportCsv(users: UserRow[]) {
   const rows = users.map((u) =>
     [
       u.display_name, u.email ?? "", u.role, u.coach_name ?? "",
+      u.plan_tier ?? "opener",
       u.course_access ? "yes" : "no",
       u.test_access ? "yes" : "no",
       u.ai_access ? "yes" : "no",
@@ -740,13 +742,25 @@ function UsersTab({
                   )}
                 </div>
 
-                {/* Access toggles (course / tests / AI) */}
+                {/* Access: tier selector + legacy toggles */}
                 <div
                   className="hidden sm:flex flex-col gap-1.5"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {user.role === "athlete" ? (
                     <>
+                      {/* Tier selector */}
+                      <select
+                        value={user.plan_tier ?? "opener"}
+                        disabled={saving[user.id] ?? false}
+                        onChange={(e) => onPatchUser(user.id, { plan_tier: e.target.value })}
+                        className="rounded border border-white/10 bg-[#0e0a16] px-1.5 py-0.5 font-saira text-[9px] text-purple-300 uppercase tracking-wider disabled:opacity-40 cursor-pointer focus:outline-none focus:border-purple-500/50"
+                      >
+                        <option value="opener">Opener</option>
+                        <option value="second">Second</option>
+                        <option value="pr">PR</option>
+                      </select>
+                      {/* Legacy access toggles */}
                       {(
                         [
                           ["course_access", "Course", user.course_access],
@@ -817,7 +831,18 @@ function UsersTab({
                   {user.journal_count_7d}j · {user.checkin_count_7d}c
                 </span>
                 {user.role === "athlete" && (
-                  <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-3 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                    {/* Mobile tier selector */}
+                    <select
+                      value={user.plan_tier ?? "opener"}
+                      disabled={saving[user.id] ?? false}
+                      onChange={(e) => onPatchUser(user.id, { plan_tier: e.target.value })}
+                      className="rounded border border-white/10 bg-[#0e0a16] px-2 py-1 font-saira text-[10px] text-purple-300 uppercase tracking-wider disabled:opacity-40 cursor-pointer focus:outline-none"
+                    >
+                      <option value="opener">Opener</option>
+                      <option value="second">Second</option>
+                      <option value="pr">PR</option>
+                    </select>
                     {(
                       [
                         ["course_access", "Course", user.course_access],
