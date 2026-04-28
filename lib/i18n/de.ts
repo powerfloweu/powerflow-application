@@ -572,6 +572,170 @@ export const de: Dict = {
     audioFailed: "Audio fehlgeschlagen — erneut versuchen.",
   },
 
+  guideAthlete: {
+    s01: {
+      title: "Anmelden",
+      t1: "Öffne die App und tippe auf [[Mit Google anmelden]]. Wähle [[Athlet]] aus, bevor du dich anmeldest — das legt deine Rolle dauerhaft fest.",
+      t2: "Wenn dein Coach dir einen Einladungslink geschickt hat, öffne ihn zuerst. Er verknüpft dein Konto automatisch mit deinem Coach, sobald du dich anmeldest.",
+    },
+    s02: {
+      title: "Setup-Assistent",
+      t1: "[[Schritt 1 — Über dich]] Dein Name, Instagram und Geschlecht. Name und Geschlecht sind Pflichtfelder.",
+      t2: "[[Schritt 2 — Powerlifting-Profil]] Jahre im Sport, Verband, Körpergewicht, Gewichtsklasse, nächstes Wettkampfdatum und Trainingstage pro Woche.",
+      t3: "[[Schritt 3 — Deine Lifts]] Aktuelle Bestleistungen und Wettkampfziele für Squat, Bench und Deadlift. Alles optional — du kannst sie jederzeit im [[Du]]-Tab aktualisieren.",
+      t4: "[[Schritt 4 — Mindset]] Vier Fragen zu deinen mentalen Blockaden, Selbstvertrauen, Grübeln und bisheriger Mental-Coaching-Erfahrung. Dann bewerte dich selbst von 1–10 in fünf Bereichen: Selbstvertrauen regulieren, Fokus unter Erschöpfung, Umgang mit Druck, Wettkampfangst und emotionale Erholung.",
+      t5: "[[Schritt 5 — Ziele]] Bis zu drei mentale Ziele für die nächsten 3 Monate. Teile außerdem deine Erwartungen ans Coaching, mentale Werkzeuge, die du bereits ausprobiert hast, und alles Weitere, das relevant ist.",
+      t6: "[[Schritt 6 — Dein Coach]] Wähle deinen PowerFlow Coach aus der Liste oder überspringe diesen Schritt und verbinde dich später über den [[Du]]-Tab.",
+      t7: "Nutze den [[← Zurück]]-Button, um einen Schritt erneut aufzurufen. Tippe oben rechts auf [[Setup überspringen]], um direkt zur App zu gelangen — dein Fortschritt wird gespeichert.",
+    },
+    s03: {
+      title: "Home — Tagestyp festlegen",
+      t1: "Jeder Tag beginnt auf dem [[Home]]-Bildschirm. Wenn du ihn an einem neuen Tag zum ersten Mal öffnest, erscheint eine Vollbild-Abfrage: Trainingstag oder Ruhetag?",
+      t2: "Tippe auf [[🏋️ Trainingstag]] oder [[😴 Ruhetag]], um deine Wahl zu speichern. Das dauert eine Sekunde — die Details kommen ins Journal.",
+      t3: "Bereits eingetragen? Home zeigt deinen aktuellen Tagestyp. Tippe auf [[Ändern]], um ihn zu wechseln.",
+      t4: "Der rote Punkt im [[Home]]-Tab bedeutet, dass du deinen Tagestyp noch nicht festgelegt hast.",
+    },
+    s04: {
+      title: "Journal — deine Session festhalten",
+      t1: "Tippe auf den [[Journal]]-Tab, um zu schreiben. An einem [[Trainingstag]] siehst du fünf gezielte Fragen: Gedanken vor der Session, Reflexion danach, was gut lief, Frustration und Fokus für die nächste Session.",
+      t2: "An einem [[Ruhetag]] öffnet sich das Journal als freier Eingabebereich — schreib alles, was dir durch den Kopf geht.",
+      t3: "Du kannst jederzeit auch einen allgemeinen Eintrag mit einem [[Kontext-Tag]] erstellen: Allgemein, Vor dem Wettkampf, Nach dem Wettkampf, Während der Session oder Ruhetag.",
+      t4: "Die KI vergibt automatisch eine Stimmungsbewertung (positiv, neutral, negativ) und erkennt Themen — das fließt ins Dashboard deines Coaches ein.",
+      t5: "Wenn dein Coach eine Notiz zu einem deiner Einträge hinterlässt, erscheint sie direkt darunter als Zitat — achte auf die lila Linie auf der linken Seite.",
+    },
+    s05: {
+      title: "Tools — mentale Performance-Werkzeuge",
+      t1: "Der [[Tools]]-Tab hat vier Bereiche: Visualisierungen, Entspannung, Progressive Muskelentspannung (PR) und Affirmationen.",
+      t2: "[[Visualisierungen]] — geführtes Audio für Squat, Bench und Deadlift. Nach dem ersten Anhören kannst du 1–3 persönliche Stichwörter eingeben, die dir etwas bedeuten. Diese werden gespeichert und sind für deinen Coach sichtbar.",
+      t3: "[[Entspannung]] — zwei Atemübungen. Markiere deine Lieblings-Übung mit dem ☆-Symbol, damit sie immer ganz oben steht.",
+      t4: "[[PR (Progressive Muskelentspannung)]] — eine geführte Ganzkörper-Anspannungs- und Entspannungssession.",
+      t5: "[[Affirmationen]] — schreibe 1–3 persönliche Selbstgespräch-Sätze, die dein bestes Mindset aktivieren. Werden in deinem Profil gespeichert und sind für deinen Coach sichtbar.",
+      t6: "Der [[Tools]]-Tab gibt dir außerdem Zugang zu vier validierten psychologischen Assessments: SAT, ACSI, CSAI-2 und DAS. Diese fließen in den Test-Ergebnisse-Tab deines Coaches ein.",
+    },
+    s06: {
+      title: "Du — Profil & Einstellungen",
+      t1: "Im [[Du]]-Tab kannst du alles aus dem Setup-Assistenten aktualisieren: Name, Wettkampfdatum, Körperwerte, Lifts, mentale Ziele, Trainingsplan und Coach-Verbindung. Jeder Bereich ist eingeklappt — tippe zum Aufklappen.",
+      t2: "Um deinen Coach zu wechseln oder die Verbindung zu trennen, klappe den [[Coach]]-Bereich auf und tippe auf [[Coach wechseln]].",
+      t3: "Der Guide-Link (diese Seite) und die Abmelde-Option befinden sich ganz unten.",
+    },
+  },
+
+  guideCoach: {
+    s01: {
+      title: "Als Coach anmelden",
+      t1: "Öffne die App und tippe auf [[Als Coach anmelden]] (wähle die Coach-Rolle vor der Google-Anmeldung). Die Rolle wird einmalig festgelegt — Coaches und Athleten benötigen separate Konten.",
+      t2: "Nach der Anmeldung gelangst du automatisch zum [[Coach-Dashboard]].",
+    },
+    s02: {
+      title: "Athleten einladen",
+      t1: "Dein einzigartiger [[Einladungslink]] wird oben im Dashboard angezeigt. Teile ihn — Athleten, die ihn vor der Anmeldung anklicken, werden automatisch mit dir verknüpft.",
+      t2: "Athleten können sich auch verbinden, indem sie während des Onboardings deinen Namen aus der Coach-Liste wählen oder später über ihren [[Du]]-Tab.",
+      t3: "Neue Athleten erscheinen innerhalb von Sekunden nach der Verknüpfung in deinem Dashboard.",
+    },
+    s03: {
+      title: "Dashboard-Übersicht",
+      t1: "Jede Athleten-Karte zeigt: Einträge diese Woche, positiver Stimmungsanteil der letzten 7 Tage in %, eine Sparkline und eine Ampel-Markierung.",
+      t2: "[[🟢 Auf Kurs]] = 55%+ positiv. [[🟡 Beobachten]] = 30–55%. [[🔴 Aufmerksamkeit]] = unter 30% — melde dich.",
+      t3: "Ein [[rosafarbenes Banner]] erscheint oben im Dashboard und listet alle Athleten auf, die aktuell als Aufmerksamkeit markiert sind, mit einem schnellen E-Mail-Link für jeden.",
+      t4: "Nutze die Suchleiste und Sortieroptionen (Priorität, Positiv %, Aktivität, Name), um einen größeren Kader zu navigieren.",
+      t5: "Tippe auf eine Athleten-Karte, um sie aufzuklappen — sechs Tabs stehen zur Verfügung: Analyse, Aktuelle Einträge, Testergebnisse, Trainingsprotokoll, Profil und Notizen.",
+    },
+    s04: {
+      title: "Analyse-Tab",
+      t1: "Zeigt das dominante psychologische Thema des Athleten in diesem Zeitraum (z. B. Perfektionismus, Selbstzweifel, Selbstvertrauen) mit einer kurzen Beschreibung.",
+      t2: "Eine 3-Wochen-Stimmungsentwicklung (verbessernd / rückläufig / stabil / schwankend) hilft dir, Trends zu erkennen, bevor sie zum Problem werden.",
+      t3: "Training-Stimmungs-Korrelation: ob die Stimmung des Athleten an Trainingstagen konstant höher oder niedriger ist.",
+      t4: "Zwei oder drei [[Gesprächseinstiege]] werden basierend auf dem aktuellen Muster vorgeschlagen — nützliche Impulse für deinen nächsten Check-in-Call.",
+      t5: "Wechsle oben im Tab zwischen [[7d / 30d / 60d]]-Zeitfenstern, um die Daten zu vergrößern oder zu verkleinern.",
+    },
+    s05: {
+      title: "Aktuelle Einträge-Tab",
+      t1: "Zeigt die neuesten Journaleinträge des Athleten mit Stimmungsfarbe und Kontext-Tag. Tippe auf einen Eintrag, um den vollständigen Text zu lesen.",
+      t2: "Um Feedback zu einem Eintrag zu hinterlassen, tippe darunter auf [[Coach-Notiz hinzufügen]]. Schreibe deinen Kommentar und speichere — der Athlet sieht ihn sofort in seinem Journal, als lila Zitat unter dem Eintrag.",
+      t3: "Bestehende Notizen werden inline angezeigt; tippe auf das Stift-Symbol zum Bearbeiten.",
+    },
+    s06: {
+      title: "Trainingsprotokoll-Tab",
+      t1: "Zeigt die vollständige Trainingswoche (Mo–So) mit einer Stimmungs-Sparkline. Nutze die [[← →]]-Pfeile, um bis zu 4 Wochen zurückzublättern.",
+      t2: "🏋️ = Trainingstag · 💤 = Ruhetag · kein Balken = kein Eintrag an diesem Tag.",
+      t3: "Klappe einen beliebigen Tag auf, um Gedanken vor der Session, Reflexion danach, was gut lief, Frustration und Fokus für die nächste Session zu lesen.",
+      t4: "Die wöchentliche Zusammenfassung am unteren Ende zeigt wiederkehrende Themen vor/nach der Session und den allgemeinen Stimmungstrend.",
+    },
+    s07: {
+      title: "Testergebnisse-Tab",
+      t1: "Zeigt die aktuellsten Ergebnisse des Athleten für alle vier Assessments: SAT, ACSI, CSAI-2 und DAS. Ergebnisse erscheinen, sobald der Athlet einen Test abschließt und freischaltet.",
+      t2: "Vergleiche mit der Tagebuch-Stimmung — niedrige ACSI-Konzentrationswerte kombiniert mit negativen Einträgen rund um den Wettkampf sind ein deutliches Frühwarnsignal.",
+    },
+    s08: {
+      title: "Profil-Tab",
+      t1: "Vollständiges Onboarding-Profil: körperliche Daten, Lifts (aktuell und Ziel), Selbstbewertungsskalen, Mindset-Assessment-Antworten, mentale Ziele und Coaching-Erwartungen.",
+      t2: "Der Bereich [[Mentale Werkzeuge]] oben zeigt die gespeicherten Affirmationen des Athleten und seine persönlichen Stichwörter für jeden Lift (Squat, Bench, Deadlift).",
+    },
+    s09: {
+      title: "Notizen-Tab",
+      t1: "Dein privates Notizbuch für diesen Athleten. Halte Session-Beobachtungen, Follow-up-Punkte und Muster fest, die du vor dem nächsten Call im Kopf behalten möchtest.",
+      t2: "Notizen werden beim Tippen automatisch gespeichert. Nur du kannst sie sehen — Athleten können deine Coach-Notizen nicht lesen.",
+    },
+    s10: {
+      title: "Dein Profil & Code",
+      t1: "Der [[Du]]-Tab zeigt deinen Namen, dein Rollen-Abzeichen und die Abmelde-Option. Dein Einladungslink und Coach-Code sind immer oben im Haupt-Dashboard sichtbar.",
+      t2: "Athleten können sich selbst über ihren [[Du]]-Tab von dir trennen. Du kannst Athlet-Coach-Verknüpfungen bei Bedarf auch über das Admin-Dashboard verwalten.",
+    },
+  },
+
+  tools: {
+    pmr: {
+      title: "Progressive Muskelentspannung",
+      tagline: "Ganzkörper-Spannungsabbau",
+      intro: "Von Edmund Jacobson (1938) entwickelt, funktioniert PMR durch das systematische Anspannen und Entspannen von Muskelgruppen, um eine tiefe physiologische und psychologische Entspannung zu erzeugen. Im Sport hat es sich gezeigt, dass es die Vorwettkampfangst senkt, die Schlafqualität vor Wettkämpfen verbessert und die Erholung zwischen Einheiten beschleunigt — mit messbaren Effekten bereits nach wenigen Wochen täglicher Praxis.",
+    },
+    at: {
+      title: "Autogenes Training",
+      tagline: "Selbstinduzierte Tiefenentspannung",
+      intro: "Das vom Psychiater Johannes Heinrich Schultz (1932) entwickelte Autogene Training nutzt stille, selbst geführte Formeln, um Empfindungen von Schwere und Wärme auszulösen und so direkt das parasympathische Nervensystem zu aktivieren. Systematische Reviews zeigen, dass es Angst und Cortisol deutlich reduziert, die Schlafqualität verbessert und die Erholungszeit verkürzt — besonders wirksam in belastungsreichen Wettkampfphasen.",
+    },
+    vizSquat: {
+      title: "Squat",
+      tagline: "Mentales Probehandeln · Squat",
+      intro: "Mentale Vorstellung aktiviert dieselben motorischen Bahnen wie die physische Ausführung, festigt die Technik und stärkt das Selbstvertrauen, ohne körperliche Belastung hinzuzufügen. Konsequentes gedankliches Üben vor dem Lift hat gezeigt, dass es die Ausführungsgenauigkeit verbessert und die Wettkampfangst reduziert — am wirkungsvollsten, wenn die Vorstellung lebendig, aus der Ich-Perspektive erlebt und körperlich gespürt wird.",
+    },
+    vizBench: {
+      title: "Bench",
+      tagline: "Mentales Probehandeln · Bench Press",
+      intro: "Die Visualisierung des Bench Press mit hoher sensorischer Detailtiefe — einschließlich Propriozeption, Timing und Kraft — bereitet das neuromuskuläre System auf die Ausführung vor. Multi-sensorische Vorstellung verbessert nachweislich sowohl die technische Präzision als auch die Aufmerksamkeitsfokussierung unter Druck, wobei die größten Zuwächse erzielt werden, wenn die Vorstellung eng mit der realen Wettkampfumgebung übereinstimmt.",
+    },
+    vizDeadlift: {
+      title: "Deadlift",
+      tagline: "Mentales Probehandeln · Deadlift",
+      intro: "Das Deadlift erfordert vom ersten Zug an maximale Anspannung. Mentales Probehandeln hilft dabei, die richtigen internen Fokus-Cues — Spannung aufbauen, Slack rausnehmen, Bein-Drück-Gefühl — vor dem Ansetzen zu etablieren und reduziert die Fehlerquoten bei schweren Versuchen. Die Forschung zeigt, dass Vorstellung am wirkungsvollsten ist, wenn sie mit der tatsächlichen Bewegungsgeschwindigkeit geübt wird.",
+    },
+    resourceActivation: {
+      title: "Ressourcenaktivierung",
+      tagline: "Verankere deinen Spitzenzustand",
+      intro: "Das Ankern verknüpft einen körperlichen Reiz — zum Beispiel ein Fingerdrücken — über klassische Konditionierung mit einem einstudierten emotionalen Zustand. Durch wiederholtes Koppeln des Reizes mit der Erinnerung an den Spitzenzustand können Athleten auf Abruf optimales Selbstvertrauen und optimale Aktivierung abrufen, was die Variabilität der psychologischen Wettkampfbereitschaft zwischen Versuchen verringert.",
+    },
+    affirmations: {
+      title: "Selbstgespräch-Affirmationen",
+      tagline: "Persönliches Mindset-Priming",
+      intro: "Positives Selbstgespräch — gezielte innere Aussagen an sich selbst — gehört zu den am besten untersuchten psychologischen Fertigkeiten im Sport. Eine Meta-Analyse von Hatzigeorgiadis et al. (2011) zeigte, dass Selbstgespräch-Interventionen die Leistung über verschiedene Sportarten hinweg signifikant verbessern, wobei motivierendes Selbstgespräch besonders wirksam bei Kraft- und Schnellkraftaufgaben ist. Gut konstruierte Affirmationen reduzieren Leistungsangst, schärfen den Aufmerksamkeitsfokus und aktivieren assoziierte neuronale Bahnen vor der Ausführung.",
+    },
+    barrier: {
+      title: "Barriere",
+      tagline: "Ablenkungen blockieren · Im Moment bleiben",
+      intro: "Wettkampfumgebungen sind voller Ablenkungen — Lärm, andere Athleten, Anzeigetafeln, Zuschauer. Das Barriere-Audio nutzt geführte Vorstellung, um eine psychologische Grenze zwischen dir und allem außerhalb der Plattform aufzubauen. Auf deine Fokus-Cues personalisiert, trainiert es die selektive Aufmerksamkeit — sodass, wenn die Stange beladen ist, nur der Lift existiert.",
+    },
+    cinemaScreening: {
+      title: "Kinovorführungsraum",
+      tagline: "Mentale Fehlerkorrektur · Wiederholen & Neuschreiben",
+      intro: "Die Kinoleinwand-Technik nutzt geführte Vorstellung, um eine Leistung aus der Perspektive eines Vorführraums zu wiederholen — du siehst dir selbst auf der Leinwand zu, pausierst den Film und ersetzt Fehler bewusst durch korrekte Ausführungen. Der neu geschnittene mentale Film wird als neue Erinnerung gespeichert und verringert die Wahrscheinlichkeit, denselben Fehler unter Wettkampfbelastung zu wiederholen.",
+    },
+    compDayViz: {
+      title: "Wettkampftag",
+      tagline: "Vollständiger Meet-Durchlauf · Personalisiert",
+      intro: "Eine geführte 12-minütige Übung deines gesamten Wettkampftages — vom Aufwachen bis zu jedem deiner neun Versuche. Auf deine Fokus-Cues personalisiert, führt dich das Audio durch Einwiegen, Aufwärmen, Warten, die Ansagen und jeden Lift in der Reihenfolge. Vollständige Szenario-Mentalübung reduziert die Angst am Wettkampftag signifikant und bereitet die Leistungsbereitschaft vor.",
+    },
+  },
+
   guide: {
     back: "Zurück",
     pageTitle: "PowerFlow-Leitfaden",

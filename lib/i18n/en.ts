@@ -598,6 +598,173 @@ export const en = {
     audioFailed: "Audio failed — try again.",
   },
 
+  // Guide — athlete section content (tips use [[...]] for highlighted UI labels)
+  guideAthlete: {
+    s01: {
+      title: "Sign in",
+      t1: "Open the app and tap [[Sign in with Google]]. Make sure you select [[Athlete]] before signing in — this sets your role permanently.",
+      t2: "If your coach shared an invite link, open it first. It automatically links your account to your coach when you sign in.",
+    },
+    s02: {
+      title: "Setup wizard",
+      t1: "[[Step 1 — About you]] Your name, Instagram, and gender. Name and gender are required.",
+      t2: "[[Step 2 — Powerlifting profile]] Years in the sport, federation, bodyweight, weight class, next competition date, and training days per week.",
+      t3: "[[Step 3 — Your lifts]] Current bests and competition goals for squat, bench, and deadlift. All optional — you can update from the [[You]] tab at any time.",
+      t4: "[[Step 4 — Mindset]] Four questions about your mental barriers, confidence, overthinking, and previous mental coaching work. Then rate yourself 1–10 on five areas: confidence regulation, focus under fatigue, handling pressure, competition anxiety, and emotional recovery.",
+      t5: "[[Step 5 — Goals]] Up to three mental goals for the next 3 months. Also share your expectations from coaching, mental tools you've tried, and anything else relevant.",
+      t6: "[[Step 6 — Your coach]] Pick your PowerFlow coach from the list, or skip and connect later from the [[You]] tab.",
+      t7: "Use the [[← Back]] button to revisit any step. Tap [[Skip setup]] in the top-right to go straight to the app — your progress is saved.",
+    },
+    s03: {
+      title: "Home — set your day type",
+      t1: "Every day starts on the [[Home]] screen. The first time you open it each day, a full-screen prompt asks: training day or rest day?",
+      t2: "Tap [[🏋️ Training Day]] or [[😴 Rest Day]] to log your choice. This takes one second — the detail goes in your journal.",
+      t3: "Already logged? Home shows your current day type. Tap [[Change]] to switch it.",
+      t4: "The red dot on the [[Home]] tab means you haven't set your day type yet.",
+    },
+    s04: {
+      title: "Journal — write your session",
+      t1: "Tap the [[Journal]] tab to write. On a [[training day]] you'll see five focused questions: pre-session thoughts, post-session reflection, what went well, frustrations, and next-session focus.",
+      t2: "On a [[rest day]] the journal opens as a free-text prompt — write anything on your mind.",
+      t3: "You can also log a general entry at any time using a [[context tag]]: General, Pre-competition, Post-competition, During session, or Rest day.",
+      t4: "The AI automatically labels sentiment (positive, neutral, negative) and detects themes — this feeds your coach's dashboard.",
+      t5: "If your coach leaves a note on one of your entries, it appears directly below that entry as a quoted comment — look for the purple line on the left side.",
+    },
+    s05: {
+      title: "Tools — mental performance toolkit",
+      t1: "The [[Tools]] tab has four sections: Visualizations, Relaxation, Progressive Muscle Relaxation (PR), and Affirmations.",
+      t2: "[[Visualizations]] — guided audio for squat, bench, and deadlift. After your first listen, enter 1–3 personal cue words that resonate with you. These are saved and visible to your coach.",
+      t3: "[[Relaxation]] — two breathing tracks. Star your favourite with the ☆ icon so it's always at the top.",
+      t4: "[[PR (Progressive Muscle Relaxation)]] — a guided full-body tension-release session.",
+      t5: "[[Affirmations]] — write 1–3 personal self-talk sentences that prime your best mindset. Saved to your profile and visible to your coach.",
+      t6: "The [[Tools]] tab also gives access to four validated psychological assessments: SAT, ACSI, CSAI-2, and DAS. These feed into your coach's Test Results tab.",
+    },
+    s06: {
+      title: "You — profile & settings",
+      t1: "The [[You]] tab lets you update everything from the setup wizard: name, competition date, body stats, lifts, mental goals, training schedule, and coach connection. Each section collapses — tap to expand.",
+      t2: "To change or disconnect your coach, expand the [[Coach]] section and tap [[Change coach]].",
+      t3: "The guide link (this page) and sign-out are at the bottom.",
+    },
+  },
+
+  // Guide — coach section content
+  guideCoach: {
+    s01: {
+      title: "Sign in as a coach",
+      t1: "Open the app and tap [[Sign in as coach]] (select the coach role before Google sign-in). Role is set once — coaches and athletes need separate accounts.",
+      t2: "After sign-in you land on the [[Coach Dashboard]] automatically.",
+    },
+    s02: {
+      title: "Invite your athletes",
+      t1: "Your unique [[Join Link]] is shown at the top of the dashboard. Share it — athletes who click it before signing in are automatically linked to you.",
+      t2: "Athletes can also connect by selecting your name from the coach list during onboarding, or later from their [[You]] tab.",
+      t3: "New athletes appear on your dashboard within seconds of linking.",
+    },
+    s03: {
+      title: "Dashboard overview",
+      t1: "Each athlete card shows: entries this week, 7-day positive sentiment %, a sparkline, and a traffic-light flag.",
+      t2: "[[🟢 On-track]] = 55%+ positive. [[🟡 Monitor]] = 30–55%. [[🔴 Attention]] = below 30% — reach out.",
+      t3: "A [[rose banner]] appears at the top of the dashboard listing all athletes currently flagged as Attention, with a quick email link for each.",
+      t4: "Use the search bar and sort options (Priority, Positive %, Activity, Name) to navigate a larger roster.",
+      t5: "Tap any athlete card to expand it — six tabs are available: Analysis, Recent Entries, Test Scores, Training Log, Profile, and Notes.",
+    },
+    s04: {
+      title: "Analysis tab",
+      t1: "Shows the athlete's dominant psychological theme this period (e.g. Perfectionism, Self-doubt, Confidence) with a short descriptor.",
+      t2: "A 3-week sentiment trajectory (improving / declining / stable / volatile) helps you spot trends before they become problems.",
+      t3: "Training-mood correlation: whether the athlete's mood is consistently higher or lower on training days.",
+      t4: "Two or three [[conversation starters]] are suggested based on the current pattern — useful prompts for your next check-in call.",
+      t5: "Switch between [[7d / 30d / 60d]] windows at the top of the tab to zoom in or out on the data.",
+    },
+    s05: {
+      title: "Recent entries tab",
+      t1: "Shows the athlete's latest journal entries with sentiment colour and context tag. Tap an entry to read the full text.",
+      t2: "To leave feedback on an entry, tap [[Add coach note]] below it. Type your comment and save — the athlete sees it immediately in their Journal, quoted in purple below the entry.",
+      t3: "Existing notes show inline; tap the pencil icon to edit.",
+    },
+    s06: {
+      title: "Training log tab",
+      t1: "Shows the full training week (Mon–Sun) with a mood sparkline. Use the [[← →]] arrows to navigate up to 4 weeks back.",
+      t2: "🏋️ = training day · 💤 = rest day · no bar = no entry that day.",
+      t3: "Expand any day to read pre-session thoughts, post-session reflection, what went well, frustrations, and next-session focus.",
+      t4: "The weekly brief at the bottom surfaces recurring pre/post-session themes and overall mood trend.",
+    },
+    s07: {
+      title: "Test scores tab",
+      t1: "Displays the athlete's most recent scores on all four assessments: SAT, ACSI, CSAI-2, and DAS. Scores appear once the athlete completes and unlocks a test.",
+      t2: "Cross-reference with journal sentiment — low ACSI concentration combined with negative entries around competition is a strong early warning signal.",
+    },
+    s08: {
+      title: "Profile tab",
+      t1: "Full onboarding profile: physical stats, lifts (current and goal), self-rating scales, mindset assessment answers, mental goals, and coaching expectations.",
+      t2: "The [[Mental tools]] section at the top shows the athlete's saved affirmations and their personal cue words for each lift (squat, bench, deadlift).",
+    },
+    s09: {
+      title: "Notes tab",
+      t1: "Your private notepad for this athlete. Write session observations, follow-up items, patterns you've noticed — anything you'd want to remember before the next call.",
+      t2: "Notes auto-save as you type. Only you can see them — athletes cannot read your coach notes.",
+    },
+    s10: {
+      title: "Your profile & code",
+      t1: "The [[You]] tab shows your name, role badge, and sign-out. Your join link and coach code are always visible at the top of the main dashboard.",
+      t2: "Athletes can disconnect from you themselves via their [[You]] tab. You can also manage athlete-coach links from the admin dashboard if needed.",
+    },
+  },
+
+  // Library tool titles, taglines, and intros (citations stay in English in the TOOLS array)
+  tools: {
+    pmr: {
+      title: "Progressive Muscle Relaxation",
+      tagline: "Full-body tension release",
+      intro: "Developed by Edmund Jacobson (1938), PMR works by systematically tensing and releasing muscle groups to produce deep physiological and psychological relaxation. In sport contexts it has been shown to lower pre-competition anxiety, improve sleep quality before meets, and accelerate recovery between sessions — with measurable effects after just a few weeks of daily practice.",
+    },
+    at: {
+      title: "Autogenic Training",
+      tagline: "Self-induced deep relaxation",
+      intro: "Developed by psychiatrist Johannes Heinrich Schultz (1932), autogenic training uses silent self-directed formulas to induce sensations of heaviness and warmth, directly activating the parasympathetic nervous system. Systematic reviews show it significantly reduces anxiety and cortisol, improves sleep quality, and shortens recovery time — particularly effective during high-load competition blocks.",
+    },
+    vizSquat: {
+      title: "Squat",
+      tagline: "Mental rehearsal · Squat",
+      intro: "Mental imagery activates the same motor pathways as physical execution, reinforcing technique and building confidence without adding physical load. Consistent pre-lift rehearsal has been shown to improve performance accuracy and reduce competition anxiety — most effective when the imagery is vivid, first-person, and felt in the body rather than watched from the outside.",
+    },
+    vizBench: {
+      title: "Bench",
+      tagline: "Mental rehearsal · Bench Press",
+      intro: "Visualising the bench press with high sensory detail — including proprioception, timing, and force — primes the neuromuscular system for execution. Multi-sensory imagery has been shown to improve both technical precision and attentional focus under pressure, with the greatest gains seen when imagery closely matches the real performance environment.",
+    },
+    vizDeadlift: {
+      title: "Deadlift",
+      tagline: "Mental rehearsal · Deadlift",
+      intro: "The deadlift demands maximal tension from the first pull. Mental rehearsal helps establish the correct internal focus cues — brace, slack out, leg press — before getting under the bar, reducing error rates on heavy attempts. Research shows imagery is most effective when rehearsed at the actual speed of the movement.",
+    },
+    resourceActivation: {
+      title: "Resource Activation",
+      tagline: "Anchor your peak state",
+      intro: "Anchoring links a physical cue — such as a finger squeeze — to a rehearsed emotional state through classical conditioning. Repeated pairing of the cue with peak-state recall allows athletes to rapidly access optimal confidence and arousal on demand, reducing variability in psychological readiness across competition attempts.",
+    },
+    affirmations: {
+      title: "Self-Talk Affirmations",
+      tagline: "Personal mindset priming",
+      intro: "Positive self-talk — deliberate internal statements directed at oneself — is one of the most studied psychological skills in sport. A 2011 meta-analysis by Hatzigeorgiadis et al. found self-talk interventions significantly improve performance across sport disciplines, with motivational self-talk being particularly effective for strength and power tasks. Well-constructed affirmations reduce performance anxiety, prime attentional focus, and activate associated neural pathways before execution.",
+    },
+    barrier: {
+      title: "Barrier",
+      tagline: "Block distractions · Stay present",
+      intro: "Competition environments are filled with distractions — noise, other lifters, scoreboards, crowd. The Barrier audio uses guided imagery to build a psychological boundary between you and everything outside the platform. Personalized to your focus cues, it trains selective attention so that when the bar is loaded, only the lift exists.",
+    },
+    cinemaScreening: {
+      title: "Cinema Screening Room",
+      tagline: "Mental error correction · Replay & rewrite",
+      intro: "The cinema screening technique uses guided imagery to replay a performance from the vantage point of a projection room — watching yourself on screen, pausing the film, and deliberately replacing errors with correct executions. The re-edited mental film is stored as a new memory, reducing the probability of repeating the same mistake under competition load.",
+    },
+    compDayViz: {
+      title: "Competition Day",
+      tagline: "Full meet walkthrough · Personalized",
+      intro: "A guided 12-minute rehearsal of your entire competition day — from the moment you wake up through each of your nine attempts. Personalized using your focus cues, the audio walks you through weigh-in, warm-ups, waiting, the calls, and each lift in sequence. Full-scenario mental rehearsal significantly reduces meet-day anxiety and primes readiness to perform.",
+    },
+  },
+
   // Guide page navigation
   guide: {
     back: "Back",

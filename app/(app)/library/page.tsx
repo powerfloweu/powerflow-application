@@ -24,12 +24,11 @@ const TOOLS: Array<{
   minTier: PlanTier;
   items: Array<{
     id: string;
-    title: string;
-    tagline: string;
+    /** i18n key segment — used as t(`tools.${i18nKey}.title`) etc. */
+    i18nKey: string;
     icon: string;
     color: string;
     duration: string;
-    intro: string;
     citations: string[];
     fileKey: string | null;
     /** If true, shows the VizKeywords personalisation UI when expanded */
@@ -43,12 +42,10 @@ const TOOLS: Array<{
     items: [
       {
         id: "pmr",
-        title: "Progressive Muscle Relaxation",
-        tagline: "Full-body tension release",
+        i18nKey: "pmr",
         icon: "PR",
         color: "teal",
         duration: "~12 min",
-        intro: "Developed by Edmund Jacobson (1938), PMR works by systematically tensing and releasing muscle groups to produce deep physiological and psychological relaxation. In sport contexts it has been shown to lower pre-competition anxiety, improve sleep quality before meets, and accelerate recovery between sessions — with measurable effects after just a few weeks of daily practice.",
         citations: [
           "Jacobson (1938). Progressive Relaxation. University of Chicago Press.",
           "Maynard et al. (1995). The effect of a somatic intervention on competitive state anxiety and performance. Journal of Sports Sciences, 13(4), 289–300.",
@@ -58,12 +55,10 @@ const TOOLS: Array<{
       },
       {
         id: "autogenic-training",
-        title: "Autogenic Training",
-        tagline: "Self-induced deep relaxation",
+        i18nKey: "at",
         icon: "AT",
         color: "teal",
         duration: "~10 min",
-        intro: "Developed by psychiatrist Johannes Heinrich Schultz (1932), autogenic training uses silent self-directed formulas to induce sensations of heaviness and warmth, directly activating the parasympathetic nervous system. Systematic reviews show it significantly reduces anxiety and cortisol, improves sleep quality, and shortens recovery time — particularly effective during high-load competition blocks.",
         citations: [
           "Schultz & Luthe (1969). Autogenic Therapy. Grune & Stratton.",
           "Ernst & Kanji (2000). Autogenic training for stress and anxiety: A systematic review. Complementary Therapies in Medicine, 8(2), 106–110.",
@@ -81,12 +76,10 @@ const TOOLS: Array<{
     items: [
       {
         id: "viz-squat",
-        title: "Squat",
-        tagline: "Mental rehearsal · Squat",
+        i18nKey: "vizSquat",
         icon: "S",
         color: "purple",
         duration: "~6 min",
-        intro: "Mental imagery activates the same motor pathways as physical execution, reinforcing technique and building confidence without adding physical load. Consistent pre-lift rehearsal has been shown to improve performance accuracy and reduce competition anxiety — most effective when the imagery is vivid, first-person, and felt in the body rather than watched from the outside.",
         citations: [
           "Holmes & Collins (2001). The PETTLEP approach to motor imagery. Journal of Applied Sport Psychology, 13(1), 60–83.",
           "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
@@ -96,12 +89,10 @@ const TOOLS: Array<{
       },
       {
         id: "viz-bench",
-        title: "Bench",
-        tagline: "Mental rehearsal · Bench Press",
+        i18nKey: "vizBench",
         icon: "B",
         color: "purple",
         duration: "~6 min",
-        intro: "Visualising the bench press with high sensory detail — including proprioception, timing, and force — primes the neuromuscular system for execution. Multi-sensory imagery has been shown to improve both technical precision and attentional focus under pressure, with the greatest gains seen when imagery closely matches the real performance environment.",
         citations: [
           "Ranganathan et al. (2004). From mental power to muscle power. Neuropsychologia, 42(7), 944–956.",
           "Holmes & Collins (2001). The PETTLEP approach to motor imagery. Journal of Applied Sport Psychology, 13(1), 60–83.",
@@ -111,12 +102,10 @@ const TOOLS: Array<{
       },
       {
         id: "viz-deadlift",
-        title: "Deadlift",
-        tagline: "Mental rehearsal · Deadlift",
+        i18nKey: "vizDeadlift",
         icon: "D",
         color: "purple",
         duration: "~6 min",
-        intro: "The deadlift demands maximal tension from the first pull. Mental rehearsal helps establish the correct internal focus cues — brace, slack out, leg press — before getting under the bar, reducing error rates on heavy attempts. Research shows imagery is most effective when rehearsed at the actual speed of the movement.",
         citations: [
           "Guillot & Collet (2008). Construction of the motor imagery integrative model in sport. International Review of Sport and Exercise Psychology, 1(1), 31–44.",
           "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
@@ -132,12 +121,10 @@ const TOOLS: Array<{
     items: [
       {
         id: "resource-activation",
-        title: "Resource Activation",
-        tagline: "Anchor your peak state",
+        i18nKey: "resourceActivation",
         icon: "⚡",
         color: "amber",
         duration: "~8 min",
-        intro: "Anchoring links a physical cue — such as a finger squeeze — to a rehearsed emotional state through classical conditioning. Repeated pairing of the cue with peak-state recall allows athletes to rapidly access optimal confidence and arousal on demand, reducing variability in psychological readiness across competition attempts.",
         citations: [
           "Cotterill (2010). Pre-performance routines in sport. International Review of Sport and Exercise Psychology, 3(2), 132–153.",
           "Lidor & Singer (2000). Teaching pre-performance routines to beginners. Journal of Physical Education, Recreation & Dance, 71(7), 34–36.",
@@ -152,12 +139,10 @@ const TOOLS: Array<{
     items: [
       {
         id: "affirmations",
-        title: "Self-Talk Affirmations",
-        tagline: "Personal mindset priming",
+        i18nKey: "affirmations",
         icon: "✦",
         color: "emerald",
         duration: "",
-        intro: "Positive self-talk — deliberate internal statements directed at oneself — is one of the most studied psychological skills in sport. A 2011 meta-analysis by Hatzigeorgiadis et al. found self-talk interventions significantly improve performance across sport disciplines, with motivational self-talk being particularly effective for strength and power tasks. Well-constructed affirmations reduce performance anxiety, prime attentional focus, and activate associated neural pathways before execution.",
         citations: [
           "Hatzigeorgiadis et al. (2011). Self-talk and sports performance: A meta-analysis. Perspectives on Psychological Science, 6(4), 348–356.",
           "Hardy (2006). Speaking clearly: A critical review of the self-talk literature. Psychology of Sport and Exercise, 7(1), 81–97.",
@@ -175,12 +160,10 @@ const TOOLS: Array<{
     items: [
       {
         id: "barrier",
-        title: "Barrier",
-        tagline: "Block distractions · Stay present",
+        i18nKey: "barrier",
         icon: "▣",
         color: "amber",
         duration: "~8 min",
-        intro: "Competition environments are filled with distractions — noise, other lifters, scoreboards, crowd. The Barrier audio uses guided imagery to build a psychological boundary between you and everything outside the platform. Personalized to your focus cues, it trains selective attention so that when the bar is loaded, only the lift exists.",
         citations: [
           "Moran (1996). The Psychology of Concentration in Sport Performers. Psychology Press.",
           "Nideffer (1976). Test of attentional and interpersonal style. Journal of Personality and Social Psychology, 34(3), 394–404.",
@@ -191,12 +174,10 @@ const TOOLS: Array<{
       },
       {
         id: "hibajavitas",
-        title: "Cinema Screening Room",
-        tagline: "Mental error correction · Replay & rewrite",
+        i18nKey: "cinemaScreening",
         icon: "◫",
         color: "purple",
         duration: "~10 min",
-        intro: "The cinema screening technique uses guided imagery to replay a performance from the vantage point of a projection room — watching yourself on screen, pausing the film, and deliberately replacing errors with correct executions. The re-edited mental film is stored as a new memory, reducing the probability of repeating the same mistake under competition load.",
         citations: [
           "Orlick (2000). In Pursuit of Excellence. Human Kinetics.",
           "Vealey & Greenleaf (2010). Seeing is believing: Understanding and using imagery in sport. In J. Williams (Ed.), Applied Sport Psychology: Personal Growth to Peak Performance (pp. 267–304).",
@@ -212,12 +193,10 @@ const TOOLS: Array<{
     items: [
       {
         id: "comp-day-viz",
-        title: "Competition Day",
-        tagline: "Full meet walkthrough · Personalized",
+        i18nKey: "compDayViz",
         icon: "CM",
         color: "purple",
         duration: "~12 min",
-        intro: "A guided 12-minute rehearsal of your entire competition day — from the moment you wake up through each of your nine attempts. Personalized using your focus cues, the audio walks you through weigh-in, warm-ups, waiting, the calls, and each lift in sequence. Full-scenario mental rehearsal significantly reduces meet-day anxiety and primes readiness to perform.",
         citations: [
           "Calmels et al. (2004). The use of mental imagery among elite sport performers. Journal of Applied Sport Psychology, 16(2), 157–177.",
           "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
@@ -782,8 +761,8 @@ export default function ToolsPage() {
                           {tool.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-saira text-sm font-semibold text-zinc-400">{tool.title}</p>
-                          <p className="font-saira text-[11px] text-zinc-600">{tool.tagline}</p>
+                          <p className="font-saira text-sm font-semibold text-zinc-400">{t(`tools.${tool.i18nKey}.title`)}</p>
+                          <p className="font-saira text-[11px] text-zinc-600">{t(`tools.${tool.i18nKey}.tagline`)}</p>
                         </div>
                       </div>
                     ))}
@@ -814,9 +793,9 @@ export default function ToolsPage() {
                               {tool.icon}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-saira text-sm font-semibold text-white">{tool.title}</p>
+                              <p className="font-saira text-sm font-semibold text-white">{t(`tools.${tool.i18nKey}.title`)}</p>
                               <p className="font-saira text-[11px] text-zinc-500">
-                                {tool.tagline}
+                                {t(`tools.${tool.i18nKey}.tagline`)}
                                 {tool.duration && <span className="ml-2 text-zinc-700">{tool.duration}</span>}
                               </p>
                             </div>
@@ -848,7 +827,7 @@ export default function ToolsPage() {
                         {open && (
                           <div className="px-5 pb-6">
                             <div className={`w-full h-px mb-4 border-t ${c.border}`} />
-                            <p className="font-saira text-[13px] text-zinc-300 leading-relaxed mb-3">{tool.intro}</p>
+                            <p className="font-saira text-[13px] text-zinc-300 leading-relaxed mb-3">{t(`tools.${tool.i18nKey}.intro`)}</p>
                             <ul className="space-y-1 mb-5">
                               {tool.citations.map((cite, i) => (
                                 <li key={i} className="flex gap-2 items-baseline">
