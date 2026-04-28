@@ -485,6 +485,52 @@ export const en = {
     second: "Second Tier",
     pr: "PR Tier",
   },
+
+  // AI Coach chat page
+  chat: {
+    title: "Coach AI",
+    scriptsLink: "Scripts",
+    clear: "Clear",
+    clearTitle: "Clear conversation?",
+    clearDesc: "This will delete all messages permanently.",
+    clearingBtn: "Clearing…",
+    placeholder: "What's on your mind…",
+    sendHint: "Cmd+Enter to send",
+    quickStartsLabel: "Quick starts",
+    welcomeDesc: "Start a conversation. I know your profile, your recent journal entries, and your upcoming meet. Tell me what's on your mind — before training, after a tough session, or the night before competition.",
+    generatingAudio: "Generating audio…",
+    keepScreenOpen: "Keep this screen open — longer scripts take 10–30 s to generate.",
+    play: "▶ Play",
+    stop: "◼ Stop",
+    saveScript: "↓ Save to library",
+    savedScript: "✓ Saved",
+    savingScript: "Saving…",
+    audioFailed: "Audio failed — try again.",
+    noSound: "🔔 No sound? Check your phone is not on silent.",
+    errorMsg: "Sorry, something went wrong. Please try again.",
+    q1: "I missed a lift today and can't stop thinking about it",
+    q2: "Help me prepare mentally for my meet",
+    q3: "I want to map a new internal voice",
+    q4: "Generate a visualization script for my squat",
+  },
+
+  // Saved scripts page
+  scripts: {
+    title: "My Scripts",
+    emptyTitle: "No saved scripts yet.",
+    emptyDesc: "Ask the AI coach to generate a visualization, grounding, or pre-competition script — then save it here.",
+    openCoach: "Open AI Coach →",
+    savedWhen: "Saved {when}",
+    readFull: "Read full ↓",
+    showLess: "Show less ↑",
+    generatingAudio: "Generating audio…",
+    keepOpen: "Keep this screen open — longer scripts take 10–30 s to generate.",
+    play: "▶ Play",
+    stop: "◼ Stop",
+    noSound: "🔔 No sound? Check your phone is not on silent.",
+    delete: "✕ Delete",
+    audioFailed: "Audio failed — try again.",
+  },
 } as const;
 
 /** Recursively widen a const-asserted dict so other locales can supply any string. */

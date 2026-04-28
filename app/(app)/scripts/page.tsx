@@ -3,6 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 type SavedScript = {
   id: string;
@@ -26,6 +27,7 @@ function fmtTime(s: number) {
 
 export default function ScriptsPage() {
   const router = useRouter();
+  const { t } = useT();
 
   const [scripts, setScripts] = React.useState<SavedScript[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -237,41 +239,44 @@ export default function ScriptsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-6 pb-12 max-w-lg mx-auto md:max-w-2xl">
+    <div className="min-h-screen bg-[#050608]">
 
-      {/* ── Header ────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-8">
-        <Link
-          href="/chat"
-          className="font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.18em] transition"
-        >
-          ← Back
-        </Link>
-        <div className="flex items-center gap-2">
+      {/* ── Sticky header ─────────────────────────────────────── */}
+      <header className="sticky top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#050608]/95 backdrop-blur-sm">
+        <div className="justify-self-start">
+          <Link
+            href="/chat"
+            className="font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.18em] transition"
+          >
+            ← {t("common.back")}
+          </Link>
+        </div>
+        <div className="flex items-center gap-2 justify-self-center">
           <span className="text-purple-400 text-sm">✦</span>
           <p className="font-saira text-sm font-semibold text-white uppercase tracking-[0.14em]">
-            My Scripts
+            {t("scripts.title")}
           </p>
         </div>
-        <div className="w-16" />
-      </div>
+        <div />
+      </header>
+
+      <div className="px-4 pt-6 pb-12 max-w-lg mx-auto md:max-w-2xl">
 
       {/* ── Empty state ───────────────────────────────────────── */}
       {scripts.length === 0 ? (
         <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
           <div className="rounded-2xl border border-white/8 bg-[#17131F] px-6 py-8 max-w-sm w-full">
             <p className="font-saira text-sm font-semibold text-white mb-2">
-              No saved scripts yet.
+              {t("scripts.emptyTitle")}
             </p>
             <p className="font-saira text-xs text-zinc-500 leading-relaxed mb-6">
-              Ask the AI coach to generate a visualization, grounding, or
-              pre-competition script&nbsp;— then save it here.
+              {t("scripts.emptyDesc")}
             </p>
             <Link
               href="/chat"
               className="inline-block rounded-xl bg-purple-600 hover:bg-purple-500 px-5 py-2.5 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition"
             >
-              Open AI Coach →
+              {t("scripts.openCoach")}
             </Link>
           </div>
         </div>
@@ -296,7 +301,7 @@ export default function ScriptsPage() {
                     {script.title}
                   </p>
                   <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-600">
-                    Saved {timeAgo(script.created_at)}
+                    {t("scripts.savedWhen", { when: timeAgo(script.created_at) })}
                   </p>
                 </div>
 
@@ -311,7 +316,7 @@ export default function ScriptsPage() {
                       onClick={() => setExpandedId(isExpanded ? null : script.id)}
                       className="mt-1 font-saira text-[10px] uppercase tracking-wider text-purple-400 hover:text-purple-300 transition"
                     >
-                      {isExpanded ? "Show less ↑" : "Read full ↓"}
+                      {isExpanded ? t("scripts.showLess") : t("scripts.readFull")}
                     </button>
                   )}
                 </div>
@@ -321,17 +326,17 @@ export default function ScriptsPage() {
                   <div className="space-y-2 mb-3">
                     <div className="flex items-center gap-3">
                       <div className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin flex-shrink-0" />
-                      <span className="font-saira text-xs text-zinc-400">Generating audio…</span>
+                      <span className="font-saira text-xs text-zinc-400">{t("scripts.generatingAudio")}</span>
                       <button
                         type="button"
                         onClick={() => stopAudio()}
                         className="ml-auto font-saira text-[10px] uppercase tracking-wider text-zinc-600 hover:text-zinc-400 transition"
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </button>
                     </div>
                     <p className="font-saira text-[10px] text-zinc-600">
-                      Keep this screen open — longer scripts take 10–30 s to generate.
+                      {t("scripts.keepOpen")}
                     </p>
                   </div>
                 ) : isPlaying ? (
@@ -361,7 +366,7 @@ export default function ScriptsPage() {
                         onClick={handleStop}
                         className="flex-1 rounded-xl border border-purple-500/30 bg-purple-500/10 py-2 font-saira text-xs uppercase tracking-wider text-purple-300 hover:bg-purple-500/20 transition"
                       >
-                        ◼ Stop
+                        {t("scripts.stop")}
                       </button>
                       <button
                         type="button"
@@ -372,7 +377,7 @@ export default function ScriptsPage() {
                       </button>
                     </div>
                     <p className="font-saira text-[10px] text-zinc-700 text-center">
-                      🔔 No sound? Check your phone is not on silent.
+                      {t("scripts.noSound")}
                     </p>
                   </div>
                 ) : (
@@ -382,7 +387,7 @@ export default function ScriptsPage() {
                       onClick={() => handlePlay(script)}
                       className="border border-purple-500/30 bg-purple-500/10 text-purple-300 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:bg-purple-500/20 transition"
                     >
-                      ▶ Play
+                      {t("scripts.play")}
                     </button>
                     <button
                       type="button"
@@ -391,11 +396,11 @@ export default function ScriptsPage() {
                       className="border border-white/10 text-zinc-600 rounded-xl px-3 py-2 font-saira text-xs uppercase tracking-wider hover:text-red-400 hover:border-red-500/30 transition disabled:opacity-40"
                       aria-label="Delete script"
                     >
-                      {deletingId === script.id ? "…" : "✕ Delete"}
+                      {deletingId === script.id ? "…" : t("scripts.delete")}
                     </button>
                     {ttsError?.startsWith(script.id + "||") && (
                       <p className="w-full font-saira text-[10px] text-red-400 break-all">
-                        {ttsError.split("||")[1] || "Audio failed — try again."}
+                        {ttsError.split("||")[1] || t("scripts.audioFailed")}
                       </p>
                     )}
                   </div>
@@ -405,6 +410,7 @@ export default function ScriptsPage() {
           })}
         </div>
       )}
+      </div>{/* /inner content */}
     </div>
   );
 }

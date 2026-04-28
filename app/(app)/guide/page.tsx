@@ -191,15 +191,29 @@ export default function GuidePage() {
   const isCoach = role === "coach";
 
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto">
+    <div className="min-h-screen bg-[#050608] pb-10">
 
-      {/* Back */}
-      <Link
-        href="/you"
-        className="inline-block mb-5 font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.18em] transition"
-      >
-        ← You
-      </Link>
+      {/* ── Sticky back bar ────────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-40 bg-[#050608]/95 backdrop-blur-sm border-b border-white/5">
+        <div className="max-w-lg mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex items-center gap-2 font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-400 hover:text-purple-300 transition"
+          >
+            <svg viewBox="0 0 20 20" className="w-4 h-4 flex-shrink-0" fill="none" aria-hidden>
+              <path d="M12 4L6 10l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Back
+          </button>
+          <span className="font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-700">·</span>
+          <span className="font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-600">
+            PowerFlow Guide
+          </span>
+        </div>
+      </div>
+
+      <div className="max-w-lg mx-auto px-4 pt-8 sm:px-6">
 
       {/* Header */}
       <div className="mb-6">
@@ -251,6 +265,8 @@ export default function GuidePage() {
           Questions? Contact your PowerFlow coach or email support.
         </p>
       </div>
+
+      </div>{/* /inner scroll container */}
     </div>
   );
 }

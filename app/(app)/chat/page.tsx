@@ -3,6 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,6 +45,7 @@ function ScriptBlock({
   onStop: () => void;
   onSeekBy: (delta: number) => void;
 }) {
+  const { t } = useT();
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const isLoading = loadingId === blockId;
@@ -100,17 +102,17 @@ function ScriptBlock({
         <div className="space-y-2 mb-3">
           <div className="flex items-center gap-3">
             <div className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin flex-shrink-0" />
-            <span className="font-saira text-xs text-zinc-400">Generating audio…</span>
+            <span className="font-saira text-xs text-zinc-400">{t("chat.generatingAudio")}</span>
             <button
               type="button"
               onClick={onStop}
               className="ml-auto font-saira text-[10px] uppercase tracking-wider text-zinc-600 hover:text-zinc-400 transition"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
           <p className="font-saira text-[10px] text-zinc-600">
-            Keep this screen open — longer scripts take 10–30 s to generate.
+            {t("chat.keepScreenOpen")}
           </p>
         </div>
       ) : playing ? (
@@ -143,7 +145,7 @@ function ScriptBlock({
               onClick={onStop}
               className="flex-1 rounded-xl border border-purple-500/30 bg-purple-500/10 py-2 font-saira text-xs uppercase tracking-wider text-purple-300 hover:bg-purple-500/20 transition"
             >
-              ◼ Stop
+              {t("chat.stop")}
             </button>
             <button
               type="button"
@@ -154,7 +156,7 @@ function ScriptBlock({
             </button>
           </div>
           <p className="font-saira text-[10px] text-zinc-700 text-center">
-            🔔 No sound? Check your phone is not on silent.
+            {t("chat.noSound")}
           </p>
         </div>
       ) : (
@@ -164,7 +166,7 @@ function ScriptBlock({
             onClick={() => onPlay(blockId, content)}
             className="border border-purple-500/30 bg-purple-500/10 text-purple-300 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:bg-purple-500/20 transition"
           >
-            ▶ Play
+            {t("chat.play")}
           </button>
           <button
             type="button"
@@ -172,11 +174,11 @@ function ScriptBlock({
             disabled={saving}
             className="border border-white/10 text-zinc-400 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:text-white hover:border-white/30 transition disabled:opacity-50"
           >
-            {saved ? "✓ Saved" : saving ? "Saving…" : "↓ Save to library"}
+            {saved ? t("chat.savedScript") : saving ? t("chat.savingScript") : t("chat.saveScript")}
           </button>
           {hasError && (
             <p className="w-full font-saira text-[10px] text-red-400 break-all">
-              {errorMsg || "Audio failed — try again."}
+              {errorMsg || t("chat.audioFailed")}
             </p>
           )}
         </div>
@@ -283,37 +285,32 @@ function TypingIndicator() {
   );
 }
 
-// ── Quick start chips ─────────────────────────────────────────────────────────
-
-const QUICK_STARTS = [
-  "I missed a lift today and can't stop thinking about it",
-  "Help me prepare mentally for my meet",
-  "I want to map a new internal voice",
-  "Generate a visualization script for my squat",
-];
-
 // ── Welcome card ──────────────────────────────────────────────────────────────
 
 function WelcomeCard({ onChip }: { onChip: (text: string) => void }) {
+  const { t } = useT();
+  const quickStarts = [
+    t("chat.q1"),
+    t("chat.q2"),
+    t("chat.q3"),
+    t("chat.q4"),
+  ];
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] px-4 py-8">
       <div className="w-full max-w-sm">
         <div className="rounded-2xl border border-purple-500/20 bg-purple-500/5 px-6 py-6 mb-4 text-center">
           <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-3">
-            ✦ Coach AI
+            ✦ {t("chat.title")}
           </p>
           <p className="font-saira text-sm text-zinc-300 leading-relaxed">
-            Start a conversation. I know your profile, your recent journal
-            entries, and your upcoming meet. Tell me what&apos;s on your
-            mind&nbsp;&mdash; before training, after a tough session, or the
-            night before competition.
+            {t("chat.welcomeDesc")}
           </p>
         </div>
         <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-600 mb-3 text-center">
-          Quick starts
+          {t("chat.quickStartsLabel")}
         </p>
         <div className="flex flex-col gap-2">
-          {QUICK_STARTS.map((qs) => (
+          {quickStarts.map((qs) => (
             <button
               key={qs}
               type="button"
@@ -333,6 +330,7 @@ function WelcomeCard({ onChip }: { onChip: (text: string) => void }) {
 
 export default function ChatPage() {
   const router = useRouter();
+  const { t } = useT();
 
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [input, setInput] = React.useState("");
@@ -664,7 +662,7 @@ export default function ChatPage() {
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: "Sorry, something went wrong. Please try again.",
+          content: t("chat.errorMsg"),
         },
       ]);
       setStreamingContent("");
@@ -763,13 +761,13 @@ export default function ChatPage() {
             href="/library"
             className="inline-block font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.14em] sm:tracking-[0.18em] transition"
           >
-            ← Back
+            ← {t("common.back")}
           </Link>
         </div>
         <div className="flex items-center gap-1.5 justify-self-center min-w-0">
           <span className="text-purple-400 text-sm">✦</span>
           <p className="font-saira text-sm font-semibold text-white uppercase tracking-[0.1em] sm:tracking-[0.14em] truncate">
-            Coach AI
+            {t("chat.title")}
           </p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 justify-self-end">
@@ -779,7 +777,7 @@ export default function ChatPage() {
             className="font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.14em] transition"
           >
             <span className="sm:hidden text-base leading-none">📜</span>
-            <span className="hidden sm:inline">📜 Scripts</span>
+            <span className="hidden sm:inline">📜 {t("chat.scriptsLink")}</span>
           </Link>
           <button
             type="button"
@@ -787,7 +785,7 @@ export default function ChatPage() {
             disabled={!hasMessages || streaming}
             className="font-saira text-[11px] text-zinc-600 hover:text-zinc-400 uppercase tracking-[0.14em] transition disabled:opacity-30"
           >
-            Clear
+            {t("chat.clear")}
           </button>
         </div>
       </header>
@@ -797,10 +795,10 @@ export default function ChatPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6">
           <div className="w-full max-w-xs rounded-2xl border border-white/10 bg-[#17131F] p-6 text-center">
             <p className="font-saira text-sm font-semibold text-white mb-2">
-              Clear conversation?
+              {t("chat.clearTitle")}
             </p>
             <p className="font-saira text-xs text-zinc-500 mb-5">
-              This will delete all messages permanently.
+              {t("chat.clearDesc")}
             </p>
             <div className="flex gap-3">
               <button
@@ -808,7 +806,7 @@ export default function ChatPage() {
                 onClick={() => setShowClearConfirm(false)}
                 className="flex-1 rounded-xl border border-white/10 bg-[#0D0B14] py-2.5 font-saira text-xs font-semibold text-zinc-400 hover:text-white transition"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -816,7 +814,7 @@ export default function ChatPage() {
                 disabled={clearing}
                 className="flex-1 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 py-2.5 font-saira text-xs font-semibold text-white transition"
               >
-                {clearing ? "Clearing…" : "Clear"}
+                {clearing ? t("chat.clearingBtn") : t("chat.clear")}
               </button>
             </div>
           </div>
@@ -901,7 +899,7 @@ export default function ChatPage() {
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="What's on your mind…"
+            placeholder={t("chat.placeholder")}
             rows={1}
             disabled={streaming}
             // text-base on mobile (16px) prevents iOS Safari from auto-zooming
@@ -922,7 +920,7 @@ export default function ChatPage() {
           </button>
         </div>
         <p className="font-saira text-[10px] text-zinc-700 text-center mt-1.5">
-          Cmd+Enter to send
+          {t("chat.sendHint")}
         </p>
       </footer>
     </div>
