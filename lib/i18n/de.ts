@@ -444,8 +444,12 @@ export const de: Dict = {
   notifications: {
     title: "Was ist neu",
     devlogTitle: "Letztes Update",
+    fromCoach: "Von deinem Coach",
+    whatsNewWith: "Was ist neu",
+    latestBadge: "Neu",
     readMore: "Mehr lesen",
     dismiss: "Verstanden",
+    gotIt: "Verstanden →",
   },
 
   tests: {

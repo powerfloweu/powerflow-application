@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import BottomSheet from "./BottomSheet";
 import { DEVLOG, CURRENT_DEVLOG_VERSION } from "@/lib/devlog";
 import type { BroadcastRow } from "@/app/api/notifications/route";
+import { useT } from "@/lib/i18n";
 
 // ── Link renderer ─────────────────────────────────────────────────────────────
 
@@ -60,6 +61,7 @@ function BroadcastPanel({
   broadcast: BroadcastRow;
   onDismiss: () => void;
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [dismissing, setDismissing] = React.useState(false);
 
@@ -84,7 +86,7 @@ function BroadcastPanel({
       <div className="flex items-center gap-2">
         <span className="text-xl">📣</span>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-300">
-          From your coach
+          {t("notifications.fromCoach")}
         </p>
       </div>
 
@@ -99,7 +101,7 @@ function BroadcastPanel({
         disabled={dismissing}
         className="w-full mt-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-3 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition"
       >
-        Got it →
+        {t("notifications.gotIt")}
       </button>
     </div>
   );
@@ -108,6 +110,7 @@ function BroadcastPanel({
 // ── Dev log panel ─────────────────────────────────────────────────────────────
 
 function DevLogPanel({ onDismiss }: { onDismiss: () => void }) {
+  const { t } = useT();
   const [dismissing, setDismissing] = React.useState(false);
   const latest = DEVLOG[0];
 
@@ -128,7 +131,7 @@ function DevLogPanel({ onDismiss }: { onDismiss: () => void }) {
       <div className="flex items-center gap-2">
         <span className="text-xl">✦</span>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-300">
-          What's new · {latest.date}
+          {t("notifications.whatsNewWith")} · {latest.date}
         </p>
       </div>
 
@@ -207,6 +210,7 @@ export default function NotificationModal({
 // ── Standalone devlog viewer (for You page) ───────────────────────────────────
 
 export function DevLogViewer() {
+  const { t } = useT();
   return (
     <div className="space-y-6">
       {DEVLOG.map((entry) => (
@@ -217,7 +221,7 @@ export function DevLogViewer() {
             </p>
             {entry.version === CURRENT_DEVLOG_VERSION && (
               <span className="font-saira text-[8px] font-bold uppercase tracking-[0.2em] text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-full px-1.5 py-0.5">
-                Latest
+                {t("notifications.latestBadge")}
               </span>
             )}
           </div>

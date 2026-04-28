@@ -459,8 +459,12 @@ export const en = {
   notifications: {
     title: "What's new",
     devlogTitle: "Latest update",
+    fromCoach: "From your coach",
+    whatsNewWith: "What's new",
+    latestBadge: "Latest",
     readMore: "Read more",
     dismiss: "Got it",
+    gotIt: "Got it →",
   },
 
   // Test bundle
