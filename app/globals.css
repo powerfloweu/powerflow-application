@@ -27,17 +27,24 @@ body {
 
 /**
  * Chat page container — fills the viewport above the mobile TabBar.
- * Uses 100svh (small viewport height) so the browser chrome doesn't
- * push content off-screen, then subtracts the fixed TabBar height (4rem)
- * and the iOS home-indicator safe-area inset.
+ *
+ * Height cascade (best to worst supported):
+ *   100dvh — dynamic viewport height; SHRINKS when the iOS keyboard appears,
+ *            so the sticky input footer always stays above the keyboard.
+ *   100svh — small viewport height; older browsers, doesn't track keyboard.
+ *   100vh  — fallback; can leave content behind keyboard or browser chrome.
+ *
+ * Subtract the fixed TabBar (4rem) and the iOS home-indicator safe-area inset.
  * On desktop (md+) the TabBar is hidden; subtract only the top nav (3rem).
  */
 .chat-screen {
-  height: 100vh; /* fallback for browsers without svh support */
+  height: 100vh; /* legacy fallback */
   height: calc(100svh - 4rem - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - 4rem - env(safe-area-inset-bottom, 0px));
 }
 @media (min-width: 768px) {
   .chat-screen {
     height: calc(100vh - 3rem);
+    height: calc(100dvh - 3rem);
   }
 }

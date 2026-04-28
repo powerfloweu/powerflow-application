@@ -236,7 +236,7 @@ function renderContent(
       return (
         <pre
           key={i}
-          className="bg-[#0e0b15] rounded-lg p-3 text-xs mt-2 whitespace-pre-wrap font-mono overflow-x-auto"
+          className="bg-[#0e0b15] rounded-lg p-3 text-[13px] sm:text-xs mt-2 whitespace-pre-wrap font-mono overflow-x-auto"
         >
           {body}
         </pre>
@@ -752,26 +752,34 @@ export default function ChatPage() {
   return (
     <div className="chat-screen flex flex-col bg-[#050608]">
 
-      {/* ── Sticky header ─────────────────────────────────────── */}
-      <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/6 bg-[#050608]/95 backdrop-blur-sm">
-        <Link
-          href="/library"
-          className="font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.18em] transition"
-        >
-          ← Back
-        </Link>
-        <div className="flex items-center gap-1.5">
+      {/* ── Sticky header ───────────────────────────────────────
+          3-column grid keeps the centre title visually centred even when
+          the side columns have different widths. On narrow phones we drop
+          the "Scripts" label to just an emoji icon so the right column
+          doesn't collide with the title. */}
+      <header className="sticky top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:px-4 py-3 border-b border-white/6 bg-[#050608]/95 backdrop-blur-sm">
+        <div className="justify-self-start">
+          <Link
+            href="/library"
+            className="inline-block font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.14em] sm:tracking-[0.18em] transition"
+          >
+            ← Back
+          </Link>
+        </div>
+        <div className="flex items-center gap-1.5 justify-self-center min-w-0">
           <span className="text-purple-400 text-sm">✦</span>
-          <p className="font-saira text-sm font-semibold text-white uppercase tracking-[0.14em]">
+          <p className="font-saira text-sm font-semibold text-white uppercase tracking-[0.1em] sm:tracking-[0.14em] truncate">
             Coach AI
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 justify-self-end">
           <Link
             href="/scripts"
+            aria-label="Saved scripts"
             className="font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.14em] transition"
           >
-            📜 Scripts
+            <span className="sm:hidden text-base leading-none">📜</span>
+            <span className="hidden sm:inline">📜 Scripts</span>
           </Link>
           <button
             type="button"
@@ -896,7 +904,9 @@ export default function ChatPage() {
             placeholder="What's on your mind…"
             rows={1}
             disabled={streaming}
-            className="flex-1 rounded-2xl border border-white/10 bg-[#17131F] px-4 py-3 font-saira text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/40 resize-none overflow-hidden disabled:opacity-50 [color-scheme:dark]"
+            // text-base on mobile (16px) prevents iOS Safari from auto-zooming
+            // when the textarea is focused. Drops to text-sm at sm: breakpoint.
+            className="flex-1 rounded-2xl border border-white/10 bg-[#17131F] px-4 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/40 resize-none overflow-hidden disabled:opacity-50 [color-scheme:dark]"
             style={{ minHeight: "48px", maxHeight: "200px" }}
           />
           <button
