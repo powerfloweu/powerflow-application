@@ -280,6 +280,7 @@ function VizKeywords({
   keywords: string[];
   onSave: (kws: string[]) => Promise<void>;
 }) {
+  const { t } = useT();
   const [editing, setEditing] = React.useState(false);
   const [drafts, setDrafts]   = React.useState(["", "", ""]);
   const [saving, setSaving]   = React.useState(false);
@@ -303,7 +304,7 @@ function VizKeywords({
     return (
       <div className="mb-5 rounded-xl border border-purple-500/15 bg-purple-500/5 p-4">
         <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-purple-300 mb-3">
-          Your focus cues {keywords.length === 0 ? "(1–3 keywords)" : ""}
+          {t("library.yourFocusCues")} {keywords.length === 0 ? t("library.addKeywordsHint") : ""}
         </p>
         <div className="flex gap-2 mb-3 flex-wrap">
           {[0, 1, 2].map((i) => (
@@ -329,7 +330,7 @@ function VizKeywords({
             disabled={drafts.every((s) => !s.trim()) || saving}
             className="rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-4 py-1.5 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition"
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? t("common.saving") : t("common.save")}
           </button>
           {keywords.length > 0 && (
             <button
@@ -337,7 +338,7 @@ function VizKeywords({
               onClick={() => setEditing(false)}
               className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           )}
         </div>
@@ -349,14 +350,14 @@ function VizKeywords({
     <div className="mb-5">
       <div className="flex items-center gap-2 mb-2">
         <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-          Your cues
+          {t("library.yourCues")}
         </p>
         <button
           type="button"
           onClick={openEdit}
           className="font-saira text-[10px] text-zinc-600 hover:text-purple-400 underline transition"
         >
-          Edit
+          {t("common.edit")}
         </button>
       </div>
       <div className="flex gap-1.5 flex-wrap">
@@ -379,6 +380,7 @@ function AffirmationsInputs({
   affirmations: string[];
   onSave: (a: string[]) => Promise<void>;
 }) {
+  const { t } = useT();
   const [drafts, setDrafts] = React.useState([
     affirmations[0] ?? "",
     affirmations[1] ?? "",
@@ -405,16 +407,16 @@ function AffirmationsInputs({
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
-      setError("Couldn't save — please try again.");
+      setError(t("you.saveFailed"));
     } finally {
       setSaving(false);
     }
   };
 
   const placeholders = [
-    "e.g. I am strong and prepared for this",
-    "e.g. I trust my technique under pressure",
-    "e.g. I control what I can control",
+    t("library.affirmationPlaceholder1"),
+    t("library.affirmationPlaceholder2"),
+    t("library.affirmationPlaceholder3"),
   ];
 
   return (
@@ -422,7 +424,7 @@ function AffirmationsInputs({
       {[0, 1, 2].map((i) => (
         <div key={i}>
           <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
-            Affirmation {i + 1}{i > 0 ? " (optional)" : ""}
+            {t("library.affirmationLabel")} {i + 1}{i > 0 ? ` (${t("common.optional")})` : ""}
           </label>
           <input
             type="text"
@@ -449,7 +451,7 @@ function AffirmationsInputs({
               : "bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40"
           }`}
         >
-          {saved ? "✓ Saved" : saving ? "Saving…" : "Save"}
+          {saved ? t("common.saved") : saving ? t("common.saving") : t("common.save")}
         </button>
         {error && <p className="font-saira text-[11px] text-red-400">{error}</p>}
       </div>
@@ -467,6 +469,7 @@ const STORAGE_BASE =
   "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/";
 
 function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolColor }) {
+  const { t } = useT();
   const audioRef  = React.useRef<HTMLAudioElement>(null);
   const [playing, setPlaying]         = React.useState(false);
   const [buffering, setBuffering]     = React.useState(false);
@@ -516,9 +519,9 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
           </svg>
         </div>
         <div>
-          <p className="font-saira text-xs font-semibold text-zinc-500">Guided audio</p>
+          <p className="font-saira text-xs font-semibold text-zinc-500">{t("library.audioGuided")}</p>
           <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-700">
-            Recording coming soon
+            {t("library.audioComingSoon")}
           </p>
         </div>
       </div>
@@ -533,13 +536,13 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
           ✕
         </div>
         <div>
-          <p className="font-saira text-xs font-semibold text-red-400">Couldn't load audio</p>
+          <p className="font-saira text-xs font-semibold text-red-400">{t("library.audioLoadError")}</p>
           <button
             type="button"
             onClick={() => setErrored(false)}
             className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
           >
-            Try again
+            {t("common.retry")}
           </button>
         </div>
       </div>

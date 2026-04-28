@@ -388,7 +388,9 @@ export default function YouPage() {
                   next[i] = e.target.value;
                   setMentalGoals(next);
                 }}
-                placeholder={`Goal ${i + 1}${i === 0 ? " (required)" : " (optional)"}`}
+                placeholder={i === 0
+                  ? t("onboarding.goalRequired", { n: i + 1 })
+                  : t("onboarding.goalOptional", { n: i + 1 })}
                 maxLength={200}
                 className="flex-1 rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
               />
