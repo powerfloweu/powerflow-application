@@ -178,6 +178,20 @@ export const en = {
     pillPractice: "{count}/{target} practice",
     backToCourseShort: "← Back to course",
 
+    pageLabelYourPlan: "YOUR PLAN",
+    indexTitle: "Mental Training",
+    weeksAthletePaced: "{count} weeks · athlete-paced",
+    aiPersonalisedSuffix: " · AI-personalised",
+    progress: "Progress",
+    completeOf: "{done} / {total} complete",
+    stepOf: "Step {pos} of {total}",
+    continueArrow: "Continue →",
+    whyThisPlan: "Why this plan",
+    editOrRegenerate: "Edit or regenerate plan",
+    afterYourMeet: "After your meet",
+    postMeetTitle: "Post-Meet Reflection",
+    postMeetSubtitle: "Close the loop. Start the next prep right.",
+
     // Reflection bottom sheet
     reflectionTextTab: "Text",
     reflectionVoiceTab: "Voice",

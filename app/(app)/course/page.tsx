@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { COURSE_MODULES, PLAN_MODULES, weeksByTheme, stepsComplete, type CoursePlan, type CourseModule, type CourseProgressRow } from "@/lib/course";
+import { useT } from "@/lib/i18n";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ type PageStage =
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function CourseIndexPage() {
+  const { t } = useT();
   const [profile, setProfile]   = React.useState<Profile | null>(null);
   const [progress, setProgress] = React.useState<CourseProgressRow[]>([]);
   const [uiStage, setUiStage]   = React.useState<PageStage>({ stage: "loading" });
@@ -174,14 +176,14 @@ export default function CourseIndexPage() {
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="mb-6">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
-          POWERFLOW · YOUR PLAN
+          {t("brand.name").toUpperCase()} · {t("course.pageLabelYourPlan")}
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-1">
-          Mental Training
+          {t("course.indexTitle")}
         </h1>
         <p className="font-saira text-sm text-zinc-500">
-          {planWeeks.length} weeks · athlete-paced
-          {plan.type === "ai" && " · AI-personalised"}
+          {t("course.weeksAthletePaced", { count: planWeeks.length })}
+          {plan.type === "ai" && t("course.aiPersonalisedSuffix")}
         </p>
       </div>
 
@@ -189,10 +191,10 @@ export default function CourseIndexPage() {
       <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-6">
         <div className="flex items-baseline justify-between mb-2">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
-            Progress
+            {t("course.progress")}
           </p>
           <p className="font-saira text-xs text-zinc-400 tabular-nums">
-            {completedCount} / {planWeeks.length} complete
+            {t("course.completeOf", { done: completedCount, total: planWeeks.length })}
           </p>
         </div>
         <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
@@ -211,7 +213,7 @@ export default function CourseIndexPage() {
         >
           <div className="flex items-center justify-between mb-2">
             <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300">
-              Step {currentPos} of {planWeeks.length}
+              {t("course.stepOf", { pos: currentPos ?? 1, total: planWeeks.length })}
             </p>
             <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500 border border-white/10 rounded-full px-2 py-0.5">
               {currentWeek.theme}
@@ -225,7 +227,7 @@ export default function CourseIndexPage() {
           )}
           <StepDots row={progressMap[currentWeek.slug]} />
           <p className="mt-3 font-saira text-xs text-purple-300 group-hover:text-white transition">
-            Continue →
+            {t("course.continueArrow")}
           </p>
         </Link>
       )}
@@ -234,7 +236,7 @@ export default function CourseIndexPage() {
       {plan.rationale && (
         <div className="rounded-xl border border-white/5 bg-[#17131F] px-4 py-3 mb-6">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-1">
-            Why this plan
+            {t("course.whyThisPlan")}
           </p>
           <p className="font-saira text-xs text-zinc-400 leading-relaxed">{plan.rationale}</p>
         </div>
@@ -262,14 +264,14 @@ export default function CourseIndexPage() {
           onClick={() => setUiStage({ stage: "editing", plan })}
           className="font-saira text-xs text-zinc-600 hover:text-zinc-400 transition underline underline-offset-2"
         >
-          Edit or regenerate plan
+          {t("course.editOrRegenerate")}
         </button>
       </div>
 
       {/* ── Bonus: post-meet module ──────────────────────────────────────────── */}
       <div className="mt-8 pt-8 border-t border-white/5">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-600 mb-3">
-          After your meet
+          {t("course.afterYourMeet")}
         </p>
         <Link
           href="/course/m/w16-post-meet"
@@ -280,10 +282,10 @@ export default function CourseIndexPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-saira text-sm font-semibold text-white group-hover:text-purple-300 transition">
-              Post-Meet Reflection
+              {t("course.postMeetTitle")}
             </p>
             <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
-              Close the loop. Start the next prep right.
+              {t("course.postMeetSubtitle")}
             </p>
           </div>
           <span className="font-saira text-zinc-600 group-hover:text-purple-400 transition mt-0.5">→</span>
