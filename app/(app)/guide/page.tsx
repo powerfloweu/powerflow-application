@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AthleteProfile } from "@/lib/athlete";
+import { useT } from "@/lib/i18n";
 
 // ── Section component ─────────────────────────────────────────────────────────
 
@@ -170,6 +171,7 @@ function CoachGuide() {
 
 export default function GuidePage() {
   const router = useRouter();
+  const { t } = useT();
   const [role, setRole] = React.useState<"athlete" | "coach" | null>(null);
   const [name, setName] = React.useState("");
 
@@ -204,11 +206,11 @@ export default function GuidePage() {
             <svg viewBox="0 0 20 20" className="w-4 h-4 flex-shrink-0" fill="none" aria-hidden>
               <path d="M12 4L6 10l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Back
+            {t("guide.back")}
           </button>
           <span className="font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-700">·</span>
           <span className="font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-600">
-            PowerFlow Guide
+            {t("guide.pageTitle")}
           </span>
         </div>
       </div>
@@ -221,11 +223,11 @@ export default function GuidePage() {
           POWERFLOW · GUIDE
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-1">
-          {isCoach ? "Coach guide" : "Athlete guide"}
+          {isCoach ? t("guide.coachGuide") : t("guide.athleteGuide")}
         </h1>
         {name && (
           <p className="font-saira text-sm text-zinc-500">
-            Welcome{name ? `, ${name}` : ""}. Here&apos;s everything you need to know.
+            {t("guide.welcome", { name: `, ${name}` })}
           </p>
         )}
       </div>
@@ -239,10 +241,10 @@ export default function GuidePage() {
       >
         <div>
           <p className="font-saira text-sm font-semibold text-purple-300 group-hover:text-white transition mb-0.5">
-            Printable version
+            {t("guide.printable")}
           </p>
           <p className="font-saira text-[10px] text-zinc-500">
-            Tap to view → use Cmd/Ctrl+P to save as PDF · Back button at the top to return
+            {t("guide.printableHint")}
           </p>
         </div>
         <span className="text-purple-400 text-lg">→</span>
@@ -262,7 +264,7 @@ export default function GuidePage() {
       {/* Footer */}
       <div className="mt-6 text-center">
         <p className="font-saira text-[10px] text-zinc-600">
-          Questions? Contact your PowerFlow coach or email support.
+          {t("guide.footer")}
         </p>
       </div>
 
