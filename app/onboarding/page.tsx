@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { WEIGHT_CATEGORIES } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
+import { useT } from "@/lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -122,11 +123,12 @@ function Step1({
   instagram: string; setInstagram: (v: string) => void;
   gender: "male" | "female" | ""; setGender: (v: "male" | "female") => void;
 }) {
+  const { t } = useT();
   return (
     <div className="space-y-6">
       <div>
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
-          About you
+          {t("onboarding.step1Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
           Tell us the basics so we can personalise your experience.
@@ -192,13 +194,14 @@ function Step2({
   meetDate: string; setMeetDate: (v: string) => void;
   trainingDays: number | null; setTrainingDays: (v: number) => void;
 }) {
+  const { t } = useT();
   const cats = gender ? WEIGHT_CATEGORIES[gender] : [];
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
-          Powerlifting profile
+          {t("onboarding.step2Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
           Your experience and competition details.
@@ -301,17 +304,18 @@ function Step3({
   dlCurrent: string; setDlCurrent: (v: string) => void;
   dlGoal: string; setDlGoal: (v: string) => void;
 }) {
+  const { t } = useT();
   const rows = [
-    { label: "Squat",    current: squatCurrent, setCurrent: setSquatCurrent, goal: squatGoal, setGoal: setSquatGoal },
-    { label: "Bench",    current: benchCurrent, setCurrent: setBenchCurrent, goal: benchGoal, setGoal: setBenchGoal },
-    { label: "Deadlift", current: dlCurrent,    setCurrent: setDlCurrent,    goal: dlGoal,    setGoal: setDlGoal    },
+    { label: t("you.squat"),    current: squatCurrent, setCurrent: setSquatCurrent, goal: squatGoal, setGoal: setSquatGoal },
+    { label: t("you.bench"),    current: benchCurrent, setCurrent: setBenchCurrent, goal: benchGoal, setGoal: setBenchGoal },
+    { label: t("you.deadlift"), current: dlCurrent,    setCurrent: setDlCurrent,    goal: dlGoal,    setGoal: setDlGoal    },
   ];
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
-          Your lifts
+          {t("onboarding.step3Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
           Current bests and competition goals. All optional.
@@ -378,11 +382,12 @@ function Step4({
   selfCompetitionAnxiety: number | null; setSelfCompetitionAnxiety: (v: number) => void;
   selfEmotionalRecovery: number | null; setSelfEmotionalRecovery: (v: number) => void;
 }) {
+  const { t } = useT();
   return (
     <div className="space-y-6">
       <div>
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
-          Mindset &amp; self-assessment
+          {t("onboarding.step4Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
           Help us understand where you are mentally right now.
@@ -463,6 +468,7 @@ function Step5({
   previousTools: string; setPreviousTools: (v: string) => void;
   anythingElse: string; setAnythingElse: (v: string) => void;
 }) {
+  const { t } = useT();
   const updateGoal = (i: number, val: string) => {
     const next = [...mentalGoals];
     next[i] = val;
@@ -473,7 +479,7 @@ function Step5({
     <div className="space-y-6">
       <div>
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
-          Goals &amp; commitment
+          {t("onboarding.step5Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
           What you want to achieve in the next 3 months.
@@ -555,11 +561,12 @@ function Step6({
   selectedCoachId: string | null;
   setSelectedCoachId: (v: string | null) => void;
 }) {
+  const { t } = useT();
   return (
     <div className="space-y-6">
       <div>
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
-          Your coach
+          {t("onboarding.step6Title")}
         </h2>
         <p className="font-saira text-sm text-zinc-500">
           Is your coach on PowerFlow? Select them below. If not — or if you train solo — just skip.
@@ -636,6 +643,7 @@ function Step6({
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { t } = useT();
   const [authChecked, setAuthChecked] = React.useState(false);
 
   const TOTAL_STEPS = 6;
@@ -801,7 +809,7 @@ export default function OnboardingPage() {
       <div className="px-5 pt-12 pb-0 max-w-lg mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400">
-            POWERFLOW · SETUP
+            {t("brand.name").toUpperCase()} · {t("onboarding.pageLabel")}
           </p>
           <button
             type="button"
@@ -809,7 +817,7 @@ export default function OnboardingPage() {
             disabled={submitting}
             className="font-saira text-xs font-semibold text-zinc-300 hover:text-white border border-white/15 hover:border-white/30 rounded-lg px-3 py-1.5 transition disabled:opacity-40"
           >
-            Skip setup
+            {t("onboarding.skipSetup")}
           </button>
         </div>
         <ProgressBar step={step} total={TOTAL_STEPS} />
@@ -885,7 +893,7 @@ export default function OnboardingPage() {
               onClick={() => setStep((s) => s - 1)}
               className="rounded-xl border border-white/10 bg-white/5 hover:border-purple-500/40 hover:text-white py-3.5 px-5 font-saira text-sm font-semibold text-zinc-400 transition"
             >
-              ← Back
+              {t("onboarding.backArrow")}
             </button>
           )}
           {step < TOTAL_STEPS ? (
@@ -895,7 +903,7 @@ export default function OnboardingPage() {
               disabled={!canNext}
               className="flex-1 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed py-3.5 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition"
             >
-              Next →
+              {t("onboarding.continueArrow")}
             </button>
           ) : (
             <button
@@ -907,10 +915,10 @@ export default function OnboardingPage() {
               {submitting ? (
                 <>
                   <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Setting up…
+                  {t("onboarding.submitting")}
                 </>
               ) : (
-                "Complete setup →"
+                t("onboarding.completeSetup")
               )}
             </button>
           )}

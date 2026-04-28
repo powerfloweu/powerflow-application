@@ -438,6 +438,23 @@ export const en = {
     signOut: "Sign out",
   },
 
+  // Onboarding
+  onboarding: {
+    pageLabel: "ONBOARDING",
+    step1Title: "About you",
+    step2Title: "Powerlifting profile",
+    step3Title: "Your lifts",
+    step4Title: "Mindset & self-assessment",
+    step5Title: "Goals & commitment",
+    step6Title: "Your coach",
+    skipSetup: "Skip setup",
+    backArrow: "← Back",
+    continueArrow: "Continue →",
+    completeSetup: "Complete setup →",
+    submitting: "Setting up…",
+    stepOf: "Step {step} of {total}",
+  },
+
   // Notifications modal
   notifications: {
     title: "What's new",

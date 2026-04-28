@@ -425,6 +425,22 @@ export const de: Dict = {
     signOut: "Abmelden",
   },
 
+  onboarding: {
+    pageLabel: "ONBOARDING",
+    step1Title: "Über dich",
+    step2Title: "Powerlifting-Profil",
+    step3Title: "Deine Lifts",
+    step4Title: "Mindset & Selbsteinschätzung",
+    step5Title: "Ziele & Commitment",
+    step6Title: "Dein Coach",
+    skipSetup: "Setup überspringen",
+    backArrow: "← Zurück",
+    continueArrow: "Weiter →",
+    completeSetup: "Setup abschließen →",
+    submitting: "Wird eingerichtet…",
+    stepOf: "Schritt {step} von {total}",
+  },
+
   notifications: {
     title: "Was ist neu",
     devlogTitle: "Letztes Update",
