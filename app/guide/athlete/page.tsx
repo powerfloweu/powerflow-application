@@ -632,9 +632,48 @@ export default function AthleteGuidePage() {
             border-radius: 6px; padding: 2px 6px; font-weight: 700;
           }
           .s-coach-row { display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+
+          /*
+           * Back-to-app button — only visible on screen. Hidden in print so
+           * the PDF stays clean. Sits at the very top of the document so users
+           * can never get stuck on this page (especially in a PWA where
+           * target="_blank" sometimes opens in the same window).
+           */
+          .back-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 12px 16px;
+          }
+          .back-bar a {
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none;
+            color: #7c3aed;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.04em;
+            background: rgba(124, 58, 237, 0.08);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 999px;
+            padding: 8px 14px;
+            transition: background 0.15s, border-color 0.15s;
+          }
+          .back-bar a:hover {
+            background: rgba(124, 58, 237, 0.16);
+            border-color: rgba(124, 58, 237, 0.5);
+          }
+          @media print {
+            .back-bar { display: none !important; }
+          }
         `}</style>
       </head>
       <body>
+        {/* Sticky back-to-app bar — hidden in print, visible on screen */}
+        <div className="back-bar">
+          <a href="/guide">← Back to app</a>
+        </div>
         <div className="doc">
 
           {/* ── Cover ─────────────────────────────────────────── */}

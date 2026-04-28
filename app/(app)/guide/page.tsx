@@ -216,23 +216,23 @@ export default function GuidePage() {
         )}
       </div>
 
-      {/* PDF link */}
-      <a
+      {/* PDF link — opens in same tab so PWA users can use the in-document
+          "Back to app" button to return. (target="_blank" was unreliable in
+          installed PWAs, leaving users stranded on the printable view.) */}
+      <Link
         href={pdfHref}
-        target="_blank"
-        rel="noopener noreferrer"
         className="flex items-center justify-between rounded-2xl border border-purple-500/25 bg-purple-500/5 px-5 py-4 mb-6 hover:border-purple-400/50 transition group"
       >
         <div>
           <p className="font-saira text-sm font-semibold text-purple-300 group-hover:text-white transition mb-0.5">
-            Printable PDF version
+            Printable version
           </p>
           <p className="font-saira text-[10px] text-zinc-500">
-            Open in browser → Cmd/Ctrl+P → Save as PDF
+            Tap to view → use Cmd/Ctrl+P to save as PDF · Back button at the top to return
           </p>
         </div>
-        <span className="text-purple-400 text-lg">↗</span>
-      </a>
+        <span className="text-purple-400 text-lg">→</span>
+      </Link>
 
       {/* Role-specific guide */}
       {role === null ? (

@@ -388,9 +388,46 @@ export default function CoachGuidePage() {
           .s-log-date { font-size: 8px; font-weight: 700; color: #fff; margin-bottom: 6px; }
           .s-log-label { font-size: 6.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #71717a; margin-top: 5px; margin-bottom: 2px; }
           .s-log-text { font-size: 7.5px; color: #d4d4d8; line-height: 1.4; }
+
+          /*
+           * Back-to-app button — only visible on screen, hidden in print.
+           * Sits at the top so users never get stranded on this page in a PWA.
+           */
+          .back-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 12px 16px;
+          }
+          .back-bar a {
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none;
+            color: #7c3aed;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.04em;
+            background: rgba(124, 58, 237, 0.08);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 999px;
+            padding: 8px 14px;
+            transition: background 0.15s, border-color 0.15s;
+          }
+          .back-bar a:hover {
+            background: rgba(124, 58, 237, 0.16);
+            border-color: rgba(124, 58, 237, 0.5);
+          }
+          @media print {
+            .back-bar { display: none !important; }
+          }
         `}</style>
       </head>
       <body>
+        {/* Sticky back-to-app bar — hidden in print, visible on screen */}
+        <div className="back-bar">
+          <a href="/guide">← Back to app</a>
+        </div>
         <div className="doc">
 
           {/* ── Cover ─────────────────────────────────────────── */}
