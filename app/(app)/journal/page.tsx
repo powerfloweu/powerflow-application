@@ -13,6 +13,16 @@ import {
 } from "@/lib/journal";
 import { TRAINING_QUESTIONS, type TrainingEntry } from "@/lib/training";
 import { ymdLocal } from "@/lib/date";
+import { useT } from "@/lib/i18n";
+
+/** Map TRAINING_QUESTIONS keys to journal-dict translation keys */
+const TRAINING_QKEY: Record<string, string> = {
+  thoughts_before: "journal.qThoughtsBefore",
+  thoughts_after: "journal.qThoughtsAfter",
+  what_went_well: "journal.qWentWell",
+  frustrations: "journal.qFrustrations",
+  next_session: "journal.qNextSession",
+};
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -45,23 +55,36 @@ function detectThemesForEntry(text: string, sentiment: Sentiment): string[] {
     .map((def) => def.label);
 }
 
-function timeSinceJournal(iso: string): string {
+function timeSinceJournal(
+  iso: string,
+  t: (key: string, vars?: Record<string, string | number>) => string,
+): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const diffMin = Math.floor(diffMs / 60000);
   const diffH   = Math.floor(diffMs / 3600000);
   const diffD   = Math.floor(diffMs / 86400000);
-  if (diffMin < 1)  return "just now";
-  if (diffMin < 60) return `${diffMin} min ago`;
-  if (diffH   < 24) return `${diffH}h ago`;
-  return `${diffD}d ago`;
+  if (diffMin < 1)  return t("journal.justNow");
+  if (diffMin < 60) return t("journal.minAgo", { n: diffMin });
+  if (diffH   < 24) return t("journal.hAgo", { n: diffH });
+  return t("journal.dAgo", { n: diffD });
 }
 
-function dayLabel(d: Date) {
+function localeForDate(loc: string): string {
+  if (loc === "de") return "de-DE";
+  if (loc === "hu") return "hu-HU";
+  return "en-GB";
+}
+
+function dayLabel(
+  d: Date,
+  t: (key: string) => string,
+  loc: string,
+) {
   const today = new Date();
   const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
-  if (d.toDateString() === today.toDateString())     return "Today";
-  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" });
+  if (d.toDateString() === today.toDateString())     return t("journal.today");
+  if (d.toDateString() === yesterday.toDateString()) return t("journal.yesterday");
+  return d.toLocaleDateString(localeForDate(loc), { weekday: "long", day: "numeric", month: "short" });
 }
 
 /** Returns a date string for a feed item — used for grouping by day */
@@ -207,6 +230,7 @@ function TrainingJournalForm({
   entry: TrainingEntry;
   onSave: (updated: TrainingEntry) => void;
 }) {
+  const { t } = useT();
   const [answers, setAnswers] = React.useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     for (const q of TRAINING_QUESTIONS) {
@@ -243,7 +267,7 @@ function TrainingJournalForm({
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
-      setError("Couldn't save — please try again.");
+      setError(t("journal.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -254,7 +278,7 @@ function TrainingJournalForm({
       <div className="flex items-center gap-2 mb-4">
         <span className="text-base">🏋️</span>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-300">
-          Training Day
+          {t("journal.trainingDay")}
         </p>
       </div>
 
@@ -262,7 +286,7 @@ function TrainingJournalForm({
         {TRAINING_QUESTIONS.map((q) => (
           <div key={q.key}>
             <label className="block font-saira text-xs text-zinc-400 mb-1.5">
-              {q.label}
+              {t(TRAINING_QKEY[q.key] ?? "")}
             </label>
             <textarea
               rows={2}
@@ -286,7 +310,7 @@ function TrainingJournalForm({
             : "bg-purple-500/20 text-purple-500/50 cursor-not-allowed"
           }`}
         >
-          {saved ? "✓ Saved" : saving ? "Saving…" : "Save"}
+          {saved ? t("common.saved") : saving ? t("common.saving") : t("common.save")}
         </button>
       </div>
       {error && <p className="mt-2 font-saira text-[11px] text-red-400">{error}</p>}
@@ -297,6 +321,7 @@ function TrainingJournalForm({
 // ── Quick entry form ───────────────────────────────────────────────────────────
 
 function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
+  const { t } = useT();
   const [text, setText]             = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [submitted, setSubmitted]   = React.useState(false);
@@ -324,7 +349,7 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 1800);
     } catch {
-      setError("Couldn't save — please try again.");
+      setError(t("journal.saveFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -338,7 +363,7 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
     <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 via-fuchsia-500/5 to-transparent p-5 sm:p-6 shadow-[0_16px_40px_rgba(126,34,206,0.15)]">
       <textarea
         value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKey}
-        placeholder="What's on your mind right now? Log a thought, a doubt, a win…"
+        placeholder={t("journal.writePlaceholder")}
         rows={3}
         className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-base sm:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
       />
@@ -350,12 +375,12 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
             : canSubmit ? "bg-purple-500 text-white hover:bg-purple-400"
             : "bg-purple-500/20 text-purple-500/50 cursor-not-allowed"
           }`}>
-          {submitted ? "✓ Logged" : submitting ? "Saving…" : "Log thought"}
+          {submitted ? t("journal.logged") : submitting ? t("common.saving") : t("journal.logThought")}
         </button>
       </div>
 
       {error && <p className="mt-2 font-saira text-[11px] text-red-400">{error}</p>}
-      <p className="mt-2 font-saira text-[10px] text-zinc-700 hidden sm:block">⌘ + Enter to submit quickly</p>
+      <p className="mt-2 font-saira text-[10px] text-zinc-700 hidden sm:block">{t("journal.quickSubmit")}</p>
     </div>
   );
 }
@@ -363,12 +388,13 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
 // ── Training day card (feed) ───────────────────────────────────────────────────
 
 function TrainingDayCard({ entry }: { entry: TrainingEntry }) {
+  const { t } = useT();
   const fields = [
-    { label: "Before top sets",  value: entry.thoughts_before },
-    { label: "After top sets",   value: entry.thoughts_after },
-    { label: "Went well",        value: entry.what_went_well },
-    { label: "Frustrated by",    value: entry.frustrations },
-    { label: "Next session",     value: entry.next_session },
+    { label: t("journal.fieldThoughtsBefore"), value: entry.thoughts_before },
+    { label: t("journal.fieldThoughtsAfter"),  value: entry.thoughts_after },
+    { label: t("journal.fieldWentWell"),       value: entry.what_went_well },
+    { label: t("journal.fieldFrustrations"),   value: entry.frustrations },
+    { label: t("journal.fieldNextSession"),    value: entry.next_session },
   ].filter((f) => f.value);
 
   if (!fields.length) return null;
@@ -378,11 +404,11 @@ function TrainingDayCard({ entry }: { entry: TrainingEntry }) {
       <div className="flex items-center gap-2 mb-3">
         <span className="text-sm">🏋️</span>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-sky-300">
-          Training day log
+          {t("journal.trainingDayLog")}
         </p>
         {entry.mood_rating != null && (
           <span className="ml-auto font-saira text-[10px] text-zinc-500">
-            Mood {entry.mood_rating}/10
+            {t("journal.moodOf", { value: entry.mood_rating })}
           </span>
         )}
       </div>
@@ -399,7 +425,7 @@ function TrainingDayCard({ entry }: { entry: TrainingEntry }) {
           <p className="font-saira text-xs text-zinc-400 italic leading-relaxed">
             &ldquo;{entry.coach_note}&rdquo;
           </p>
-          <p className="font-saira text-[10px] text-zinc-600 mt-0.5">Coach note</p>
+          <p className="font-saira text-[10px] text-zinc-600 mt-0.5">{t("journal.coachNote")}</p>
         </div>
       )}
     </div>
@@ -409,6 +435,7 @@ function TrainingDayCard({ entry }: { entry: TrainingEntry }) {
 // ── Weekly digest sidebar ──────────────────────────────────────────────────────
 
 function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
+  const { t, locale } = useT();
   const week    = weekEntries(entries);
   const pos     = week.filter((e) => e.sentiment === "positive").length;
   const neg     = week.filter((e) => e.sentiment === "negative").length;
@@ -421,31 +448,31 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
     <div className="space-y-4">
       <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-5 space-y-5">
         <div>
-          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-purple-300">This week</p>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-purple-300">{t("journal.digestThisWeek")}</p>
           <p className="font-saira text-[11px] text-zinc-600 mt-0.5">
-            {new Date(Date.now() - 6 * 86400000).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+            {new Date(Date.now() - 6 * 86400000).toLocaleDateString(localeForDate(locale), { day: "numeric", month: "short" })}
             {" — "}
-            {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+            {new Date().toLocaleDateString(localeForDate(locale), { day: "numeric", month: "short" })}
           </p>
         </div>
 
         <div className="flex items-center gap-4">
           <SentimentDonut pos={pos} neg={neg} neu={neu} />
           <div className="space-y-2 flex-1">
-            <StatRow dot="bg-emerald-400" label="Positive" value={pos} />
-            <StatRow dot="bg-rose-400"    label="Negative" value={neg} />
-            <StatRow dot="bg-sky-400"     label="Neutral"  value={neu} />
+            <StatRow dot="bg-emerald-400" label={t("journal.digestPositive")} value={pos} />
+            <StatRow dot="bg-rose-400"    label={t("journal.digestNegative")} value={neg} />
+            <StatRow dot="bg-sky-400"     label={t("journal.digestNeutral")}  value={neu} />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 pt-1 border-t border-white/5">
-          <StatPill label="Entries" value={String(week.length)} />
-          <StatPill label="Positive" value={`${posRate}%`} highlight={posRate >= 50} />
-          <StatPill label="Streak" value={`${str}d`} highlight={str >= 3} />
+          <StatPill label={t("journal.digestEntries")} value={String(week.length)} />
+          <StatPill label={t("journal.digestPositive")} value={`${posRate}%`} highlight={posRate >= 50} />
+          <StatPill label={t("journal.digestStreak")} value={`${str}d`} highlight={str >= 3} />
         </div>
 
         <div>
-          <p className="font-saira text-[10px] text-zinc-600 mb-2 uppercase tracking-[0.18em]">Daily volume</p>
+          <p className="font-saira text-[10px] text-zinc-600 mb-2 uppercase tracking-[0.18em]">{t("journal.digestDailyVolume")}</p>
           <WeekBar entries={entries} />
         </div>
       </div>
@@ -453,7 +480,7 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
       {themes.length > 0 && (
         <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-5">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-purple-300 mb-3">
-            Themes detected
+            {t("journal.digestThemes")}
           </p>
           <div className="flex flex-wrap gap-2">
             {themes.map(({ def, count }) => (
@@ -461,7 +488,7 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
             ))}
           </div>
           <p className="mt-3 font-saira text-[10px] text-zinc-600 leading-relaxed">
-            AI-powered theme analysis and reframes coming in a future update.
+            {t("journal.digestThemesNote")}
           </p>
         </div>
       )}
@@ -492,14 +519,15 @@ function StatPill({ label, value, highlight = false }: { label: string; value: s
 // ── Coach prompt banner ────────────────────────────────────────────────────────
 
 function CoachPromptBanner({ onDismiss }: { onDismiss: () => void }) {
+  const { t } = useT();
   return (
     <div className="mb-6 rounded-2xl border border-purple-500/20 bg-purple-500/[0.07] px-5 py-4 flex flex-wrap items-center gap-4">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-sm">🧠</div>
         <div className="min-w-0">
-          <p className="font-saira text-xs font-semibold text-purple-200">Working with a coach?</p>
+          <p className="font-saira text-xs font-semibold text-purple-200">{t("journal.coachBannerTitle")}</p>
           <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
-            You've built a solid journaling streak. Share your data with your coach — ask them to send you an invite link.
+            {t("journal.coachBannerBody")}
           </p>
         </div>
       </div>
@@ -511,6 +539,7 @@ function CoachPromptBanner({ onDismiss }: { onDismiss: () => void }) {
 // ── User header ────────────────────────────────────────────────────────────────
 
 function UserHeader({ profile }: { profile: UserProfile }) {
+  const { t } = useT();
   return (
     <div className="mb-6 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
@@ -528,7 +557,7 @@ function UserHeader({ profile }: { profile: UserProfile }) {
         </div>
       </div>
       <a href="/auth/sign-out" className="font-saira text-[10px] text-zinc-700 hover:text-zinc-400 transition underline underline-offset-2">
-        Sign out
+        {t("auth.signOut")}
       </a>
     </div>
   );
@@ -537,6 +566,7 @@ function UserHeader({ profile }: { profile: UserProfile }) {
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function JournalPage() {
+  const { t, locale } = useT();
   const [entries, setEntries]             = React.useState<JournalEntry[]>([]);
   const [allTraining, setAllTraining]     = React.useState<TrainingEntry[]>([]);
   const [profile, setProfile]             = React.useState<UserProfile | null>(null);
@@ -610,10 +640,10 @@ export default function JournalPage() {
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">PowerFlow · Journal</p>
-          <h1 className="mt-2 font-saira text-3xl font-extrabold uppercase tracking-[0.12em] sm:text-4xl">Self-Talk Log</h1>
+          <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">{t("brand.name")} · {t("journal.pageLabel")}</p>
+          <h1 className="mt-2 font-saira text-3xl font-extrabold uppercase tracking-[0.12em] sm:text-4xl">{t("journal.title")}</h1>
           <p className="mt-3 font-saira text-sm text-zinc-400 max-w-xl">
-            Track what your inner voice says during training, competition, and recovery. Patterns surface, beliefs shift.
+            {t("journal.subtitle")}
           </p>
         </div>
 
@@ -625,7 +655,7 @@ export default function JournalPage() {
             href="/voices"
             className="flex items-center justify-between gap-3 mb-4 rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-2.5 font-saira text-xs text-purple-300 hover:border-purple-500/40 hover:text-purple-200 transition"
           >
-            <span>✦ Voice work mode &nbsp;·&nbsp; View your cast</span>
+            <span>{t("journal.voiceModeBanner")}</span>
             <span>→</span>
           </a>
         )}
@@ -645,7 +675,7 @@ export default function JournalPage() {
 
             {grouped.length === 0 ? (
               <div className="rounded-3xl border border-white/5 bg-[#0F1117] p-10 text-center">
-                <p className="font-saira text-sm text-zinc-600">No entries yet — log your first thought above.</p>
+                <p className="font-saira text-sm text-zinc-600">{t("journal.empty")}</p>
               </div>
             ) : (
               <div className="space-y-8">
@@ -653,11 +683,11 @@ export default function JournalPage() {
                   <div key={dateKey}>
                     <div className="flex items-center gap-3 mb-3">
                       <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
-                        {dayLabel(feedItemDate(dayItems[0]))}
+                        {dayLabel(feedItemDate(dayItems[0]), t, locale)}
                       </span>
                       <div className="flex-1 h-px bg-white/5" />
                       <span className="font-saira text-[10px] text-zinc-700">
-                        {dayItems.length} entr{dayItems.length === 1 ? "y" : "ies"}
+                        {t(dayItems.length === 1 ? "journal.entryCountSingular" : "journal.entryCountPlural", { n: dayItems.length })}
                       </span>
                     </div>
                     <div className="space-y-3">
@@ -673,7 +703,7 @@ export default function JournalPage() {
                                   &ldquo;{coachFeedback[item.entry.id].content}&rdquo;
                                 </p>
                                 <p className="font-saira text-[10px] text-zinc-600 mt-0.5">
-                                  — {coachFeedback[item.entry.id].coach_name} (coach) · {timeSinceJournal(coachFeedback[item.entry.id].created_at)}
+                                  — {coachFeedback[item.entry.id].coach_name} (coach) · {timeSinceJournal(coachFeedback[item.entry.id].created_at, t)}
                                 </p>
                               </div>
                             )}
@@ -694,12 +724,12 @@ export default function JournalPage() {
 
         <div className="mt-14 flex flex-wrap items-center justify-center gap-6">
           <Link href="/tests" className="font-saira text-[11px] text-zinc-700 underline decoration-zinc-700 hover:text-zinc-400 transition">
-            ← Back to tests
+            {t("journal.backToTests")}
           </Link>
           <span className="text-zinc-800">·</span>
           {profile?.role === "coach" && (
             <Link href="/coach" className="font-saira text-[11px] text-purple-500/70 underline decoration-purple-500/30 hover:text-purple-300 transition">
-              Coach dashboard →
+              {t("journal.coachDashboard")}
             </Link>
           )}
         </div>
