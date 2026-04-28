@@ -369,6 +369,9 @@ export const en = {
     enterCoachCode: "Enter coach code",
     linkCoach: "Link coach",
     unlinkCoach: "Unlink coach",
+    coachConnectedTo: "Connected to {name}",
+    coachConnected: "Connected to your coach",
+    coachNotConnected: "Not connected.",
   },
 
   // Upgrade / pricing page

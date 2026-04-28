@@ -474,12 +474,12 @@ export default function YouPage() {
                     <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
                     <p className="font-saira text-sm text-emerald-300">
                       {currentCoach
-                        ? `Connected to ${currentCoach.display_name}`
-                        : "Connected to your coach"}
+                        ? t("you.coachConnectedTo", { name: currentCoach.display_name })
+                        : t("you.coachConnected")}
                     </p>
                   </div>
                 ) : (
-                  <p className="font-saira text-sm text-zinc-500 mb-3">Not connected.</p>
+                  <p className="font-saira text-sm text-zinc-500 mb-3">{t("you.coachNotConnected")}</p>
                 )}
                 <button
                   type="button"
@@ -512,7 +512,7 @@ export default function YouPage() {
                     <div className="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
                       <span className="font-saira text-xs text-zinc-400">–</span>
                     </div>
-                    <p className="font-saira text-sm font-semibold text-white">No coach</p>
+                    <p className="font-saira text-sm font-semibold text-white">{t("onboarding.noCoachLabel")}</p>
                     {coachId === null && (
                       <span className="ml-auto text-purple-400 text-sm">✓</span>
                     )}

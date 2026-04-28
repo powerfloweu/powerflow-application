@@ -361,6 +361,9 @@ export const de: Dict = {
     enterCoachCode: "Coach-Code eingeben",
     linkCoach: "Coach verbinden",
     unlinkCoach: "Verbindung trennen",
+    coachConnectedTo: "Verbunden mit {name}",
+    coachConnected: "Mit deinem Coach verbunden",
+    coachNotConnected: "Nicht verbunden.",
   },
 
   upgrade: {
