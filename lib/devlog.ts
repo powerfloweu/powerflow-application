@@ -13,9 +13,21 @@ export type DevLogEntry = {
   items: string[];
 };
 
-export const CURRENT_DEVLOG_VERSION = "2026-04-27.2";
+export const CURRENT_DEVLOG_VERSION = "2026-04-29";
 
 export const DEVLOG: DevLogEntry[] = [
+  {
+    version: "2026-04-29",
+    date: "29 Apr 2026",
+    title: "Back-date your training log",
+    items: [
+      "Forgot to log yesterday? Both the Home and Journal pages now have a date switcher — tap Yesterday or 2 days ago to log for a missed day.",
+      "Home page: mark a past day as Training or Rest, just like you would for today.",
+      "Journal page: if that day was a training day you can fill in all five training-log questions for it; if it wasn't logged yet, you can mark it right there.",
+      "Instagram handles on coach and admin dashboards are now clickable links.",
+      "Admin panel: plan tier (Opener / Second / PR) is now editable directly from the user row.",
+    ],
+  },
   {
     version: "2026-04-27.2",
     date: "27 Apr 2026",
