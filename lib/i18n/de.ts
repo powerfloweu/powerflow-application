@@ -102,6 +102,9 @@ export const de: Dict = {
     setGoals: "Ziele setzen",
     setMentalGoalsHint: "Setze 1–3 mentale Ziele für deinen nächsten Wettkampf.",
     addNowArrow: "Jetzt hinzufügen →",
+    tabToday: "Heute",
+    tabYesterday: "Gestern",
+    tabDayBefore: "Vorgestern",
   },
 
   journal: {
@@ -178,6 +181,12 @@ export const de: Dict = {
 
     entryCountSingular: "{n} Eintrag",
     entryCountPlural: "{n} Einträge",
+    dayBefore: "Vorgestern",
+    pastRestDay: "Das war ein Ruhetag. Nichts zu protokollieren.",
+    pastNoEntry: "Dieser Tag wurde noch nicht protokolliert.",
+    markAsTraining: "🏋️ Trainingstag",
+    markAsRest: "😴 Ruhetag",
+    logForDate: "Log für {date}",
   },
 
   course: {

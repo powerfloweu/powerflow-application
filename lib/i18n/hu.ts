@@ -100,6 +100,9 @@ export const hu: Dict = {
     setGoals: "Célok beállítása",
     setMentalGoalsHint: "Állíts be 1–3 mentális célt a következő versenyedre.",
     addNowArrow: "Hozzáadás most →",
+    tabToday: "Ma",
+    tabYesterday: "Tegnap",
+    tabDayBefore: "2 napja",
   },
 
   journal: {
@@ -176,6 +179,12 @@ export const hu: Dict = {
 
     entryCountSingular: "{n} bejegyzés",
     entryCountPlural: "{n} bejegyzés",
+    dayBefore: "2 napja",
+    pastRestDay: "Ez pihenőnap volt. Nincs mit naplózni.",
+    pastNoEntry: "Ez a nap még nincs naplózva.",
+    markAsTraining: "🏋️ Edzésnap",
+    markAsRest: "😴 Pihenőnap",
+    logForDate: "Napló — {date}",
   },
 
   course: {

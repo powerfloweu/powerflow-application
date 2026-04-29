@@ -13,6 +13,7 @@ import {
 } from "@/lib/journal";
 import { TRAINING_QUESTIONS, type TrainingEntry } from "@/lib/training";
 import { ymdLocal } from "@/lib/date";
+import { DateTabs, offsetDate } from "@/app/components/DateTabs";
 import { useT } from "@/lib/i18n";
 
 /** Map TRAINING_QUESTIONS keys to journal-dict translation keys */
@@ -536,6 +537,83 @@ function CoachPromptBanner({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
+// ── Past-date form ────────────────────────────────────────────────────────────
+
+/**
+ * Shown in the form area when the athlete selects a past date on the journal
+ * page. Handles three states:
+ *   null     → day not logged yet → show mini day-type buttons
+ *   rest     → rest day message
+ *   training → defer to TrainingJournalForm (handled in parent)
+ */
+function PastDateForm({
+  dateLabel,
+  entry,
+  onMark,
+  marking,
+  onSave,
+}: {
+  dateLabel: string;
+  entry: TrainingEntry | null;
+  onMark: (mode: "training" | "rest") => void;
+  marking: boolean;
+  onSave: (updated: TrainingEntry) => void;
+}) {
+  const { t } = useT();
+
+  if (entry === null) {
+    return (
+      <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-5 sm:p-6">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-500 mb-1">
+          {dateLabel}
+        </p>
+        <p className="font-saira text-sm text-zinc-400 mb-5">
+          {t("journal.pastNoEntry")}
+        </p>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            disabled={marking}
+            onClick={() => onMark("training")}
+            className="flex-1 rounded-xl border border-purple-500/30 bg-purple-500/10 py-3 font-saira text-sm font-semibold text-purple-200 hover:bg-purple-500/20 transition disabled:opacity-50"
+          >
+            {t("journal.markAsTraining")}
+          </button>
+          <button
+            type="button"
+            disabled={marking}
+            onClick={() => onMark("rest")}
+            className="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 font-saira text-sm font-semibold text-zinc-300 hover:bg-white/10 transition disabled:opacity-50"
+          >
+            {t("journal.markAsRest")}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!entry.is_training_day) {
+    return (
+      <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-5 sm:p-6">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-500 mb-1">
+          {dateLabel}
+        </p>
+        <p className="font-saira text-sm text-zinc-500">{t("journal.pastRestDay")}</p>
+      </div>
+    );
+  }
+
+  // Training day → show the journal form
+  return (
+    <div>
+      <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-500 mb-3">
+        {t("journal.logForDate").replace("{date}", dateLabel.toLowerCase())}
+      </p>
+      <TrainingJournalForm entry={entry} onSave={onSave} />
+    </div>
+  );
+}
+
 // ── User header ────────────────────────────────────────────────────────────────
 
 function UserHeader({ profile }: { profile: UserProfile }) {
@@ -574,6 +652,63 @@ export default function JournalPage() {
   const [ready, setReady]                 = React.useState(false);
   const [coachPromptDismissed, setCoachPromptDismissed] = React.useState(false);
   const [coachFeedback, setCoachFeedback] = React.useState<Record<string, CoachFeedbackItem>>({});
+
+  // ── Date navigation ─────────────────────────────────────────────────────────
+  const todayStr = React.useMemo(() => ymdLocal(), []);
+  const [selectedDate, setSelectedDate] = React.useState<string>(() => ymdLocal());
+  const [pastDayMarking, setPastDayMarking] = React.useState(false);
+
+  // Derived: training entry for the currently-selected date
+  const selectedEntry = React.useMemo(
+    () => allTraining.find((e) => e.entry_date === selectedDate) ?? null,
+    [allTraining, selectedDate],
+  );
+
+  // Label for the selected date tab
+  const dateLabel = selectedDate === todayStr
+    ? t("today.tabToday")
+    : selectedDate === offsetDate(1)
+    ? t("today.tabYesterday")
+    : t("today.tabDayBefore");
+
+  const tabLabels = {
+    today: t("today.tabToday"),
+    yesterday: t("today.tabYesterday"),
+    dayBefore: t("today.tabDayBefore"),
+  };
+
+  /** Mark a past date as training or rest (updates allTraining optimistically). */
+  const markPastDay = async (date: string, mode: "training" | "rest") => {
+    if (pastDayMarking) return;
+    setPastDayMarking(true);
+    try {
+      await fetch("/api/training/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entry_date: date, is_training_day: mode === "training" }),
+      });
+      const newEntry: TrainingEntry = {
+        id: `past-${date}`,
+        user_id: "",
+        entry_date: date,
+        is_training_day: mode === "training",
+        mood_rating: null,
+        thoughts_before: null,
+        thoughts_after: null,
+        what_went_well: null,
+        frustrations: null,
+        next_session: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setAllTraining((prev) => [
+        ...prev.filter((e) => e.entry_date !== date),
+        newEntry,
+      ]);
+    } finally {
+      setPastDayMarking(false);
+    }
+  };
 
   React.useEffect(() => {
     (async () => {
@@ -664,13 +799,39 @@ export default function JournalPage() {
 
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           <div className="flex-1 min-w-0 space-y-6">
-            {todayTraining?.is_training_day ? (
-              <TrainingJournalForm
-                entry={todayTraining}
-                onSave={(updated) => setTodayTraining(updated)}
-              />
+
+            {/* ── Date tabs ──────────────────────────────────────── */}
+            <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
+
+            {/* ── Form area: switches based on selected date ──────── */}
+            {selectedDate === todayStr ? (
+              // Today — existing behaviour
+              todayTraining?.is_training_day ? (
+                <TrainingJournalForm
+                  entry={todayTraining}
+                  onSave={(updated) => {
+                    setTodayTraining(updated);
+                    setAllTraining((prev) =>
+                      prev.map((e) => e.entry_date === updated.entry_date ? updated : e),
+                    );
+                  }}
+                />
+              ) : (
+                <QuickEntry onAdd={handleAdd} />
+              )
             ) : (
-              <QuickEntry onAdd={handleAdd} />
+              // Past date
+              <PastDateForm
+                dateLabel={dateLabel}
+                entry={selectedEntry}
+                onMark={(mode) => markPastDay(selectedDate, mode)}
+                marking={pastDayMarking}
+                onSave={(updated) => {
+                  setAllTraining((prev) =>
+                    prev.map((e) => e.entry_date === updated.entry_date ? updated : e),
+                  );
+                }}
+              />
             )}
 
             {grouped.length === 0 ? (

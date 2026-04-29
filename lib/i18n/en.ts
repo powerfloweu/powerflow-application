@@ -100,6 +100,9 @@ export const en = {
     setGoals: "Set goals",
     setMentalGoalsHint: "Set 1–3 mental goals for your next meet.",
     addNowArrow: "Add now →",
+    tabToday: "Today",
+    tabYesterday: "Yesterday",
+    tabDayBefore: "2 days ago",
   },
 
   // Journal page
@@ -177,6 +180,12 @@ export const en = {
 
     entryCountSingular: "{n} entry",
     entryCountPlural: "{n} entries",
+    dayBefore: "2 days ago",
+    pastRestDay: "This was a rest day. Nothing to log here.",
+    pastNoEntry: "This day hasn't been logged yet.",
+    markAsTraining: "🏋️ Training Day",
+    markAsRest: "😴 Rest Day",
+    logForDate: "Log for {date}",
   },
 
   // Course

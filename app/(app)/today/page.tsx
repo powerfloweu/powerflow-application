@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PhaseBadge from "@/app/components/PhaseBadge";
+import { DateTabs, offsetDate } from "@/app/components/DateTabs";
 import { computePhase } from "@/lib/phase";
 import { computeGLPoints, currentTotal, goalTotal } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
@@ -27,8 +28,10 @@ function localeForDate(loc: string): string {
   return "en-GB";
 }
 
-function formatDate(loc: string): string {
-  return new Date().toLocaleDateString(localeForDate(loc), {
+/** Format a YYYY-MM-DD string for display (avoids UTC off-by-one). */
+function formatDateForYmd(ymd: string, loc: string): string {
+  const d = new Date(ymd + "T12:00:00");
+  return d.toLocaleDateString(localeForDate(loc), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -40,8 +43,8 @@ function firstName(name: string | null | undefined): string {
   return name.split(" ")[0];
 }
 
-function todayKey() {
-  return ymdLocal(); // local YYYY-MM-DD (avoids UTC off-by-one)
+function todayKey(): string {
+  return ymdLocal();
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -52,16 +55,20 @@ export default function TodayPage() {
   const [profile, setProfile]           = React.useState<AthleteProfile | null>(null);
   const [loading, setLoading]           = React.useState(true);
 
-  // ── Day type state ─────────────────────────────────────────
-  const [todayEntry, setTodayEntry]     = React.useState<TrainingEntry | null>(null);
+  // ── Selected date (today by default) ───────────────────────────────────────
+  const [selectedDate, setSelectedDate] = React.useState<string>(() => todayKey());
+  /** "loading" = fetching, null = no entry for this date, TrainingEntry = found */
+  const [entry, setEntry]               = React.useState<TrainingEntry | null | "loading">("loading");
   const [dayTypeSaving, setDayTypeSaving] = React.useState(false);
+  const isFirstMount = React.useRef(true);
 
+  // Initial load — profile + entry for selected (today) date in parallel
   React.useEffect(() => {
     Promise.all([
       fetch("/api/me").then((r) => r.json()),
-      fetch(`/api/training/entries?date=${todayKey()}`).then((r) => r.json()),
+      fetch(`/api/training/entries?date=${selectedDate}`).then((r) => r.json()),
     ])
-      .then(([prof, trainingEntry]) => {
+      .then(([prof, trainingData]) => {
         if (prof?.id) {
           setProfile(prof);
           if (prof.role === "athlete" && prof.onboarding_complete === false) {
@@ -69,21 +76,38 @@ export default function TodayPage() {
             return;
           }
         }
-        if (trainingEntry?.id) {
-          setTodayEntry(trainingEntry as TrainingEntry);
-          markCheckinDone();
-        }
+        const e = trainingData?.id ? (trainingData as TrainingEntry) : null;
+        setEntry(e);
+        if (selectedDate === todayKey() && e) markCheckinDone();
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-fetch entry whenever the date tab changes (skip initial mount)
+  React.useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    setEntry("loading");
+    fetch(`/api/training/entries?date=${selectedDate}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const e = data?.id ? (data as TrainingEntry) : null;
+        setEntry(e);
+        if (selectedDate === todayKey() && e) markCheckinDone();
+      })
+      .catch(() => setEntry(null));
+  }, [selectedDate]);
 
   // Coaches go to their dashboard
   React.useEffect(() => {
     if (profile?.role === "coach") router.replace("/coach");
   }, [profile, router]);
 
-  // ── Select day type — saves immediately, no questions sheet ─────────────────
+  // ── Select day type — saves immediately ─────────────────────────────────────
   const selectDayType = async (mode: "training" | "rest") => {
     if (dayTypeSaving) return;
     setDayTypeSaving(true);
@@ -92,16 +116,16 @@ export default function TodayPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          entry_date: todayKey(),
+          entry_date: selectedDate,
           is_training_day: mode === "training",
           mood_rating: null,
         }),
       });
       const saved = res.ok ? await res.json() : {};
-      setTodayEntry({
+      setEntry({
         id: saved.id ?? "",
         user_id: "",
-        entry_date: todayKey(),
+        entry_date: selectedDate,
         is_training_day: mode === "training",
         mood_rating: null,
         thoughts_before: null,
@@ -112,7 +136,7 @@ export default function TodayPage() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
-      markCheckinDone();
+      if (selectedDate === todayKey()) markCheckinDone();
     } finally {
       setDayTypeSaving(false);
     }
@@ -126,6 +150,20 @@ export default function TodayPage() {
     ? computeGLPoints(total, profile.bodyweight_kg, profile.gender)
     : null;
 
+  // Date-tab derived values
+  const isToday = selectedDate === todayKey();
+  const dateLabel = isToday
+    ? t("today.tabToday")
+    : selectedDate === offsetDate(1)
+    ? t("today.tabYesterday")
+    : t("today.tabDayBefore");
+
+  const tabLabels = {
+    today: t("today.tabToday"),
+    yesterday: t("today.tabYesterday"),
+    dayBefore: t("today.tabDayBefore"),
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -134,11 +172,28 @@ export default function TodayPage() {
     );
   }
 
-  // ── Full-screen day picker (no entry yet for today) ──────────────────────────
-  if (todayEntry === null) {
+  // ── No entry for selected date (or loading a different date) ────────────────
+  if (entry === "loading" || entry === null) {
     return (
       <div className="min-h-screen bg-[#050608]">
-        <DayPickerScreen onSelect={selectDayType} saving={dayTypeSaving} />
+        {/* Date tabs always visible */}
+        <div className="pt-10 px-4 sm:px-6 max-w-lg mx-auto md:max-w-2xl">
+          <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
+        </div>
+
+        {entry === "loading" ? (
+          <div className="flex items-center justify-center" style={{ minHeight: "calc(100vh - 100px)" }}>
+            <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+          </div>
+        ) : (
+          <DayPickerScreen
+            onSelect={selectDayType}
+            saving={dayTypeSaving}
+            dateLabel={dateLabel}
+            isToday={isToday}
+            locale={locale}
+          />
+        )}
       </div>
     );
   }
@@ -146,37 +201,62 @@ export default function TodayPage() {
   return (
     <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-2xl">
 
-      {/* ── Greeting ──────────────────────────────────────────── */}
+      {/* ── Date tabs ─────────────────────────────────────────── */}
+      <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
+
+      {/* ── Greeting / date header ────────────────────────────── */}
       <div className="mb-8">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
           {t("brand.name").toUpperCase()} · {t("today.pageLabel")}
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-1">
-          {t(greetingKey())}{profile ? `, ${firstName(profile.display_name)}` : ""}
+          {isToday
+            ? `${t(greetingKey())}${profile ? `, ${firstName(profile.display_name)}` : ""}`
+            : dateLabel}
         </h1>
-        <p className="font-saira text-sm text-zinc-500">{formatDate(locale)}</p>
+        <p className="font-saira text-sm text-zinc-500">{formatDateForYmd(selectedDate, locale)}</p>
       </div>
 
-      {/* ── Today ✓ card ──────────────────────────────────────── */}
+      {/* ── Entry ✓ card ───────────────────────────────────────── */}
       <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 mb-5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="font-saira text-xs font-semibold text-emerald-300">{t("today.todayDone")}</span>
+          <span className="font-saira text-xs font-semibold text-emerald-300">
+            {dateLabel} ✓
+          </span>
           <span className={`rounded-full border px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] ${
-            todayEntry.is_training_day
+            entry.is_training_day
               ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
               : "border-zinc-600/40 bg-zinc-600/10 text-zinc-400"
           }`}>
-            {todayEntry.is_training_day ? t("today.training") : t("today.rest")}
+            {entry.is_training_day ? t("today.training") : t("today.rest")}
           </span>
         </div>
         <button
           type="button"
-          onClick={() => setTodayEntry(null)}
+          onClick={() => setEntry(null)}
           className="flex-shrink-0 font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
         >
           {t("today.change")}
         </button>
       </div>
+
+      {/* ── Past training day → link to journal for details ───── */}
+      {!isToday && entry.is_training_day && (
+        <Link
+          href="/journal"
+          className="flex items-center justify-between rounded-2xl border border-purple-500/30 bg-purple-500/[0.08] p-4 mb-5 group hover:border-purple-400/50 transition"
+        >
+          <div>
+            <p className="font-saira text-sm font-semibold text-purple-300 group-hover:text-white transition mb-0.5">
+              {t("journal.logForDate").replace("{date}", dateLabel.toLowerCase())}
+            </p>
+            <p className="font-saira text-xs text-zinc-500">
+              {t("journal.trainingDay")} · {t("journal.pageLabel")}
+            </p>
+          </div>
+          <span className="text-purple-400 text-lg">→</span>
+        </Link>
+      )}
 
       {/* ── Phase block ───────────────────────────────────────── */}
       {phase ? (
@@ -273,24 +353,32 @@ export default function TodayPage() {
   );
 }
 
-// ── Day picker full-screen ────────────────────────────────────────────────────
+// ── Day picker (full centred view, used when no entry for selected date) ───────
 
 function DayPickerScreen({
   onSelect,
   saving,
+  dateLabel,
+  isToday,
+  locale,
 }: {
   onSelect: (mode: "training" | "rest") => void;
   saving: boolean;
+  dateLabel: string;
+  isToday: boolean;
+  locale: string;
 }) {
-  const { t, locale } = useT();
+  const { t } = useT();
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6">
+    <div className="flex flex-col items-center justify-center px-6 pb-10" style={{ minHeight: "calc(100vh - 100px)" }}>
       <div className="w-full max-w-sm">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-2 text-center">
           {t("brand.name").toUpperCase()} · {t("today.pageLabel")}
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-2 text-center">
-          {new Date().toLocaleDateString(localeForDate(locale), { weekday: "long" })}
+          {isToday
+            ? new Date().toLocaleDateString(localeForDate(locale), { weekday: "long" })
+            : dateLabel}
         </h1>
         <p className="font-saira text-sm text-zinc-500 mb-10 text-center">
           {t("today.howsTodayLooking")}
@@ -315,39 +403,6 @@ function DayPickerScreen({
         </div>
       </div>
     </div>
-  );
-}
-
-// ── Reminder permission button ────────────────────────────────────────────────
-
-/**
- * Small inline button shown on the check-in card.
- * Disappears once notifications are granted (or if unsupported).
- */
-function ReminderPermissionButton() {
-  const [permission, setPermission] = React.useState<NotificationPermission | null>(null);
-
-  React.useEffect(() => {
-    if (!("Notification" in window)) { setPermission("denied"); return; }
-    setPermission(Notification.permission);
-  }, []);
-
-  const handleEnable = async () => {
-    const result = await Notification.requestPermission();
-    setPermission(result);
-  };
-
-  // Don't render until we know the permission state, or if already granted/unsupported
-  if (!permission || permission === "granted" || permission === "denied") return null;
-
-  return (
-    <button
-      type="button"
-      onClick={handleEnable}
-      className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-600 hover:text-purple-400 transition flex items-center gap-1"
-    >
-      🔔 Reminders
-    </button>
   );
 }
 
