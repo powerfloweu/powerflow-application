@@ -75,6 +75,7 @@ type AthleteRaw = {
   all_training_entries: TrainingEntry[];
   feedbackByEntryId: Record<string, { id: string; content: string; created_at: string }>;
   weekly_checkins: WeeklyCheckin[];
+  assigned_tests: { id: string; test_slug: string; assigned_at: string }[];
 };
 
 type CoachProfile = {
@@ -197,6 +198,7 @@ function computeClient(a: AthleteRaw) {
     allTrainingEntries: a.all_training_entries,
     feedbackByEntryId: a.feedbackByEntryId,
     weeklyCheckins: a.weekly_checkins,
+    assignedTestSlugs: (a.assigned_tests ?? []).map((t) => t.test_slug),
     isCoach: a.role === "coach",
     // full onboarding profile — passed through for Profile tab
     profile: {
@@ -1245,6 +1247,30 @@ function ClientCard({
   const [trainingWeekOffset, setTrainingWeekOffset] = React.useState(0);
   const flag = FLAG_CONFIG[client.flag];
 
+  // ── Test assignment local state ─────────────────────────────────────────────
+  const [assignedSlugs, setAssignedSlugs] = React.useState<string[]>(() => client.assignedTestSlugs ?? []);
+  const [assignWorking, setAssignWorking] = React.useState<string | null>(null);
+
+  const toggleTestAssignment = async (slug: string) => {
+    if (assignWorking) return;
+    const isAssigned = assignedSlugs.includes(slug);
+    setAssignWorking(slug);
+    try {
+      const res = await fetch("/api/coach/assign-test", {
+        method: isAssigned ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ athlete_id: client.id, test_slug: slug }),
+      });
+      if (res.ok) {
+        setAssignedSlugs((prev) =>
+          isAssigned ? prev.filter((s) => s !== slug) : [...prev, slug]
+        );
+      }
+    } finally {
+      setAssignWorking(null);
+    }
+  };
+
   // Compute windowed stats for Analysis tab
   const windowedEntries = React.useMemo(() => {
     const cut = new Date();
@@ -1619,10 +1645,51 @@ function ClientCard({
                  client.testScores.sat.length === 0 && (
                   <p className="font-saira text-sm text-zinc-400 py-4 text-center">
                     No tests completed yet.
-                    {" "}
-                    <Link href="/tests" className="text-purple-400 underline hover:text-purple-300">View tests →</Link>
                   </p>
                 )}
+
+                {/* ── Assign test ── */}
+                <div className="mt-4 pt-4 border-t border-white/5">
+                  <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
+                    Assign a test to {client.name.split(" ")[0]}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { slug: "sat",  label: "Self-Awareness" },
+                      { slug: "acsi", label: "Coping Skills"  },
+                      { slug: "csai", label: "Competitive Anxiety" },
+                      { slug: "das",  label: "Att. Scale (DAS)"    },
+                    ] as const).map(({ slug, label }) => {
+                      const isAssigned = assignedSlugs.includes(slug);
+                      const isWorking  = assignWorking === slug;
+                      return (
+                        <button
+                          key={slug}
+                          type="button"
+                          onClick={() => toggleTestAssignment(slug)}
+                          disabled={!!assignWorking}
+                          className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 font-saira text-[11px] transition ${
+                            isAssigned
+                              ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                              : "border-white/10 bg-white/[0.03] text-zinc-300 hover:border-purple-500/30 hover:text-zinc-100"
+                          } disabled:opacity-50`}
+                        >
+                          <span>{label}</span>
+                          {isWorking ? (
+                            <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin flex-shrink-0" />
+                          ) : isAssigned ? (
+                            <span className="text-amber-300 flex-shrink-0">✓ Assigned</span>
+                          ) : (
+                            <span className="text-zinc-500 flex-shrink-0">+ Assign</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="font-saira text-[10px] text-zinc-500 mt-2">
+                    Assigned tests appear as a prompt on the athlete&apos;s Home screen.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -2361,9 +2428,6 @@ export default function CoachPage() {
               </p>
             </div>
             <div className="flex gap-3 self-start mt-1">
-              <Link href="/journal" className="rounded-full border border-white/10 px-4 py-2 font-saira text-[11px] text-zinc-400 hover:border-purple-400/50 hover:text-zinc-200 transition">
-                My journal
-              </Link>
               <Link href="/tests" className="rounded-full border border-white/10 px-4 py-2 font-saira text-[11px] text-zinc-400 hover:border-purple-400/50 hover:text-zinc-200 transition">
                 Tests
               </Link>
@@ -2462,11 +2526,7 @@ export default function CoachPage() {
           </div>
 
           {/* Footer */}
-          <div className="mt-12 text-center">
-            <Link href="/journal" className="font-saira text-[11px] text-zinc-500 underline decoration-zinc-700 hover:text-zinc-400 transition">
-              Open your own journal →
-            </Link>
-          </div>
+          <div className="mt-12" />
         </div>
       </div>
 

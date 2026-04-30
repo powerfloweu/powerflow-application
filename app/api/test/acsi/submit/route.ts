@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isConfigured, dbInsert } from "../../../../../lib/supabaseAdmin";
+import { createClient } from "../../../../../lib/supabase/server";
 import type { AcsiReport } from "../../../../../lib/tests/acsi/scoring";
 
 export const runtime = "nodejs";
@@ -42,6 +43,14 @@ export async function POST(req: NextRequest) {
     subscaleScores[col] = sub.score;
   }
 
+  // Link to authenticated user if logged in
+  let user_id: string | null = null;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) user_id = user.id;
+  } catch { /* not logged in — fine */ }
+
   const row = {
     result_ref: resultRef,
     first_name: respondent.firstName,
@@ -58,6 +67,7 @@ export async function POST(req: NextRequest) {
     score_confidence: subscaleScores.score_confidence,
     score_coachability: subscaleScores.score_coachability,
     total_score: report.totalScore,
+    ...(user_id ? { user_id } : {}),
   };
 
   const inserted = await dbInsert<typeof row>("acsi_results", row);

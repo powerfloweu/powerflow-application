@@ -337,6 +337,9 @@ export const hu: Dict = {
 
     languageRow: "Nyelv",
     languageDesc: "Válaszd az app nyelvét",
+    appearanceRow: "Megjelenés",
+    appearanceDark: "Sötét mód — érintsd a váltáshoz",
+    appearanceLight: "Világos mód — érintsd a váltáshoz",
     notificationsRow: "Értesítések",
     accountRow: "Fiók",
     plan: "Csomag",

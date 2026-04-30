@@ -662,16 +662,17 @@ export default function YouPage() {
 
 function AppearanceRow() {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useT();
   const isDark = theme === "dark";
   return (
     <div className="rounded-2xl border border-white/5 bg-surface-card mb-4 px-5 py-4">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
-            Appearance
+            {t("you.appearanceRow")}
           </p>
           <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
-            {isDark ? "Dark mode" : "Light mode"} — tap to switch
+            {isDark ? t("you.appearanceDark") : t("you.appearanceLight")}
           </p>
         </div>
         <button

@@ -346,6 +346,9 @@ export const en = {
     // Settings rows
     languageRow: "Language",
     languageDesc: "Choose the app language",
+    appearanceRow: "Appearance",
+    appearanceDark: "Dark mode — tap to switch",
+    appearanceLight: "Light mode — tap to switch",
     notificationsRow: "Notifications",
     accountRow: "Account",
     plan: "Plan",

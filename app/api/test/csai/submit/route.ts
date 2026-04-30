@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isConfigured, dbInsert } from "../../../../../lib/supabaseAdmin";
+import { createClient } from "../../../../../lib/supabase/server";
 import type { CsaiReport } from "../../../../../lib/tests/csai/scoring";
 
 export const runtime = "nodejs";
@@ -41,6 +42,14 @@ export async function POST(req: NextRequest) {
     subscaleScores[`score_${sub.key}`] = sub.score;
   }
 
+  // Link to authenticated user if logged in
+  let user_id: string | null = null;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) user_id = user.id;
+  } catch { /* not logged in — fine */ }
+
   const row = {
     result_ref: resultRef,
     first_name: respondent.firstName,
@@ -52,6 +61,7 @@ export async function POST(req: NextRequest) {
     score_cognitive: subscaleScores.score_cognitive,
     score_somatic: subscaleScores.score_somatic,
     score_confidence: subscaleScores.score_confidence,
+    ...(user_id ? { user_id } : {}),
   };
 
   const inserted = await dbInsert<typeof row>("csai_results", row);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isConfigured, dbInsert } from "../../../../../lib/supabaseAdmin";
+import { createClient } from "../../../../../lib/supabase/server";
 import type { DasReport } from "../../../../../lib/tests/das/scoring";
 
 export const runtime = "nodejs";
@@ -35,6 +36,14 @@ export async function POST(req: NextRequest) {
 
   const byKey = Object.fromEntries(report.subscales.map((s) => [s.key, s.score]));
 
+  // Link to authenticated user if logged in
+  let user_id: string | null = null;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) user_id = user.id;
+  } catch { /* not logged in — fine */ }
+
   const row = {
     result_ref: resultRef,
     first_name: respondent.firstName,
@@ -51,6 +60,7 @@ export async function POST(req: NextRequest) {
     score_external_control:   byKey.externalControl ?? 0,
     total_score:              report.totalScore,
     depression_prone:         report.depressionProne,
+    ...(user_id ? { user_id } : {}),
   };
 
   const inserted = await dbInsert<typeof row>("das_results", row);

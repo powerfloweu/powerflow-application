@@ -19,6 +19,13 @@ type FeedbackRow = {
   created_at: string;
 };
 
+type AssignedTestRow = {
+  id: string;
+  athlete_id: string;
+  test_slug: string;
+  assigned_at: string;
+};
+
 type ProfileRow = {
   id: string;
   display_name: string;
@@ -128,8 +135,8 @@ export async function GET() {
   const twentyEightDaysAgo  = daysAgoYmd(28);
   const oneEightyDaysAgo    = daysAgoYmd(180);
 
-  // Fetch entries, test results, training entries and weekly check-ins for all athletes in parallel
-  const [entries, sat, acsi, csai, das, trainingEntriesRaw, allFeedback, weeklyCheckins] = await Promise.all([
+  // Fetch entries, test results, training entries, weekly check-ins, and assigned tests in parallel
+  const [entries, sat, acsi, csai, das, trainingEntriesRaw, allFeedback, weeklyCheckins, assignedTests] = await Promise.all([
     dbSelect<EntryRow>("journal_entries", {
       user_id: `in.${idList}`,
       order: "created_at.desc",
@@ -177,6 +184,13 @@ export async function GET() {
       limit: "200",
       select: "id,user_id,week_number,year,week_start,mood_rating,training_quality,readiness_rating,energy_rating,sleep_rating,biggest_win,biggest_challenge,focus_next_week,created_at,updated_at",
     }),
+    // Tests assigned by this coach that are still pending
+    dbSelect<AssignedTestRow>("assigned_tests", {
+      coach_id: `eq.${user.id}`,
+      athlete_id: `in.${idList}`,
+      completed_at: "is.null",
+      select: "id,athlete_id,test_slug,assigned_at",
+    }).catch(() => [] as AssignedTestRow[]), // graceful: table may not exist yet
   ]);
 
   // Filter training to current week for the primary trainingThisWeek field
@@ -202,6 +216,7 @@ export async function GET() {
       all_training_entries: trainingEntriesRaw.filter((e) => e.user_id === athlete.id),
       feedbackByEntryId,
       weekly_checkins: weeklyCheckins.filter((c) => c.user_id === athlete.id),
+      assigned_tests: (assignedTests as AssignedTestRow[]).filter((t) => t.athlete_id === athlete.id),
     };
   });
 

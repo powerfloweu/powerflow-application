@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isConfigured, dbInsert } from "../../../../lib/supabaseAdmin";
+import { createClient } from "../../../../lib/supabase/server";
 import type { ScoreReport } from "../../../../lib/tests/self-awareness/scoring";
 
 export const runtime = "nodejs";
@@ -58,6 +59,14 @@ export async function POST(req: NextRequest) {
     if (col) subfactorScores[col] = sf.score;
   }
 
+  // Link to authenticated user if logged in
+  let user_id: string | null = null;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) user_id = user.id;
+  } catch { /* not logged in — fine */ }
+
   const row = {
     first_name: respondent.firstName,
     email: respondent.email.toLowerCase(),
@@ -71,6 +80,7 @@ export async function POST(req: NextRequest) {
     sum_yes: report.validity.sumYes,
     total_score: report.validity.sumYes,   // alias used by coach dashboard
     validity_reliable: report.validity.reliable,
+    ...(user_id ? { user_id } : {}),
   };
 
   const inserted = await dbInsert<typeof row>("sat_results", row);

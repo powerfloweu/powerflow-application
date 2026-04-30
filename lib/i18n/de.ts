@@ -339,6 +339,9 @@ export const de: Dict = {
 
     languageRow: "Sprache",
     languageDesc: "Wähle die App-Sprache",
+    appearanceRow: "Erscheinungsbild",
+    appearanceDark: "Dunkelmodus — tippen zum Wechseln",
+    appearanceLight: "Hellmodus — tippen zum Wechseln",
     notificationsRow: "Benachrichtigungen",
     accountRow: "Konto",
     plan: "Plan",

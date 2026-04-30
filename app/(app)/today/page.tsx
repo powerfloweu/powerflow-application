@@ -13,6 +13,15 @@ import { ymdLocal } from "@/lib/date";
 import { markCheckinDone } from "@/lib/checkinReminder";
 import { useT } from "@/lib/i18n";
 
+// ── Test metadata ─────────────────────────────────────────────────────────────
+
+const TEST_META = {
+  sat:  { label: "Self-Awareness Test",          href: "/tests/self-awareness" },
+  acsi: { label: "Coping Skills Inventory",      href: "/tests/acsi"           },
+  csai: { label: "Competitive Anxiety Inventory", href: "/tests/csai"           },
+  das:  { label: "Dysfunctional Attitude Scale",  href: "/tests/das"            },
+} as const;
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function greetingKey(): "today.greetingMorning" | "today.greetingAfternoon" | "today.greetingEvening" {
@@ -54,6 +63,24 @@ export default function TodayPage() {
   const { t, locale } = useT();
   const [profile, setProfile]           = React.useState<AthleteProfile | null>(null);
   const [loading, setLoading]           = React.useState(true);
+
+  // ── Assigned tests from coach ───────────────────────────────────────────────
+  const [assignedTests, setAssignedTests] = React.useState<Array<{ id: string; test_slug: string }>>([]);
+  React.useEffect(() => {
+    fetch("/api/athlete/assigned-tests")
+      .then((r) => r.ok ? r.json() : [])
+      .then((rows) => { if (Array.isArray(rows)) setAssignedTests(rows); })
+      .catch(() => {});
+  }, []);
+
+  const dismissAssignment = (slug: string) => {
+    setAssignedTests((prev) => prev.filter((a) => a.test_slug !== slug));
+    fetch("/api/athlete/assigned-tests", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ test_slug: slug }),
+    }).catch(() => {});
+  };
 
   // ── Selected date (today by default) ───────────────────────────────────────
   const [selectedDate, setSelectedDate] = React.useState<string>(() => todayKey());
@@ -198,6 +225,44 @@ export default function TodayPage() {
 
       {/* ── Date tabs ─────────────────────────────────────────── */}
       <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
+
+      {/* ── Coach-assigned tests ──────────────────────────────── */}
+      {assignedTests.length > 0 && (
+        <div className="mb-5 space-y-2">
+          {assignedTests.map((a) => {
+            const meta = TEST_META[a.test_slug as keyof typeof TEST_META];
+            if (!meta) return null;
+            return (
+              <div key={a.test_slug} className="flex items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/8 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-300 mb-0.5">
+                    Your coach wants you to take a test
+                  </p>
+                  <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{meta.label}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Link
+                    href={meta.href}
+                    className="rounded-full bg-amber-500/20 border border-amber-500/40 px-3 py-1.5 font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200 hover:bg-amber-500/30 transition"
+                  >
+                    Take test →
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => dismissAssignment(a.test_slug)}
+                    className="p-1 text-zinc-500 hover:text-zinc-300 transition"
+                    aria-label="Dismiss"
+                  >
+                    <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
+                      <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── Greeting / date header ────────────────────────────── */}
       <div className="mb-8">
