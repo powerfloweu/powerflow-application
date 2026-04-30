@@ -33,31 +33,20 @@ function RatingRow({
   highLabel?: string;
 }) {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
-          {label}
-        </span>
-        <span className={`font-saira text-sm font-bold tabular-nums ${
-          value >= 8 ? "text-emerald-400" : value >= 5 ? "text-purple-300" : "text-rose-400"
-        }`}>
-          {value}
-        </span>
-      </div>
-      <div className="flex gap-1.5">
+    <div className="space-y-2">
+      <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+        {label}
+      </span>
+      <div className="grid grid-cols-10 gap-1 sm:gap-1.5">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
           <button
             key={n}
             type="button"
             onClick={() => onChange(n)}
-            className={`flex-1 h-7 rounded font-saira text-[10px] font-bold transition-all ${
-              n <= value
-                ? n >= 8
-                  ? "bg-emerald-500/80 text-white"
-                  : n >= 5
-                  ? "bg-purple-500/80 text-white"
-                  : "bg-rose-500/70 text-white"
-                : "bg-white/5 text-zinc-500 hover:bg-white/10"
+            className={`aspect-square rounded-lg sm:rounded-xl border font-saira text-xs sm:text-sm font-semibold transition ${
+              value === n
+                ? "border-purple-500 bg-purple-600 text-white"
+                : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-white"
             }`}
           >
             {n}
@@ -65,9 +54,9 @@ function RatingRow({
         ))}
       </div>
       {(lowLabel || highLabel) && (
-        <div className="flex justify-between mt-1">
-          <span className="font-saira text-[9px] text-zinc-500">{lowLabel}</span>
-          <span className="font-saira text-[9px] text-zinc-500">{highLabel}</span>
+        <div className="flex justify-between font-saira text-[9px] text-zinc-500 px-0.5">
+          <span>{lowLabel}</span>
+          <span>{highLabel}</span>
         </div>
       )}
     </div>
