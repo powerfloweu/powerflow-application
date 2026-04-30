@@ -718,6 +718,9 @@ export default function ChatPage() {
     const text = input.trim();
     if (!text || streaming) return;
 
+    // Stop mic if it's still recording when the user taps Send
+    if (listening) toggleMic();
+
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
@@ -725,6 +728,7 @@ export default function ChatPage() {
     };
 
     setInput("");
+    interimRef.current = "";
     // Reset textarea height
     if (inputRef.current) {
       inputRef.current.style.height = "auto";
@@ -1128,8 +1132,8 @@ export default function ChatPage() {
       )}
 
       {/* ── Sticky input footer ────────────────────────────────── */}
-      <footer className="sticky bottom-0 z-10 border-t border-white/6 bg-surface-base/95 backdrop-blur-sm px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-end gap-2">
+      <footer className="sticky bottom-0 z-10 border-t border-white/6 bg-surface-base/95 backdrop-blur-sm px-3 py-2.5">
+        <div className="max-w-lg mx-auto flex items-end gap-1.5">
           <textarea
             ref={inputRef}
             value={input}
@@ -1140,29 +1144,37 @@ export default function ChatPage() {
             disabled={streaming}
             // text-base on mobile (16px) prevents iOS Safari from auto-zooming
             // when the textarea is focused. Drops to text-sm at sm: breakpoint.
-            className="flex-1 rounded-2xl border border-white/10 bg-surface-card px-4 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/40 resize-none overflow-hidden disabled:opacity-50 [color-scheme:dark]"
-            style={{ minHeight: "48px", maxHeight: "200px" }}
+            className="flex-1 rounded-2xl border border-white/10 bg-surface-card px-4 py-2.5 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/40 resize-none overflow-hidden disabled:opacity-50 [color-scheme:dark]"
+            style={{ minHeight: "44px", maxHeight: "200px" }}
           />
           {micSupported && (
             <button
               type="button"
-              onClick={toggleMic}
+              onClick={() => {
+                if (!listening) {
+                  // Fresh recording session — clear any leftover text first
+                  setInput("");
+                  interimRef.current = "";
+                  if (inputRef.current) inputRef.current.style.height = "auto";
+                }
+                toggleMic();
+              }}
               disabled={streaming}
               aria-label={listening ? "Stop recording" : "Start voice input"}
-              className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition ${
+              className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition ${
                 listening
-                  ? "bg-rose-600 hover:bg-rose-500 shadow-[0_0_12px_rgba(225,29,72,0.5)]"
+                  ? "bg-rose-600 hover:bg-rose-500 shadow-[0_0_8px_rgba(225,29,72,0.45)]"
                   : "border border-white/10 bg-surface-card hover:border-purple-500/40 hover:text-purple-300 text-zinc-400"
               } disabled:opacity-40`}
             >
               {listening ? (
-                /* Stop / pulse icon */
-                <svg viewBox="0 0 20 20" className="w-4 h-4" fill="white" aria-hidden>
+                /* Stop icon */
+                <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="white" aria-hidden>
                   <rect x="5" y="5" width="10" height="10" rx="1.5" />
                 </svg>
               ) : (
                 /* Mic icon */
-                <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <rect x="7" y="2" width="6" height="10" rx="3" />
                   <path d="M4 10a6 6 0 0012 0" />
                   <line x1="10" y1="16" x2="10" y2="19" />
@@ -1175,15 +1187,16 @@ export default function ChatPage() {
             type="button"
             onClick={send}
             disabled={!input.trim() || streaming}
-            className="flex-shrink-0 w-12 h-12 rounded-2xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 flex items-center justify-center transition"
+            className="flex-shrink-0 w-10 h-10 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 flex items-center justify-center transition"
             aria-label="Send"
           >
-            <svg viewBox="0 0 20 20" className="w-4 h-4 rotate-90" fill="white" aria-hidden>
+            <svg viewBox="0 0 20 20" className="w-3.5 h-3.5 rotate-90" fill="white" aria-hidden>
               <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
             </svg>
           </button>
         </div>
-        <p className="font-saira text-[10px] text-zinc-500 text-center mt-1.5">
+        {/* Desktop only — Cmd+Enter shortcut hint */}
+        <p className="hidden sm:block font-saira text-[10px] text-zinc-500 text-center mt-1.5">
           {t("chat.sendHint")}
         </p>
       </footer>
