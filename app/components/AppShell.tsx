@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import TabBar from "./TabBar";
@@ -128,22 +129,44 @@ export default function AppShell({ children }: Props) {
       >
         <aside className="flex flex-col w-56 h-full border-r border-white/5 bg-surface-panel/95 backdrop-blur-md">
           {/* Brand */}
-          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
-            <span className="font-saira text-[11px] font-bold uppercase tracking-[0.22em] text-purple-300">
-              PowerFlow · Athlete
-            </span>
-            {/* Collapse button — only for coaches */}
+          <div className="relative border-b border-white/5 flex flex-col items-center pt-5 pb-3">
+            {/* Collapse button — coaches only, top-right corner */}
             {canCollapse && (
               <button
                 onClick={toggleSidebar}
                 aria-label="Collapse athlete panel"
-                className="w-5 h-5 flex items-center justify-center rounded text-zinc-400 hover:text-zinc-300 transition"
+                className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded text-zinc-400 hover:text-zinc-200 transition"
               >
                 <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none">
                   <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             )}
+
+            {/* Logo — CSS classes switch dark/light variant without JS */}
+            <Link href="/today" className="block">
+              <Image
+                src="/fm_powerflow_logo_verziok_01_negative.png"
+                alt="PowerFlow"
+                width={500}
+                height={500}
+                className="logo-dark w-28 h-28 object-contain"
+                priority
+              />
+              <Image
+                src="/fm_powerflow_logo_verziok_01.png"
+                alt="PowerFlow"
+                width={500}
+                height={500}
+                className="logo-light w-28 h-28 object-contain"
+                priority
+              />
+            </Link>
+
+            {/* Athlete badge */}
+            <span className="font-saira text-[9px] font-bold uppercase tracking-[0.32em] text-purple-300/80 -mt-1 mb-1">
+              Athlete
+            </span>
           </div>
 
           {/* Nav links */}
@@ -219,9 +242,36 @@ export default function AppShell({ children }: Props) {
         </button>
       )}
 
+      {/* ── Mobile top bar (logo) — hidden on desktop ───────────── */}
+      {/* Positioned below the notch safe area (root div handles the inset offset) */}
+      <header
+        className="md:hidden fixed inset-x-0 z-40 h-12 flex items-center justify-between px-4 border-b border-white/5 bg-surface-panel/90 backdrop-blur-md"
+        style={{ top: "env(safe-area-inset-top)" }}
+      >
+        <Link href="/today" className="flex items-center gap-2">
+          <Image
+            src="/fm_powerflow_logo_verziok_02_negative.png"
+            alt="PowerFlow"
+            width={400}
+            height={400}
+            className="logo-dark h-7 w-auto object-contain"
+            priority
+          />
+          <Image
+            src="/fm_powerflow_logo_verziok_02.png"
+            alt="PowerFlow"
+            width={400}
+            height={400}
+            className="logo-light h-7 w-auto object-contain"
+            priority
+          />
+        </Link>
+        <ThemeToggle className="w-8 h-8" />
+      </header>
+
       {/* ── Page content ────────────────────────────────────────── */}
       <main
-        className={`pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0 transition-[padding] duration-200 ease-in-out ${
+        className={`pt-12 md:pt-0 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0 transition-[padding] duration-200 ease-in-out ${
           !sidebarReady || sidebarOpen ? "md:pl-56" : "md:pl-0"
         }`}
       >

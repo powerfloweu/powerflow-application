@@ -101,6 +101,16 @@ html[data-theme="light"] .hover\:bg-white\/10:hover { background-color: rgba(0,0
 html[data-theme="light"] .divide-white\/10 > * + * { border-color: #e5e7eb !important; }
 
 /* ══════════════════════════════════════════════════════════════
+   THEME-ADAPTIVE LOGO HELPERS
+   Show the correct logo variant without JS — responds instantly
+   to data-theme changes on <html>.
+   ══════════════════════════════════════════════════════════════ */
+.logo-dark  { display: block; }
+.logo-light { display: none;  }
+html[data-theme="light"] .logo-dark  { display: none;  }
+html[data-theme="light"] .logo-light { display: block; }
+
+/* ══════════════════════════════════════════════════════════════
    CHAT SCREEN HEIGHT
    ══════════════════════════════════════════════════════════════ */
 .chat-screen {
