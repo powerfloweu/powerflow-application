@@ -13,9 +13,21 @@ export type DevLogEntry = {
   items: string[];
 };
 
-export const CURRENT_DEVLOG_VERSION = "2026-04-29";
+export const CURRENT_DEVLOG_VERSION = "2026-04-30";
 
 export const DEVLOG: DevLogEntry[] = [
+  {
+    version: "2026-04-30",
+    date: "30 Apr 2026",
+    title: "Light mode · logo · readability",
+    items: [
+      "Light mode added — switch between dark and light with the sun/moon button in the sidebar (desktop) or You → Appearance (mobile). PowerFlow colours: black, violet, and white.",
+      "PowerFlow logo now appears in the sidebar on desktop and in the top bar on mobile, with the athlete silhouette and barbell — theme-adaptive (white on dark, colour on light).",
+      "All grey text across the app has been brightened significantly for better readability on dark backgrounds.",
+      "Weekly check-in: coaches can now see athletes' weekly check-ins in a dedicated tab on the coach dashboard.",
+      "Dev Tools tab added to the admin panel for testing features like the weekly check-in modal on any day of the week.",
+    ],
+  },
   {
     version: "2026-04-29",
     date: "29 Apr 2026",
