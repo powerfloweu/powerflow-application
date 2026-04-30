@@ -409,6 +409,22 @@ export default function TodayPage() {
         </div>
       )}
 
+      {/* ── Mental tests card ─────────────────────────────────── */}
+      <Link
+        href="/tests"
+        className="flex items-center justify-between rounded-2xl border border-white/5 bg-surface-card px-5 py-4 mb-6 group hover:border-purple-500/30 transition"
+      >
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400 mb-1">
+            Mental Tests
+          </p>
+          <p className="font-saira text-xs text-zinc-300">
+            Self-awareness · Coping skills · Competitive anxiety
+          </p>
+        </div>
+        <span className="text-purple-400 text-lg group-hover:translate-x-0.5 transition-transform">→</span>
+      </Link>
+
     </div>
   );
 }
