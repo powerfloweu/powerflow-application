@@ -1677,6 +1677,7 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
   const [checkinLoading, setCheckinLoading] = React.useState(false);
   const [checkinMsg, setCheckinMsg]         = React.useState<string | null>(null);
   const [popupForced, setPopupForced]       = React.useState(false);
+  const [forcingPopup, setForcingPopup]     = React.useState(false);
 
   const triggerCheckin = async () => {
     setCheckinLoading(true);
@@ -1692,7 +1693,7 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
       const data = await res.json();
       setCheckinResult(data);
       if (data.targetWeek) {
-        setCheckinMsg(`Window forced open for Week ${data.targetWeek.week} — ${data.currentSubmitted ? "already submitted" : "not yet submitted"}`);
+        setCheckinMsg(`Week ${data.targetWeek.week} — ${data.currentSubmitted ? "already submitted" : "not yet submitted"}`);
       }
     } catch {
       setCheckinMsg("Error calling API");
@@ -1701,10 +1702,25 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
     }
   };
 
-  const forcePopupForMe = () => {
-    if (!checkinResult?.targetWeek) return;
-    localStorage.setItem("pf-force-checkin", JSON.stringify(checkinResult.targetWeek));
-    setPopupForced(true);
+  const forcePopup = async () => {
+    if (forcingPopup || !checkinResult?.targetWeek) return;
+    setForcingPopup(true);
+    try {
+      if (!selectedUserId) {
+        // Own account — localStorage is fastest (no page reload needed)
+        localStorage.setItem("pf-force-checkin", JSON.stringify(checkinResult.targetWeek));
+      } else {
+        // Another user — set server-side flag; modal fires on their next app load
+        await fetch("/api/admin/weekly-checkin-test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: selectedUserId, forceModal: true }),
+        });
+      }
+      setPopupForced(true);
+    } finally {
+      setForcingPopup(false);
+    }
   };
 
   return (
@@ -1759,20 +1775,20 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
             </p>
           )}
 
-          {/* Force popup button — only useful for your own account (localStorage is per-browser) */}
-          {!!checkinResult?.targetWeek && !checkinResult?.currentSubmitted && !selectedUserId && (
+          {/* Force popup — works for any user via server-side flag */}
+          {!!checkinResult?.targetWeek && !checkinResult?.currentSubmitted && (
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={forcePopupForMe}
-                disabled={popupForced}
+                onClick={forcePopup}
+                disabled={popupForced || forcingPopup}
                 className="rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 px-4 py-2 font-saira text-[11px] font-bold uppercase tracking-[0.18em] text-white transition"
               >
-                {popupForced ? "✓ Popup queued" : "Force popup on my next visit"}
+                {forcingPopup ? "Setting…" : popupForced ? "✓ Modal queued" : selectedUserId ? "Force modal on their next load" : "Force modal on my next visit"}
               </button>
               {popupForced && (
                 <p className="font-saira text-xs text-amber-400">
-                  Navigate to any athlete page — the modal will appear once.
+                  {selectedUserId ? "They'll see it next time they open the app." : "Reload any athlete page — modal appears once."}
                 </p>
               )}
             </div>

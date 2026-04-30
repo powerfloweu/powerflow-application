@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
-import { dbSelect } from "@/lib/supabaseAdmin";
+import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
 import { isoWeekYear } from "@/lib/weeklyCheckin";
 import { mondayOfWeek } from "@/lib/date";
 import type { WeeklyCheckin } from "@/lib/weeklyCheckin";
@@ -25,10 +25,16 @@ export async function POST(req: NextRequest) {
   const isAdmin = (user.email ?? "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
   if (!isAdmin) return NextResponse.json({ error: "Admin only" }, { status: 403 });
 
-  let body: { userId?: string } = {};
+  let body: { userId?: string; forceModal?: boolean } = {};
   try { body = await req.json(); } catch { /* no body is fine */ }
 
   const targetUserId = body.userId ?? user.id;
+
+  // If forceModal requested, set the flag on the target user's profile
+  if (body.forceModal) {
+    await dbPatch("profiles", { id: targetUserId }, { force_checkin: true });
+    return NextResponse.json({ forced: true, targetUserId });
+  }
 
   // Compute current week info (no day restriction)
   const now = new Date();

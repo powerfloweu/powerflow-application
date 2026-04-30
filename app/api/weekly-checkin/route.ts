@@ -6,7 +6,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
-import { checkinTargetWeek } from "@/lib/weeklyCheckin";
+import { checkinTargetWeek, isoWeekYear } from "@/lib/weeklyCheckin";
+import { mondayOfWeek } from "@/lib/date";
 import type { WeeklyCheckin } from "@/lib/weeklyCheckin";
 
 const SELECT =
@@ -20,7 +21,22 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const target = checkinTargetWeek();
+  // Check server-side force flag (set by Dev Tools for any user)
+  const profileRows = await dbSelect<{ force_checkin: boolean }>("profiles", {
+    id: `eq.${user.id}`,
+    select: "force_checkin",
+  });
+  const forceFlag = profileRows[0]?.force_checkin === true;
+
+  // If forced, use current week regardless of day; otherwise use normal day gate
+  let target = checkinTargetWeek();
+  if (forceFlag && !target) {
+    const now = new Date();
+    const { week, year } = isoWeekYear(now);
+    target = { week, year, weekStart: mondayOfWeek(now) };
+    // Clear the flag immediately so it only fires once
+    await dbPatch("profiles", { id: user.id }, { force_checkin: false });
+  }
 
   const checkins = await dbSelect<WeeklyCheckin>("weekly_checkins", {
     user_id: `eq.${user.id}`,
