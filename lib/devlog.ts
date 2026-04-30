@@ -13,9 +13,18 @@ export type DevLogEntry = {
   items: string[];
 };
 
-export const CURRENT_DEVLOG_VERSION = "2026-04-30.2";
+export const CURRENT_DEVLOG_VERSION = "2026-04-30.3";
 
 export const DEVLOG: DevLogEntry[] = [
+  {
+    version: "2026-04-30.3",
+    date: "30 Apr 2026",
+    title: "Monthly check-in · weekly check-in nudge",
+    items: [
+      "Monthly check-in — every fourth week the regular check-in is replaced by a deeper monthly review. It includes the same five ratings and weekly reflection, plus an overall monthly progress rating and three deeper prompts: biggest breakthrough, key lesson, and intention for next month.",
+      "Weekly check-in nudge on Today — if you pressed Later on the check-in modal, a card now appears at the top of your Today page so you can jump back in at any time without waiting for the next login.",
+    ],
+  },
   {
     version: "2026-04-30.2",
     date: "30 Apr 2026",
