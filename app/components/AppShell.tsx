@@ -59,9 +59,9 @@ export default function AppShell({ children }: Props) {
       {/* ── Desktop left sidebar (hidden on mobile) ─────────────── */}
       <aside className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-56 z-50 border-r border-white/5 bg-[#0D0B14]/95 backdrop-blur-md">
         {/* Brand */}
-        <div className="px-5 pt-7 pb-6 border-b border-white/5">
-          <span className="font-saira text-[11px] font-bold uppercase tracking-[0.32em] text-purple-300">
-            {t("brand.name")}
+        <div className="px-5 py-4 border-b border-white/5">
+          <span className="font-saira text-[11px] font-bold uppercase tracking-[0.22em] text-purple-300">
+            PowerFlow · Athlete
           </span>
         </div>
 

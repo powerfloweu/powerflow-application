@@ -2381,7 +2381,7 @@ export default function CoachPage() {
 
           {/* Brand */}
           <div className="flex-shrink-0 px-5 py-4 border-b border-white/5">
-            <span className="font-saira text-sm font-bold uppercase tracking-[0.22em] text-purple-300">
+            <span className="font-saira text-[11px] font-bold uppercase tracking-[0.22em] text-purple-300">
               PowerFlow · Coach
             </span>
           </div>
