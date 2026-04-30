@@ -101,12 +101,11 @@ export async function GET() {
     return NextResponse.json({ error: "Not a coach" }, { status: 403 });
   }
 
-  // Fetch athletes linked to this coach (full profile including onboarding fields)
+  // Fetch everyone linked to this coach — includes athletes AND coach-athletes
   const athletes = await dbSelect<ProfileRow>("profiles", {
     coach_id: `eq.${user.id}`,
-    role: "eq.athlete",
     select: [
-      "id,display_name,avatar_url,created_at",
+      "id,display_name,avatar_url,role,created_at",
       "meet_date,gender,bodyweight_kg,weight_category",
       "squat_current_kg,squat_goal_kg,bench_current_kg,bench_goal_kg,deadlift_current_kg,deadlift_goal_kg",
       "mental_goals,training_days_per_week,instagram,years_powerlifting,federation",

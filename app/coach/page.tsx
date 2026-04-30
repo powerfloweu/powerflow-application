@@ -32,6 +32,7 @@ type AthleteRaw = {
   id: string;
   display_name: string;
   avatar_url: string | null;
+  role: "athlete" | "coach";
   created_at: string;
   // onboarding profile fields
   meet_date: string | null;
@@ -193,6 +194,7 @@ function computeClient(a: AthleteRaw) {
     trainingThisWeek: a.training_entries,
     allTrainingEntries: a.all_training_entries,
     feedbackByEntryId: a.feedbackByEntryId,
+    isCoach: a.role === "coach",
     // full onboarding profile — passed through for Profile tab
     profile: {
       meet_date: a.meet_date,
@@ -2051,7 +2053,14 @@ function CompactAthleteRow({
       )}
       {/* Name + meta */}
       <div className="flex-1 min-w-0">
-        <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{client.name}</p>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{client.name}</p>
+          {client.isCoach && (
+            <span className="flex-shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-saira text-[9px] uppercase tracking-wider text-emerald-400">
+              Coach
+            </span>
+          )}
+        </div>
         <p className="font-saira text-xs text-zinc-500 mt-0.5">
           {client.entriesThisWeek} entries · {client.lastActive}
         </p>
@@ -2544,7 +2553,14 @@ export default function CoachPage() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h2 className="font-saira text-xl font-bold text-white leading-none">{selectedClient.name}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-saira text-xl font-bold text-white leading-none">{selectedClient.name}</h2>
+                    {selectedClient.isCoach && (
+                      <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-saira text-[10px] uppercase tracking-wider text-emerald-400">
+                        Coach
+                      </span>
+                    )}
+                  </div>
                   <p className="font-saira text-sm text-zinc-500 mt-1">
                     Last active {selectedClient.lastActive} · {selectedClient.entriesThisWeek} entries this week · {selectedClient.positiveRate}% positive
                   </p>
