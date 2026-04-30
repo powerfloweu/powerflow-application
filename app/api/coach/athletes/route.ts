@@ -8,6 +8,7 @@ import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
 import type { TrainingEntry } from "@/lib/training";
 import { mondayOfWeek, sundayOfWeek } from "@/lib/date";
+import type { WeeklyCheckin } from "@/lib/weeklyCheckin";
 
 type FeedbackRow = {
   id: string;
@@ -127,8 +128,8 @@ export async function GET() {
   const twentyEightDaysAgo  = daysAgoYmd(28);
   const oneEightyDaysAgo    = daysAgoYmd(180);
 
-  // Fetch entries, test results and training entries for all athletes in parallel
-  const [entries, sat, acsi, csai, das, trainingEntriesRaw, allFeedback] = await Promise.all([
+  // Fetch entries, test results, training entries and weekly check-ins for all athletes in parallel
+  const [entries, sat, acsi, csai, das, trainingEntriesRaw, allFeedback, weeklyCheckins] = await Promise.all([
     dbSelect<EntryRow>("journal_entries", {
       user_id: `in.${idList}`,
       order: "created_at.desc",
@@ -169,6 +170,13 @@ export async function GET() {
       select: "id,entry_id,athlete_id,content,created_at",
       order: "created_at.asc",
     }),
+    // Weekly check-ins for all athletes (last 16 weeks each)
+    dbSelect<WeeklyCheckin>("weekly_checkins", {
+      user_id: `in.${idList}`,
+      order: "year.desc,week_number.desc",
+      limit: "200",
+      select: "id,user_id,week_number,year,week_start,mood_rating,training_quality,readiness_rating,energy_rating,sleep_rating,biggest_win,biggest_challenge,focus_next_week,created_at,updated_at",
+    }),
   ]);
 
   // Filter training to current week for the primary trainingThisWeek field
@@ -193,6 +201,7 @@ export async function GET() {
       training_entries: trainingEntries.filter((e) => e.user_id === athlete.id),
       all_training_entries: trainingEntriesRaw.filter((e) => e.user_id === athlete.id),
       feedbackByEntryId,
+      weekly_checkins: weeklyCheckins.filter((c) => c.user_id === athlete.id),
     };
   });
 

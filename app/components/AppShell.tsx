@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import TabBar from "./TabBar";
 import CheckinReminderScheduler from "./CheckinReminderScheduler";
 import NotificationModal, { type NotificationState } from "./NotificationModal";
+import WeeklyCheckinModal from "./WeeklyCheckinModal";
 import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
 
@@ -34,6 +35,10 @@ export default function AppShell({ children }: Props) {
   const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
   const [planTier, setPlanTier] = React.useState<PlanTier>("pr");
   const [role, setRole] = React.useState<string | null>(null);
+  // Weekly check-in popup
+  const [weeklyCheckinTarget, setWeeklyCheckinTarget] = React.useState<{
+    week: number; year: number; weekStart: string;
+  } | null>(null);
 
   const isCoachPage = pathname === "/coach" || pathname.startsWith("/coach/");
 
@@ -59,7 +64,7 @@ export default function AppShell({ children }: Props) {
     });
   };
 
-  // Fetch notifications + plan tier + role on mount
+  // Fetch notifications + plan tier + role + weekly check-in status on mount
   React.useEffect(() => {
     fetch("/api/notifications")
       .then((r) => r.ok ? r.json() : null)
@@ -77,6 +82,20 @@ export default function AppShell({ children }: Props) {
         if (p?.role) setRole(p.role as string);
       })
       .catch(() => {});
+
+    // Show weekly check-in popup if window is open and not yet submitted
+    // Use sessionStorage so it only fires once per browser session
+    const skippedThisSession = sessionStorage.getItem("weekly-checkin-skipped");
+    if (!skippedThisSession) {
+      fetch("/api/weekly-checkin")
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data?.windowOpen && !data.currentSubmitted && data.targetWeek) {
+            setWeeklyCheckinTarget(data.targetWeek);
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
 
   const canCollapse = role === "coach";
@@ -203,6 +222,18 @@ export default function AppShell({ children }: Props) {
         <NotificationModal
           state={notifications}
           onDone={() => setNotifications(null)}
+        />
+      )}
+
+      {/* ── Weekly check-in popup ────────────────────────────────── */}
+      {weeklyCheckinTarget && !notifications && (
+        <WeeklyCheckinModal
+          targetWeek={weeklyCheckinTarget}
+          onDone={() => setWeeklyCheckinTarget(null)}
+          onSkip={() => {
+            sessionStorage.setItem("weekly-checkin-skipped", "1");
+            setWeeklyCheckinTarget(null);
+          }}
         />
       )}
     </div>

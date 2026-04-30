@@ -7,6 +7,7 @@ import TagChip from "@/app/components/TagChip";
 import { THEME_DEFS, type Sentiment, type Context } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
 import { weekDays as currentWeekDaysLocal } from "@/lib/date";
+import { weekLabel, type WeeklyCheckin } from "@/lib/weeklyCheckin";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ type AthleteRaw = {
   training_entries: TrainingEntry[];
   all_training_entries: TrainingEntry[];
   feedbackByEntryId: Record<string, { id: string; content: string; created_at: string }>;
+  weekly_checkins: WeeklyCheckin[];
 };
 
 type CoachProfile = {
@@ -194,6 +196,7 @@ function computeClient(a: AthleteRaw) {
     trainingThisWeek: a.training_entries,
     allTrainingEntries: a.all_training_entries,
     feedbackByEntryId: a.feedbackByEntryId,
+    weeklyCheckins: a.weekly_checkins,
     isCoach: a.role === "coach",
     // full onboarding profile — passed through for Profile tab
     profile: {
@@ -465,6 +468,94 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── Check-ins tab ─────────────────────────────────────────────────────────────
+
+function CheckinsTab({ checkins }: { checkins: WeeklyCheckin[] }) {
+  const [expandedWeeks, setExpandedWeeks] = React.useState<Set<string>>(new Set());
+
+  if (!checkins.length) {
+    return (
+      <p className="font-saira text-sm text-zinc-600 py-6 text-center">
+        No weekly check-ins submitted yet.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {checkins.map((ci) => {
+        const key = `${ci.year}-${ci.week_number}`;
+        const isExpanded = expandedWeeks.has(key);
+        const label = weekLabel(ci.week_number, ci.week_start);
+        const avg = Math.round(
+          ((ci.mood_rating + ci.training_quality + ci.readiness_rating + ci.energy_rating + ci.sleep_rating) / 5) * 10,
+        ) / 10;
+        const avgColor = avg >= 7.5 ? "text-emerald-400" : avg >= 5 ? "text-purple-300" : "text-rose-400";
+
+        return (
+          <div key={key} className="rounded-xl border border-white/6 bg-[#13151A] overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setExpandedWeeks((prev) => {
+                const next = new Set(prev);
+                isExpanded ? next.delete(key) : next.add(key);
+                return next;
+              })}
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/3 transition"
+            >
+              <span className="font-saira text-[11px] font-semibold text-zinc-300">{label}</span>
+              <div className="flex items-center gap-3">
+                <span className={`font-saira text-sm font-bold tabular-nums ${avgColor}`}>{avg.toFixed(1)}</span>
+                <svg viewBox="0 0 16 16" className={`w-3 h-3 text-zinc-600 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none">
+                  <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </button>
+
+            {isExpanded && (
+              <div className="px-4 pb-4 border-t border-white/5 pt-3 space-y-3">
+                {/* Ratings */}
+                <div className="grid grid-cols-5 gap-2">
+                  {[
+                    { label: "Mood",      v: ci.mood_rating },
+                    { label: "Training",  v: ci.training_quality },
+                    { label: "Energy",    v: ci.energy_rating },
+                    { label: "Sleep",     v: ci.sleep_rating },
+                    { label: "Readiness", v: ci.readiness_rating },
+                  ].map(({ label: rl, v }) => (
+                    <div key={rl} className="text-center">
+                      <p className={`font-saira text-lg font-extrabold tabular-nums ${v >= 8 ? "text-emerald-400" : v >= 5 ? "text-purple-300" : "text-rose-400"}`}>{v}</p>
+                      <p className="font-saira text-[9px] uppercase tracking-[0.12em] text-zinc-600 leading-tight">{rl}</p>
+                    </div>
+                  ))}
+                </div>
+                {ci.biggest_win && (
+                  <div>
+                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Biggest win</p>
+                    <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_win}</p>
+                  </div>
+                )}
+                {ci.biggest_challenge && (
+                  <div>
+                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Main challenge</p>
+                    <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_challenge}</p>
+                  </div>
+                )}
+                {ci.focus_next_week && (
+                  <div>
+                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Focus next week</p>
+                    <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.focus_next_week}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1119,7 +1210,7 @@ function TrainingFeedbackSection({
 
 // ── Client card ────────────────────────────────────────────────────────────────
 
-type ActiveTab = "analysis" | "entries" | "scores" | "training" | "profile" | "notes";
+type ActiveTab = "analysis" | "entries" | "scores" | "training" | "checkins" | "profile" | "notes";
 
 function ClientCard({
   client,
@@ -1313,6 +1404,7 @@ function ClientCard({
               { key: "entries",   label: "Activity" },
               { key: "scores",    label: "Test scores" },
               { key: "training",  label: "Training Log" },
+              { key: "checkins",  label: "Check-ins" },
               { key: "profile",   label: "Profile" },
               { key: "notes",     label: "Notes" },
             ] as const).map((tab) => (
@@ -1567,6 +1659,11 @@ function ClientCard({
                 </div>
                 <TrainingLogTab trainingThisWeek={currentWeekTraining} weekDays={offsetWeekDays} />
               </div>
+            )}
+
+            {/* ── Tab: Check-ins ── */}
+            {activeTab === "checkins" && (
+              <CheckinsTab checkins={client.weeklyCheckins} />
             )}
 
             {/* ── Tab: Profile ── */}

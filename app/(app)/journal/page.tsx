@@ -15,6 +15,8 @@ import { TRAINING_QUESTIONS, type TrainingEntry } from "@/lib/training";
 import { ymdLocal } from "@/lib/date";
 import { DateTabs, offsetDate } from "@/app/components/DateTabs";
 import { useT } from "@/lib/i18n";
+import WeeklyCheckinModal from "@/app/components/WeeklyCheckinModal";
+import { weekLabel, type WeeklyCheckin } from "@/lib/weeklyCheckin";
 
 /** Map TRAINING_QUESTIONS keys to journal-dict translation keys */
 const TRAINING_QKEY: Record<string, string> = {
@@ -653,6 +655,14 @@ export default function JournalPage() {
   const [coachPromptDismissed, setCoachPromptDismissed] = React.useState(false);
   const [coachFeedback, setCoachFeedback] = React.useState<Record<string, CoachFeedbackItem>>({});
 
+  // ── Weekly check-ins ────────────────────────────────────────────────────────
+  const [weeklyCheckins,    setWeeklyCheckins]    = React.useState<WeeklyCheckin[]>([]);
+  const [checkinWindowOpen, setCheckinWindowOpen] = React.useState(false);
+  const [checkinSubmitted,  setCheckinSubmitted]  = React.useState(false);
+  const [checkinTarget,     setCheckinTarget]     = React.useState<{ week: number; year: number; weekStart: string } | null>(null);
+  const [showCheckinModal,  setShowCheckinModal]  = React.useState(false);
+  const [expandedWeeks,     setExpandedWeeks]     = React.useState<Set<string>>(new Set());
+
   // ── Date navigation ─────────────────────────────────────────────────────────
   const todayStr = React.useMemo(() => ymdLocal(), []);
   const [selectedDate, setSelectedDate] = React.useState<string>(() => ymdLocal());
@@ -712,11 +722,12 @@ export default function JournalPage() {
 
   React.useEffect(() => {
     (async () => {
-      const [profileRes, entriesRes, trainingRes, feedbackRes] = await Promise.all([
+      const [profileRes, entriesRes, trainingRes, feedbackRes, checkinRes] = await Promise.all([
         fetch("/api/me"),
         fetch("/api/journal/entries"),
         fetch("/api/training/entries?all=true"),
         fetch("/api/journal/entry-feedback"),
+        fetch("/api/weekly-checkin"),
       ]);
       if (profileRes.ok) setProfile(await profileRes.json());
       if (entriesRes.ok) setEntries(await entriesRes.json());
@@ -731,6 +742,13 @@ export default function JournalPage() {
       }
       if (feedbackRes.ok) {
         setCoachFeedback(await feedbackRes.json());
+      }
+      if (checkinRes.ok) {
+        const data = await checkinRes.json();
+        setWeeklyCheckins(data.checkins ?? []);
+        setCheckinWindowOpen(data.windowOpen ?? false);
+        setCheckinSubmitted(data.currentSubmitted ?? false);
+        setCheckinTarget(data.targetWeek ?? null);
       }
       setReady(true);
     })();
@@ -831,6 +849,129 @@ export default function JournalPage() {
                     prev.map((e) => e.entry_date === updated.entry_date ? updated : e),
                   );
                 }}
+              />
+            )}
+
+            {/* ── Weekly Check-ins section ────────────────────────── */}
+            {(weeklyCheckins.length > 0 || checkinWindowOpen) && (
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.24em] text-purple-400">
+                    Weekly Check-Ins
+                  </span>
+                  <div className="flex-1 h-px bg-white/5" />
+                </div>
+
+                {/* CTA when window is open and not yet submitted */}
+                {checkinWindowOpen && !checkinSubmitted && checkinTarget && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCheckinModal(true)}
+                    className="w-full mb-3 flex items-center justify-between rounded-2xl border border-purple-500/30 bg-purple-500/8 px-4 py-3.5 hover:border-purple-400/50 hover:bg-purple-500/12 transition group"
+                  >
+                    <div className="text-left">
+                      <p className="font-saira text-[10px] font-bold uppercase tracking-[0.22em] text-purple-400 mb-0.5">
+                        {weekLabel(checkinTarget.week, checkinTarget.weekStart)} · Due now
+                      </p>
+                      <p className="font-saira text-xs text-zinc-400">
+                        Take 2 minutes to reflect on your week
+                      </p>
+                    </div>
+                    <span className="font-saira text-xs text-purple-400 group-hover:text-purple-300 transition">
+                      Start →
+                    </span>
+                  </button>
+                )}
+
+                {/* Past check-ins list */}
+                <div className="space-y-2">
+                  {weeklyCheckins.map((ci) => {
+                    const key = `${ci.year}-${ci.week_number}`;
+                    const isExpanded = expandedWeeks.has(key);
+                    const label = weekLabel(ci.week_number, ci.week_start);
+                    const avg = Math.round(
+                      ((ci.mood_rating + ci.training_quality + ci.readiness_rating + ci.energy_rating + ci.sleep_rating) / 5) * 10,
+                    ) / 10;
+                    const avgColor = avg >= 7.5 ? "text-emerald-400" : avg >= 5 ? "text-purple-300" : "text-rose-400";
+                    return (
+                      <div key={key} className="rounded-2xl border border-white/6 bg-[#0F1117] overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedWeeks((prev) => {
+                            const next = new Set(prev);
+                            isExpanded ? next.delete(key) : next.add(key);
+                            return next;
+                          })}
+                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/3 transition"
+                        >
+                          <span className="font-saira text-[11px] font-semibold text-zinc-300">{label}</span>
+                          <div className="flex items-center gap-3">
+                            <span className={`font-saira text-sm font-bold tabular-nums ${avgColor}`}>{avg.toFixed(1)}</span>
+                            <svg viewBox="0 0 16 16" className={`w-3.5 h-3.5 text-zinc-600 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none">
+                              <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </div>
+                        </button>
+                        {isExpanded && (
+                          <div className="px-4 pb-4 border-t border-white/5 pt-3 space-y-3">
+                            {/* Ratings grid */}
+                            <div className="grid grid-cols-5 gap-2">
+                              {[
+                                { label: "Mood",     v: ci.mood_rating },
+                                { label: "Training", v: ci.training_quality },
+                                { label: "Energy",   v: ci.energy_rating },
+                                { label: "Sleep",    v: ci.sleep_rating },
+                                { label: "Readiness",v: ci.readiness_rating },
+                              ].map(({ label: rl, v }) => (
+                                <div key={rl} className="text-center">
+                                  <p className={`font-saira text-lg font-extrabold tabular-nums ${v >= 8 ? "text-emerald-400" : v >= 5 ? "text-purple-300" : "text-rose-400"}`}>{v}</p>
+                                  <p className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-600 leading-tight">{rl}</p>
+                                </div>
+                              ))}
+                            </div>
+                            {/* Text responses */}
+                            {ci.biggest_win && (
+                              <div>
+                                <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Biggest win</p>
+                                <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_win}</p>
+                              </div>
+                            )}
+                            {ci.biggest_challenge && (
+                              <div>
+                                <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Main challenge</p>
+                                <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_challenge}</p>
+                              </div>
+                            )}
+                            {ci.focus_next_week && (
+                              <div>
+                                <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Focus next week</p>
+                                <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.focus_next_week}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Modal (also triggered from AppShell, but can open here too) ── */}
+            {showCheckinModal && checkinTarget && (
+              <WeeklyCheckinModal
+                targetWeek={checkinTarget}
+                onDone={async () => {
+                  setShowCheckinModal(false);
+                  setCheckinSubmitted(true);
+                  // Refresh the list
+                  const res = await fetch("/api/weekly-checkin");
+                  if (res.ok) {
+                    const data = await res.json();
+                    setWeeklyCheckins(data.checkins ?? []);
+                  }
+                }}
+                onSkip={() => setShowCheckinModal(false)}
               />
             )}
 
