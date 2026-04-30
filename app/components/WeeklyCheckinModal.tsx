@@ -165,9 +165,14 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
 
           {/* Text questions */}
           <div className="space-y-4">
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300">
-              Reflect  ·  all optional
-            </p>
+            <div className="flex items-baseline gap-2">
+              <p className="font-saira text-base font-extrabold uppercase tracking-[0.12em] text-white">
+                Reflect
+              </p>
+              <p className="font-saira text-[10px] text-zinc-500 uppercase tracking-[0.18em]">
+                all optional
+              </p>
+            </div>
 
             <div>
               <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">
