@@ -9,6 +9,7 @@ import CheckinReminderScheduler from "./CheckinReminderScheduler";
 import NotificationModal, { type NotificationState } from "./NotificationModal";
 import WeeklyCheckinModal from "./WeeklyCheckinModal";
 import ThemeToggle from "./ThemeToggle";
+import { WeeklyCheckinContext } from "./WeeklyCheckinContext";
 import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
 
@@ -41,6 +42,8 @@ export default function AppShell({ children }: Props) {
   const [weeklyCheckinTarget, setWeeklyCheckinTarget] = React.useState<{
     week: number; year: number; weekStart: string;
   } | null>(null);
+  // true = athlete pressed "Later" — modal hidden but target kept so Today page can offer re-entry
+  const [checkinSkipped, setCheckinSkipped] = React.useState(false);
 
   const isCoachPage = pathname === "/coach" || pathname.startsWith("/coach/");
 
@@ -89,35 +92,45 @@ export default function AppShell({ children }: Props) {
     const forcePayload = localStorage.getItem("pf-force-checkin");
     if (forcePayload) {
       localStorage.removeItem("pf-force-checkin");
-      // Also clear the skip flag so the modal actually shows
       sessionStorage.removeItem("weekly-checkin-skipped");
       try {
         const tw = JSON.parse(forcePayload) as { week: number; year: number; weekStart: string };
         if (tw?.week && tw?.year) {
           setWeeklyCheckinTarget(tw);
+          setCheckinSkipped(false);
           return; // skip the normal fetch
         }
       } catch { /* fall through to normal fetch */ }
     }
 
-    // Show weekly check-in popup if window is open and not yet submitted
-    // Use sessionStorage so it only fires once per browser session
+    // Always fetch to get the target week — we use checkinSkipped state (not sessionStorage)
+    // to decide whether to auto-show the modal, so Today page can always offer re-entry.
     const skippedThisSession = sessionStorage.getItem("weekly-checkin-skipped");
-    if (!skippedThisSession) {
-      fetch("/api/weekly-checkin")
-        .then((r) => r.ok ? r.json() : null)
-        .then((data) => {
-          if (data?.windowOpen && !data.currentSubmitted && data.targetWeek) {
-            setWeeklyCheckinTarget(data.targetWeek);
-          }
-        })
-        .catch(() => {});
-    }
+    fetch("/api/weekly-checkin")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.windowOpen && !data.currentSubmitted && data.targetWeek) {
+          setWeeklyCheckinTarget(data.targetWeek);
+          // If athlete already pressed "Later" in a previous page visit this session,
+          // keep the modal hidden but let Today page show the nudge card.
+          if (skippedThisSession) setCheckinSkipped(true);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const canCollapse = role === "coach";
 
+  const checkinCtxValue = React.useMemo(() => ({
+    pendingCheckin: (weeklyCheckinTarget && checkinSkipped) ? weeklyCheckinTarget : null,
+    reopenCheckin: () => {
+      sessionStorage.removeItem("weekly-checkin-skipped");
+      setCheckinSkipped(false);
+    },
+  }), [weeklyCheckinTarget, checkinSkipped]);
+
   return (
+    <WeeklyCheckinContext.Provider value={checkinCtxValue}>
     <div className="min-h-screen bg-surface-base pt-[env(safe-area-inset-top)]">
 
       {/* ── Desktop left sidebar (hidden on mobile) ─────────────── */}
@@ -293,17 +306,22 @@ export default function AppShell({ children }: Props) {
       )}
 
       {/* ── Weekly check-in popup ────────────────────────────────── */}
-      {weeklyCheckinTarget && !notifications && (
+      {weeklyCheckinTarget && !checkinSkipped && !notifications && (
         <WeeklyCheckinModal
           targetWeek={weeklyCheckinTarget}
-          onDone={() => setWeeklyCheckinTarget(null)}
+          onDone={() => {
+            setWeeklyCheckinTarget(null);
+            setCheckinSkipped(false);
+            sessionStorage.removeItem("weekly-checkin-skipped");
+          }}
           onSkip={() => {
             sessionStorage.setItem("weekly-checkin-skipped", "1");
-            setWeeklyCheckinTarget(null);
+            setCheckinSkipped(true); // keep target alive for Today page nudge
           }}
         />
       )}
     </div>
+    </WeeklyCheckinContext.Provider>
   );
 }
 
