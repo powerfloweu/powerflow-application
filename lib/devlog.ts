@@ -13,9 +13,21 @@ export type DevLogEntry = {
   items: string[];
 };
 
-export const CURRENT_DEVLOG_VERSION = "2026-04-30";
+export const CURRENT_DEVLOG_VERSION = "2026-04-30.2";
 
 export const DEVLOG: DevLogEntry[] = [
+  {
+    version: "2026-04-30.2",
+    date: "30 Apr 2026",
+    title: "Voice input · tests · Coach AI feedback",
+    items: [
+      "Voice input in Coach AI — tap the mic button next to the send field, speak, and your words appear in real time. Tap again to stop. Works on Chrome, Edge, and Safari.",
+      "Mental Tests now accessible from the Home screen — a Tests card at the bottom of your Today page links directly to all four tests.",
+      "Coaches can assign a test to an athlete — open any athlete's Test scores tab and use the Assign panel at the bottom. Assigned tests appear as an amber prompt on the athlete's Home screen.",
+      "When an athlete completes a test while logged in, results are automatically linked to their profile so the coach sees them instantly.",
+      "Coach AI daily feedback — after your third message of the day, a quick check-in appears: rate response length, style, and overall helpfulness. Takes five seconds and helps improve the AI over time.",
+    ],
+  },
   {
     version: "2026-04-30",
     date: "30 Apr 2026",
