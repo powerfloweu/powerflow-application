@@ -62,7 +62,7 @@ function todayKey(): string {
 export default function TodayPage() {
   const router = useRouter();
   const { t, locale } = useT();
-  const { pendingCheckin, reopenCheckin } = useWeeklyCheckin();
+  const { pendingCheckin, isMonthly: checkinIsMonthly, reopenCheckin } = useWeeklyCheckin();
   const [profile, setProfile]           = React.useState<AthleteProfile | null>(null);
   const [loading, setLoading]           = React.useState(true);
 
@@ -266,22 +266,26 @@ export default function TodayPage() {
         </div>
       )}
 
-      {/* ── Weekly check-in nudge (athlete pressed "Later" earlier) ── */}
+      {/* ── Weekly / monthly check-in nudge (athlete pressed "Later") ── */}
       {pendingCheckin && isToday && (
         <button
           type="button"
           onClick={reopenCheckin}
-          className="w-full mb-5 flex items-center justify-between rounded-2xl border border-purple-500/30 bg-purple-500/[0.08] px-4 py-3 group hover:border-purple-400/50 hover:bg-purple-500/[0.12] transition text-left"
+          className={`w-full mb-5 flex items-center justify-between rounded-2xl border px-4 py-3 group transition text-left ${
+            checkinIsMonthly
+              ? "border-amber-500/30 bg-amber-500/[0.08] hover:border-amber-400/50 hover:bg-amber-500/[0.12]"
+              : "border-purple-500/30 bg-purple-500/[0.08] hover:border-purple-400/50 hover:bg-purple-500/[0.12]"
+          }`}
         >
           <div>
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-400 mb-0.5">
-              Weekly Check-In
+            <p className={`font-saira text-[10px] font-semibold uppercase tracking-[0.22em] mb-0.5 ${checkinIsMonthly ? "text-amber-400" : "text-purple-400"}`}>
+              {checkinIsMonthly ? "Monthly Check-In" : "Weekly Check-In"}
             </p>
             <p className="font-saira text-sm font-semibold text-zinc-100">
-              Complete your weekly check-in
+              {checkinIsMonthly ? "Complete your monthly check-in" : "Complete your weekly check-in"}
             </p>
           </div>
-          <span className="text-purple-400 text-lg group-hover:translate-x-0.5 transition-transform flex-shrink-0">→</span>
+          <span className={`text-lg group-hover:translate-x-0.5 transition-transform flex-shrink-0 ${checkinIsMonthly ? "text-amber-400" : "text-purple-400"}`}>→</span>
         </button>
       )}
 

@@ -6,9 +6,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
-import { checkinTargetWeek, isoWeekYear } from "@/lib/weeklyCheckin";
+import { checkinTargetWeek, isoWeekYear, isMonthlyWeek } from "@/lib/weeklyCheckin";
 import { mondayOfWeek } from "@/lib/date";
-import type { WeeklyCheckin } from "@/lib/weeklyCheckin";
+import type { WeeklyCheckin, MonthlyCheckin } from "@/lib/weeklyCheckin";
 
 const SELECT =
   "id,user_id,week_number,year,week_start,mood_rating,training_quality,readiness_rating,energy_rating,sleep_rating,biggest_win,biggest_challenge,focus_next_week,created_at,updated_at";
@@ -45,11 +45,25 @@ export async function GET() {
     select: SELECT,
   });
 
-  const currentSubmitted = target
-    ? checkins.some((c) => c.year === target.year && c.week_number === target.week)
-    : false;
+  const isMonthly = target ? isMonthlyWeek(target.week) : false;
 
-  return NextResponse.json({ checkins, windowOpen: target !== null, targetWeek: target, currentSubmitted });
+  // For monthly weeks check monthly_checkins; for regular weeks check weekly_checkins
+  let currentSubmitted = false;
+  if (target) {
+    if (isMonthly) {
+      const monthlyRows = await dbSelect<{ id: string }>("monthly_checkins", {
+        user_id:     `eq.${user.id}`,
+        year:        `eq.${target.year}`,
+        week_number: `eq.${target.week}`,
+        select: "id",
+      }).catch(() => [] as { id: string }[]);
+      currentSubmitted = monthlyRows.length > 0;
+    } else {
+      currentSubmitted = checkins.some((c) => c.year === target.year && c.week_number === target.week);
+    }
+  }
+
+  return NextResponse.json({ checkins, windowOpen: target !== null, targetWeek: target, currentSubmitted, isMonthly });
 }
 
 export async function POST(req: NextRequest) {

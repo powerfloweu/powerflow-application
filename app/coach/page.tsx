@@ -7,7 +7,7 @@ import TagChip from "@/app/components/TagChip";
 import { THEME_DEFS, type Sentiment, type Context } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
 import { weekDays as currentWeekDaysLocal } from "@/lib/date";
-import { weekLabel, type WeeklyCheckin } from "@/lib/weeklyCheckin";
+import { weekLabel, type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weeklyCheckin";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -75,6 +75,7 @@ type AthleteRaw = {
   all_training_entries: TrainingEntry[];
   feedbackByEntryId: Record<string, { id: string; content: string; created_at: string }>;
   weekly_checkins: WeeklyCheckin[];
+  monthly_checkins: MonthlyCheckin[];
   assigned_tests: { id: string; test_slug: string; assigned_at: string }[];
 };
 
@@ -198,6 +199,7 @@ function computeClient(a: AthleteRaw) {
     allTrainingEntries: a.all_training_entries,
     feedbackByEntryId: a.feedbackByEntryId,
     weeklyCheckins: a.weekly_checkins,
+    monthlyCheckins: a.monthly_checkins ?? [],
     assignedTestSlugs: (a.assigned_tests ?? []).map((t) => t.test_slug),
     isCoach: a.role === "coach",
     // full onboarding profile — passed through for Profile tab
@@ -476,30 +478,59 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
 
 // ── Check-ins tab ─────────────────────────────────────────────────────────────
 
-function CheckinsTab({ checkins }: { checkins: WeeklyCheckin[] }) {
+function CheckinsTab({
+  checkins,
+  monthlyCheckins,
+}: {
+  checkins: WeeklyCheckin[];
+  monthlyCheckins: MonthlyCheckin[];
+}) {
   const [expandedWeeks, setExpandedWeeks] = React.useState<Set<string>>(new Set());
 
-  if (!checkins.length) {
+  // Merge weekly + monthly into one list, sorted newest-first
+  type Row =
+    | { kind: "weekly";  data: WeeklyCheckin }
+    | { kind: "monthly"; data: MonthlyCheckin };
+
+  const rows: Row[] = [
+    ...checkins.map((d): Row => ({ kind: "weekly", data: d })),
+    ...monthlyCheckins.map((d): Row => ({ kind: "monthly", data: d })),
+  ].sort((a, b) => {
+    if (b.data.year !== a.data.year) return b.data.year - a.data.year;
+    return b.data.week_number - a.data.week_number;
+  });
+
+  if (!rows.length) {
     return (
       <p className="font-saira text-sm text-zinc-400 py-6 text-center">
-        No weekly check-ins submitted yet.
+        No check-ins submitted yet.
       </p>
     );
   }
 
+  const ratingColor = (v: number) =>
+    v >= 8 ? "text-emerald-400" : v >= 5 ? "text-purple-300" : "text-rose-400";
+
   return (
     <div className="space-y-2">
-      {checkins.map((ci) => {
-        const key = `${ci.year}-${ci.week_number}`;
+      {rows.map((row) => {
+        const ci = row.data;
+        const key = `${row.kind}-${ci.year}-${ci.week_number}`;
         const isExpanded = expandedWeeks.has(key);
         const label = weekLabel(ci.week_number, ci.week_start);
         const avg = Math.round(
           ((ci.mood_rating + ci.training_quality + ci.readiness_rating + ci.energy_rating + ci.sleep_rating) / 5) * 10,
         ) / 10;
         const avgColor = avg >= 7.5 ? "text-emerald-400" : avg >= 5 ? "text-purple-300" : "text-rose-400";
+        const isMonthly = row.kind === "monthly";
 
         return (
-          <div key={key} className="rounded-xl border border-white/6 bg-surface-section overflow-hidden">
+          <div
+            key={key}
+            className={`rounded-xl border overflow-hidden ${
+              isMonthly ? "border-amber-500/25 bg-amber-500/[0.04]" : "border-white/6 bg-surface-section"
+            }`}
+          >
             <button
               type="button"
               onClick={() => setExpandedWeeks((prev) => {
@@ -509,8 +540,15 @@ function CheckinsTab({ checkins }: { checkins: WeeklyCheckin[] }) {
               })}
               className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/3 transition"
             >
-              <span className="font-saira text-[11px] font-semibold text-zinc-300">{label}</span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                {isMonthly && (
+                  <span className="flex-shrink-0 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-saira text-[8px] font-bold uppercase tracking-[0.18em] text-amber-400">
+                    Monthly
+                  </span>
+                )}
+                <span className="font-saira text-[11px] font-semibold text-zinc-300 truncate">{label}</span>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
                 <span className={`font-saira text-sm font-bold tabular-nums ${avgColor}`}>{avg.toFixed(1)}</span>
                 <svg viewBox="0 0 16 16" className={`w-3 h-3 text-zinc-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none">
                   <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -520,7 +558,7 @@ function CheckinsTab({ checkins }: { checkins: WeeklyCheckin[] }) {
 
             {isExpanded && (
               <div className="px-4 pb-4 border-t border-white/5 pt-3 space-y-3">
-                {/* Ratings */}
+                {/* Weekly ratings (both types) */}
                 <div className="grid grid-cols-5 gap-2">
                   {[
                     { label: "Mood",      v: ci.mood_rating },
@@ -530,11 +568,13 @@ function CheckinsTab({ checkins }: { checkins: WeeklyCheckin[] }) {
                     { label: "Readiness", v: ci.readiness_rating },
                   ].map(({ label: rl, v }) => (
                     <div key={rl} className="text-center">
-                      <p className={`font-saira text-lg font-extrabold tabular-nums ${v >= 8 ? "text-emerald-400" : v >= 5 ? "text-purple-300" : "text-rose-400"}`}>{v}</p>
+                      <p className={`font-saira text-lg font-extrabold tabular-nums ${ratingColor(v)}`}>{v}</p>
                       <p className="font-saira text-[9px] uppercase tracking-[0.12em] text-zinc-400 leading-tight">{rl}</p>
                     </div>
                   ))}
                 </div>
+
+                {/* Weekly reflection fields */}
                 {ci.biggest_win && (
                   <div>
                     <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Biggest win</p>
@@ -553,6 +593,44 @@ function CheckinsTab({ checkins }: { checkins: WeeklyCheckin[] }) {
                     <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.focus_next_week}</p>
                   </div>
                 )}
+
+                {/* Monthly-specific fields */}
+                {isMonthly && (() => {
+                  const mc = (row as { kind: "monthly"; data: MonthlyCheckin }).data;
+                  return (
+                    <>
+                      <div className="flex items-center gap-2 pt-1">
+                        <div className="flex-1 h-px bg-amber-500/20" />
+                        <span className="font-saira text-[8px] font-bold uppercase tracking-[0.2em] text-amber-400/60">Monthly</span>
+                        <div className="flex-1 h-px bg-amber-500/20" />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-center">
+                          <p className={`font-saira text-lg font-extrabold tabular-nums ${ratingColor(mc.overall_progress)}`}>{mc.overall_progress}</p>
+                          <p className="font-saira text-[9px] uppercase tracking-[0.12em] text-zinc-400 leading-tight">Progress</p>
+                        </div>
+                      </div>
+                      {mc.biggest_breakthrough && (
+                        <div>
+                          <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">Biggest breakthrough</p>
+                          <p className="font-saira text-xs text-zinc-300 leading-relaxed">{mc.biggest_breakthrough}</p>
+                        </div>
+                      )}
+                      {mc.key_lesson && (
+                        <div>
+                          <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">Key lesson</p>
+                          <p className="font-saira text-xs text-zinc-300 leading-relaxed">{mc.key_lesson}</p>
+                        </div>
+                      )}
+                      {mc.next_month_intention && (
+                        <div>
+                          <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">Intention for next month</p>
+                          <p className="font-saira text-xs text-zinc-300 leading-relaxed">{mc.next_month_intention}</p>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -1730,7 +1808,7 @@ function ClientCard({
 
             {/* ── Tab: Check-ins ── */}
             {activeTab === "checkins" && (
-              <CheckinsTab checkins={client.weeklyCheckins} />
+              <CheckinsTab checkins={client.weeklyCheckins} monthlyCheckins={client.monthlyCheckins} />
             )}
 
             {/* ── Tab: Profile ── */}

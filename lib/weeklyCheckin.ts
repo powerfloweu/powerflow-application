@@ -2,6 +2,28 @@ import { ymdLocal, mondayOfWeek } from "./date";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type MonthlyCheckin = {
+  id: string;
+  user_id: string;
+  week_number: number;
+  year: number;
+  week_start: string;
+  mood_rating: number;
+  training_quality: number;
+  readiness_rating: number;
+  energy_rating: number;
+  sleep_rating: number;
+  biggest_win: string | null;
+  biggest_challenge: string | null;
+  focus_next_week: string | null;
+  overall_progress: number;
+  biggest_breakthrough: string | null;
+  key_lesson: string | null;
+  next_month_intention: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type WeeklyCheckin = {
   id: string;
   user_id: string;
@@ -31,6 +53,14 @@ export function isoWeekYear(d: Date): { week: number; year: number } {
   const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
   const week = Math.ceil(((utc.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
   return { week, year: utc.getUTCFullYear() };
+}
+
+/**
+ * Returns true when this ISO week number should show a monthly check-in
+ * instead of the standard weekly one (every 4th week: 4, 8, 12 … 52).
+ */
+export function isMonthlyWeek(week: number): boolean {
+  return week % 4 === 0;
 }
 
 /**

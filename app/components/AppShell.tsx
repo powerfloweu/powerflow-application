@@ -8,6 +8,7 @@ import TabBar from "./TabBar";
 import CheckinReminderScheduler from "./CheckinReminderScheduler";
 import NotificationModal, { type NotificationState } from "./NotificationModal";
 import WeeklyCheckinModal from "./WeeklyCheckinModal";
+import MonthlyCheckinModal from "./MonthlyCheckinModal";
 import ThemeToggle from "./ThemeToggle";
 import { WeeklyCheckinContext } from "./WeeklyCheckinContext";
 import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
@@ -38,10 +39,11 @@ export default function AppShell({ children }: Props) {
   const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
   const [planTier, setPlanTier] = React.useState<PlanTier>("pr");
   const [role, setRole] = React.useState<string | null>(null);
-  // Weekly check-in popup
+  // Weekly / monthly check-in popup
   const [weeklyCheckinTarget, setWeeklyCheckinTarget] = React.useState<{
     week: number; year: number; weekStart: string;
   } | null>(null);
+  const [checkinIsMonthly, setCheckinIsMonthly] = React.useState(false);
   // true = athlete pressed "Later" — modal hidden but target kept so Today page can offer re-entry
   const [checkinSkipped, setCheckinSkipped] = React.useState(false);
 
@@ -97,6 +99,7 @@ export default function AppShell({ children }: Props) {
         const tw = JSON.parse(forcePayload) as { week: number; year: number; weekStart: string };
         if (tw?.week && tw?.year) {
           setWeeklyCheckinTarget(tw);
+          setCheckinIsMonthly(tw.week % 4 === 0);
           setCheckinSkipped(false);
           return; // skip the normal fetch
         }
@@ -111,6 +114,7 @@ export default function AppShell({ children }: Props) {
       .then((data) => {
         if (data?.windowOpen && !data.currentSubmitted && data.targetWeek) {
           setWeeklyCheckinTarget(data.targetWeek);
+          setCheckinIsMonthly(data.isMonthly === true);
           // If athlete already pressed "Later" in a previous page visit this session,
           // keep the modal hidden but let Today page show the nudge card.
           if (skippedThisSession) setCheckinSkipped(true);
@@ -123,11 +127,12 @@ export default function AppShell({ children }: Props) {
 
   const checkinCtxValue = React.useMemo(() => ({
     pendingCheckin: (weeklyCheckinTarget && checkinSkipped) ? weeklyCheckinTarget : null,
+    isMonthly: checkinIsMonthly,
     reopenCheckin: () => {
       sessionStorage.removeItem("weekly-checkin-skipped");
       setCheckinSkipped(false);
     },
-  }), [weeklyCheckinTarget, checkinSkipped]);
+  }), [weeklyCheckinTarget, checkinSkipped, checkinIsMonthly]);
 
   return (
     <WeeklyCheckinContext.Provider value={checkinCtxValue}>
@@ -305,20 +310,35 @@ export default function AppShell({ children }: Props) {
         />
       )}
 
-      {/* ── Weekly check-in popup ────────────────────────────────── */}
+      {/* ── Weekly / monthly check-in popup ──────────────────────── */}
       {weeklyCheckinTarget && !checkinSkipped && !notifications && (
-        <WeeklyCheckinModal
-          targetWeek={weeklyCheckinTarget}
-          onDone={() => {
-            setWeeklyCheckinTarget(null);
-            setCheckinSkipped(false);
-            sessionStorage.removeItem("weekly-checkin-skipped");
-          }}
-          onSkip={() => {
-            sessionStorage.setItem("weekly-checkin-skipped", "1");
-            setCheckinSkipped(true); // keep target alive for Today page nudge
-          }}
-        />
+        checkinIsMonthly ? (
+          <MonthlyCheckinModal
+            targetWeek={weeklyCheckinTarget}
+            onDone={() => {
+              setWeeklyCheckinTarget(null);
+              setCheckinSkipped(false);
+              sessionStorage.removeItem("weekly-checkin-skipped");
+            }}
+            onSkip={() => {
+              sessionStorage.setItem("weekly-checkin-skipped", "1");
+              setCheckinSkipped(true);
+            }}
+          />
+        ) : (
+          <WeeklyCheckinModal
+            targetWeek={weeklyCheckinTarget}
+            onDone={() => {
+              setWeeklyCheckinTarget(null);
+              setCheckinSkipped(false);
+              sessionStorage.removeItem("weekly-checkin-skipped");
+            }}
+            onSkip={() => {
+              sessionStorage.setItem("weekly-checkin-skipped", "1");
+              setCheckinSkipped(true);
+            }}
+          />
+        )
       )}
     </div>
     </WeeklyCheckinContext.Provider>

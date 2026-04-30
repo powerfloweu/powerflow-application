@@ -8,7 +8,7 @@ import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
 import type { TrainingEntry } from "@/lib/training";
 import { mondayOfWeek, sundayOfWeek } from "@/lib/date";
-import type { WeeklyCheckin } from "@/lib/weeklyCheckin";
+import type { WeeklyCheckin, MonthlyCheckin } from "@/lib/weeklyCheckin";
 
 type FeedbackRow = {
   id: string;
@@ -135,8 +135,8 @@ export async function GET() {
   const twentyEightDaysAgo  = daysAgoYmd(28);
   const oneEightyDaysAgo    = daysAgoYmd(180);
 
-  // Fetch entries, test results, training entries, weekly check-ins, and assigned tests in parallel
-  const [entries, sat, acsi, csai, das, trainingEntriesRaw, allFeedback, weeklyCheckins, assignedTests] = await Promise.all([
+  // Fetch entries, test results, training entries, weekly/monthly check-ins, and assigned tests in parallel
+  const [entries, sat, acsi, csai, das, trainingEntriesRaw, allFeedback, weeklyCheckins, monthlyCheckins, assignedTests] = await Promise.all([
     dbSelect<EntryRow>("journal_entries", {
       user_id: `in.${idList}`,
       order: "created_at.desc",
@@ -184,6 +184,13 @@ export async function GET() {
       limit: "200",
       select: "id,user_id,week_number,year,week_start,mood_rating,training_quality,readiness_rating,energy_rating,sleep_rating,biggest_win,biggest_challenge,focus_next_week,created_at,updated_at",
     }),
+    // Monthly check-ins for all athletes
+    dbSelect<MonthlyCheckin>("monthly_checkins", {
+      user_id: `in.${idList}`,
+      order: "year.desc,week_number.desc",
+      limit: "48",
+      select: "id,user_id,week_number,year,week_start,mood_rating,training_quality,readiness_rating,energy_rating,sleep_rating,biggest_win,biggest_challenge,focus_next_week,overall_progress,biggest_breakthrough,key_lesson,next_month_intention,created_at,updated_at",
+    }).catch(() => [] as MonthlyCheckin[]), // graceful: table may not exist yet
     // Tests assigned by this coach that are still pending
     dbSelect<AssignedTestRow>("assigned_tests", {
       coach_id: `eq.${user.id}`,
@@ -216,6 +223,7 @@ export async function GET() {
       all_training_entries: trainingEntriesRaw.filter((e) => e.user_id === athlete.id),
       feedbackByEntryId,
       weekly_checkins: weeklyCheckins.filter((c) => c.user_id === athlete.id),
+      monthly_checkins: (monthlyCheckins as MonthlyCheckin[]).filter((c) => c.user_id === athlete.id),
       assigned_tests: (assignedTests as AssignedTestRow[]).filter((t) => t.athlete_id === athlete.id),
     };
   });
