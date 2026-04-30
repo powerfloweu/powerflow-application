@@ -5,6 +5,57 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
 
+// ── Speech recognition hook ───────────────────────────────────────────────────
+
+function useSpeechRecognition(onTranscript: (text: string, isFinal: boolean) => void) {
+  const [listening, setListening] = React.useState(false);
+  const [supported, setSupported] = React.useState(false);
+  const recogRef = React.useRef<SpeechRecognition | null>(null);
+
+  React.useEffect(() => {
+    const SR = (window as Window & typeof globalThis & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition
+      ?? (window as Window & typeof globalThis & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+    setSupported(!!SR);
+    if (!SR) return;
+
+    const r = new SR();
+    r.continuous = true;
+    r.interimResults = true;
+    r.lang = ""; // uses the browser/device language
+
+    r.onresult = (e: SpeechRecognitionEvent) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const res = e.results[i];
+        if (res.isFinal) {
+          onTranscript(res[0].transcript, true);
+        } else {
+          interim += res[0].transcript;
+        }
+      }
+      if (interim) onTranscript(interim, false);
+    };
+
+    r.onend = () => setListening(false);
+    r.onerror = () => setListening(false);
+    recogRef.current = r;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggle = React.useCallback(() => {
+    const r = recogRef.current;
+    if (!r) return;
+    if (listening) {
+      r.stop();
+      setListening(false);
+    } else {
+      try { r.start(); setListening(true); } catch { /* already started */ }
+    }
+  }, [listening]);
+
+  return { listening, supported, toggle };
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ChatMessage = {
@@ -361,6 +412,40 @@ export default function ChatPage() {
 
   const bottomRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // ── Speech recognition ────────────────────────────────────────────────────
+  // interimRef holds the most recent non-final transcript so we can replace
+  // it when a final result arrives for the same utterance.
+  const interimRef = React.useRef("");
+  const { listening, supported: micSupported, toggle: toggleMic } = useSpeechRecognition(
+    (text, isFinal) => {
+      if (isFinal) {
+        setInput((prev) => {
+          const base = prev.endsWith(interimRef.current)
+            ? prev.slice(0, prev.length - interimRef.current.length)
+            : prev;
+          interimRef.current = "";
+          const spacer = base.length && !base.endsWith(" ") ? " " : "";
+          return base + spacer + text.trim();
+        });
+      } else {
+        setInput((prev) => {
+          const base = prev.endsWith(interimRef.current)
+            ? prev.slice(0, prev.length - interimRef.current.length)
+            : prev;
+          interimRef.current = text;
+          return base + text;
+        });
+      }
+      // Keep textarea auto-growing while voice is active
+      requestAnimationFrame(() => {
+        if (inputRef.current) {
+          inputRef.current.style.height = "auto";
+          inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 200)}px`;
+        }
+      });
+    }
+  );
 
   // ── On mount: verify PR tier access + load history ────────────────────────
 
@@ -893,13 +978,13 @@ export default function ChatPage() {
 
       {/* ── Sticky input footer ────────────────────────────────── */}
       <footer className="sticky bottom-0 z-10 border-t border-white/6 bg-surface-base/95 backdrop-blur-sm px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-end gap-3">
+        <div className="max-w-lg mx-auto flex items-end gap-2">
           <textarea
             ref={inputRef}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder={t("chat.placeholder")}
+            placeholder={listening ? "Listening…" : t("chat.placeholder")}
             rows={1}
             disabled={streaming}
             // text-base on mobile (16px) prevents iOS Safari from auto-zooming
@@ -907,6 +992,34 @@ export default function ChatPage() {
             className="flex-1 rounded-2xl border border-white/10 bg-surface-card px-4 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/40 resize-none overflow-hidden disabled:opacity-50 [color-scheme:dark]"
             style={{ minHeight: "48px", maxHeight: "200px" }}
           />
+          {micSupported && (
+            <button
+              type="button"
+              onClick={toggleMic}
+              disabled={streaming}
+              aria-label={listening ? "Stop recording" : "Start voice input"}
+              className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition ${
+                listening
+                  ? "bg-rose-600 hover:bg-rose-500 shadow-[0_0_12px_rgba(225,29,72,0.5)]"
+                  : "border border-white/10 bg-surface-card hover:border-purple-500/40 hover:text-purple-300 text-zinc-400"
+              } disabled:opacity-40`}
+            >
+              {listening ? (
+                /* Stop / pulse icon */
+                <svg viewBox="0 0 20 20" className="w-4 h-4" fill="white" aria-hidden>
+                  <rect x="5" y="5" width="10" height="10" rx="1.5" />
+                </svg>
+              ) : (
+                /* Mic icon */
+                <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x="7" y="2" width="6" height="10" rx="3" />
+                  <path d="M4 10a6 6 0 0012 0" />
+                  <line x1="10" y1="16" x2="10" y2="19" />
+                  <line x1="7" y1="19" x2="13" y2="19" />
+                </svg>
+              )}
+            </button>
+          )}
           <button
             type="button"
             onClick={send}
