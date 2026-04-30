@@ -243,35 +243,35 @@ export default function AppShell({ children }: Props) {
       )}
 
       {/* ── Mobile top bar (logo) — hidden on desktop ───────────── */}
-      {/* Positioned below the notch safe area (root div handles the inset offset) */}
+      {/* Taller bar so the full logo with athlete silhouette is visible */}
       <header
-        className="md:hidden fixed inset-x-0 z-40 h-12 flex items-center justify-between px-4 border-b border-white/5 bg-surface-panel/90 backdrop-blur-md"
+        className="md:hidden fixed inset-x-0 z-40 h-20 flex items-center justify-between px-5 border-b border-white/5 bg-surface-panel/90 backdrop-blur-md"
         style={{ top: "env(safe-area-inset-top)" }}
       >
-        <Link href="/today" className="flex items-center gap-2">
+        <Link href="/today" className="block">
           <Image
-            src="/fm_powerflow_logo_verziok_02_negative.png"
+            src="/fm_powerflow_logo_verziok_01_negative.png"
             alt="PowerFlow"
-            width={400}
-            height={400}
-            className="logo-dark h-7 w-auto object-contain"
+            width={500}
+            height={500}
+            className="logo-dark h-16 w-16 object-contain"
             priority
           />
           <Image
-            src="/fm_powerflow_logo_verziok_02.png"
+            src="/fm_powerflow_logo_verziok_01.png"
             alt="PowerFlow"
-            width={400}
-            height={400}
-            className="logo-light h-7 w-auto object-contain"
+            width={500}
+            height={500}
+            className="logo-light h-16 w-16 object-contain"
             priority
           />
         </Link>
-        <ThemeToggle className="w-8 h-8" />
+        <ThemeToggle className="w-9 h-9" />
       </header>
 
       {/* ── Page content ────────────────────────────────────────── */}
       <main
-        className={`pt-12 md:pt-0 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0 transition-[padding] duration-200 ease-in-out ${
+        className={`pt-20 md:pt-0 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0 transition-[padding] duration-200 ease-in-out ${
           !sidebarReady || sidebarOpen ? "md:pl-56" : "md:pl-0"
         }`}
       >
