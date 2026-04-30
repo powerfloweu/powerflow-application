@@ -2404,6 +2404,7 @@ export default function CoachPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
+                <Link href="/today" className="font-saira text-xs text-emerald-600 hover:text-emerald-400 transition">My profile</Link>
                 <Link href="/guide" className="font-saira text-xs text-zinc-600 hover:text-purple-300 transition">Guide</Link>
                 <a href="/auth/sign-out" className="font-saira text-xs text-zinc-700 hover:text-zinc-400 transition">Sign out</a>
               </div>
