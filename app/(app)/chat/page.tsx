@@ -394,6 +394,59 @@ export default function ChatPage() {
   // Message ratings: dbId → "good" | "bad"
   const [ratings, setRatings] = React.useState<Record<string, "good" | "bad">>({});
 
+  // ── Daily Coach AI feedback ────────────────────────────────────────────────
+  const todayYmd = () => new Date().toISOString().slice(0, 10);
+  const feedbackKey = () => `pf-chat-feedback-${todayYmd()}`;
+  const [showFeedback, setShowFeedback]         = React.useState(false);
+  const [userMsgCountToday, setUserMsgCountToday] = React.useState(0);
+  const [fbLength, setFbLength]   = React.useState<"shorter"|"perfect"|"more_detail"|null>(null);
+  const [fbStyle, setFbStyle]     = React.useState<"direct"|"good"|"warmer"|null>(null);
+  const [fbStars, setFbStars]     = React.useState<number>(0);
+  const [fbNote, setFbNote]       = React.useState("");
+  const [fbSubmitting, setFbSubmitting] = React.useState(false);
+  const [fbDone, setFbDone]       = React.useState(false);
+
+  // On mount: check if already rated today (localStorage fast-path)
+  React.useEffect(() => {
+    if (localStorage.getItem(feedbackKey())) setFbDone(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Count today's user messages from history (set once history loads)
+  const initFeedbackCount = React.useCallback((history: ChatMessage[]) => {
+    const todayPrefix = todayYmd();
+    const count = history.filter(
+      (m) => m.role === "user" && (m.created_at ?? "").startsWith(todayPrefix)
+    ).length;
+    setUserMsgCountToday(count);
+  }, []);
+
+  const dismissFeedback = () => {
+    localStorage.setItem(feedbackKey(), "skipped");
+    setShowFeedback(false);
+    setFbDone(true);
+  };
+
+  const submitFeedback = async () => {
+    if (fbSubmitting) return;
+    setFbSubmitting(true);
+    try {
+      await fetch("/api/chat/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          length_rating: fbLength,
+          style_rating:  fbStyle,
+          helpfulness:   fbStars || null,
+          note:          fbNote || null,
+        }),
+      });
+    } catch { /* ignore */ }
+    localStorage.setItem(feedbackKey(), "done");
+    setFbDone(true);
+    setShowFeedback(false);
+  };
+
   // ── Audio / script state ───────────────────────────────────────────────────
   const [playingScriptId, setPlayingScriptId] = React.useState<string | null>(null);
   const [loadingScriptId, setLoadingScriptId] = React.useState<string | null>(null);
@@ -471,6 +524,7 @@ export default function ChatPage() {
             })
           );
           setMessages(loaded);
+          initFeedbackCount(loaded);
 
           // If the last message is from a previous day, trigger background summarization
           const lastDate = loaded[loaded.length - 1]?.created_at?.split("T")[0];
@@ -679,6 +733,15 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMsg]);
     setStreaming(true);
     setStreamingContent("");
+
+    // Track daily message count for feedback prompt (show after 3rd message today)
+    if (!fbDone) {
+      setUserMsgCountToday((prev) => {
+        const next = prev + 1;
+        if (next >= 3) setShowFeedback(true);
+        return next;
+      });
+    }
 
     // Persist user message — capture DB id to enable ratings
     fetch("/api/chat/messages", {
@@ -975,6 +1038,94 @@ export default function ChatPage() {
           </div>
         )}
       </div>
+
+      {/* ── Daily feedback banner ─────────────────────────────── */}
+      {showFeedback && !fbDone && (
+        <div className="sticky bottom-0 z-20 border-t border-purple-500/20 bg-surface-panel/95 backdrop-blur-sm px-4 py-4">
+          <div className="max-w-lg mx-auto space-y-3">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.22em] text-purple-300">
+                Quick check-in — how&apos;s Coach AI doing?
+              </p>
+              <button
+                type="button"
+                onClick={dismissFeedback}
+                className="font-saira text-[10px] text-zinc-500 hover:text-zinc-300 transition"
+              >
+                Skip
+              </button>
+            </div>
+
+            {/* Row 1 — Length */}
+            <div className="flex items-center gap-2">
+              <span className="font-saira text-[10px] text-zinc-400 w-14 flex-shrink-0">Length</span>
+              {(["shorter", "perfect", "more_detail"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setFbLength(v)}
+                  className={`flex-1 rounded-xl border py-1.5 font-saira text-[10px] transition ${
+                    fbLength === v
+                      ? "border-purple-500/60 bg-purple-500/20 text-purple-200"
+                      : "border-white/10 text-zinc-400 hover:border-purple-500/30 hover:text-zinc-200"
+                  }`}
+                >
+                  {v === "shorter" ? "Shorter" : v === "perfect" ? "Perfect" : "More detail"}
+                </button>
+              ))}
+            </div>
+
+            {/* Row 2 — Style */}
+            <div className="flex items-center gap-2">
+              <span className="font-saira text-[10px] text-zinc-400 w-14 flex-shrink-0">Style</span>
+              {(["direct", "good", "warmer"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setFbStyle(v)}
+                  className={`flex-1 rounded-xl border py-1.5 font-saira text-[10px] transition ${
+                    fbStyle === v
+                      ? "border-purple-500/60 bg-purple-500/20 text-purple-200"
+                      : "border-white/10 text-zinc-400 hover:border-purple-500/30 hover:text-zinc-200"
+                  }`}
+                >
+                  {v === "direct" ? "More direct" : v === "good" ? "Just right" : "Warmer"}
+                </button>
+              ))}
+            </div>
+
+            {/* Row 3 — Stars */}
+            <div className="flex items-center gap-2">
+              <span className="font-saira text-[10px] text-zinc-400 w-14 flex-shrink-0">Overall</span>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setFbStars(n)}
+                    className={`text-lg leading-none transition ${
+                      n <= fbStars ? "text-amber-400" : "text-zinc-600 hover:text-zinc-400"
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="button"
+              onClick={submitFeedback}
+              disabled={fbSubmitting || (!fbLength && !fbStyle && !fbStars)}
+              className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 py-2 font-saira text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition"
+            >
+              {fbSubmitting ? "Saving…" : "Send feedback"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Sticky input footer ────────────────────────────────── */}
       <footer className="sticky bottom-0 z-10 border-t border-white/6 bg-surface-base/95 backdrop-blur-sm px-4 py-3">
