@@ -1669,9 +1669,111 @@ function BroadcastTab({ users }: { users: UserRow[] }) {
   );
 }
 
+// ── Dev Tools Tab ─────────────────────────────────────────────────────────────
+
+function DevToolsTab({ users }: { users: UserRow[] }) {
+  const [selectedUserId, setSelectedUserId] = React.useState("");
+  const [checkinResult, setCheckinResult]   = React.useState<Record<string, unknown> | null>(null);
+  const [checkinLoading, setCheckinLoading] = React.useState(false);
+  const [checkinMsg, setCheckinMsg]         = React.useState<string | null>(null);
+
+  const triggerCheckin = async () => {
+    setCheckinLoading(true);
+    setCheckinResult(null);
+    setCheckinMsg(null);
+    try {
+      const res = await fetch("/api/admin/weekly-checkin-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selectedUserId || undefined }),
+      });
+      const data = await res.json();
+      setCheckinResult(data);
+      if (data.targetWeek) {
+        setCheckinMsg(`Window forced open for Week ${data.targetWeek.week} — ${data.currentSubmitted ? "already submitted" : "not yet submitted"}`);
+      }
+    } catch {
+      setCheckinMsg("Error calling API");
+    } finally {
+      setCheckinLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl space-y-8">
+      <div>
+        <h2 className="font-saira text-sm font-bold uppercase tracking-[0.22em] text-zinc-300 mb-1">Dev Tools</h2>
+        <p className="font-saira text-xs text-zinc-600">
+          Admin-only overrides for testing features before they go live in production.
+        </p>
+      </div>
+
+      {/* ── Weekly Check-in Test ── */}
+      <div className="rounded-2xl border border-white/8 bg-[#0F1117] p-5">
+        <p className="font-saira text-[11px] font-bold uppercase tracking-[0.22em] text-purple-400 mb-1">
+          Weekly Check-in
+        </p>
+        <p className="font-saira text-xs text-zinc-500 mb-4">
+          Forces the check-in window open regardless of day. Use this to test the modal and submission on any day of the week.
+        </p>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block font-saira text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wider">
+              Target user (optional — leave blank to use your own account)
+            </label>
+            <select
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-saira text-sm text-zinc-100 outline-none focus:border-purple-400/50"
+            >
+              <option value="">My account</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.display_name} ({u.role}{u.email ? ` · ${u.email}` : ""})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={triggerCheckin}
+            disabled={checkinLoading}
+            className="rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 px-4 py-2 font-saira text-[11px] font-bold uppercase tracking-[0.18em] text-white transition"
+          >
+            {checkinLoading ? "Checking…" : "Check window status"}
+          </button>
+
+          {checkinMsg && (
+            <p className={`font-saira text-xs ${checkinResult?.currentSubmitted ? "text-emerald-400" : "text-amber-400"}`}>
+              {checkinMsg}
+            </p>
+          )}
+
+          {checkinResult && (
+            <div className="rounded-xl border border-white/5 bg-[#13151A] px-4 py-3">
+              <p className="font-saira text-[10px] text-zinc-500 mb-2 uppercase tracking-wider">API response</p>
+              <pre className="font-mono text-[11px] text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                {JSON.stringify(checkinResult, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          <p className="font-saira text-[10px] text-zinc-700">
+            To trigger the popup: after confirming window is open, open the app in a new incognito tab or clear
+            <code className="font-mono mx-1">sessionStorage.removeItem(&apos;weekly-checkin-skipped&apos;)</code>
+            in the console, then refresh.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations";
+type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "devtools";
 
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -1813,6 +1915,7 @@ export default function MasterAdminPage() {
     ["results",        "Test Results",    "✦"],
     ["broadcast",      "Broadcast",       "✉"],
     ["conversations",  "Conversations",   "💬"],
+    ["devtools",       "Dev Tools",       "⚙"],
   ];
 
   return (
@@ -1906,6 +2009,7 @@ export default function MasterAdminPage() {
               {activeTab === "results" && <ResultsTab />}
               {activeTab === "broadcast" && <BroadcastTab users={users} />}
               {activeTab === "conversations" && <ConversationsTab />}
+              {activeTab === "devtools" && <DevToolsTab users={users} />}
             </>
           )}
         </div>

@@ -15,7 +15,7 @@ import { dbSelect } from "@/lib/supabaseAdmin";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "trainer.pod@gmail.com";
 
 type MessageRow = { id: string; user_id: string; role: string; content: string; created_at: string };
-type ProfileRow = { id: string; display_name: string; role: string; email: string | null };
+type ProfileRow = { id: string; display_name: string; role: string };
 type SummaryRow = {
   id: string;
   user_id: string;
@@ -34,14 +34,15 @@ export async function GET(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify coach or admin
+  // Verify coach or admin — email lives in auth.users, not profiles
+  const isAdmin = (user.email ?? "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
   const me = await dbSelect<ProfileRow>("profiles", {
     id: `eq.${user.id}`,
-    select: "id,role,email",
+    select: "id,role",
     limit: "1",
   });
   const myProfile = me[0];
-  if (!myProfile || (myProfile.role !== "coach" && myProfile.email !== ADMIN_EMAIL)) {
+  if (!myProfile || (!isAdmin && myProfile.role !== "coach")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -76,7 +77,7 @@ export async function GET(req: NextRequest) {
 
   const profiles = await dbSelect<ProfileRow>("profiles", {
     id: `in.${idList}`,
-    select: "id,display_name,role,email",
+    select: "id,display_name,role",
   });
   const profileById = new Map(profiles.map((p) => [p.id, p]));
 
