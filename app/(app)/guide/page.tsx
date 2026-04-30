@@ -18,7 +18,7 @@ function GuideSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-4">
+    <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-4">
       <div className="flex items-start gap-3 mb-3">
         <span className="font-saira text-[10px] font-bold text-purple-400 pt-0.5 flex-shrink-0 tabular-nums">
           {num}
@@ -207,10 +207,10 @@ export default function GuidePage() {
   const isCoach = role === "coach";
 
   return (
-    <div className="min-h-screen bg-[#050608] pb-10">
+    <div className="min-h-screen bg-surface-base pb-10">
 
       {/* ── Sticky back bar ────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-40 bg-[#050608]/95 backdrop-blur-sm border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-surface-base/95 backdrop-blur-sm border-b border-white/5">
         <div className="max-w-lg mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
           <button
             type="button"
@@ -222,8 +222,8 @@ export default function GuidePage() {
             </svg>
             {t("guide.back")}
           </button>
-          <span className="font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-700">·</span>
-          <span className="font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-600">
+          <span className="font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-500">·</span>
+          <span className="font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-400">
             {t("guide.pageTitle")}
           </span>
         </div>
@@ -240,7 +240,7 @@ export default function GuidePage() {
           {isCoach ? t("guide.coachGuide") : t("guide.athleteGuide")}
         </h1>
         {name && (
-          <p className="font-saira text-sm text-zinc-500">
+          <p className="font-saira text-sm text-zinc-300">
             {t("guide.welcome", { name: `, ${name}` })}
           </p>
         )}
@@ -257,7 +257,7 @@ export default function GuidePage() {
           <p className="font-saira text-sm font-semibold text-purple-300 group-hover:text-white transition mb-0.5">
             {t("guide.printable")}
           </p>
-          <p className="font-saira text-[10px] text-zinc-500">
+          <p className="font-saira text-[10px] text-zinc-300">
             {t("guide.printableHint")}
           </p>
         </div>
@@ -277,7 +277,7 @@ export default function GuidePage() {
 
       {/* Footer */}
       <div className="mt-6 text-center">
-        <p className="font-saira text-[10px] text-zinc-600">
+        <p className="font-saira text-[10px] text-zinc-400">
           {t("guide.footer")}
         </p>
       </div>

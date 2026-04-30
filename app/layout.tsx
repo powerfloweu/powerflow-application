@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Saira } from "next/font/google";
 import "./globals.css";
 import NavBar from "./components/NavBar";
 import { I18nProvider } from "@/lib/i18n";
+import { ThemeProvider } from "@/lib/theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,14 +49,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${saira.variable} antialiased bg-[#050608]`}
+        className={`${geistSans.variable} ${geistMono.variable} ${saira.variable} antialiased bg-surface-base`}
       >
-        <I18nProvider>
-          <NavBar />
-          {children}
-        </I18nProvider>
+        <ThemeProvider>
+          <I18nProvider>
+            <NavBar />
+            {children}
+          </I18nProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -86,7 +86,7 @@ export default function BundleCompletePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#050608] pt-24 pb-20 text-white">
+    <div className="min-h-screen bg-surface-base pt-24 pb-20 text-white">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(168,85,247,0.18),transparent_55%)]" />
       </div>
@@ -142,7 +142,7 @@ export default function BundleCompletePage() {
 
             <Link
               href="/tests"
-              className="inline-block font-saira text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-300 transition"
+              className="inline-block font-saira text-xs text-zinc-300 underline underline-offset-2 hover:text-zinc-300 transition"
             >
               ← Back to all tests
             </Link>
@@ -162,13 +162,13 @@ export default function BundleCompletePage() {
                 Payment not verified
               </h1>
               <p className="mt-3 font-saira text-sm text-zinc-400">{errorMsg}</p>
-              <p className="mt-2 font-saira text-sm text-zinc-500">
+              <p className="mt-2 font-saira text-sm text-zinc-300">
                 If you completed payment, please contact us with your Stripe receipt.
               </p>
             </div>
             <Link
               href="/tests"
-              className="inline-block font-saira text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-300 transition"
+              className="inline-block font-saira text-xs text-zinc-300 underline underline-offset-2 hover:text-zinc-300 transition"
             >
               ← Back to tests
             </Link>

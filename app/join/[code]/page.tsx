@@ -77,7 +77,7 @@ export default function JoinPage() {
 
   // ── Render ─────────────────────────────────────────────────────
   return (
-    <div className="relative min-h-screen bg-[#050608] flex items-center justify-center px-4">
+    <div className="relative min-h-screen bg-surface-base flex items-center justify-center px-4">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.13),transparent_55%)]" />
       </div>
@@ -98,7 +98,7 @@ export default function JoinPage() {
         {state === "invalid" && (
           <div className="mt-8 rounded-3xl border border-red-500/20 bg-red-500/5 p-8">
             <p className="font-saira text-lg font-bold text-red-300 mb-2">Invalid link</p>
-            <p className="font-saira text-sm text-zinc-500">
+            <p className="font-saira text-sm text-zinc-300">
               This invite link is invalid or has expired. Ask your coach for a new one.
             </p>
           </div>
@@ -114,8 +114,8 @@ export default function JoinPage() {
               <span className="text-purple-300 font-semibold">{coachName}</span> has invited you
               to join PowerFlow.
             </p>
-            <div className="mt-8 rounded-3xl border border-white/8 bg-[#0F1117] p-8">
-              <p className="font-saira text-xs text-zinc-500 mb-5">
+            <div className="mt-8 rounded-3xl border border-white/8 bg-surface-alt p-8">
+              <p className="font-saira text-xs text-zinc-300 mb-5">
                 Sign in with Google to connect. Your coach will be able to see your journal and test results.
               </p>
               <button
@@ -143,8 +143,8 @@ export default function JoinPage() {
               <span className="text-purple-300 font-semibold">{coachName}</span> has invited you
               to join PowerFlow.
             </p>
-            <div className="mt-8 rounded-3xl border border-white/8 bg-[#0F1117] p-8">
-              <p className="font-saira text-xs text-zinc-500 mb-5">
+            <div className="mt-8 rounded-3xl border border-white/8 bg-surface-alt p-8">
+              <p className="font-saira text-xs text-zinc-300 mb-5">
                 You're already signed in. Tap below to connect your account to {coachName}.
               </p>
               <button
@@ -174,7 +174,7 @@ export default function JoinPage() {
           <div className="mt-8 rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-8">
             <p className="font-saira text-2xl mb-2">✓</p>
             <p className="font-saira text-lg font-bold text-emerald-300 mb-2">You're connected!</p>
-            <p className="font-saira text-sm text-zinc-500">Redirecting you now…</p>
+            <p className="font-saira text-sm text-zinc-300">Redirecting you now…</p>
           </div>
         )}
 
@@ -182,7 +182,7 @@ export default function JoinPage() {
         {state === "error" && (
           <div className="mt-8 rounded-3xl border border-red-500/20 bg-red-500/5 p-8">
             <p className="font-saira text-lg font-bold text-red-300 mb-2">Something went wrong</p>
-            <p className="font-saira text-sm text-zinc-500">
+            <p className="font-saira text-sm text-zinc-300">
               Couldn't link your account. Please try the invite link again or contact your coach.
             </p>
           </div>

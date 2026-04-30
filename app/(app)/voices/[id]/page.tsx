@@ -16,7 +16,7 @@ function SliderDisplay({ label, value }: { label: string; value: number }) {
   const track = Array.from({ length: 12 }, (_, i) => i < filled);
   return (
     <div className="flex items-center gap-3">
-      <span className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 w-16 flex-shrink-0">
+      <span className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300 w-16 flex-shrink-0">
         {label}
       </span>
       <div className="flex-1 flex items-center gap-0.5">
@@ -27,7 +27,7 @@ function SliderDisplay({ label, value }: { label: string; value: number }) {
           />
         ))}
       </div>
-      <span className="font-saira text-[10px] text-zinc-500 w-16 text-right flex-shrink-0">
+      <span className="font-saira text-[10px] text-zinc-300 w-16 text-right flex-shrink-0">
         {value} / {lv}
       </span>
     </div>
@@ -63,7 +63,7 @@ export default function VoiceDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#050608]">
+      <div className="flex items-center justify-center min-h-screen bg-surface-base">
         <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
       </div>
     );
@@ -71,8 +71,8 @@ export default function VoiceDetailPage() {
 
   if (notFound || !voice) {
     return (
-      <div className="min-h-screen bg-[#050608] flex flex-col items-center justify-center gap-4 px-4">
-        <p className="font-saira text-zinc-500 text-sm">{t("voices.notFound")}</p>
+      <div className="min-h-screen bg-surface-base flex flex-col items-center justify-center gap-4 px-4">
+        <p className="font-saira text-zinc-300 text-sm">{t("voices.notFound")}</p>
         <Link
           href="/voices"
           className="font-saira text-[11px] text-purple-400 hover:text-purple-300 uppercase tracking-[0.14em] transition"
@@ -90,9 +90,9 @@ export default function VoiceDetailPage() {
   const sideLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
   return (
-    <div className="min-h-screen bg-[#050608]">
+    <div className="min-h-screen bg-surface-base">
       {/* Sticky back header */}
-      <div className="sticky top-0 z-40 bg-[#050608]/95 backdrop-blur-sm border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-surface-base/95 backdrop-blur-sm border-b border-white/5">
         <div className="max-w-lg mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
           <button
             type="button"
@@ -104,8 +104,8 @@ export default function VoiceDetailPage() {
             </svg>
             {t("voices.back")}
           </button>
-          <span className="text-zinc-700">·</span>
-          <span className="font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-600 truncate">{voice.name}</span>
+          <span className="text-zinc-500">·</span>
+          <span className="font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-400 truncate">{voice.name}</span>
         </div>
       </div>
 
@@ -121,7 +121,7 @@ export default function VoiceDetailPage() {
           <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-1">
             {voice.name}
           </h1>
-          <p className="font-saira text-xs text-zinc-500">
+          <p className="font-saira text-xs text-zinc-300">
             {voice.shape}
             {voice.shape === "custom" && voice.shape_custom_description
               ? ` · ${voice.shape_custom_description}`
@@ -135,7 +135,7 @@ export default function VoiceDetailPage() {
         <div className="flex items-center justify-center gap-6 py-4 mb-6 border-t border-b border-white/5">
           <div className="text-center">
             <p className="font-saira text-lg font-bold text-white">{voice.thought_count ?? 0}</p>
-            <p className="font-saira text-[10px] text-zinc-600 uppercase tracking-[0.14em]">{t("voices.statsThoughts")}</p>
+            <p className="font-saira text-[10px] text-zinc-400 uppercase tracking-[0.14em]">{t("voices.statsThoughts")}</p>
           </div>
           {voice.body_locations.length > 0 && (
             <>
@@ -144,7 +144,7 @@ export default function VoiceDetailPage() {
                 <p className="font-saira text-sm font-semibold text-white">
                   {voice.body_locations.map((l) => l.replace(/_/g, " ")).join(", ")}
                 </p>
-                <p className="font-saira text-[10px] text-zinc-600 uppercase tracking-[0.14em]">{t("voices.statsBody")}</p>
+                <p className="font-saira text-[10px] text-zinc-400 uppercase tracking-[0.14em]">{t("voices.statsBody")}</p>
               </div>
             </>
           )}
@@ -153,20 +153,20 @@ export default function VoiceDetailPage() {
               <div className="w-px h-8 bg-white/5" />
               <div className="text-center">
                 <p className="font-saira text-lg font-bold text-white">{voice.helps_when.length}</p>
-                <p className="font-saira text-[10px] text-zinc-600 uppercase tracking-[0.14em]">{t("voices.statsWhenHelps")}</p>
+                <p className="font-saira text-[10px] text-zinc-400 uppercase tracking-[0.14em]">{t("voices.statsWhenHelps")}</p>
               </div>
             </>
           )}
         </div>
 
         {/* Placement */}
-        <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-4">
-          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-3">
+        <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-4">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-300 mb-3">
             {t("voices.placement")}
           </p>
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <p className="font-saira text-[10px] text-zinc-600 uppercase tracking-[0.12em] mb-0.5">{t("voices.placementNow")}</p>
+              <p className="font-saira text-[10px] text-zinc-400 uppercase tracking-[0.12em] mb-0.5">{t("voices.placementNow")}</p>
               <p className="font-saira text-sm text-white font-semibold">
                 {DISTANCE_LABELS[voice.current_distance]} · {sideLabel(voice.current_side)}
               </p>
@@ -183,14 +183,14 @@ export default function VoiceDetailPage() {
               </>
             )}
             {!placementChanged && (
-              <p className="font-saira text-[10px] text-zinc-700 italic">{t("voices.placementFeelsRight")}</p>
+              <p className="font-saira text-[10px] text-zinc-500 italic">{t("voices.placementFeelsRight")}</p>
             )}
           </div>
         </div>
 
         {/* Physical profile */}
-        <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-4">
-          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-4">
+        <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-4">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-300 mb-4">
             {t("voices.physicalProfile")}
           </p>
           <div className="space-y-3 mb-4">
@@ -199,7 +199,7 @@ export default function VoiceDetailPage() {
           </div>
           {voice.body_locations.length > 0 && (
             <p className="font-saira text-xs text-zinc-400">
-              <span className="text-zinc-600">{t("voices.bodyLabel")} </span>
+              <span className="text-zinc-400">{t("voices.bodyLabel")} </span>
               {voice.body_locations.map((l) => l.replace(/_/g, " ")).join(", ")}
             </p>
           )}
@@ -207,8 +207,8 @@ export default function VoiceDetailPage() {
 
         {/* When it helps */}
         {(voice.helps_when.length > 0 || voice.helps_note) && (
-          <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-6">
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-3">
+          <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-6">
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-300 mb-3">
               {t("voices.whenItHelps")}
             </p>
             {voice.helps_when.length > 0 && (
@@ -236,7 +236,7 @@ export default function VoiceDetailPage() {
             setShowEditToast(true);
             setTimeout(() => setShowEditToast(false), 3000);
           }}
-          className="w-full rounded-2xl border border-white/5 bg-[#17131F] py-4 font-saira text-sm font-semibold text-zinc-400 hover:text-purple-300 hover:border-purple-500/20 transition"
+          className="w-full rounded-2xl border border-white/5 bg-surface-card py-4 font-saira text-sm font-semibold text-zinc-400 hover:text-purple-300 hover:border-purple-500/20 transition"
         >
           {t("voices.editBtn")}
         </button>

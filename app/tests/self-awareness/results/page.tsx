@@ -140,7 +140,7 @@ export default function ResultsPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-[#050608] pt-24 text-white">
+      <div className="min-h-screen bg-surface-base pt-24 text-white">
         <div className="mx-auto max-w-3xl px-4 py-12 text-center font-saira text-sm text-zinc-400">
           Loading…
         </div>
@@ -150,7 +150,7 @@ export default function ResultsPage() {
 
   if (!payload) {
     return (
-      <div className="relative min-h-screen bg-[#050608] pt-24 text-white">
+      <div className="relative min-h-screen bg-surface-base pt-24 text-white">
         <div className="mx-auto max-w-xl px-4 py-16 text-center">
           <h1 className="font-saira text-2xl font-extrabold uppercase tracking-[0.12em]">
             No results yet
@@ -269,7 +269,7 @@ export default function ResultsPage() {
   const subfactorLabel = (name: string) => lang === "hu" ? (SUBFACTOR_HU[name] ?? name) : name;
 
   return (
-    <div className="relative min-h-screen bg-[#050608] pt-24 pb-20 text-white">
+    <div className="relative min-h-screen bg-surface-base pt-24 pb-20 text-white">
       <div className="pointer-events-none fixed inset-0 z-0 print:hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(168,85,247,0.14),transparent_55%)]" />
       </div>
@@ -310,14 +310,14 @@ export default function ResultsPage() {
             <span className="font-saira text-[11px] uppercase tracking-[0.22em] text-zinc-400">
               {respondent.gender === "male" ? c.genderMale : c.genderFemale}
             </span>
-            <span className="text-zinc-600">&middot;</span>
+            <span className="text-zinc-400">&middot;</span>
             <span className="font-saira text-[11px] uppercase tracking-[0.22em] text-zinc-400">
               {new Date(respondent.submittedAt).toLocaleDateString()}
             </span>
           </div>
           <div className="relative mt-6 flex items-center gap-4 border-t border-white/5 pt-5">
             <div>
-              <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+              <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-300">
                 {lang === "en" ? "Factors profiled" : "Feltárt tényezők"}
               </p>
               <p className="mt-1 font-saira text-2xl font-extrabold tabular-nums text-white">
@@ -326,7 +326,7 @@ export default function ResultsPage() {
             </div>
             <div className="h-10 w-px bg-white/5" />
             <div>
-              <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+              <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-300">
                 {c.refNorms(respondent.gender === "male" ? c.genderMale : c.genderFemale)}
               </p>
               <p className="mt-1 font-saira text-sm font-semibold text-zinc-300">
@@ -425,7 +425,7 @@ export default function ResultsPage() {
                         <div className="shrink-0 text-right">
                           <div className="font-saira text-2xl font-extrabold tabular-nums leading-none text-white">
                             {f.rawScore}
-                            <span className="text-sm font-normal text-zinc-500">/{f.max}</span>
+                            <span className="text-sm font-normal text-zinc-300">/{f.max}</span>
                           </div>
                           <div className="mt-1.5">
                             <BandPill band={f.band} lang={lang} />
@@ -438,7 +438,7 @@ export default function ResultsPage() {
                           style={{ width: `${scorePct}%` }}
                         />
                       </div>
-                      <div className="mt-1 flex justify-between font-saira text-[9px] text-zinc-600">
+                      <div className="mt-1 flex justify-between font-saira text-[9px] text-zinc-400">
                         <span>0</span>
                         <span>{c.typical} {f.bandMin}–{f.bandMax}</span>
                         <span>{f.max}</span>
@@ -466,7 +466,7 @@ export default function ResultsPage() {
                 {report.subfactors.map((s) => (
                   <div
                     key={s.subfactor}
-                    className="rounded-2xl border border-white/5 bg-[#0F1116] p-5 transition hover:border-purple-500/20"
+                    className="rounded-2xl border border-white/5 bg-surface-alt p-5 transition hover:border-purple-500/20"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-saira text-xs font-semibold uppercase tracking-[0.18em] text-zinc-200">
@@ -490,8 +490,8 @@ export default function ResultsPage() {
                     </div>
                     <div className="mt-2 font-saira text-xs text-zinc-400">
                       {c.score} <span className="font-semibold text-zinc-200">{s.score}</span>
-                      <span className="text-zinc-600 mx-1">·</span>
-                      <span className="text-zinc-500">{c.typical} {s.bandMin}–{s.bandMax}</span>
+                      <span className="text-zinc-400 mx-1">·</span>
+                      <span className="text-zinc-300">{c.typical} {s.bandMin}–{s.bandMax}</span>
                     </div>
                   </div>
                 ))}
@@ -538,7 +538,7 @@ export default function ResultsPage() {
             >
               {c.upsellCta}
             </button>
-            <p className="mt-4 font-saira text-[11px] text-zinc-500">
+            <p className="mt-4 font-saira text-[11px] text-zinc-300">
               {c.upsellFine}
             </p>
 
@@ -561,7 +561,7 @@ export default function ResultsPage() {
             >
               {c.downloadPdf}
             </button>
-            <p className="mt-4 font-saira text-[11px] text-zinc-500">
+            <p className="mt-4 font-saira text-[11px] text-zinc-300">
               {c.downloadFine}
             </p>
           </div>
@@ -574,7 +574,7 @@ export default function ResultsPage() {
           >
             {c.coaching}
           </Link>
-          <Link href="/tests" className="font-saira text-[11px] text-zinc-500 underline decoration-zinc-600 hover:text-white">
+          <Link href="/tests" className="font-saira text-[11px] text-zinc-300 underline decoration-zinc-600 hover:text-white">
             {c.allTests}
           </Link>
         </div>
@@ -589,7 +589,7 @@ export default function ResultsPage() {
             alt="PowerFlow"
             style={{ height: "20px", width: "auto", opacity: 0.6 }}
           />
-          <p className="font-saira text-[9px] uppercase tracking-[0.22em] text-zinc-500">
+          <p className="font-saira text-[9px] uppercase tracking-[0.22em] text-zinc-300">
             David Sipos — Sports psychologist · power-flow.eu
           </p>
         </div>
@@ -730,7 +730,7 @@ function RadarChart({ data, onLabelClick, radarTitle, radarYou, radarAvg, radarF
   const gridLevels = [0.25, 0.5, 0.75, 1];
 
   return (
-    <div className="rounded-3xl border border-white/5 bg-[#0F1116] p-6 sm:p-8">
+    <div className="rounded-3xl border border-white/5 bg-surface-alt p-6 sm:p-8">
       <div className="flex items-center justify-between">
         <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
           {radarTitle}
@@ -849,7 +849,7 @@ function RadarChart({ data, onLabelClick, radarTitle, radarYou, radarAvg, radarF
           <circle cx={cx} cy={cy} r={2} fill="rgba(255,255,255,0.3)" />
         </svg>
       </div>
-      <p className="mt-4 text-center font-saira text-[11px] text-zinc-500">
+      <p className="mt-4 text-center font-saira text-[11px] text-zinc-300">
         {radarFootnote}
       </p>
     </div>

@@ -44,7 +44,7 @@ export function DateTabs({ selected, onChange, labels }: DateTabsProps) {
           className={`flex-1 rounded-lg py-1.5 font-saira text-[11px] font-semibold uppercase tracking-wider transition ${
             selected === tab.date
               ? "bg-purple-600/80 text-white shadow-sm"
-              : "text-zinc-500 hover:text-zinc-300"
+              : "text-zinc-300 hover:text-zinc-300"
           }`}
         >
           {tab.label}

@@ -239,14 +239,14 @@ export default function ScriptsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050608]">
+    <div className="min-h-screen bg-surface-base">
 
       {/* ── Sticky header ─────────────────────────────────────── */}
-      <header className="sticky top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#050608]/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 border-b border-white/6 bg-surface-base/95 backdrop-blur-sm">
         <div className="justify-self-start">
           <Link
             href="/chat"
-            className="font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.18em] transition"
+            className="font-saira text-[11px] text-zinc-300 hover:text-purple-300 uppercase tracking-[0.18em] transition"
           >
             ← {t("common.back")}
           </Link>
@@ -265,11 +265,11 @@ export default function ScriptsPage() {
       {/* ── Empty state ───────────────────────────────────────── */}
       {scripts.length === 0 ? (
         <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
-          <div className="rounded-2xl border border-white/8 bg-[#17131F] px-6 py-8 max-w-sm w-full">
+          <div className="rounded-2xl border border-white/8 bg-surface-card px-6 py-8 max-w-sm w-full">
             <p className="font-saira text-sm font-semibold text-white mb-2">
               {t("scripts.emptyTitle")}
             </p>
-            <p className="font-saira text-xs text-zinc-500 leading-relaxed mb-6">
+            <p className="font-saira text-xs text-zinc-300 leading-relaxed mb-6">
               {t("scripts.emptyDesc")}
             </p>
             <Link
@@ -293,14 +293,14 @@ export default function ScriptsPage() {
             return (
               <div
                 key={script.id}
-                className="rounded-2xl border border-white/8 bg-[#17131F] p-5"
+                className="rounded-2xl border border-white/8 bg-surface-card p-5"
               >
                 {/* Title + date */}
                 <div className="mb-3">
                   <p className="font-saira text-sm font-semibold text-white mb-0.5">
                     {script.title}
                   </p>
-                  <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+                  <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-400">
                     {t("scripts.savedWhen", { when: timeAgo(script.created_at) })}
                   </p>
                 </div>
@@ -330,12 +330,12 @@ export default function ScriptsPage() {
                       <button
                         type="button"
                         onClick={() => stopAudio()}
-                        className="ml-auto font-saira text-[10px] uppercase tracking-wider text-zinc-600 hover:text-zinc-400 transition"
+                        className="ml-auto font-saira text-[10px] uppercase tracking-wider text-zinc-400 hover:text-zinc-400 transition"
                       >
                         {t("common.cancel")}
                       </button>
                     </div>
-                    <p className="font-saira text-[10px] text-zinc-600">
+                    <p className="font-saira text-[10px] text-zinc-400">
                       {t("scripts.keepOpen")}
                     </p>
                   </div>
@@ -348,7 +348,7 @@ export default function ScriptsPage() {
                       />
                     </div>
                     {audioTime && audioTime.duration > 0 && (
-                      <div className="flex justify-between font-saira text-[10px] text-zinc-600">
+                      <div className="flex justify-between font-saira text-[10px] text-zinc-400">
                         <span>{fmtTime(audioTime.current)}</span>
                         <span>{fmtTime(audioTime.duration)}</span>
                       </div>
@@ -376,7 +376,7 @@ export default function ScriptsPage() {
                         10s →
                       </button>
                     </div>
-                    <p className="font-saira text-[10px] text-zinc-700 text-center">
+                    <p className="font-saira text-[10px] text-zinc-500 text-center">
                       {t("scripts.noSound")}
                     </p>
                   </div>
@@ -393,7 +393,7 @@ export default function ScriptsPage() {
                       type="button"
                       onClick={() => handleDelete(script.id)}
                       disabled={deletingId === script.id}
-                      className="border border-white/10 text-zinc-600 rounded-xl px-3 py-2 font-saira text-xs uppercase tracking-wider hover:text-red-400 hover:border-red-500/30 transition disabled:opacity-40"
+                      className="border border-white/10 text-zinc-400 rounded-xl px-3 py-2 font-saira text-xs uppercase tracking-wider hover:text-red-400 hover:border-red-500/30 transition disabled:opacity-40"
                       aria-label="Delete script"
                     >
                       {deletingId === script.id ? "…" : t("scripts.delete")}

@@ -552,13 +552,13 @@ function BandChip({
 function BandAnalysisPanel({ results }: { results: Result[] }) {
   const [genderFilter, setGenderFilter] = React.useState<"male" | "female">("male");
   return (
-    <div className="mt-8 rounded-2xl border border-white/5 bg-[#13151A] p-6 space-y-10">
+    <div className="mt-8 rounded-2xl border border-white/5 bg-surface-section p-6 space-y-10">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
             Band Analysis — SAT
           </h2>
-          <p className="font-saira text-[11px] text-zinc-500 mt-1">
+          <p className="font-saira text-[11px] text-zinc-300 mt-1">
             P25 → Low/Avg boundary · P75 → Avg/High boundary · Amber = differs from norm by &gt;1 pt
           </p>
         </div>
@@ -588,13 +588,13 @@ function BandAnalysisPanel({ results }: { results: Result[] }) {
           ).length;
           return (
             <div key={gender}>
-              <p className="font-saira text-[11px] text-zinc-500 mb-4">
+              <p className="font-saira text-[11px] text-zinc-300 mb-4">
                 Based on {validN} valid responses
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full font-saira text-xs">
                   <thead>
-                    <tr className="text-zinc-500 uppercase tracking-[0.15em]">
+                    <tr className="text-zinc-300 uppercase tracking-[0.15em]">
                       <th className="text-left py-2 pr-4 font-semibold">Factor</th>
                       <th className="text-right py-2 px-2 font-semibold">n</th>
                       <th className="text-right py-2 px-2 font-semibold">Mean</th>
@@ -628,7 +628,7 @@ function BandAnalysisPanel({ results }: { results: Result[] }) {
                         >
                           {s.p75}
                         </td>
-                        <td className="py-2 px-2 text-right text-zinc-500">
+                        <td className="py-2 px-2 text-right text-zinc-300">
                           {s.normMin}–{s.normMax}
                         </td>
                       </tr>
@@ -676,7 +676,7 @@ function ResultRow({
 
   return (
     <div
-      className="rounded-2xl border border-white/5 bg-[#13151A] overflow-hidden cursor-pointer hover:border-purple-500/20 transition"
+      className="rounded-2xl border border-white/5 bg-surface-section overflow-hidden cursor-pointer hover:border-purple-500/20 transition"
       onClick={() => setExpanded((v) => !v)}
     >
       {/* Collapsed row */}
@@ -686,7 +686,7 @@ function ResultRow({
             {result.first_name}{" "}
             <span className="font-normal text-zinc-400 text-xs">{result.email}</span>
           </p>
-          <p className="font-saira text-[11px] text-zinc-500 mt-0.5">{fmtDate(result.submitted_at)}</p>
+          <p className="font-saira text-[11px] text-zinc-300 mt-0.5">{fmtDate(result.submitted_at)}</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -713,7 +713,7 @@ function ResultRow({
           )}
 
           <SparkBar scores={factorScores} />
-          <span className="font-saira text-[11px] text-zinc-600 ml-1">{expanded ? "▲" : "▼"}</span>
+          <span className="font-saira text-[11px] text-zinc-400 ml-1">{expanded ? "▲" : "▼"}</span>
         </div>
       </div>
 
@@ -732,13 +732,13 @@ function ResultRow({
               {FACTOR_KEYS.map((key) => {
                 const factorScore = getFactorScore(result, key);
                 return (
-                  <div key={key} className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
-                    <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1 capitalize">
+                  <div key={key} className="rounded-xl border border-white/5 bg-surface-input p-3">
+                    <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-300 mb-1 capitalize">
                       {key}
                     </p>
                     <p className="font-saira text-base font-bold text-zinc-100">
                       {factorScore}
-                      <span className="text-xs font-normal text-zinc-600">/15</span>
+                      <span className="text-xs font-normal text-zinc-400">/15</span>
                     </p>
                     <MiniProgressBar value={factorScore} />
                   </div>
@@ -754,8 +754,8 @@ function ResultRow({
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {subfactors.map(({ label, score }) => (
-                <div key={label} className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
-                  <p className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1">
+                <div key={label} className="rounded-xl border border-white/5 bg-surface-input p-3">
+                  <p className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300 mb-1">
                     {label}
                   </p>
                   <p className="font-saira text-base font-bold text-zinc-100">{score}</p>
@@ -771,11 +771,11 @@ function ResultRow({
             </p>
             <div className="flex flex-wrap gap-4 font-saira text-sm">
               <span>
-                <span className="text-zinc-500 text-xs uppercase tracking-[0.15em] mr-2">Sum Yes</span>
+                <span className="text-zinc-300 text-xs uppercase tracking-[0.15em] mr-2">Sum Yes</span>
                 <span className="text-zinc-200 font-semibold">{result.sum_yes}</span>
               </span>
               <span>
-                <span className="text-zinc-500 text-xs uppercase tracking-[0.15em] mr-2">Reliable</span>
+                <span className="text-zinc-300 text-xs uppercase tracking-[0.15em] mr-2">Reliable</span>
                 <span
                   className={`font-semibold ${
                     result.validity_reliable ? "text-emerald-300" : "text-amber-300"
@@ -876,7 +876,7 @@ function ResultRow({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-500 hover:border-red-500/50 hover:text-red-400 transition"
+                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-300 hover:border-red-500/50 hover:text-red-400 transition"
                 >
                   Delete
                 </button>
@@ -931,7 +931,7 @@ function AcsiResultRow({
 
   return (
     <div
-      className="rounded-2xl border border-white/5 bg-[#13151A] overflow-hidden cursor-pointer hover:border-purple-500/20 transition"
+      className="rounded-2xl border border-white/5 bg-surface-section overflow-hidden cursor-pointer hover:border-purple-500/20 transition"
       onClick={() => setExpanded((v) => !v)}
     >
       {/* Collapsed row */}
@@ -941,13 +941,13 @@ function AcsiResultRow({
             {result.first_name}{" "}
             <span className="font-normal text-zinc-400 text-xs">{result.email}</span>
           </p>
-          <p className="font-saira text-[11px] text-zinc-500 mt-0.5">{fmtDate(result.submitted_at)}</p>
+          <p className="font-saira text-[11px] text-zinc-300 mt-0.5">{fmtDate(result.submitted_at)}</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-saira text-xs font-semibold text-zinc-200">
             {result.total_score}
-            <span className="text-zinc-600 font-normal">/112</span>
+            <span className="text-zinc-400 font-normal">/112</span>
           </span>
 
           {localPaid && (
@@ -957,7 +957,7 @@ function AcsiResultRow({
           )}
 
           <AcsiSparkBar result={result} />
-          <span className="font-saira text-[11px] text-zinc-600 ml-1">{expanded ? "▲" : "▼"}</span>
+          <span className="font-saira text-[11px] text-zinc-400 ml-1">{expanded ? "▲" : "▼"}</span>
         </div>
       </div>
 
@@ -985,14 +985,14 @@ function AcsiResultRow({
                 const s = scoreMap[key];
                 const band = classifyAcsi(s);
                 return (
-                  <div key={key} className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
-                    <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500 mb-1">
+                  <div key={key} className="rounded-xl border border-white/5 bg-surface-input p-3">
+                    <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-300 mb-1">
                       {ACSI_LABELS[key]}
                     </p>
                     <div className="flex items-baseline justify-between mb-1">
                       <p className="font-saira text-base font-bold text-zinc-100">
                         {s}
-                        <span className="text-xs font-normal text-zinc-600">/16</span>
+                        <span className="text-xs font-normal text-zinc-400">/16</span>
                       </p>
                       <BandChip band={band} />
                     </div>
@@ -1092,7 +1092,7 @@ function AcsiResultRow({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-500 hover:border-red-500/50 hover:text-red-400 transition"
+                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-300 hover:border-red-500/50 hover:text-red-400 transition"
                 >
                   Delete
                 </button>
@@ -1139,7 +1139,7 @@ function CsaiResultRow({
 
   return (
     <div
-      className="rounded-2xl border border-white/5 bg-[#13151A] overflow-hidden cursor-pointer hover:border-sky-500/20 transition"
+      className="rounded-2xl border border-white/5 bg-surface-section overflow-hidden cursor-pointer hover:border-sky-500/20 transition"
       onClick={() => setExpanded((v) => !v)}
     >
       {/* Collapsed row */}
@@ -1149,7 +1149,7 @@ function CsaiResultRow({
             {result.first_name}{" "}
             <span className="font-normal text-zinc-400 text-xs">{result.email}</span>
           </p>
-          <p className="font-saira text-[11px] text-zinc-500 mt-0.5">{fmtDate(result.submitted_at)}</p>
+          <p className="font-saira text-[11px] text-zinc-300 mt-0.5">{fmtDate(result.submitted_at)}</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -1170,7 +1170,7 @@ function CsaiResultRow({
             </span>
           )}
 
-          <span className="font-saira text-[11px] text-zinc-600 ml-1">{expanded ? "▲" : "▼"}</span>
+          <span className="font-saira text-[11px] text-zinc-400 ml-1">{expanded ? "▲" : "▼"}</span>
         </div>
       </div>
 
@@ -1191,14 +1191,14 @@ function CsaiResultRow({
                 // Anxiety subscales: low is good; confidence: high is good
                 const inverse = key !== "confidence";
                 return (
-                  <div key={key} className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
-                    <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500 mb-1">
+                  <div key={key} className="rounded-xl border border-white/5 bg-surface-input p-3">
+                    <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-300 mb-1">
                       {CSAI_LABELS[key]}
                     </p>
                     <div className="flex items-baseline justify-between mb-1">
                       <p className="font-saira text-base font-bold text-zinc-100">
                         {s}
-                        <span className="text-xs font-normal text-zinc-600">/36</span>
+                        <span className="text-xs font-normal text-zinc-400">/36</span>
                       </p>
                       <BandChip band={band} inverse={inverse} />
                     </div>
@@ -1298,7 +1298,7 @@ function CsaiResultRow({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-500 hover:border-red-500/50 hover:text-red-400 transition"
+                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-300 hover:border-red-500/50 hover:text-red-400 transition"
                 >
                   Delete
                 </button>
@@ -1392,7 +1392,7 @@ function DasResultRow({
 
   return (
     <div
-      className="rounded-2xl border border-white/5 bg-[#13151A] overflow-hidden cursor-pointer hover:border-amber-500/20 transition"
+      className="rounded-2xl border border-white/5 bg-surface-section overflow-hidden cursor-pointer hover:border-amber-500/20 transition"
       onClick={() => setExpanded((v) => !v)}
     >
       {/* Collapsed row */}
@@ -1402,13 +1402,13 @@ function DasResultRow({
             {result.first_name}{" "}
             <span className="font-normal text-zinc-400 text-xs">{result.email}</span>
           </p>
-          <p className="font-saira text-[11px] text-zinc-500 mt-0.5">{fmtDate(result.submitted_at)}</p>
+          <p className="font-saira text-[11px] text-zinc-300 mt-0.5">{fmtDate(result.submitted_at)}</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-saira text-xs font-semibold text-zinc-200">
             {result.total_score > 0 ? "+" : ""}{result.total_score}
-            <span className="text-zinc-600 font-normal">/70</span>
+            <span className="text-zinc-400 font-normal">/70</span>
           </span>
 
           {result.depression_prone && (
@@ -1424,7 +1424,7 @@ function DasResultRow({
           )}
 
           <DasSparkBar result={result} />
-          <span className="font-saira text-[11px] text-zinc-600 ml-1">{expanded ? "▲" : "▼"}</span>
+          <span className="font-saira text-[11px] text-zinc-400 ml-1">{expanded ? "▲" : "▼"}</span>
         </div>
       </div>
 
@@ -1443,14 +1443,14 @@ function DasResultRow({
                 const s = scoreMap[key] ?? 0;
                 const dysfunctional = Math.abs(s) > 5;
                 return (
-                  <div key={key} className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
-                    <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500 mb-1">
+                  <div key={key} className="rounded-xl border border-white/5 bg-surface-input p-3">
+                    <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-300 mb-1">
                       {DAS_LABELS[key]}
                     </p>
                     <div className="flex items-baseline justify-between mb-1">
                       <p className="font-saira text-base font-bold text-zinc-100">
                         {s > 0 ? "+" : ""}{s}
-                        <span className="text-xs font-normal text-zinc-600">/10</span>
+                        <span className="text-xs font-normal text-zinc-400">/10</span>
                       </p>
                       <span className={`rounded-full border px-2 py-0.5 font-saira text-[9px] uppercase tracking-[0.12em] ${
                         dysfunctional
@@ -1578,7 +1578,7 @@ function DasResultRow({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-500 hover:border-red-500/50 hover:text-red-400 transition"
+                  className="ml-auto rounded-full border border-zinc-700 px-3 py-1 font-saira text-[10px] text-zinc-300 hover:border-red-500/50 hover:text-red-400 transition"
                 >
                   Delete
                 </button>
@@ -1611,7 +1611,7 @@ function AthleteCard({
   const latestDate = allDates.length > 0 ? Math.max(...allDates) : 0;
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-[#0F1117] overflow-hidden transition hover:border-purple-500/15">
+    <div className="rounded-2xl border border-white/5 bg-surface-alt overflow-hidden transition hover:border-purple-500/15">
       {/* Header row */}
       <div
         className="flex flex-wrap items-center gap-3 p-4 sm:p-5 cursor-pointer"
@@ -1629,7 +1629,7 @@ function AthleteCard({
           <p className="font-saira text-sm font-semibold text-zinc-100 truncate">
             {profile.name}
           </p>
-          <p className="font-saira text-[11px] text-zinc-500 truncate">{profile.email}</p>
+          <p className="font-saira text-[11px] text-zinc-300 truncate">{profile.email}</p>
         </div>
 
         {/* Test badges */}
@@ -1659,11 +1659,11 @@ function AthleteCard({
         {/* Date + expand */}
         <div className="flex items-center gap-2">
           {latestDate > 0 && (
-            <span className="font-saira text-[11px] text-zinc-600">
+            <span className="font-saira text-[11px] text-zinc-400">
               {fmtDate(new Date(latestDate).toISOString())}
             </span>
           )}
-          <span className="font-saira text-[11px] text-zinc-600">
+          <span className="font-saira text-[11px] text-zinc-400">
             {expanded ? "▲" : "▼"}
           </span>
         </div>
@@ -1756,7 +1756,7 @@ function AthleteCard({
           )}
 
           {totalTests === 0 && (
-            <p className="font-saira text-sm text-zinc-600 text-center py-4">No results</p>
+            <p className="font-saira text-sm text-zinc-400 text-center py-4">No results</p>
           )}
         </div>
       )}
@@ -1908,14 +1908,14 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
           Drop <span className="text-purple-300">.xlsx</span> files here, or{" "}
           <span className="text-purple-300 underline underline-offset-2">browse</span>
         </p>
-        <p className="font-saira text-[11px] text-zinc-600 mt-1">
+        <p className="font-saira text-[11px] text-zinc-400 mt-1">
           Multiple files allowed · One person per file
         </p>
       </div>
 
       {/* Staged files table */}
       {files.length > 0 && (
-        <div className="rounded-2xl border border-white/5 bg-[#13151A] overflow-hidden">
+        <div className="rounded-2xl border border-white/5 bg-surface-section overflow-hidden">
           <div className="px-5 py-3 border-b border-white/5">
             <p className="font-saira text-[11px] font-semibold uppercase tracking-[0.22em] text-purple-300">
               Staged files — {files.length}
@@ -1926,7 +1926,7 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
               <div key={f.id} className="p-4 space-y-3">
                 {/* Row header */}
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="font-saira text-[11px] text-zinc-500 truncate max-w-[180px]">
+                  <span className="font-saira text-[11px] text-zinc-300 truncate max-w-[180px]">
                     {f.filename}
                   </span>
                   <span
@@ -1966,7 +1966,7 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                   <button
                     type="button"
                     onClick={() => removeFile(f.id)}
-                    className="ml-auto font-saira text-xs text-zinc-600 hover:text-red-400 transition"
+                    className="ml-auto font-saira text-xs text-zinc-400 hover:text-red-400 transition"
                   >
                     ×
                   </button>
@@ -1979,14 +1979,14 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                     value={f.name}
                     onChange={(e) => updateFile(f.id, { name: e.target.value })}
                     placeholder="Full name"
-                    className="rounded-lg border border-zinc-700/70 bg-[#0D0F14] px-3 py-1.5 font-saira text-xs text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/40 w-44"
+                    className="rounded-lg border border-zinc-700/70 bg-surface-input px-3 py-1.5 font-saira text-xs text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/40 w-44"
                   />
                   <input
                     type="email"
                     value={f.email}
                     onChange={(e) => updateFile(f.id, { email: e.target.value })}
                     placeholder="Email (optional)"
-                    className="rounded-lg border border-zinc-700/70 bg-[#0D0F14] px-3 py-1.5 font-saira text-xs text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/40 w-48"
+                    className="rounded-lg border border-zinc-700/70 bg-surface-input px-3 py-1.5 font-saira text-xs text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/40 w-48"
                   />
                   <div className="flex gap-1.5">
                     {(["male", "female"] as const).map((g) => (
@@ -2006,7 +2006,7 @@ function ImportTab({ onSwitchToResults }: { onSwitchToResults: () => void }) {
                             ? g === "male"
                               ? "border-sky-400 bg-sky-500/20 text-sky-200"
                               : "border-pink-400 bg-pink-500/20 text-pink-200"
-                            : "border-zinc-700 text-zinc-500 hover:border-zinc-500"
+                            : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
                         }`}
                       >
                         {g}
@@ -2218,7 +2218,7 @@ export default function AdminPage() {
 
   if (satResults === null) {
     return (
-      <div className="min-h-screen bg-[#050608] pt-24 text-white">
+      <div className="min-h-screen bg-surface-base pt-24 text-white">
         <div className="pointer-events-none fixed inset-0 z-0">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(168,85,247,0.14),transparent_55%)]" />
         </div>
@@ -2236,7 +2236,7 @@ export default function AdminPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full rounded-xl border border-zinc-700/70 bg-[#13151A] px-4 py-3 font-saira text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40"
+              className="w-full rounded-xl border border-zinc-700/70 bg-surface-section px-4 py-3 font-saira text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40"
               autoFocus
             />
             {authError && (
@@ -2259,7 +2259,7 @@ export default function AdminPage() {
   // ── Dashboard ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#050608] pt-24 pb-20 text-white">
+    <div className="min-h-screen bg-surface-base pt-24 pb-20 text-white">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(168,85,247,0.10),transparent_55%)]" />
       </div>
@@ -2315,7 +2315,7 @@ export default function AdminPage() {
               type="button"
               onClick={() => setActiveTab(tab.key)}
               className={`relative px-5 py-2.5 font-saira text-xs font-semibold uppercase tracking-[0.2em] transition-colors ${
-                activeTab === tab.key ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+                activeTab === tab.key ? "text-white" : "text-zinc-300 hover:text-zinc-300"
               }`}
             >
               {tab.label}
@@ -2340,14 +2340,14 @@ export default function AdminPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by name or email…"
-                  className="w-full max-w-sm rounded-xl border border-zinc-700/70 bg-[#13151A] px-4 py-2.5 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30"
+                  className="w-full max-w-sm rounded-xl border border-zinc-700/70 bg-surface-section px-4 py-2.5 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30"
                 />
               </div>
 
               {/* Athletes list */}
               <div className="space-y-3">
                 {filteredAthletes.length === 0 ? (
-                  <p className="font-saira text-sm text-zinc-500 py-8 text-center">
+                  <p className="font-saira text-sm text-zinc-300 py-8 text-center">
                     {search ? "No athletes match your search." : "No results found."}
                   </p>
                 ) : (

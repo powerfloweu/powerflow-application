@@ -349,7 +349,7 @@ export default function CsaiResultsPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-[#050608] pt-24 text-white">
+      <div className="min-h-screen bg-surface-base pt-24 text-white">
         <div className="mx-auto max-w-3xl px-4 py-12 text-center font-saira text-sm text-zinc-400">
           Loading&hellip;
         </div>
@@ -360,7 +360,7 @@ export default function CsaiResultsPage() {
   if (!payload) {
     const c = ui.en;
     return (
-      <div className="relative min-h-screen bg-[#050608] pt-24 text-white">
+      <div className="relative min-h-screen bg-surface-base pt-24 text-white">
         <div className="mx-auto max-w-xl px-4 py-16 text-center">
           <h1 className="font-saira text-2xl font-extrabold uppercase tracking-[0.12em]">
             {c.noResults}
@@ -420,7 +420,7 @@ export default function CsaiResultsPage() {
   )[0];
 
   return (
-    <div className="relative min-h-screen bg-[#050608] pt-24 pb-20 text-white">
+    <div className="relative min-h-screen bg-surface-base pt-24 pb-20 text-white">
       <div className="pointer-events-none fixed inset-0 z-0 print:hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(168,85,247,0.14),transparent_55%)]" />
       </div>
@@ -458,7 +458,7 @@ export default function CsaiResultsPage() {
             <span className="font-saira text-[11px] uppercase tracking-[0.22em] text-zinc-400">
               {respondent.gender === "male" ? c.genderMale : c.genderFemale}
             </span>
-            <span className="text-zinc-600">&middot;</span>
+            <span className="text-zinc-400">&middot;</span>
             <span className="font-saira text-[11px] uppercase tracking-[0.22em] text-zinc-400">
               {new Date(respondent.submittedAt).toLocaleDateString()}
             </span>
@@ -472,12 +472,12 @@ export default function CsaiResultsPage() {
         </div>
 
         {/* Bar chart -- always visible (free deliverable) */}
-        <div className="mt-6 rounded-3xl border border-white/5 bg-[#0B0D12] p-6 sm:p-8">
+        <div className="mt-6 rounded-3xl border border-white/5 bg-surface-alt p-6 sm:p-8">
           <div className="flex items-center justify-between">
             <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
               {c.chartTitle}
             </h2>
-            <span className="flex items-center gap-2 font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+            <span className="flex items-center gap-2 font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-300">
               <span className="inline-block h-px w-5 bg-zinc-500" /> {c.popAvg}
             </span>
           </div>
@@ -500,7 +500,7 @@ export default function CsaiResultsPage() {
                     <div className="flex shrink-0 items-center gap-2">
                       <CsaiBandPill subscale={d.key} band={d.band} lang={lang} />
                       <span className="font-saira text-sm font-bold tabular-nums text-white">
-                        {d.score}<span className="font-normal text-zinc-500">/{d.max}</span>
+                        {d.score}<span className="font-normal text-zinc-300">/{d.max}</span>
                       </span>
                     </div>
                   </div>
@@ -519,7 +519,7 @@ export default function CsaiResultsPage() {
             })}
           </div>
 
-          <p className="mt-6 text-center font-saira text-[10px] text-zinc-600">
+          <p className="mt-6 text-center font-saira text-[10px] text-zinc-400">
             {c.chartFootnote}
           </p>
         </div>
@@ -592,7 +592,7 @@ export default function CsaiResultsPage() {
                         <div className="shrink-0 text-right">
                           <div className="font-saira text-2xl font-extrabold tabular-nums leading-none text-white">
                             {sub.score}
-                            <span className="text-sm font-normal text-zinc-500">/{sub.max}</span>
+                            <span className="text-sm font-normal text-zinc-300">/{sub.max}</span>
                           </div>
                           <div className="mt-1.5">
                             <CsaiBandPill subscale={key} band={sub.band} lang={lang} />
@@ -605,7 +605,7 @@ export default function CsaiResultsPage() {
                           style={{ width: `${scorePct}%` }}
                         />
                       </div>
-                      <div className="mt-1 flex justify-between font-saira text-[9px] text-zinc-600">
+                      <div className="mt-1 flex justify-between font-saira text-[9px] text-zinc-400">
                         <span>{sub.min}</span>
                         <span>{c.typical} {cutoffs.average.min}–{cutoffs.average.max}</span>
                         <span>{sub.max}</span>
@@ -661,7 +661,7 @@ export default function CsaiResultsPage() {
             >
               {c.upsellCta}
             </button>
-            <p className="mt-4 font-saira text-[11px] text-zinc-500">
+            <p className="mt-4 font-saira text-[11px] text-zinc-300">
               {c.upsellFine}
             </p>
           </div>
@@ -683,7 +683,7 @@ export default function CsaiResultsPage() {
             >
               {c.downloadPdf}
             </button>
-            <p className="mt-4 font-saira text-[11px] text-zinc-500">
+            <p className="mt-4 font-saira text-[11px] text-zinc-300">
               {c.downloadFine}
             </p>
           </div>
@@ -698,7 +698,7 @@ export default function CsaiResultsPage() {
           </Link>
           <Link
             href="/tests"
-            className="font-saira text-[11px] text-zinc-500 underline decoration-zinc-600 hover:text-white"
+            className="font-saira text-[11px] text-zinc-300 underline decoration-zinc-600 hover:text-white"
           >
             {c.allTests}
           </Link>
@@ -714,7 +714,7 @@ export default function CsaiResultsPage() {
             alt="PowerFlow"
             style={{ height: "20px", width: "auto", opacity: 0.6 }}
           />
-          <p className="font-saira text-[9px] uppercase tracking-[0.22em] text-zinc-500">
+          <p className="font-saira text-[9px] uppercase tracking-[0.22em] text-zinc-300">
             David Sipos &mdash; Sports psychologist &middot; power-flow.eu
           </p>
         </div>

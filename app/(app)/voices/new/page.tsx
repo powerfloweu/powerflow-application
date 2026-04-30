@@ -9,9 +9,9 @@ export default function VoicesNewPage() {
   const { t } = useT();
 
   return (
-    <div className="min-h-screen bg-[#050608]">
+    <div className="min-h-screen bg-surface-base">
       {/* Sticky back header */}
-      <div className="sticky top-0 z-40 bg-[#050608]/95 backdrop-blur-sm border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-surface-base/95 backdrop-blur-sm border-b border-white/5">
         <div className="max-w-lg mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
           <button
             type="button"
@@ -23,8 +23,8 @@ export default function VoicesNewPage() {
             </svg>
             {t("voices.back")}
           </button>
-          <span className="text-zinc-700">·</span>
-          <span className="font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-600">{t("voices.title")}</span>
+          <span className="text-zinc-500">·</span>
+          <span className="font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-400">{t("voices.title")}</span>
         </div>
       </div>
 
@@ -45,7 +45,7 @@ export default function VoicesNewPage() {
                 className={`w-6 h-6 rounded-full flex items-center justify-center font-saira text-[10px] font-bold ${
                   n === 1
                     ? "bg-purple-600 text-white"
-                    : "bg-white/5 border border-white/10 text-zinc-600"
+                    : "bg-white/5 border border-white/10 text-zinc-400"
                 }`}
               >
                 {n}
@@ -56,16 +56,16 @@ export default function VoicesNewPage() {
         </div>
 
         {/* Step 1 label */}
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500 mb-6">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300 mb-6">
           {t("voices.stepLabel", { n: 1 })}
         </p>
 
         {/* Placeholder card */}
-        <div className="rounded-2xl border border-white/5 bg-[#17131F] p-6 text-center">
+        <div className="rounded-2xl border border-white/5 bg-surface-card p-6 text-center">
           <p className="font-saira text-sm text-zinc-400 leading-relaxed mb-2">
             {t("voices.wizardSoon")}
           </p>
-          <p className="font-saira text-xs text-zinc-600">
+          <p className="font-saira text-xs text-zinc-400">
             {t("voices.coachCreateNote")}
           </p>
         </div>

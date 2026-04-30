@@ -29,10 +29,10 @@ function initials(name: string): string {
 // input is focused. We drop to text-sm at sm: breakpoint where the keyboard
 // behaviour doesn't apply.
 const inputCls =
-  "w-full rounded-xl border border-purple-500/25 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white focus:outline-none focus:border-purple-500/60 placeholder-zinc-600 [color-scheme:dark]";
+  "w-full rounded-xl border border-purple-500/25 bg-surface-panel px-3 py-3 font-saira text-base sm:text-sm text-white focus:outline-none focus:border-purple-500/60 placeholder-zinc-600 [color-scheme:dark]";
 
 const textareaCls =
-  "w-full rounded-xl border border-purple-500/25 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white focus:outline-none focus:border-purple-500/60 placeholder-zinc-600 resize-none [color-scheme:dark]";
+  "w-full rounded-xl border border-purple-500/25 bg-surface-panel px-3 py-3 font-saira text-base sm:text-sm text-white focus:outline-none focus:border-purple-500/60 placeholder-zinc-600 resize-none [color-scheme:dark]";
 
 const pillCls = (active: boolean) =>
   `flex-1 rounded-xl border py-3 font-saira text-sm font-semibold transition ${
@@ -58,7 +58,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400">
           {t("onboarding.stepOf", { step, total })}
         </p>
-        <p className="font-saira text-[10px] text-zinc-500">
+        <p className="font-saira text-[10px] text-zinc-300">
           {Math.round((step / total) * 100)}%
         </p>
       </div>
@@ -111,7 +111,7 @@ function ScaleSelector({
           </button>
         ))}
       </div>
-      <div className="flex justify-between font-saira text-[9px] text-zinc-600 px-0.5">
+      <div className="flex justify-between font-saira text-[9px] text-zinc-400 px-0.5">
         <span>{t("onboarding.scaleVeryLow")}</span>
         <span>{t("onboarding.scaleVeryHigh")}</span>
       </div>
@@ -137,7 +137,7 @@ function Step1({
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
           {t("onboarding.step1Title")}
         </h2>
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           {t("onboarding.step1Subtitle")}
         </p>
       </div>
@@ -156,7 +156,7 @@ function Step1({
       <div>
         <SectionLabel>{t("onboarding.labelInstagram")}</SectionLabel>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-saira text-sm text-zinc-500">@</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-saira text-sm text-zinc-300">@</span>
           <input
             type="text"
             value={instagram}
@@ -210,7 +210,7 @@ function Step2({
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
           {t("onboarding.step2Title")}
         </h2>
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           {t("onboarding.step2Subtitle")}
         </p>
       </div>
@@ -324,7 +324,7 @@ function Step3({
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
           {t("onboarding.step3Title")}
         </h2>
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           {t("onboarding.step3Subtitle")}
         </p>
       </div>
@@ -335,7 +335,7 @@ function Step3({
             <SectionLabel>{label}</SectionLabel>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="font-saira text-[10px] text-zinc-600 mb-1">{t("onboarding.labelCurrent")}</p>
+                <p className="font-saira text-[10px] text-zinc-400 mb-1">{t("onboarding.labelCurrent")}</p>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -347,7 +347,7 @@ function Step3({
                 />
               </div>
               <div>
-                <p className="font-saira text-[10px] text-zinc-600 mb-1">{t("onboarding.labelGoal")}</p>
+                <p className="font-saira text-[10px] text-zinc-400 mb-1">{t("onboarding.labelGoal")}</p>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -396,7 +396,7 @@ function Step4({
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
           {t("onboarding.step4Title")}
         </h2>
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           {t("onboarding.step4Subtitle")}
         </p>
       </div>
@@ -488,7 +488,7 @@ function Step5({
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
           {t("onboarding.step5Title")}
         </h2>
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           {t("onboarding.step5Subtitle")}
         </p>
       </div>
@@ -498,7 +498,7 @@ function Step5({
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
             <div key={i}>
-              <p className="font-saira text-[10px] text-zinc-600 mb-1">
+              <p className="font-saira text-[10px] text-zinc-400 mb-1">
                 {i === 0
                   ? t("onboarding.goalRequired", { n: i + 1 })
                   : t("onboarding.goalOptional", { n: i + 1 })}
@@ -577,7 +577,7 @@ function Step6({
         <h2 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
           {t("onboarding.step6Title")}
         </h2>
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           {t("onboarding.step6Subtitle")}
         </p>
       </div>
@@ -594,7 +594,7 @@ function Step6({
             className={`w-full flex items-center gap-4 rounded-2xl border p-4 text-left transition ${
               selectedCoachId === null
                 ? "border-purple-500 bg-purple-500/10"
-                : "border-white/5 bg-[#17131F] hover:border-white/10"
+                : "border-white/5 bg-surface-card hover:border-white/10"
             }`}
           >
             <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
@@ -602,7 +602,7 @@ function Step6({
             </div>
             <div>
               <p className="font-saira text-sm font-semibold text-white">{t("onboarding.noCoachLabel")}</p>
-              <p className="font-saira text-xs text-zinc-500">{t("onboarding.noCoachDesc")}</p>
+              <p className="font-saira text-xs text-zinc-300">{t("onboarding.noCoachDesc")}</p>
             </div>
             {selectedCoachId === null && (
               <span className="ml-auto text-purple-400 text-sm">✓</span>
@@ -617,7 +617,7 @@ function Step6({
               className={`w-full flex items-center gap-4 rounded-2xl border p-4 text-left transition ${
                 selectedCoachId === coach.id
                   ? "border-purple-500 bg-purple-500/10"
-                  : "border-white/5 bg-[#17131F] hover:border-white/10"
+                  : "border-white/5 bg-surface-card hover:border-white/10"
               }`}
             >
               {coach.avatar_url ? (
@@ -806,7 +806,7 @@ export default function OnboardingPage() {
   // ── Render ───────────────────────────────────────────────────────────────────
   if (!authChecked) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#050608]">
+      <div className="flex items-center justify-center min-h-screen bg-surface-base">
         <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
       </div>
     );
@@ -825,7 +825,7 @@ export default function OnboardingPage() {
      *   - Content gets `pb-32` to leave room above the fixed footer.
      */
     <div
-      className="min-h-screen bg-[#050608]"
+      className="min-h-screen bg-surface-base"
       style={{
         paddingTop: "env(safe-area-inset-top)",
       }}
@@ -914,7 +914,7 @@ export default function OnboardingPage() {
           indicator. The translucent backdrop + blur keeps content readable
           when scrolling under it. */}
       <div
-        className="fixed inset-x-0 bottom-0 z-30 bg-[#050608]/90 backdrop-blur-md border-t border-white/5 px-5 pt-4"
+        className="fixed inset-x-0 bottom-0 z-30 bg-surface-base/90 backdrop-blur-md border-t border-white/5 px-5 pt-4"
         style={{
           paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
         }}

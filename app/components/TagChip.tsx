@@ -14,7 +14,7 @@ const TREND_ICON: Record<string, string>  = { up: "↑", down: "↓", stable: "�
 const TREND_COLOR: Record<string, string> = {
   up: "text-emerald-400",
   down: "text-rose-400",
-  stable: "text-zinc-500",
+  stable: "text-zinc-300",
 };
 
 export default function TagChip({ label, color, count, trend, className = "" }: Props) {

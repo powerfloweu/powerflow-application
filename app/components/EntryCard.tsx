@@ -41,7 +41,7 @@ export default function EntryCard({ entry, onDelete }: Props) {
 
       <div className="mt-3 flex items-center gap-2 flex-wrap">
         {/* Time */}
-        <span className="ml-auto font-saira text-[10px] text-zinc-600">
+        <span className="ml-auto font-saira text-[10px] text-zinc-400">
           {smartTime(entry.created_at)}
         </span>
 
@@ -59,7 +59,7 @@ export default function EntryCard({ entry, onDelete }: Props) {
               </button>
               <button
                 onClick={() => setConfirm(false)}
-                className="font-saira text-[10px] text-zinc-500 hover:text-zinc-300 underline"
+                className="font-saira text-[10px] text-zinc-300 hover:text-zinc-300 underline"
               >
                 No
               </button>
@@ -67,7 +67,7 @@ export default function EntryCard({ entry, onDelete }: Props) {
           ) : (
             <button
               onClick={() => setConfirm(true)}
-              className="ml-1 font-saira text-[10px] text-zinc-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
+              className="ml-1 font-saira text-[10px] text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
             >
               ✕
             </button>

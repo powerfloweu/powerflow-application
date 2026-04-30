@@ -55,13 +55,13 @@ export default function VidyardPlayer({ uuid, title, onPlay }: Props) {
 
   if (isPlaceholder) {
     return (
-      <div className="relative w-full aspect-video rounded-2xl border border-white/5 bg-[#17131F] flex items-center justify-center overflow-hidden">
+      <div className="relative w-full aspect-video rounded-2xl border border-white/5 bg-surface-card flex items-center justify-center overflow-hidden">
         <div className="text-center px-6">
           <div className="w-12 h-12 mx-auto mb-3 rounded-full border border-purple-500/30 bg-purple-500/10 flex items-center justify-center text-xl">
             ▶
           </div>
           <p className="font-saira text-xs text-zinc-400 mb-1">Video coming soon</p>
-          <p className="font-saira text-[10px] text-zinc-600">
+          <p className="font-saira text-[10px] text-zinc-400">
             {title ?? "This week's video will be added shortly."}
           </p>
         </div>
@@ -91,12 +91,12 @@ export default function VidyardPlayer({ uuid, title, onPlay }: Props) {
             <span className="text-white text-2xl ml-1">▶</span>
           </div>
           {isIOSStandalone && (
-            <span className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+            <span className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-300">
               Opens in Safari ↗
             </span>
           )}
           {!isIOSStandalone && (
-            <span className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+            <span className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-300">
               Tap to play
             </span>
           )}

@@ -183,11 +183,11 @@ export default function ModuleDetailPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#050608] px-4 pt-8 pb-10 sm:px-6 max-w-lg mx-auto">
+      <div className="min-h-screen bg-surface-base px-4 pt-8 pb-10 sm:px-6 max-w-lg mx-auto">
 
         {/* ── Back ──────────────────────────────────────────────────────────── */}
         <button type="button" onClick={() => router.push("/course")}
-          className="mb-4 font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.18em] transition">
+          className="mb-4 font-saira text-[11px] text-zinc-300 hover:text-purple-300 uppercase tracking-[0.18em] transition">
           {t("course.backToCourse")}
         </button>
 
@@ -195,13 +195,13 @@ export default function ModuleDetailPage() {
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <PhaseBadge phase={mod.suggestedPhase} weekNum={mod.weekNumber} />
-            <span className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-600">
+            <span className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-400">
               {mod.theme}
             </span>
             <span className={`ml-auto font-saira text-[9px] uppercase tracking-[0.16em] rounded-full px-2 py-0.5 border ${
               isPractice
                 ? "border-purple-500/30 bg-purple-500/10 text-purple-400"
-                : "border-white/10 bg-white/5 text-zinc-500"
+                : "border-white/10 bg-white/5 text-zinc-300"
             }`}>
               {isPractice ? t("course.modulePractice") : t("course.moduleInsight")}
             </span>
@@ -234,7 +234,7 @@ export default function ModuleDetailPage() {
         </section>
 
         {/* ── Overview + key points ─────────────────────────────────────────── */}
-        <section className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-6">
+        <section className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-6">
           <p className="font-saira text-sm text-zinc-300 leading-relaxed mb-4">{mod.overview}</p>
           <ul className="space-y-2">
             {mod.keyPoints.map((kp, i) => (
@@ -259,12 +259,12 @@ export default function ModuleDetailPage() {
                   className={`w-full flex items-start gap-3 rounded-xl border p-4 text-left transition group ${
                     answered
                       ? "border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10"
-                      : "border-white/5 bg-[#17131F] hover:bg-[#1e1828]"
+                      : "border-white/5 bg-surface-card hover:bg-[#1e1828]"
                   }`}>
                   <span className={`w-5 h-5 mt-0.5 flex-shrink-0 rounded-full border flex items-center justify-center text-[9px] font-bold ${
                     answered
                       ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
-                      : "border-white/10 text-zinc-600"
+                      : "border-white/10 text-zinc-400"
                   }`}>
                     {answered ? "✓" : "?"}
                   </span>
@@ -273,10 +273,10 @@ export default function ModuleDetailPage() {
                       {q.prompt}
                     </p>
                     {answered && (
-                      <p className="font-saira text-[11px] text-zinc-500 mt-1 truncate">{answers[q.id]}</p>
+                      <p className="font-saira text-[11px] text-zinc-300 mt-1 truncate">{answers[q.id]}</p>
                     )}
                   </div>
-                  <span className="font-saira text-sm text-zinc-600 group-hover:text-purple-400 transition flex-shrink-0 mt-0.5">
+                  <span className="font-saira text-sm text-zinc-400 group-hover:text-purple-400 transition flex-shrink-0 mt-0.5">
                     {answered ? t("common.edit") : "→"}
                   </span>
                 </button>
@@ -291,7 +291,7 @@ export default function ModuleDetailPage() {
             <SectionLabel icon="↓" label={t("course.sectionWorksheets")} />
             <div className="space-y-3">
               {mod.downloads.map((dl) => (
-                <div key={dl.url} className="rounded-2xl border border-white/8 bg-[#17131F] p-4">
+                <div key={dl.url} className="rounded-2xl border border-white/8 bg-surface-card p-4">
                   {dl.description && (
                     <p className="font-saira text-[12px] text-zinc-400 leading-relaxed mb-3">
                       {dl.description}
@@ -335,12 +335,12 @@ export default function ModuleDetailPage() {
                       {tl.label}
                     </p>
                     {tl.description && (
-                      <p className="font-saira text-[11px] text-zinc-500 mt-0.5 leading-snug">
+                      <p className="font-saira text-[11px] text-zinc-300 mt-0.5 leading-snug">
                         {tl.description}
                       </p>
                     )}
                   </div>
-                  <span className="font-saira text-xs text-zinc-600 group-hover:text-purple-400 transition flex-shrink-0 mt-0.5">
+                  <span className="font-saira text-xs text-zinc-400 group-hover:text-purple-400 transition flex-shrink-0 mt-0.5">
                     Open →
                   </span>
                 </a>
@@ -361,10 +361,10 @@ export default function ModuleDetailPage() {
                 onChange={(e) => handleExerciseChange(e.target.value)}
                 placeholder="Write your response here…"
                 rows={4}
-                className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark]"
+                className="w-full rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark]"
               />
               {exerciseSaving && (
-                <p className="font-saira text-[10px] text-zinc-600 mt-1">Saving…</p>
+                <p className="font-saira text-[10px] text-zinc-400 mt-1">Saving…</p>
               )}
             </div>
           </section>
@@ -374,13 +374,13 @@ export default function ModuleDetailPage() {
         {isPractice && (
           <section className="mb-6">
             <SectionLabel icon="◆" label={t("course.sectionDailyPractice")} />
-            <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5">
+            <div className="rounded-2xl border border-white/5 bg-surface-card p-5">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="font-saira text-sm text-white font-semibold">
                     {t("course.practiceCount", { count: steps.practiceCount, target: steps.practiceTarget })}
                   </p>
-                  <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
+                  <p className="font-saira text-[11px] text-zinc-300 mt-0.5">
                     {steps.practiceGoal
                       ? t("course.targetReached")
                       : t("course.sessionsRemaining", { count: steps.practiceTarget - steps.practiceCount })}
@@ -425,7 +425,7 @@ export default function ModuleDetailPage() {
         {progress?.completed_at ? (
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-center">
             <p className="font-saira text-sm font-semibold text-emerald-300 mb-1">{t("course.moduleComplete")}</p>
-            <p className="font-saira text-xs text-zinc-500">
+            <p className="font-saira text-xs text-zinc-300">
               {isPractice && !steps.practiceGoal
                 ? t("course.contentDoneKeepPracticing")
                 : t("course.greatWork")}
@@ -451,7 +451,7 @@ export default function ModuleDetailPage() {
         )}
 
         {isPractice && !progress?.completed_at && steps.contentDone && !steps.practiceGoal && (
-          <p className="font-saira text-[11px] text-zinc-600 text-center mt-2">
+          <p className="font-saira text-[11px] text-zinc-400 text-center mt-2">
             {t("course.keepLoggingPractice")}
           </p>
         )}
@@ -474,11 +474,11 @@ export default function ModuleDetailPage() {
       >
         {activeQ && (
           <div className="space-y-4">
-            <div className="flex gap-1 rounded-xl border border-white/5 bg-[#0D0B14] p-1">
+            <div className="flex gap-1 rounded-xl border border-white/5 bg-surface-panel p-1">
               {(["text", "voice"] as const).map((tab) => (
                 <button key={tab} type="button" onClick={() => setSheetTab(tab)}
                   className={`flex-1 rounded-lg py-2 font-saira text-xs uppercase tracking-[0.16em] transition ${
-                    sheetTab === tab ? "bg-purple-600 text-white" : "text-zinc-500 hover:text-zinc-300"
+                    sheetTab === tab ? "bg-purple-600 text-white" : "text-zinc-300 hover:text-zinc-300"
                   }`}>
                   {tab === "text" ? t("course.reflectionTextTab") : t("course.reflectionVoiceTab")}
                 </button>
@@ -491,13 +491,13 @@ export default function ModuleDetailPage() {
                 placeholder={activeQ.placeholder ?? t("course.reflectionPlaceholder")}
                 rows={6}
                 autoFocus
-                className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark]"
+                className="w-full rounded-xl border border-white/10 bg-surface-panel px-3 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark]"
               />
             ) : (
               <div className="flex flex-col items-center gap-4 py-8 text-center">
                 <div className="w-14 h-14 rounded-full border border-purple-500/30 bg-purple-500/10 flex items-center justify-center text-2xl">🎙</div>
                 <p className="font-saira text-sm font-semibold text-white">{t("course.voiceAnswersComing")}</p>
-                <p className="font-saira text-xs text-zinc-500 max-w-[260px]">
+                <p className="font-saira text-xs text-zinc-300 max-w-[260px]">
                   {t("course.voiceAnswersHint")}
                 </p>
                 <button type="button" onClick={() => setSheetTab("text")}
@@ -537,7 +537,7 @@ function SectionLabel({ icon, label }: { icon: string; label: string }) {
 function StepPill({ done, label }: { done: boolean; label: string }) {
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] border transition ${
-      done ? "border-purple-500/40 bg-purple-500/15 text-purple-300" : "border-white/5 bg-white/[0.03] text-zinc-600"
+      done ? "border-purple-500/40 bg-purple-500/15 text-purple-300" : "border-white/5 bg-white/[0.03] text-zinc-400"
     }`}>
       <span className={`w-1 h-1 rounded-full ${done ? "bg-purple-400" : "bg-zinc-700"}`} />
       {label}

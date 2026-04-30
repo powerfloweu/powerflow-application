@@ -7,6 +7,7 @@ import TabBar from "./TabBar";
 import CheckinReminderScheduler from "./CheckinReminderScheduler";
 import NotificationModal, { type NotificationState } from "./NotificationModal";
 import WeeklyCheckinModal from "./WeeklyCheckinModal";
+import ThemeToggle from "./ThemeToggle";
 import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
 
@@ -83,6 +84,21 @@ export default function AppShell({ children }: Props) {
       })
       .catch(() => {});
 
+    // Admin force-flag: Dev Tools can set this to bypass the day gate
+    const forcePayload = localStorage.getItem("pf-force-checkin");
+    if (forcePayload) {
+      localStorage.removeItem("pf-force-checkin");
+      // Also clear the skip flag so the modal actually shows
+      sessionStorage.removeItem("weekly-checkin-skipped");
+      try {
+        const tw = JSON.parse(forcePayload) as { week: number; year: number; weekStart: string };
+        if (tw?.week && tw?.year) {
+          setWeeklyCheckinTarget(tw);
+          return; // skip the normal fetch
+        }
+      } catch { /* fall through to normal fetch */ }
+    }
+
     // Show weekly check-in popup if window is open and not yet submitted
     // Use sessionStorage so it only fires once per browser session
     const skippedThisSession = sessionStorage.getItem("weekly-checkin-skipped");
@@ -101,7 +117,7 @@ export default function AppShell({ children }: Props) {
   const canCollapse = role === "coach";
 
   return (
-    <div className="min-h-screen bg-[#050608] pt-[env(safe-area-inset-top)]">
+    <div className="min-h-screen bg-surface-base pt-[env(safe-area-inset-top)]">
 
       {/* ── Desktop left sidebar (hidden on mobile) ─────────────── */}
       {/* Outer wrapper keeps the sidebar in the fixed-position flow */}
@@ -110,7 +126,7 @@ export default function AppShell({ children }: Props) {
           !sidebarReady || sidebarOpen ? "w-56" : "w-0"
         }`}
       >
-        <aside className="flex flex-col w-56 h-full border-r border-white/5 bg-[#0D0B14]/95 backdrop-blur-md">
+        <aside className="flex flex-col w-56 h-full border-r border-white/5 bg-surface-panel/95 backdrop-blur-md">
           {/* Brand */}
           <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
             <span className="font-saira text-[11px] font-bold uppercase tracking-[0.22em] text-purple-300">
@@ -121,7 +137,7 @@ export default function AppShell({ children }: Props) {
               <button
                 onClick={toggleSidebar}
                 aria-label="Collapse athlete panel"
-                className="w-5 h-5 flex items-center justify-center rounded text-zinc-600 hover:text-zinc-300 transition"
+                className="w-5 h-5 flex items-center justify-center rounded text-zinc-400 hover:text-zinc-300 transition"
               >
                 <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none">
                   <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -146,14 +162,14 @@ export default function AppShell({ children }: Props) {
                     active
                       ? "bg-purple-500/15 text-purple-300 font-semibold"
                       : locked
-                      ? "text-zinc-700 hover:text-zinc-500 hover:bg-white/5"
-                      : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                      ? "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                      : "text-zinc-300 hover:text-zinc-300 hover:bg-white/5"
                   }`}
                 >
                   <Icon active={active} />
                   {t(labelKey)}
                   {locked && (
-                    <svg viewBox="0 0 16 16" className="w-3 h-3 ml-auto text-zinc-600" fill="none">
+                    <svg viewBox="0 0 16 16" className="w-3 h-3 ml-auto text-zinc-400" fill="none">
                       <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
                       <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                     </svg>
@@ -180,11 +196,12 @@ export default function AppShell({ children }: Props) {
             )}
           </nav>
 
-          {/* Version/footer */}
-          <div className="px-5 pb-6 pt-3 border-t border-white/5">
-            <p className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-700">
+          {/* Version/footer + theme toggle */}
+          <div className="px-4 pb-5 pt-3 border-t border-white/5 flex items-center justify-between">
+            <p className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-300">
               {t("brand.tagline")}
             </p>
+            <ThemeToggle className="w-7 h-7" />
           </div>
         </aside>
       </div>
@@ -194,7 +211,7 @@ export default function AppShell({ children }: Props) {
         <button
           onClick={toggleSidebar}
           aria-label="Expand athlete panel"
-          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-50 flex-col items-center justify-center w-5 h-12 rounded-r-lg bg-[#0D0B14]/95 border border-l-0 border-white/10 text-zinc-600 hover:text-purple-300 hover:border-purple-400/30 transition"
+          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-50 flex-col items-center justify-center w-5 h-12 rounded-r-lg bg-surface-panel/95 border border-l-0 border-white/10 text-zinc-400 hover:text-purple-300 hover:border-purple-400/30 transition"
         >
           <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none">
             <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

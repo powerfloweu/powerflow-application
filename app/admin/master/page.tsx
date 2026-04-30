@@ -128,9 +128,9 @@ function Stat({
   color?: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/5 bg-[#17131F] px-5 py-4 flex flex-col gap-1 min-w-[110px]">
+    <div className="rounded-xl border border-white/5 bg-surface-card px-5 py-4 flex flex-col gap-1 min-w-[110px]">
       <span className={`font-saira text-2xl font-extrabold ${color}`}>{value}</span>
-      <span className="font-saira text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+      <span className="font-saira text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-300">
         {label}
       </span>
     </div>
@@ -189,7 +189,7 @@ function Field({ label, value, href }: { label: string; value: string | number |
   if (value === null || value === undefined || value === "") return null;
   return (
     <div>
-      <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-0.5">
+      <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-300 mb-0.5">
         {label}
       </p>
       {href ? (
@@ -209,7 +209,7 @@ function Field({ label, value, href }: { label: string; value: string | number |
 }
 
 function ScorePip({ value }: { value: number | null }) {
-  if (!value) return <span className="text-zinc-600">—</span>;
+  if (!value) return <span className="text-zinc-400">—</span>;
   const color =
     value >= 8 ? "text-green-400" : value >= 5 ? "text-yellow-400" : "text-red-400";
   return <span className={`font-saira text-sm font-bold ${color}`}>{value}/10</span>;
@@ -227,14 +227,14 @@ function LiftPair({
   if (!current && !goal) return null;
   return (
     <div className="flex items-center gap-3">
-      <span className="font-saira text-[10px] font-semibold uppercase tracking-wider text-zinc-500 w-16">
+      <span className="font-saira text-[10px] font-semibold uppercase tracking-wider text-zinc-300 w-16">
         {label}
       </span>
       <span className="font-saira text-xs text-zinc-300">
         {current ? `${current} kg` : "—"}
       </span>
       {goal && (
-        <span className="font-saira text-[10px] text-zinc-500">→ {goal} kg goal</span>
+        <span className="font-saira text-[10px] text-zinc-300">→ {goal} kg goal</span>
       )}
     </div>
   );
@@ -265,7 +265,7 @@ function ExpandedProfile({ user }: { user: UserRow }) {
     user.deadlift_goal_kg;
 
   return (
-    <div className="border-t border-white/5 bg-[#0e0b15] px-5 py-5 space-y-5">
+    <div className="border-t border-white/5 bg-surface-panel px-5 py-5 space-y-5">
       {/* Personal */}
       <div>
         <p className="font-saira text-[9px] font-bold uppercase tracking-[0.25em] text-purple-400 mb-2">
@@ -357,7 +357,7 @@ function ExpandedProfile({ user }: { user: UserRow }) {
               ["Emotional recovery", user.self_emotional_recovery],
             ] as [string, number | null][]).map(([label, val]) => (
               <div key={label}>
-                <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.15em] text-zinc-500 mb-0.5">
+                <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.15em] text-zinc-300 mb-0.5">
                   {label}
                 </p>
                 <ScorePip value={val} />
@@ -426,7 +426,7 @@ function WeeklySignupsChart({ users }: { users: UserRow[] }) {
   const totalW = buckets.length * (barW + gap) - gap;
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5">
+    <div className="rounded-2xl border border-white/5 bg-surface-card p-5">
       <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-purple-400 mb-4">
         Weekly signups — last 10 weeks
       </p>
@@ -509,12 +509,12 @@ function OverviewTab({ users }: { users: UserRow[] }) {
       <WeeklySignupsChart users={users} />
 
       {/* Coach summary */}
-      <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5">
+      <div className="rounded-2xl border border-white/5 bg-surface-card p-5">
         <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-cyan-400 mb-4">
           Coaches
         </p>
         {coaches.length === 0 ? (
-          <p className="font-saira text-xs text-zinc-500">No coaches yet.</p>
+          <p className="font-saira text-xs text-zinc-300">No coaches yet.</p>
         ) : (
           <div className="space-y-3">
             {coaches.map((coach) => {
@@ -523,13 +523,13 @@ function OverviewTab({ users }: { users: UserRow[] }) {
                 <div key={coach.id} className="flex items-center justify-between">
                   <div>
                     <p className="font-saira text-sm text-white">{coach.display_name}</p>
-                    <p className="font-saira text-[10px] text-zinc-500">{coach.email}</p>
+                    <p className="font-saira text-[10px] text-zinc-300">{coach.email}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-saira text-sm font-bold text-cyan-300">
                       {myAthletes.length}
                     </p>
-                    <p className="font-saira text-[10px] text-zinc-500">athletes</p>
+                    <p className="font-saira text-[10px] text-zinc-300">athletes</p>
                   </div>
                 </div>
               );
@@ -549,13 +549,13 @@ function OverviewTab({ users }: { users: UserRow[] }) {
               <div key={u.id} className="flex items-center justify-between">
                 <div>
                   <p className="font-saira text-sm text-white">{u.display_name}</p>
-                  <p className="font-saira text-[10px] text-zinc-500">
+                  <p className="font-saira text-[10px] text-zinc-300">
                     {u.coach_name ? `Coach: ${u.coach_name}` : "No coach"}
                     {u.meet_date ? ` · Meet: ${u.meet_date}` : ""}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-saira text-[10px] text-zinc-500">
+                  <p className="font-saira text-[10px] text-zinc-300">
                     {u.last_active
                       ? `Last: ${new Date(u.last_active).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}`
                       : "Never logged"}
@@ -585,7 +585,7 @@ function OverviewTab({ users }: { users: UserRow[] }) {
               {monitorAthletes.map((u) => (
                 <div key={u.id} className="flex items-center justify-between">
                   <p className="font-saira text-sm text-white">{u.display_name}</p>
-                  <p className="font-saira text-[10px] text-zinc-500">
+                  <p className="font-saira text-[10px] text-zinc-300">
                     {u.journal_count_7d}j · {u.checkin_count_7d}c
                   </p>
                 </div>
@@ -664,15 +664,15 @@ function UsersTab({
           placeholder="Search by name, email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-[180px] rounded-xl border border-white/10 bg-[#17131F] px-4 py-2 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
+          className="flex-1 min-w-[180px] rounded-xl border border-white/10 bg-surface-card px-4 py-2 font-saira text-sm text-white placeholder:text-zinc-400 focus:outline-none focus:border-purple-500/50"
         />
-        <div className="flex rounded-xl border border-white/10 bg-[#17131F] overflow-hidden">
+        <div className="flex rounded-xl border border-white/10 bg-surface-card overflow-hidden">
           {(["all", "athlete", "coach"] as const).map((r) => (
             <button
               key={r}
               onClick={() => setRoleFilter(r)}
               className={`px-4 py-2 font-saira text-xs font-semibold uppercase tracking-wider transition
-                ${roleFilter === r ? "bg-purple-500/20 text-purple-300" : "text-zinc-500 hover:text-zinc-300"}`}
+                ${roleFilter === r ? "bg-purple-500/20 text-purple-300" : "text-zinc-300 hover:text-zinc-300"}`}
             >
               {r}
             </button>
@@ -687,13 +687,13 @@ function UsersTab({
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-white/5 bg-[#17131F] overflow-hidden">
+      <div className="rounded-2xl border border-white/5 bg-surface-card overflow-hidden">
         {/* Header */}
         <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto_auto_auto_auto] gap-2 px-5 py-3 border-b border-white/5">
           {["Name", "Email", "Role", "Coach / Athletes", "Access", "Activity (7d)", ""].map((h) => (
             <span
               key={h}
-              className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500"
+              className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-300"
             >
               {h}
             </span>
@@ -702,7 +702,7 @@ function UsersTab({
 
         {/* Rows */}
         {filtered.length === 0 ? (
-          <p className="font-saira text-sm text-zinc-500 text-center py-10">No users match.</p>
+          <p className="font-saira text-sm text-zinc-300 text-center py-10">No users match.</p>
         ) : (
           filtered.map((user) => (
             <div key={user.id} className="border-b border-white/5 last:border-0">
@@ -724,7 +724,7 @@ function UsersTab({
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="font-saira text-[10px] text-zinc-600 hover:text-purple-400 transition"
+                        className="font-saira text-[10px] text-zinc-400 hover:text-purple-400 transition"
                       >@{user.instagram.replace(/^@/, "")}</a>
                     )}
                   </div>
@@ -744,7 +744,7 @@ function UsersTab({
                   <button
                     onClick={() => handleFlipRole(user)}
                     disabled={saving[user.id] ?? false}
-                    className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-500 hover:text-white hover:border-white/30 transition disabled:opacity-40"
+                    className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition disabled:opacity-40"
                   >
                     {user.role === "athlete" ? "→ Coach" : "→ Athlete"}
                   </button>
@@ -754,7 +754,7 @@ function UsersTab({
                 <div className="hidden sm:block">
                   {user.role === "athlete" ? (
                     <p className="font-saira text-xs text-zinc-400">
-                      {user.coach_name ?? <span className="text-zinc-600">No coach</span>}
+                      {user.coach_name ?? <span className="text-zinc-400">No coach</span>}
                     </p>
                   ) : (
                     <p className="font-saira text-xs text-zinc-400">
@@ -775,7 +775,7 @@ function UsersTab({
                         value={user.plan_tier ?? "opener"}
                         disabled={saving[user.id] ?? false}
                         onChange={(e) => onPatchUser(user.id, { plan_tier: e.target.value })}
-                        className="rounded border border-white/10 bg-[#0e0a16] px-1.5 py-0.5 font-saira text-[9px] text-purple-300 uppercase tracking-wider disabled:opacity-40 cursor-pointer focus:outline-none focus:border-purple-500/50"
+                        className="rounded border border-white/10 bg-surface-section px-1.5 py-0.5 font-saira text-[9px] text-purple-300 uppercase tracking-wider disabled:opacity-40 cursor-pointer focus:outline-none focus:border-purple-500/50"
                       >
                         <option value="opener">Opener</option>
                         <option value="second">Second</option>
@@ -795,12 +795,12 @@ function UsersTab({
                             disabled={saving[user.id] ?? false}
                             onToggle={() => onPatchUser(user.id, { [field]: !val })}
                           />
-                          <span className="font-saira text-[9px] text-zinc-500 w-10">{label}</span>
+                          <span className="font-saira text-[9px] text-zinc-300 w-10">{label}</span>
                         </div>
                       ))}
                     </>
                   ) : (
-                    <span className="font-saira text-[10px] text-zinc-600">—</span>
+                    <span className="font-saira text-[10px] text-zinc-400">—</span>
                   )}
                 </div>
 
@@ -810,7 +810,7 @@ function UsersTab({
                     {user.journal_count_7d}j · {user.checkin_count_7d}c
                   </p>
                   {user.last_active && (
-                    <p className="font-saira text-[10px] text-zinc-600">
+                    <p className="font-saira text-[10px] text-zinc-400">
                       {new Date(user.last_active).toLocaleDateString("en-GB", {
                         day: "2-digit",
                         month: "short",
@@ -827,14 +827,14 @@ function UsersTab({
                   {user.email !== sessionEmail && (
                     <button
                       onClick={() => handleDelete(user)}
-                      className="text-zinc-700 hover:text-rose-400 transition text-xs"
+                      className="text-zinc-500 hover:text-rose-400 transition text-xs"
                       title="Delete user"
                     >
                       ✕
                     </button>
                   )}
                   <span
-                    className="font-saira text-zinc-500 text-xs cursor-pointer"
+                    className="font-saira text-zinc-300 text-xs cursor-pointer"
                     onClick={() => setExpandedId(expandedId === user.id ? null : user.id)}
                   >
                     {expandedId === user.id ? "▲" : "▼"}
@@ -848,7 +848,7 @@ function UsersTab({
                 {user.email && (
                   <span className="font-saira text-[10px] text-zinc-400">{user.email}</span>
                 )}
-                <span className="font-saira text-[10px] text-zinc-500">
+                <span className="font-saira text-[10px] text-zinc-300">
                   {user.journal_count_7d}j · {user.checkin_count_7d}c
                 </span>
                 {user.role === "athlete" && (
@@ -858,7 +858,7 @@ function UsersTab({
                       value={user.plan_tier ?? "opener"}
                       disabled={saving[user.id] ?? false}
                       onChange={(e) => onPatchUser(user.id, { plan_tier: e.target.value })}
-                      className="rounded border border-white/10 bg-[#0e0a16] px-2 py-1 font-saira text-[10px] text-purple-300 uppercase tracking-wider disabled:opacity-40 cursor-pointer focus:outline-none"
+                      className="rounded border border-white/10 bg-surface-section px-2 py-1 font-saira text-[10px] text-purple-300 uppercase tracking-wider disabled:opacity-40 cursor-pointer focus:outline-none"
                     >
                       <option value="opener">Opener</option>
                       <option value="second">Second</option>
@@ -877,7 +877,7 @@ function UsersTab({
                           disabled={saving[user.id] ?? false}
                           onToggle={() => onPatchUser(user.id, { [field]: !val })}
                         />
-                        <span className="font-saira text-[10px] text-zinc-500">{label}</span>
+                        <span className="font-saira text-[10px] text-zinc-300">{label}</span>
                       </div>
                     ))}
                   </div>
@@ -890,10 +890,10 @@ function UsersTab({
                   {/* Quick coach reassign for athletes */}
                   {user.role === "athlete" && coaches.length > 0 && (
                     <div
-                      className="flex items-center gap-3 px-5 py-3 border-t border-white/5 bg-[#0e0b15]"
+                      className="flex items-center gap-3 px-5 py-3 border-t border-white/5 bg-surface-panel"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <span className="font-saira text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                      <span className="font-saira text-[10px] font-semibold uppercase tracking-wider text-zinc-300">
                         Coach:
                       </span>
                       <select
@@ -902,7 +902,7 @@ function UsersTab({
                         onChange={(e) =>
                           onRelinkCoach(user.id, e.target.value || null)
                         }
-                        className="rounded-lg border border-white/10 bg-[#17131F] px-3 py-1.5 font-saira text-xs text-white focus:outline-none focus:border-purple-500/50"
+                        className="rounded-lg border border-white/10 bg-surface-card px-3 py-1.5 font-saira text-xs text-white focus:outline-none focus:border-purple-500/50"
                       >
                         <option value="">No coach</option>
                         {coaches.map((c) => (
@@ -912,7 +912,7 @@ function UsersTab({
                         ))}
                       </select>
                       {saving[user.id] && (
-                        <span className="font-saira text-[10px] text-zinc-500">Saving…</span>
+                        <span className="font-saira text-[10px] text-zinc-300">Saving…</span>
                       )}
                     </div>
                   )}
@@ -924,7 +924,7 @@ function UsersTab({
         )}
       </div>
 
-      <p className="font-saira text-[10px] text-zinc-600 text-right">
+      <p className="font-saira text-[10px] text-zinc-400 text-right">
         {filtered.length} of {users.length} users shown
       </p>
     </div>
@@ -951,8 +951,8 @@ function CoachLinksTab({
   return (
     <div className="space-y-5">
       {coaches.length === 0 && (
-        <div className="rounded-2xl border border-white/5 bg-[#17131F] p-6 text-center">
-          <p className="font-saira text-sm text-zinc-500">No coaches in the system yet.</p>
+        <div className="rounded-2xl border border-white/5 bg-surface-card p-6 text-center">
+          <p className="font-saira text-sm text-zinc-300">No coaches in the system yet.</p>
         </div>
       )}
 
@@ -961,29 +961,29 @@ function CoachLinksTab({
         return (
           <div
             key={coach.id}
-            className="rounded-2xl border border-white/5 bg-[#17131F] overflow-hidden"
+            className="rounded-2xl border border-white/5 bg-surface-card overflow-hidden"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-cyan-500/5">
               <div>
                 <p className="font-saira text-sm font-bold text-cyan-300">
                   {coach.display_name}
                 </p>
-                <p className="font-saira text-[10px] text-zinc-500">
+                <p className="font-saira text-[10px] text-zinc-300">
                   {coach.email}
                   {coach.coach_code && (
-                    <span className="ml-2 font-mono text-zinc-600">
+                    <span className="ml-2 font-mono text-zinc-400">
                       Code: {coach.coach_code}
                     </span>
                   )}
                 </p>
               </div>
-              <span className="font-saira text-xs text-zinc-500">
+              <span className="font-saira text-xs text-zinc-300">
                 {myAthletes.length} athlete{myAthletes.length !== 1 ? "s" : ""}
               </span>
             </div>
 
             {myAthletes.length === 0 ? (
-              <p className="font-saira text-xs text-zinc-600 px-5 py-4">
+              <p className="font-saira text-xs text-zinc-400 px-5 py-4">
                 No athletes linked yet.
               </p>
             ) : (
@@ -996,7 +996,7 @@ function CoachLinksTab({
                     <ActivityDot status={athlete.activity_status} />
                     <div>
                       <p className="font-saira text-sm text-white">{athlete.display_name}</p>
-                      <p className="font-saira text-[10px] text-zinc-500">
+                      <p className="font-saira text-[10px] text-zinc-300">
                         {athlete.email} · {athlete.journal_count_7d}j · {athlete.checkin_count_7d}c
                       </p>
                     </div>
@@ -1006,7 +1006,7 @@ function CoachLinksTab({
                       value={athlete.coach_id ?? ""}
                       disabled={saving[athlete.id] ?? false}
                       onChange={(e) => onRelinkCoach(athlete.id, e.target.value || null)}
-                      className="rounded-lg border border-white/10 bg-[#0e0b15] px-2.5 py-1 font-saira text-xs text-white focus:outline-none focus:border-purple-500/50"
+                      className="rounded-lg border border-white/10 bg-surface-panel px-2.5 py-1 font-saira text-xs text-white focus:outline-none focus:border-purple-500/50"
                     >
                       <option value="">Unlink</option>
                       {coaches.map((c) => (
@@ -1016,7 +1016,7 @@ function CoachLinksTab({
                       ))}
                     </select>
                     {saving[athlete.id] && (
-                      <span className="font-saira text-[10px] text-zinc-500">Saving…</span>
+                      <span className="font-saira text-[10px] text-zinc-300">Saving…</span>
                     )}
                   </div>
                 </div>
@@ -1040,7 +1040,7 @@ function CoachLinksTab({
             >
               <div>
                 <p className="font-saira text-sm text-white">{athlete.display_name}</p>
-                <p className="font-saira text-[10px] text-zinc-500">{athlete.email}</p>
+                <p className="font-saira text-[10px] text-zinc-300">{athlete.email}</p>
               </div>
               <div className="flex items-center gap-2">
                 <select
@@ -1048,7 +1048,7 @@ function CoachLinksTab({
                   onChange={(e) =>
                     setPendingCoach((prev) => ({ ...prev, [athlete.id]: e.target.value }))
                   }
-                  className="rounded-lg border border-white/10 bg-[#17131F] px-2.5 py-1 font-saira text-xs text-white focus:outline-none focus:border-purple-500/50"
+                  className="rounded-lg border border-white/10 bg-surface-card px-2.5 py-1 font-saira text-xs text-white focus:outline-none focus:border-purple-500/50"
                 >
                   <option value="">Select coach…</option>
                   {coaches.map((c) => (
@@ -1093,7 +1093,7 @@ function PaidChip({ paid }: { paid: boolean }) {
       Paid
     </span>
   ) : (
-    <span className="inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold bg-zinc-500/15 text-zinc-500">
+    <span className="inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold bg-zinc-500/15 text-zinc-300">
       Unpaid
     </span>
   );
@@ -1165,7 +1165,7 @@ function ResultsTab() {
             className={`px-3 py-1.5 rounded-lg font-saira text-[11px] font-bold uppercase tracking-wider border transition
               ${sub === key
                 ? "border-purple-400/40 bg-purple-500/15 text-purple-300"
-                : "border-white/10 text-zinc-500 hover:text-zinc-300"}`}
+                : "border-white/10 text-zinc-300 hover:text-zinc-300"}`}
           >
             {label} {data ? `(${counts[key]})` : ""}
           </button>
@@ -1183,13 +1183,13 @@ function ResultsTab() {
       )}
 
       {data && (
-        <div className="rounded-2xl border border-white/5 bg-[#17131F] overflow-hidden">
+        <div className="rounded-2xl border border-white/5 bg-surface-card overflow-hidden">
           {/* Common header */}
           <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
             <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-purple-400">
               {sub.toUpperCase()} Results
             </p>
-            <span className="font-saira text-[10px] text-zinc-500">{counts[sub]} total</span>
+            <span className="font-saira text-[10px] text-zinc-300">{counts[sub]} total</span>
           </div>
 
           <div className="overflow-x-auto">
@@ -1198,7 +1198,7 @@ function ResultsTab() {
                 <thead>
                   <tr className="border-b border-white/5">
                     {["Name", "Email", "Submitted", "Paid", "Score", "Valid", ""].map((h) => (
-                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap">{h}</th>
+                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-300 whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1207,7 +1207,7 @@ function ResultsTab() {
                     <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
                       <td className="px-4 py-2.5 text-white">{r.first_name}</td>
                       <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
-                      <td className="px-4 py-2.5 text-zinc-500 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
                         {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                       </td>
                       <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
@@ -1221,7 +1221,7 @@ function ResultsTab() {
                         {!r.paid && (
                           <button
                             onClick={() => handleUnlock("sat_results", r.id)}
-                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-500 hover:text-white hover:border-white/30 transition"
+                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
                           >
                             Unlock
                           </button>
@@ -1238,7 +1238,7 @@ function ResultsTab() {
                 <thead>
                   <tr className="border-b border-white/5">
                     {["Name", "Email", "Submitted", "Paid", "Total", "Top subscale", ""].map((h) => (
-                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap">{h}</th>
+                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-300 whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1258,7 +1258,7 @@ function ResultsTab() {
                       <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
                         <td className="px-4 py-2.5 text-white">{r.first_name}</td>
                         <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
-                        <td className="px-4 py-2.5 text-zinc-500 whitespace-nowrap">
+                        <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
                           {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                         </td>
                         <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
@@ -1268,7 +1268,7 @@ function ResultsTab() {
                           {!r.paid && (
                             <button
                               onClick={() => handleUnlock("acsi_results", r.id)}
-                              className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-500 hover:text-white hover:border-white/30 transition"
+                              className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
                             >
                               Unlock
                             </button>
@@ -1286,7 +1286,7 @@ function ResultsTab() {
                 <thead>
                   <tr className="border-b border-white/5">
                     {["Name", "Email", "Submitted", "Paid", "Cog", "Som", "Conf", ""].map((h) => (
-                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap">{h}</th>
+                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-300 whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1295,7 +1295,7 @@ function ResultsTab() {
                     <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
                       <td className="px-4 py-2.5 text-white">{r.first_name}</td>
                       <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
-                      <td className="px-4 py-2.5 text-zinc-500 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
                         {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                       </td>
                       <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
@@ -1306,7 +1306,7 @@ function ResultsTab() {
                         {!r.paid && (
                           <button
                             onClick={() => handleUnlock("csai_results", r.id)}
-                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-500 hover:text-white hover:border-white/30 transition"
+                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
                           >
                             Unlock
                           </button>
@@ -1323,7 +1323,7 @@ function ResultsTab() {
                 <thead>
                   <tr className="border-b border-white/5">
                     {["Name", "Email", "Submitted", "Paid", "Total", "Depr-prone", ""].map((h) => (
-                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap">{h}</th>
+                      <th key={h} className="px-4 py-2.5 font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-300 whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1332,13 +1332,13 @@ function ResultsTab() {
                     <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
                       <td className="px-4 py-2.5 text-white">{r.first_name}</td>
                       <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
-                      <td className="px-4 py-2.5 text-zinc-500 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
                         {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                       </td>
                       <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
                       <td className="px-4 py-2.5 font-bold text-white">{r.total_score}</td>
                       <td className="px-4 py-2.5">
-                        <span className={`inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold ${r.depression_prone ? "bg-rose-500/15 text-rose-400" : "bg-zinc-500/15 text-zinc-500"}`}>
+                        <span className={`inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold ${r.depression_prone ? "bg-rose-500/15 text-rose-400" : "bg-zinc-500/15 text-zinc-300"}`}>
                           {r.depression_prone ? "Yes" : "No"}
                         </span>
                       </td>
@@ -1346,7 +1346,7 @@ function ResultsTab() {
                         {!r.paid && (
                           <button
                             onClick={() => handleUnlock("das_results", r.id)}
-                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-500 hover:text-white hover:border-white/30 transition"
+                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
                           >
                             Unlock
                           </button>
@@ -1419,13 +1419,13 @@ function ConversationsTab() {
   );
 
   if (!stats.length) return (
-    <p className="font-saira text-sm text-zinc-600 py-4">No conversations yet.</p>
+    <p className="font-saira text-sm text-zinc-400 py-4">No conversations yet.</p>
   );
 
   return (
     <div className="space-y-3 max-w-3xl">
       {stats.map((stat) => (
-        <div key={stat.userId} className="rounded-2xl border border-white/5 bg-[#17131F] overflow-hidden">
+        <div key={stat.userId} className="rounded-2xl border border-white/5 bg-surface-card overflow-hidden">
 
           {/* Header row */}
           <button
@@ -1435,15 +1435,15 @@ function ConversationsTab() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-saira text-sm font-semibold text-white">{stat.displayName}</p>
-                <span className="font-saira text-[9px] uppercase tracking-wider border border-white/10 rounded-full px-1.5 py-0.5 text-zinc-500">
+                <span className="font-saira text-[9px] uppercase tracking-wider border border-white/10 rounded-full px-1.5 py-0.5 text-zinc-300">
                   {stat.role}
                 </span>
               </div>
-              <p className="font-saira text-xs text-zinc-500 mt-0.5">
+              <p className="font-saira text-xs text-zinc-300 mt-0.5">
                 {stat.messageCount} messages · {stat.sessionCount} session{stat.sessionCount !== 1 ? "s" : ""} · Last: {new Date(stat.lastMessageAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
               </p>
             </div>
-            <span className="font-saira text-xs text-zinc-600 flex-shrink-0">
+            <span className="font-saira text-xs text-zinc-400 flex-shrink-0">
               {selectedId === stat.userId ? "▲ hide" : "▼ thread"}
             </span>
           </button>
@@ -1451,20 +1451,20 @@ function ConversationsTab() {
           {/* Session summaries */}
           {stat.summaries.length > 0 && (
             <div className="border-t border-white/5 px-4 py-3 space-y-2">
-              <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
+              <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
                 Session summaries
               </p>
               {stat.summaries.map((s) => (
-                <div key={s.session_date} className="rounded-xl border border-white/5 bg-[#0D0B14] px-3 py-2.5">
+                <div key={s.session_date} className="rounded-xl border border-white/5 bg-surface-panel px-3 py-2.5">
                   <p className="font-saira text-[10px] text-purple-400 mb-1">{s.session_date} · {s.message_count} msgs</p>
                   <p className="font-saira text-xs text-zinc-300 leading-relaxed">{s.summary}</p>
                   {s.techniques_used?.length > 0 && (
-                    <p className="font-saira text-[10px] text-zinc-600 mt-1">
+                    <p className="font-saira text-[10px] text-zinc-400 mt-1">
                       Techniques: {s.techniques_used.join(", ")}
                     </p>
                   )}
                   {s.resonated && (
-                    <p className="font-saira text-[10px] text-zinc-500 mt-1 italic">{s.resonated}</p>
+                    <p className="font-saira text-[10px] text-zinc-300 mt-1 italic">{s.resonated}</p>
                   )}
                 </div>
               ))}
@@ -1479,7 +1479,7 @@ function ConversationsTab() {
                   <div className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
                 </div>
               ) : thread.length === 0 ? (
-                <p className="font-saira text-xs text-zinc-600 text-center py-2">No messages.</p>
+                <p className="font-saira text-xs text-zinc-400 text-center py-2">No messages.</p>
               ) : thread.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] px-3 py-2 rounded-xl font-saira text-xs leading-relaxed ${
@@ -1488,7 +1488,7 @@ function ConversationsTab() {
                       : "bg-white/[0.03] border border-white/5 text-zinc-400"
                   }`}>
                     <p>{msg.content.length > 600 ? msg.content.slice(0, 600) + "…" : msg.content}</p>
-                    <p className="font-saira text-[9px] text-zinc-700 mt-1">
+                    <p className="font-saira text-[9px] text-zinc-500 mt-1">
                       {new Date(msg.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} {new Date(msg.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
@@ -1569,7 +1569,7 @@ function BroadcastTab({ users }: { users: UserRow[] }) {
     <div className="space-y-6 max-w-2xl">
 
       {/* ── Compose ──────────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 space-y-4">
+      <div className="rounded-2xl border border-white/5 bg-surface-card p-5 space-y-4">
         <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-purple-400">
           New broadcast
         </p>
@@ -1583,11 +1583,11 @@ function BroadcastTab({ users }: { users: UserRow[] }) {
               className={`rounded-full px-3 py-1 font-saira text-[11px] uppercase tracking-[0.14em] border transition ${
                 targetRole === r
                   ? "border-purple-500/40 bg-purple-500/15 text-purple-300"
-                  : "border-white/10 text-zinc-500 hover:text-zinc-300"
+                  : "border-white/10 text-zinc-300 hover:text-zinc-300"
               }`}
             >
               {r === "all" ? "Everyone" : r === "athlete" ? "Athletes" : "Coaches"}
-              <span className="ml-1.5 text-zinc-600">({emailMap[r].length})</span>
+              <span className="ml-1.5 text-zinc-400">({emailMap[r].length})</span>
             </button>
           ))}
         </div>
@@ -1597,7 +1597,7 @@ function BroadcastTab({ users }: { users: UserRow[] }) {
           placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
+          className="w-full rounded-xl border border-white/10 bg-surface-panel px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-400 focus:outline-none focus:border-purple-500/50"
         />
         <div>
           <textarea
@@ -1605,9 +1605,9 @@ function BroadcastTab({ users }: { users: UserRow[] }) {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={5}
-            className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
+            className="w-full rounded-xl border border-white/10 bg-surface-panel px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-400 focus:outline-none focus:border-purple-500/50 resize-none"
           />
-          <p className="font-saira text-[10px] text-zinc-700 mt-1">
+          <p className="font-saira text-[10px] text-zinc-500 mt-1">
             Links: [Guide →](/guide) · [Course →](/course) · any /path works
           </p>
         </div>
@@ -1620,7 +1620,7 @@ function BroadcastTab({ users }: { users: UserRow[] }) {
           >
             {sent ? "✓ Published" : sending ? "Publishing…" : "Publish broadcast →"}
           </button>
-          <p className="font-saira text-[10px] text-zinc-600">
+          <p className="font-saira text-[10px] text-zinc-400">
             {previewEmails.length} recipient{previewEmails.length !== 1 ? "s" : ""} · shown on next login
           </p>
         </div>
@@ -1629,25 +1629,25 @@ function BroadcastTab({ users }: { users: UserRow[] }) {
       {/* ── Published broadcasts ─────────────────────────────────────────────── */}
       {broadcasts.length > 0 && (
         <div className="space-y-2">
-          <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500">
+          <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-300">
             Published
           </p>
           {broadcasts.map((b) => (
             <div
               key={b.id}
               className={`rounded-xl border p-4 flex items-start gap-4 ${
-                b.active ? "border-purple-500/20 bg-purple-500/5" : "border-white/5 bg-[#17131F] opacity-50"
+                b.active ? "border-purple-500/20 bg-purple-500/5" : "border-white/5 bg-surface-card opacity-50"
               }`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <p className="font-saira text-sm font-semibold text-white truncate">{b.title}</p>
-                  <span className="flex-shrink-0 font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-500 border border-white/10 rounded-full px-1.5 py-0.5">
+                  <span className="flex-shrink-0 font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-300 border border-white/10 rounded-full px-1.5 py-0.5">
                     {b.target_role}
                   </span>
                 </div>
-                <p className="font-saira text-xs text-zinc-500 truncate">{b.body.slice(0, 80)}{b.body.length > 80 ? "…" : ""}</p>
-                <p className="font-saira text-[10px] text-zinc-700 mt-1">
+                <p className="font-saira text-xs text-zinc-300 truncate">{b.body.slice(0, 80)}{b.body.length > 80 ? "…" : ""}</p>
+                <p className="font-saira text-[10px] text-zinc-500 mt-1">
                   {new Date(b.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                 </p>
               </div>
@@ -1676,11 +1676,13 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
   const [checkinResult, setCheckinResult]   = React.useState<Record<string, unknown> | null>(null);
   const [checkinLoading, setCheckinLoading] = React.useState(false);
   const [checkinMsg, setCheckinMsg]         = React.useState<string | null>(null);
+  const [popupForced, setPopupForced]       = React.useState(false);
 
   const triggerCheckin = async () => {
     setCheckinLoading(true);
     setCheckinResult(null);
     setCheckinMsg(null);
+    setPopupForced(false);
     try {
       const res = await fetch("/api/admin/weekly-checkin-test", {
         method: "POST",
@@ -1699,27 +1701,33 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
     }
   };
 
+  const forcePopupForMe = () => {
+    if (!checkinResult?.targetWeek) return;
+    localStorage.setItem("pf-force-checkin", JSON.stringify(checkinResult.targetWeek));
+    setPopupForced(true);
+  };
+
   return (
     <div className="max-w-2xl space-y-8">
       <div>
         <h2 className="font-saira text-sm font-bold uppercase tracking-[0.22em] text-zinc-300 mb-1">Dev Tools</h2>
-        <p className="font-saira text-xs text-zinc-600">
+        <p className="font-saira text-xs text-zinc-400">
           Admin-only overrides for testing features before they go live in production.
         </p>
       </div>
 
       {/* ── Weekly Check-in Test ── */}
-      <div className="rounded-2xl border border-white/8 bg-[#0F1117] p-5">
+      <div className="rounded-2xl border border-white/8 bg-surface-alt p-5">
         <p className="font-saira text-[11px] font-bold uppercase tracking-[0.22em] text-purple-400 mb-1">
           Weekly Check-in
         </p>
-        <p className="font-saira text-xs text-zinc-500 mb-4">
+        <p className="font-saira text-xs text-zinc-300 mb-4">
           Forces the check-in window open regardless of day. Use this to test the modal and submission on any day of the week.
         </p>
 
         <div className="space-y-3">
           <div>
-            <label className="block font-saira text-[10px] text-zinc-500 mb-1.5 uppercase tracking-wider">
+            <label className="block font-saira text-[10px] text-zinc-300 mb-1.5 uppercase tracking-wider">
               Target user (optional — leave blank to use your own account)
             </label>
             <select
@@ -1751,20 +1759,33 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
             </p>
           )}
 
+          {/* Force popup button — only useful for your own account (localStorage is per-browser) */}
+          {!!checkinResult?.targetWeek && !checkinResult?.currentSubmitted && !selectedUserId && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={forcePopupForMe}
+                disabled={popupForced}
+                className="rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 px-4 py-2 font-saira text-[11px] font-bold uppercase tracking-[0.18em] text-white transition"
+              >
+                {popupForced ? "✓ Popup queued" : "Force popup on my next visit"}
+              </button>
+              {popupForced && (
+                <p className="font-saira text-xs text-amber-400">
+                  Navigate to any athlete page — the modal will appear once.
+                </p>
+              )}
+            </div>
+          )}
+
           {checkinResult && (
-            <div className="rounded-xl border border-white/5 bg-[#13151A] px-4 py-3">
-              <p className="font-saira text-[10px] text-zinc-500 mb-2 uppercase tracking-wider">API response</p>
+            <div className="rounded-xl border border-white/5 bg-surface-section px-4 py-3">
+              <p className="font-saira text-[10px] text-zinc-300 mb-2 uppercase tracking-wider">API response</p>
               <pre className="font-mono text-[11px] text-zinc-300 whitespace-pre-wrap leading-relaxed">
                 {JSON.stringify(checkinResult, null, 2)}
               </pre>
             </div>
           )}
-
-          <p className="font-saira text-[10px] text-zinc-700">
-            To trigger the popup: after confirming window is open, open the app in a new incognito tab or clear
-            <code className="font-mono mx-1">sessionStorage.removeItem(&apos;weekly-checkin-skipped&apos;)</code>
-            in the console, then refresh.
-          </p>
         </div>
       </div>
     </div>
@@ -1871,7 +1892,7 @@ export default function MasterAdminPage() {
 
   if (isAdmin === null) {
     return (
-      <div className="min-h-screen bg-[#050608] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="w-6 h-6 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
       </div>
     );
@@ -1879,7 +1900,7 @@ export default function MasterAdminPage() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-[#050608] flex items-center justify-center px-6">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center px-6">
         <div className="text-center max-w-sm">
           <p className="font-saira text-[10px] font-bold uppercase tracking-[0.3em] text-red-400 mb-3">
             Access Denied
@@ -1887,10 +1908,10 @@ export default function MasterAdminPage() {
           <h1 className="font-saira text-2xl font-extrabold uppercase text-white mb-2">
             Not Authorized
           </h1>
-          <p className="font-saira text-sm text-zinc-500 mb-6">
+          <p className="font-saira text-sm text-zinc-300 mb-6">
             This dashboard is restricted to the PowerFlow admin account.
             {sessionEmail && (
-              <span className="block mt-1 font-mono text-xs text-zinc-600">
+              <span className="block mt-1 font-mono text-xs text-zinc-400">
                 Signed in as: {sessionEmail}
               </span>
             )}
@@ -1919,10 +1940,10 @@ export default function MasterAdminPage() {
   ];
 
   return (
-    <div className="flex h-screen bg-[#050608] text-white overflow-hidden">
+    <div className="flex h-screen bg-surface-base text-white overflow-hidden">
 
       {/* ── Left sidebar ── */}
-      <aside className="w-56 flex-shrink-0 border-r border-white/6 flex flex-col h-full bg-[#0D0B14]/90">
+      <aside className="w-56 flex-shrink-0 border-r border-white/6 flex flex-col h-full bg-surface-panel/90">
 
         {/* Brand */}
         <div className="px-5 pt-6 pb-5 border-b border-white/5">
@@ -1943,7 +1964,7 @@ export default function MasterAdminPage() {
               className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-xs uppercase tracking-[0.14em] transition ${
                 activeTab === tab
                   ? "bg-purple-500/15 text-purple-300 font-semibold"
-                  : "text-zinc-500 hover:text-zinc-200 hover:bg-white/5"
+                  : "text-zinc-300 hover:text-zinc-200 hover:bg-white/5"
               }`}
             >
               <span className="text-sm leading-none">{icon}</span>
@@ -1954,10 +1975,10 @@ export default function MasterAdminPage() {
 
         {/* Footer: admin email + back link */}
         <div className="flex-shrink-0 px-5 py-4 border-t border-white/5 space-y-2">
-          <p className="font-saira text-[10px] text-zinc-600 truncate">{sessionEmail}</p>
+          <p className="font-saira text-[10px] text-zinc-400 truncate">{sessionEmail}</p>
           <Link
             href="/you"
-            className="font-saira text-xs text-zinc-500 hover:text-purple-300 transition"
+            className="font-saira text-xs text-zinc-300 hover:text-purple-300 transition"
           >
             ← Back to app
           </Link>
@@ -1967,7 +1988,7 @@ export default function MasterAdminPage() {
       {/* ── Main content ── */}
       <main className="flex-1 overflow-y-auto">
         {/* Tab title bar */}
-        <div className="sticky top-0 z-10 border-b border-white/5 bg-[#050608]/95 backdrop-blur-md px-8 py-4">
+        <div className="sticky top-0 z-10 border-b border-white/5 bg-surface-base/95 backdrop-blur-md px-8 py-4">
           <h2 className="font-saira text-sm font-bold uppercase tracking-[0.22em] text-white">
             {NAV_TABS.find(([t]) => t === activeTab)?.[1] ?? ""}
           </h2>

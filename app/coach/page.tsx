@@ -246,7 +246,7 @@ const FLAG_CONFIG: Record<Flag, { label: string; dot: string; text: string; bg: 
 
 
 const TREND_ICON:  Record<Trend, string> = { up: "↑", down: "↓", stable: "→" };
-const TREND_COLOR: Record<Trend, string> = { up: "text-emerald-400", down: "text-rose-400", stable: "text-zinc-500" };
+const TREND_COLOR: Record<Trend, string> = { up: "text-emerald-400", down: "text-rose-400", stable: "text-zinc-300" };
 
 // ── Sentiment sparkline ────────────────────────────────────────────────────────
 
@@ -273,7 +273,7 @@ function ProfileField({ label, value, href }: { label: string; value: string | n
   if (value === null || value === undefined || value === "") return null;
   return (
     <div>
-      <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-0.5">
+      <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-300 mb-0.5">
         {label}
       </p>
       {href ? (
@@ -370,7 +370,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
       {/* Affirmations */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <p className="font-saira text-[10px] text-zinc-600">Affirmations</p>
+          <p className="font-saira text-[10px] text-zinc-400">Affirmations</p>
           {!editingAff && (
             <button onClick={startEditAff} className="font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
               Edit
@@ -392,7 +392,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
               <button onClick={saveAff} disabled={saving} className="rounded-lg bg-purple-500 px-3 py-1 font-saira text-[10px] uppercase tracking-wider text-white hover:bg-purple-400 disabled:opacity-50 transition">
                 {saving ? "Saving…" : "Save"}
               </button>
-              <button onClick={() => setEditingAff(false)} className="font-saira text-[10px] text-zinc-500 hover:text-zinc-300 transition">
+              <button onClick={() => setEditingAff(false)} className="font-saira text-[10px] text-zinc-300 hover:text-zinc-300 transition">
                 Cancel
               </button>
             </div>
@@ -407,14 +407,14 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
             ))}
           </ol>
         ) : (
-          <p className="font-saira text-sm text-zinc-600">Not set</p>
+          <p className="font-saira text-sm text-zinc-400">Not set</p>
         )}
       </div>
 
       {/* Viz keywords */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <p className="font-saira text-[10px] text-zinc-600">SBD cue words</p>
+          <p className="font-saira text-[10px] text-zinc-400">SBD cue words</p>
           {!editingKw && (
             <button onClick={startEditKw} className="font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
               Edit
@@ -425,7 +425,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
           <div className="space-y-2">
             {(["squat", "bench", "deadlift"] as const).map((lift) => (
               <div key={lift}>
-                <label className="block font-saira text-[10px] text-zinc-600 mb-1 capitalize">{lift} cues <span className="text-zinc-700">(comma-separated)</span></label>
+                <label className="block font-saira text-[10px] text-zinc-400 mb-1 capitalize">{lift} cues <span className="text-zinc-500">(comma-separated)</span></label>
                 <input
                   value={kwDrafts[lift]}
                   onChange={(e) => setKwDrafts((p) => ({ ...p, [lift]: e.target.value }))}
@@ -438,7 +438,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
               <button onClick={saveKw} disabled={saving} className="rounded-lg bg-purple-500 px-3 py-1 font-saira text-[10px] uppercase tracking-wider text-white hover:bg-purple-400 disabled:opacity-50 transition">
                 {saving ? "Saving…" : "Save"}
               </button>
-              <button onClick={() => setEditingKw(false)} className="font-saira text-[10px] text-zinc-500 hover:text-zinc-300 transition">
+              <button onClick={() => setEditingKw(false)} className="font-saira text-[10px] text-zinc-300 hover:text-zinc-300 transition">
                 Cancel
               </button>
             </div>
@@ -450,7 +450,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
               const kws = profile.viz_keywords?.[toolId] ?? [];
               return (
                 <div key={toolId}>
-                  <p className="font-saira text-[10px] text-zinc-700 mb-1">{label}</p>
+                  <p className="font-saira text-[10px] text-zinc-500 mb-1">{label}</p>
                   {kws.length ? (
                     <div className="flex gap-1.5 flex-wrap">
                       {kws.map((kw, i) => (
@@ -460,7 +460,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
                       ))}
                     </div>
                   ) : (
-                    <p className="font-saira text-xs text-zinc-700">Not set</p>
+                    <p className="font-saira text-xs text-zinc-500">Not set</p>
                   )}
                 </div>
               );
@@ -479,7 +479,7 @@ function CheckinsTab({ checkins }: { checkins: WeeklyCheckin[] }) {
 
   if (!checkins.length) {
     return (
-      <p className="font-saira text-sm text-zinc-600 py-6 text-center">
+      <p className="font-saira text-sm text-zinc-400 py-6 text-center">
         No weekly check-ins submitted yet.
       </p>
     );
@@ -497,7 +497,7 @@ function CheckinsTab({ checkins }: { checkins: WeeklyCheckin[] }) {
         const avgColor = avg >= 7.5 ? "text-emerald-400" : avg >= 5 ? "text-purple-300" : "text-rose-400";
 
         return (
-          <div key={key} className="rounded-xl border border-white/6 bg-[#13151A] overflow-hidden">
+          <div key={key} className="rounded-xl border border-white/6 bg-surface-section overflow-hidden">
             <button
               type="button"
               onClick={() => setExpandedWeeks((prev) => {
@@ -510,7 +510,7 @@ function CheckinsTab({ checkins }: { checkins: WeeklyCheckin[] }) {
               <span className="font-saira text-[11px] font-semibold text-zinc-300">{label}</span>
               <div className="flex items-center gap-3">
                 <span className={`font-saira text-sm font-bold tabular-nums ${avgColor}`}>{avg.toFixed(1)}</span>
-                <svg viewBox="0 0 16 16" className={`w-3 h-3 text-zinc-600 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none">
+                <svg viewBox="0 0 16 16" className={`w-3 h-3 text-zinc-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none">
                   <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
@@ -529,25 +529,25 @@ function CheckinsTab({ checkins }: { checkins: WeeklyCheckin[] }) {
                   ].map(({ label: rl, v }) => (
                     <div key={rl} className="text-center">
                       <p className={`font-saira text-lg font-extrabold tabular-nums ${v >= 8 ? "text-emerald-400" : v >= 5 ? "text-purple-300" : "text-rose-400"}`}>{v}</p>
-                      <p className="font-saira text-[9px] uppercase tracking-[0.12em] text-zinc-600 leading-tight">{rl}</p>
+                      <p className="font-saira text-[9px] uppercase tracking-[0.12em] text-zinc-400 leading-tight">{rl}</p>
                     </div>
                   ))}
                 </div>
                 {ci.biggest_win && (
                   <div>
-                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Biggest win</p>
+                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Biggest win</p>
                     <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_win}</p>
                   </div>
                 )}
                 {ci.biggest_challenge && (
                   <div>
-                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Main challenge</p>
+                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Main challenge</p>
                     <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_challenge}</p>
                   </div>
                 )}
                 {ci.focus_next_week && (
                   <div>
-                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Focus next week</p>
+                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Focus next week</p>
                     <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.focus_next_week}</p>
                   </div>
                 )}
@@ -579,7 +579,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
 
   if (!hasBio && !hasLifts && !hasSelfRatings && !hasMindset && !hasGoalsSection) {
     return (
-      <p className="font-saira text-sm text-zinc-600 py-6 text-center">
+      <p className="font-saira text-sm text-zinc-400 py-6 text-center">
         Onboarding not completed yet — no profile data to show.
       </p>
     );
@@ -636,14 +636,14 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
               .filter(([, cur, goal]) => cur || goal)
               .map(([label, cur, goal]) => (
                 <div key={label} className="flex items-center gap-3">
-                  <span className="font-saira text-[10px] font-semibold uppercase tracking-wider text-zinc-500 w-16 flex-shrink-0">
+                  <span className="font-saira text-[10px] font-semibold uppercase tracking-wider text-zinc-300 w-16 flex-shrink-0">
                     {label}
                   </span>
                   <span className="font-saira text-sm font-bold text-white">
                     {cur ? `${cur} kg` : "—"}
                   </span>
                   {goal && (
-                    <span className="font-saira text-[10px] text-zinc-500">
+                    <span className="font-saira text-[10px] text-zinc-300">
                       → goal: {goal} kg
                     </span>
                   )}
@@ -773,7 +773,7 @@ function PatternAnalysis({ client }: { client: Client }) {
             Pattern Analysis
           </p>
         </div>
-        <p className="font-saira text-xs leading-relaxed text-zinc-500">
+        <p className="font-saira text-xs leading-relaxed text-zinc-300">
           Insufficient data — at least 5 journal entries are needed for pattern analysis.
         </p>
       </div>
@@ -834,13 +834,13 @@ function PatternAnalysis({ client }: { client: Client }) {
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-300">
           Pattern Analysis
         </p>
-        <span className="font-saira text-[9px] text-zinc-600 ml-auto">{entryCount} entries</span>
+        <span className="font-saira text-[9px] text-zinc-400 ml-auto">{entryCount} entries</span>
       </div>
 
       {/* Psychological profile */}
       {primaryTheme && (
         <div>
-          <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-2">
+          <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-300 mb-2">
             Psychological profile
           </p>
           <div className="space-y-1.5">
@@ -849,18 +849,18 @@ function PatternAnalysis({ client }: { client: Client }) {
               <div>
                 <span className="font-saira text-xs text-zinc-200 font-semibold">{primaryTheme.label}</span>
                 {THEME_DESCRIPTORS[primaryTheme.label] && (
-                  <span className="font-saira text-[10px] text-zinc-500 ml-2">— {THEME_DESCRIPTORS[primaryTheme.label]}</span>
+                  <span className="font-saira text-[10px] text-zinc-300 ml-2">— {THEME_DESCRIPTORS[primaryTheme.label]}</span>
                 )}
-                <span className="font-saira text-[10px] text-zinc-600 ml-2">({primaryTheme.count} mentions)</span>
+                <span className="font-saira text-[10px] text-zinc-400 ml-2">({primaryTheme.count} mentions)</span>
               </div>
             </div>
             {secondaryTheme && (
               <div className="flex items-start gap-2">
-                <span className="font-saira text-[10px] text-zinc-500 w-14 flex-shrink-0 pt-0.5">Secondary</span>
+                <span className="font-saira text-[10px] text-zinc-300 w-14 flex-shrink-0 pt-0.5">Secondary</span>
                 <div>
                   <span className="font-saira text-xs text-zinc-400">{secondaryTheme.label}</span>
                   {THEME_DESCRIPTORS[secondaryTheme.label] && (
-                    <span className="font-saira text-[10px] text-zinc-600 ml-2">— {THEME_DESCRIPTORS[secondaryTheme.label]}</span>
+                    <span className="font-saira text-[10px] text-zinc-400 ml-2">— {THEME_DESCRIPTORS[secondaryTheme.label]}</span>
                   )}
                 </div>
               </div>
@@ -872,7 +872,7 @@ function PatternAnalysis({ client }: { client: Client }) {
       {/* Sentiment trajectory */}
       {hasTrajectory && trajectory.length === 3 && (
         <div>
-          <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-2">
+          <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-300 mb-2">
             Sentiment trajectory
           </p>
           <div className="flex items-end gap-3 mb-1.5">
@@ -884,7 +884,7 @@ function PatternAnalysis({ client }: { client: Client }) {
                     style={{ height: `${Math.max(4, pt.rate * 0.24)}px` }}
                   />
                 </div>
-                <span className="font-saira text-[9px] text-zinc-600 text-center leading-tight">{pt.label}</span>
+                <span className="font-saira text-[9px] text-zinc-400 text-center leading-tight">{pt.label}</span>
                 <span className={`font-saira text-[10px] font-semibold ${
                   pt.rate >= 60 ? "text-emerald-300" : pt.rate >= 40 ? "text-amber-300" : "text-rose-300"
                 }`}>{pt.rate}%</span>
@@ -897,7 +897,7 @@ function PatternAnalysis({ client }: { client: Client }) {
 
       {/* Conversation starters */}
       <div>
-        <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-2">
+        <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-300 mb-2">
           Coaching conversation starters
         </p>
         <ul className="space-y-1.5">
@@ -948,7 +948,7 @@ function NotesTab({
         rows={6}
         className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
       />
-      <div className="flex items-center gap-2 font-saira text-[10px] text-zinc-600">
+      <div className="flex items-center gap-2 font-saira text-[10px] text-zinc-400">
         {saving ? (
           <span className="text-amber-400">Saving...</span>
         ) : savedAt ? (
@@ -984,15 +984,15 @@ function CoachTrainingCard({ entry }: { entry: TrainingEntry }) {
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300">
           Training day log
         </p>
-        <span className="font-saira text-[10px] text-zinc-600 ml-1">{dateStr}</span>
+        <span className="font-saira text-[10px] text-zinc-400 ml-1">{dateStr}</span>
         {entry.mood_rating != null && (
-          <span className="ml-auto font-saira text-[10px] text-zinc-500">Mood {entry.mood_rating}/10</span>
+          <span className="ml-auto font-saira text-[10px] text-zinc-300">Mood {entry.mood_rating}/10</span>
         )}
       </div>
       <div className="space-y-2.5">
         {fields.map((f) => (
           <div key={f.label}>
-            <p className="font-saira text-[10px] uppercase tracking-wider text-zinc-600 mb-0.5">{f.label}</p>
+            <p className="font-saira text-[10px] uppercase tracking-wider text-zinc-400 mb-0.5">{f.label}</p>
             <p className="font-saira text-sm text-zinc-300 leading-relaxed">{f.value}</p>
           </div>
         ))}
@@ -1048,13 +1048,13 @@ function EntryFeedbackSection({
           <button
             type="button"
             onClick={() => { setDraft(localFeedback.content); setOpen(true); }}
-            className="font-saira text-[9px] text-zinc-600 hover:text-purple-300 transition flex-shrink-0"
+            className="font-saira text-[9px] text-zinc-400 hover:text-purple-300 transition flex-shrink-0"
             title="Edit note"
           >
             ✎
           </button>
         </div>
-        <p className="font-saira text-[9px] text-zinc-600 mt-0.5">Coach note · {timeSince(localFeedback.created_at)}</p>
+        <p className="font-saira text-[9px] text-zinc-400 mt-0.5">Coach note · {timeSince(localFeedback.created_at)}</p>
       </div>
     );
   }
@@ -1064,7 +1064,7 @@ function EntryFeedbackSection({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 font-saira text-[10px] text-zinc-600 hover:text-purple-300 transition"
+        className="mt-2 font-saira text-[10px] text-zinc-400 hover:text-purple-300 transition"
       >
         + Add coach note
       </button>
@@ -1088,7 +1088,7 @@ function EntryFeedbackSection({
           className={`rounded-full px-3 py-1 font-saira text-[10px] font-semibold transition ${
             draft.trim() && !saving
               ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30"
-              : "bg-white/5 text-zinc-600 cursor-not-allowed"
+              : "bg-white/5 text-zinc-400 cursor-not-allowed"
           }`}
         >
           {saving ? "Saving..." : "Save"}
@@ -1096,7 +1096,7 @@ function EntryFeedbackSection({
         <button
           type="button"
           onClick={() => { setOpen(false); setDraft(existing?.content ?? ""); }}
-          className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 transition"
+          className="font-saira text-[10px] text-zinc-400 hover:text-zinc-400 transition"
         >
           Cancel
         </button>
@@ -1151,13 +1151,13 @@ function TrainingFeedbackSection({
           <button
             type="button"
             onClick={() => { setDraft(localNote); setOpen(true); }}
-            className="font-saira text-[9px] text-zinc-600 hover:text-purple-300 transition flex-shrink-0"
+            className="font-saira text-[9px] text-zinc-400 hover:text-purple-300 transition flex-shrink-0"
             title="Edit note"
           >
             ✎
           </button>
         </div>
-        <p className="font-saira text-[9px] text-zinc-600 mt-0.5">Coach note</p>
+        <p className="font-saira text-[9px] text-zinc-400 mt-0.5">Coach note</p>
       </div>
     );
   }
@@ -1167,7 +1167,7 @@ function TrainingFeedbackSection({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 font-saira text-[10px] text-zinc-600 hover:text-purple-300 transition"
+        className="mt-2 font-saira text-[10px] text-zinc-400 hover:text-purple-300 transition"
       >
         + Add coach note
       </button>
@@ -1191,7 +1191,7 @@ function TrainingFeedbackSection({
           className={`rounded-full px-3 py-1 font-saira text-[10px] font-semibold transition ${
             draft.trim() && !saving
               ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30"
-              : "bg-white/5 text-zinc-600 cursor-not-allowed"
+              : "bg-white/5 text-zinc-400 cursor-not-allowed"
           }`}
         >
           {saving ? "Saving..." : "Save"}
@@ -1199,7 +1199,7 @@ function TrainingFeedbackSection({
         <button
           type="button"
           onClick={() => { setOpen(false); setDraft(existing ?? ""); }}
-          className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 transition"
+          className="font-saira text-[10px] text-zinc-400 hover:text-zinc-400 transition"
         >
           Cancel
         </button>
@@ -1327,7 +1327,7 @@ function ClientCard({
   }, [trainingWeekOffset]);
 
   return (
-    <div className={`rounded-3xl border bg-[#0C0E13] overflow-hidden transition ${
+    <div className={`rounded-3xl border bg-surface-alt overflow-hidden transition ${
       client.flag === "attention" ? "border-rose-500/20" : "border-white/6"
     }`}>
       {/* ── Collapsed header (hidden when forceOpen) ── */}
@@ -1361,7 +1361,7 @@ function ClientCard({
         {/* Name + meta */}
         <div className="flex-1 min-w-0">
           <p className="font-saira text-sm font-semibold text-zinc-100">{client.name}</p>
-          <p className="font-saira text-[11px] text-zinc-600 mt-0.5">
+          <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
             Last active {client.lastActive} · {client.entriesThisWeek} entries this week
           </p>
         </div>
@@ -1377,7 +1377,7 @@ function ClientCard({
               client.positiveRate >= 60 ? "text-emerald-300" :
               client.positiveRate >= 40 ? "text-amber-300" : "text-rose-300"
             }`}>{client.positiveRate}%</p>
-            <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-600">positive</p>
+            <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400">positive</p>
           </div>
 
           <span className={`font-saira text-lg font-bold ${TREND_COLOR[client.trend]}`}>
@@ -1389,7 +1389,7 @@ function ClientCard({
             {flag.label}
           </span>
 
-          <span className="font-saira text-[11px] text-zinc-600">{isOpen ? "▲" : "▼"}</span>
+          <span className="font-saira text-[11px] text-zinc-400">{isOpen ? "▲" : "▼"}</span>
         </div>
       </div>
       )} {/* end !forceOpen */}
@@ -1413,7 +1413,7 @@ function ClientCard({
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
                 className={`relative flex-shrink-0 px-4 py-3 font-saira text-[11px] font-semibold uppercase tracking-[0.18em] transition ${
-                  activeTab === tab.key ? "text-white" : "text-zinc-500 hover:text-zinc-300"
+                  activeTab === tab.key ? "text-white" : "text-zinc-300 hover:text-zinc-300"
                 }`}
               >
                 {tab.label}
@@ -1430,7 +1430,7 @@ function ClientCard({
               <div className="space-y-5">
                 {/* Sentiment window selector */}
                 <div className="flex items-center gap-2">
-                  <span className="font-saira text-[10px] text-zinc-600 uppercase tracking-[0.18em]">Window</span>
+                  <span className="font-saira text-[10px] text-zinc-400 uppercase tracking-[0.18em]">Window</span>
                   <div className="flex gap-1">
                     {([7, 30, 60] as const).map((w) => (
                       <button
@@ -1440,7 +1440,7 @@ function ClientCard({
                         className={`rounded-full border px-3 py-0.5 font-saira text-[10px] uppercase tracking-[0.12em] transition ${
                           sentimentWindow === w
                             ? "border-purple-400 bg-purple-500/20 text-white"
-                            : "border-zinc-700 text-zinc-500 hover:border-zinc-500"
+                            : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
                         }`}
                       >
                         {w}d
@@ -1466,14 +1466,14 @@ function ClientCard({
                     </div>
                   </div>
                 ) : (
-                  <p className="font-saira text-sm text-zinc-600 py-2">
+                  <p className="font-saira text-sm text-zinc-400 py-2">
                     {windowedEntries.length === 0 ? `No entries in the last ${sentimentWindow} days.` : "No recurring themes detected."}
                   </p>
                 )}
 
                 {/* Stats summary */}
                 {windowedEntries.length > 0 && (
-                  <div className="rounded-2xl border border-white/5 bg-[#0D0F14] p-5">
+                  <div className="rounded-2xl border border-white/5 bg-surface-input p-5">
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
                       Last {sentimentWindow} days at a glance
                     </p>
@@ -1502,7 +1502,7 @@ function ClientCard({
             {activeTab === "entries" && (
               <div className="space-y-3">
                 {activityFeed.length === 0 ? (
-                  <p className="font-saira text-sm text-zinc-600 py-4 text-center">No activity yet.</p>
+                  <p className="font-saira text-sm text-zinc-400 py-4 text-center">No activity yet.</p>
                 ) : (
                   activityFeed.map((item) =>
                     item.kind === "training" ? (
@@ -1617,7 +1617,7 @@ function ClientCard({
                  client.testScores.acsi.length === 0 &&
                  client.testScores.csai.length === 0 &&
                  client.testScores.sat.length === 0 && (
-                  <p className="font-saira text-sm text-zinc-600 py-4 text-center">
+                  <p className="font-saira text-sm text-zinc-400 py-4 text-center">
                     No tests completed yet.
                     {" "}
                     <Link href="/tests" className="text-purple-400 underline hover:text-purple-300">View tests →</Link>
@@ -1637,7 +1637,7 @@ function ClientCard({
                     disabled={trainingWeekOffset >= 3}
                     className={`font-saira text-[11px] px-3 py-1 rounded-full border transition ${
                       trainingWeekOffset >= 3
-                        ? "border-zinc-800 text-zinc-700 cursor-not-allowed"
+                        ? "border-zinc-800 text-zinc-500 cursor-not-allowed"
                         : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
                     }`}
                   >
@@ -1650,7 +1650,7 @@ function ClientCard({
                     disabled={trainingWeekOffset <= 0}
                     className={`font-saira text-[11px] px-3 py-1 rounded-full border transition ${
                       trainingWeekOffset <= 0
-                        ? "border-zinc-800 text-zinc-700 cursor-not-allowed"
+                        ? "border-zinc-800 text-zinc-500 cursor-not-allowed"
                         : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
                     }`}
                   >
@@ -1737,7 +1737,7 @@ function MoodSparkline({ entries, weekDays }: { entries: TrainingEntry[]; weekDa
               style={{ height: `${height}px` }}
               title={`${DAY_LABELS[i]}: ${mood !== null ? `${mood}/10` : "no entry"}`}
             />
-            <span className="font-saira text-[8px] text-zinc-600">{DAY_LABELS[i]}</span>
+            <span className="font-saira text-[8px] text-zinc-400">{DAY_LABELS[i]}</span>
           </div>
         );
       })}
@@ -1774,7 +1774,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-3">
           Week Summary
         </p>
-        <div className="rounded-2xl border border-white/5 bg-[#0D0F14] p-4 space-y-3">
+        <div className="rounded-2xl border border-white/5 bg-surface-input p-4 space-y-3">
           <div className="flex items-center justify-between text-xs font-saira">
             <span className="text-zinc-400">Training days</span>
             <span className="font-semibold text-white">{trainingDays}/7</span>
@@ -1805,7 +1805,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
               const dayName = dateObj.toLocaleDateString("en-GB", { weekday: "short" });
               const dayNum  = dateObj.getDate();
               return (
-                <div key={e.id} className="rounded-xl border border-white/5 bg-[#0D0F14] p-4">
+                <div key={e.id} className="rounded-xl border border-white/5 bg-surface-input p-4">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="font-saira text-xs font-semibold text-zinc-300">
                       Day {idx + 1} · {dayName} {dayNum}
@@ -1840,7 +1840,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
                       ).map(([label, val]) =>
                         val ? (
                           <div key={label} className="flex gap-2">
-                            <span className="font-saira text-[10px] uppercase tracking-[0.12em] text-zinc-600 w-20 flex-shrink-0 pt-0.5">
+                            <span className="font-saira text-[10px] uppercase tracking-[0.12em] text-zinc-400 w-20 flex-shrink-0 pt-0.5">
                               {label}
                             </span>
                             <span className="font-saira text-xs text-zinc-300 leading-snug">
@@ -1868,7 +1868,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-3">
           Weekly Brief
         </p>
-        <div className="rounded-2xl border border-white/5 bg-[#0D0F14] p-4 space-y-2">
+        <div className="rounded-2xl border border-white/5 bg-surface-input p-4 space-y-2">
           <BriefLine>
             Mood trend: <span className={
               moodTrend === "up" ? "text-emerald-300"
@@ -1898,7 +1898,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
             </BriefLine>
           )}
           {trainingThisWeek.length === 0 && (
-            <p className="font-saira text-xs text-zinc-600">No training entries logged this week.</p>
+            <p className="font-saira text-xs text-zinc-400">No training entries logged this week.</p>
           )}
         </div>
       </div>
@@ -1908,7 +1908,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
 
 function BriefLine({ children }: { children: React.ReactNode }) {
   return (
-    <p className="font-saira text-xs text-zinc-500 leading-snug">
+    <p className="font-saira text-xs text-zinc-300 leading-snug">
       — {children}
     </p>
   );
@@ -1922,11 +1922,11 @@ function ScoreCard({ label, value, sub, flag, small = false }: {
     : flag === "amber" ? "text-amber-300"
     : "text-sky-300";
   return (
-    <div className="rounded-xl border border-white/5 bg-[#0D0F14] p-3">
-      <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-500 mb-1">{label}</p>
+    <div className="rounded-xl border border-white/5 bg-surface-input p-3">
+      <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-300 mb-1">{label}</p>
       <p className={`font-saira ${small ? "text-xs" : "text-base"} font-bold leading-tight ${color}`}>
         {value}
-        {sub && <span className="text-[10px] font-normal text-zinc-600 ml-1">{sub}</span>}
+        {sub && <span className="text-[10px] font-normal text-zinc-400 ml-1">{sub}</span>}
       </p>
     </div>
   );
@@ -1936,7 +1936,7 @@ function MiniStat({ label, value, color = "text-zinc-100" }: { label: string; va
   return (
     <div className="text-center">
       <p className={`font-saira text-lg font-extrabold ${color}`}>{value}</p>
-      <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-600 mt-0.5">{label}</p>
+      <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400 mt-0.5">{label}</p>
     </div>
   );
 }
@@ -1964,12 +1964,12 @@ function RosterSummary({ clients }: { clients: Client[] }) {
 
 function SummaryTile({ value, label, color, dot }: { value: string; label: string; color: string; dot?: string }) {
   return (
-    <div className="rounded-2xl border border-white/6 bg-[#0C0E13] p-4 text-center">
+    <div className="rounded-2xl border border-white/6 bg-surface-alt p-4 text-center">
       <div className="flex items-center justify-center gap-1.5">
         {dot && <div className={`w-2 h-2 rounded-full ${dot}`} />}
         <p className={`font-saira text-2xl font-extrabold ${color}`}>{value}</p>
       </div>
-      <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-600 mt-1">{label}</p>
+      <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-400 mt-1">{label}</p>
     </div>
   );
 }
@@ -2046,7 +2046,7 @@ function InvitePanel({ coachCode }: { coachCode: string }) {
           {copied ? "✓ Copied!" : "Copy link"}
         </button>
       </div>
-      <p className="mt-2 font-saira text-[10px] text-zinc-600">
+      <p className="mt-2 font-saira text-[10px] text-zinc-400">
         Share this link with your athletes. They sign in with Google and their journal is linked to your dashboard automatically.
       </p>
     </div>
@@ -2073,19 +2073,19 @@ function CoachHeader({ profile }: { profile: CoachProfile }) {
         )}
         <div>
           <p className="font-saira text-xs font-semibold text-zinc-200">{profile.display_name}</p>
-          <p className="font-saira text-[10px] text-zinc-600">Coach</p>
+          <p className="font-saira text-[10px] text-zinc-400">Coach</p>
         </div>
       </div>
       <div className="flex items-center gap-4">
         <Link
           href="/guide"
-          className="font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition"
+          className="font-saira text-[10px] text-zinc-300 hover:text-purple-300 transition"
         >
           Guide
         </Link>
         <a
           href="/auth/sign-out"
-          className="font-saira text-[10px] text-zinc-700 hover:text-zinc-400 transition underline underline-offset-2"
+          className="font-saira text-[10px] text-zinc-500 hover:text-zinc-400 transition underline underline-offset-2"
         >
           Sign out
         </a>
@@ -2158,7 +2158,7 @@ function CompactAthleteRow({
             </span>
           )}
         </div>
-        <p className="font-saira text-xs text-zinc-500 mt-0.5">
+        <p className="font-saira text-xs text-zinc-300 mt-0.5">
           {client.entriesThisWeek} entries · {client.lastActive}
         </p>
       </div>
@@ -2330,14 +2330,14 @@ export default function CoachPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050608] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="w-5 h-5 rounded-full border-2 border-purple-500/40 border-t-purple-400 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="relative bg-[#050608] text-white">
+    <div className="relative bg-surface-base text-white">
       {/* Background gradient */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.11),transparent_55%)]" />
@@ -2391,10 +2391,10 @@ export default function CoachPage() {
 
           {/* Empty state */}
           {!error && clients.length === 0 && (
-            <div className="rounded-3xl border border-white/5 bg-[#0F1117] p-14 text-center mb-8">
+            <div className="rounded-3xl border border-white/5 bg-surface-alt p-14 text-center mb-8">
               <p className="font-saira text-3xl mb-4">&#128101;</p>
               <p className="font-saira text-sm font-semibold text-zinc-300 mb-2">No athletes connected yet</p>
-              <p className="font-saira text-xs text-zinc-600 max-w-xs mx-auto mb-6">
+              <p className="font-saira text-xs text-zinc-400 max-w-xs mx-auto mb-6">
                 Share your invite link above with athletes. Once they accept and log in, their journal and test data will appear here.
               </p>
               {profile?.coach_code && (
@@ -2411,10 +2411,10 @@ export default function CoachPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search athletes…"
-                className="rounded-xl border border-zinc-700/70 bg-[#13151A] px-4 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30 w-52"
+                className="rounded-xl border border-zinc-700/70 bg-surface-section px-4 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30 w-52"
               />
               <div className="flex gap-1.5 ml-auto">
-                <span className="font-saira text-[10px] text-zinc-600 self-center mr-1 uppercase tracking-[0.18em]">Sort</span>
+                <span className="font-saira text-[10px] text-zinc-400 self-center mr-1 uppercase tracking-[0.18em]">Sort</span>
                 {([
                   { key: "flag",     label: "Priority" },
                   { key: "positive", label: "Positive %" },
@@ -2428,7 +2428,7 @@ export default function CoachPage() {
                     className={`rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.13em] transition ${
                       sort === s.key
                         ? "border-purple-400 bg-purple-500/20 text-white"
-                        : "border-zinc-700 text-zinc-500 hover:border-zinc-500"
+                        : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
                     }`}
                   >
                     {s.label}
@@ -2457,13 +2457,13 @@ export default function CoachPage() {
               />
             ))}
             {clients.length > 0 && filtered.length === 0 && (
-              <p className="font-saira text-sm text-zinc-600 text-center py-10">No athletes match your search.</p>
+              <p className="font-saira text-sm text-zinc-400 text-center py-10">No athletes match your search.</p>
             )}
           </div>
 
           {/* Footer */}
           <div className="mt-12 text-center">
-            <Link href="/journal" className="font-saira text-[11px] text-zinc-700 underline decoration-zinc-700 hover:text-zinc-400 transition">
+            <Link href="/journal" className="font-saira text-[11px] text-zinc-500 underline decoration-zinc-700 hover:text-zinc-400 transition">
               Open your own journal →
             </Link>
           </div>
@@ -2474,7 +2474,7 @@ export default function CoachPage() {
       <div className="hidden md:flex h-screen relative z-10 overflow-hidden">
 
         {/* ── Left panel: roster sidebar ── */}
-        <aside className="w-80 flex-shrink-0 border-r border-white/6 flex flex-col h-full bg-[#0D0B14]/90 overflow-hidden">
+        <aside className="w-80 flex-shrink-0 border-r border-white/6 flex flex-col h-full bg-surface-panel/90 overflow-hidden">
 
           {/* Brand */}
           <div className="flex-shrink-0 px-5 py-4 border-b border-white/5">
@@ -2497,13 +2497,13 @@ export default function CoachPage() {
                 )}
                 <div className="min-w-0">
                   <p className="font-saira text-sm font-semibold text-zinc-200 truncate">{profile.display_name}</p>
-                  <p className="font-saira text-xs text-zinc-600">Coach</p>
+                  <p className="font-saira text-xs text-zinc-400">Coach</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 <Link href="/today" className="font-saira text-xs text-emerald-600 hover:text-emerald-400 transition">Athlete profile</Link>
-                <Link href="/guide" className="font-saira text-xs text-zinc-600 hover:text-purple-300 transition">Guide</Link>
-                <a href="/auth/sign-out" className="font-saira text-xs text-zinc-700 hover:text-zinc-400 transition">Sign out</a>
+                <Link href="/guide" className="font-saira text-xs text-zinc-400 hover:text-purple-300 transition">Guide</Link>
+                <a href="/auth/sign-out" className="font-saira text-xs text-zinc-500 hover:text-zinc-400 transition">Sign out</a>
               </div>
             </div>
           )}
@@ -2511,7 +2511,7 @@ export default function CoachPage() {
           {/* Invite link (compact) */}
           {profile?.coach_code && (
             <div className="flex-shrink-0 px-4 py-3 border-b border-white/5">
-              <p className="font-saira text-xs uppercase tracking-[0.16em] text-zinc-600 mb-1.5">Athlete invite</p>
+              <p className="font-saira text-xs uppercase tracking-[0.16em] text-zinc-400 mb-1.5">Athlete invite</p>
               <div className="flex items-center gap-2">
                 <code className="font-saira text-xs text-purple-400 font-mono truncate flex-1 leading-none">
                   /join/{profile.coach_code}
@@ -2522,7 +2522,7 @@ export default function CoachPage() {
                     const url = `${window.location.origin}/join/${profile.coach_code}`;
                     navigator.clipboard.writeText(url).catch(() => {});
                   }}
-                  className="flex-shrink-0 font-saira text-xs text-zinc-500 border border-zinc-700 rounded-lg px-2.5 py-1 hover:border-purple-500/40 hover:text-purple-300 transition"
+                  className="flex-shrink-0 font-saira text-xs text-zinc-300 border border-zinc-700 rounded-lg px-2.5 py-1 hover:border-purple-500/40 hover:text-purple-300 transition"
                 >
                   Copy
                 </button>
@@ -2536,21 +2536,21 @@ export default function CoachPage() {
               <div className="flex items-center gap-5">
                 <div className="text-center">
                   <p className="font-saira text-2xl font-extrabold text-zinc-100">{clients.length}</p>
-                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-500 mt-0.5">Athletes</p>
+                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-300 mt-0.5">Athletes</p>
                 </div>
                 <div className="w-px h-8 bg-white/10" />
                 <div className="text-center">
                   <p className="font-saira text-2xl font-extrabold text-rose-300">
                     {clients.filter((c) => c.flag === "attention").length}
                   </p>
-                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-500 mt-0.5">Attention</p>
+                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-300 mt-0.5">Attention</p>
                 </div>
                 <div className="w-px h-8 bg-white/10" />
                 <div className="text-center">
                   <p className="font-saira text-2xl font-extrabold text-purple-300">
                     {Math.round(clients.reduce((s, c) => s + c.positiveRate, 0) / clients.length)}%
                   </p>
-                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-500 mt-0.5">Avg +</p>
+                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-300 mt-0.5">Avg +</p>
                 </div>
               </div>
             </div>
@@ -2571,10 +2571,10 @@ export default function CoachPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search athletes…"
-                className="w-full rounded-xl border border-zinc-700/70 bg-[#13151A] px-3 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30"
+                className="w-full rounded-xl border border-zinc-700/70 bg-surface-section px-3 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30"
               />
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-saira text-xs text-zinc-600 mr-0.5 uppercase tracking-[0.1em]">Sort</span>
+                <span className="font-saira text-xs text-zinc-400 mr-0.5 uppercase tracking-[0.1em]">Sort</span>
                 {([
                   { key: "flag",     label: "Priority" },
                   { key: "positive", label: "+" },
@@ -2588,7 +2588,7 @@ export default function CoachPage() {
                     className={`rounded-full border px-2.5 py-0.5 font-saira text-xs uppercase tracking-[0.1em] transition ${
                       sort === s.key
                         ? "border-purple-400 bg-purple-500/20 text-white"
-                        : "border-zinc-700 text-zinc-500 hover:border-zinc-500"
+                        : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
                     }`}
                   >
                     {s.label}
@@ -2603,13 +2603,13 @@ export default function CoachPage() {
             {clients.length === 0 ? (
               <div className="px-5 py-10 text-center">
                 <p className="font-saira text-2xl mb-3">&#128101;</p>
-                <p className="font-saira text-sm text-zinc-500 mb-1">No athletes yet</p>
-                <p className="font-saira text-xs text-zinc-700 leading-relaxed">
+                <p className="font-saira text-sm text-zinc-300 mb-1">No athletes yet</p>
+                <p className="font-saira text-xs text-zinc-500 leading-relaxed">
                   Share your invite link with athletes to get started.
                 </p>
               </div>
             ) : filtered.length === 0 ? (
-              <p className="font-saira text-sm text-zinc-600 text-center py-10">No athletes match your search.</p>
+              <p className="font-saira text-sm text-zinc-400 text-center py-10">No athletes match your search.</p>
             ) : (
               filtered.map((client) => (
                 <CompactAthleteRow
@@ -2625,7 +2625,7 @@ export default function CoachPage() {
         </aside>
 
         {/* ── Right panel: athlete detail ── */}
-        <main className="flex-1 overflow-y-auto bg-[#050608]">
+        <main className="flex-1 overflow-y-auto bg-surface-base">
           {selectedClient ? (
             <div className="p-8">
               {/* Athlete name header */}
@@ -2659,7 +2659,7 @@ export default function CoachPage() {
                       </span>
                     )}
                   </div>
-                  <p className="font-saira text-sm text-zinc-500 mt-1">
+                  <p className="font-saira text-sm text-zinc-300 mt-1">
                     Last active {selectedClient.lastActive} · {selectedClient.entriesThisWeek} entries this week · {selectedClient.positiveRate}% positive
                   </p>
                 </div>
@@ -2693,7 +2693,7 @@ export default function CoachPage() {
               <div className="text-center px-8 max-w-sm">
                 <p className="text-5xl mb-6">👈</p>
                 <p className="font-saira text-base font-semibold text-zinc-400">Select an athlete</p>
-                <p className="font-saira text-sm text-zinc-600 mt-2 leading-relaxed">
+                <p className="font-saira text-sm text-zinc-400 mt-2 leading-relaxed">
                   Click any athlete in the roster to view their full dashboard here.
                 </p>
               </div>

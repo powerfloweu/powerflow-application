@@ -298,7 +298,7 @@ function VizKeywords({
               }}
               placeholder={placeholders[i]}
               maxLength={20}
-              className="flex-1 min-w-[80px] rounded-lg border border-white/10 bg-[#0D0B14] px-3 py-1.5 font-saira text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-purple-500/50"
+              className="flex-1 min-w-[80px] rounded-lg border border-white/10 bg-surface-panel px-3 py-1.5 font-saira text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-purple-500/50"
             />
           ))}
         </div>
@@ -315,7 +315,7 @@ function VizKeywords({
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
+              className="font-saira text-[10px] text-zinc-400 hover:text-zinc-400 underline transition"
             >
               {t("common.cancel")}
             </button>
@@ -328,13 +328,13 @@ function VizKeywords({
   return (
     <div className="mb-5">
       <div className="flex items-center gap-2 mb-2">
-        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-300">
           {t("library.yourCues")}
         </p>
         <button
           type="button"
           onClick={openEdit}
-          className="font-saira text-[10px] text-zinc-600 hover:text-purple-400 underline transition"
+          className="font-saira text-[10px] text-zinc-400 hover:text-purple-400 underline transition"
         >
           {t("common.edit")}
         </button>
@@ -402,7 +402,7 @@ function AffirmationsInputs({
     <div className="space-y-3">
       {[0, 1, 2].map((i) => (
         <div key={i}>
-          <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
+          <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300 mb-1.5">
             {t("library.affirmationLabel")} {i + 1}{i > 0 ? ` (${t("common.optional")})` : ""}
           </label>
           <input
@@ -415,7 +415,7 @@ function AffirmationsInputs({
             }}
             placeholder={placeholders[i]}
             maxLength={120}
-            className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2.5 font-saira text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-emerald-500/50"
+            className="w-full rounded-xl border border-white/10 bg-surface-panel px-3 py-2.5 font-saira text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-emerald-500/50"
           />
         </div>
       ))}
@@ -491,15 +491,15 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
   // ── Placeholder (no audio yet) ──────────────────────────────
   if (!url) {
     return (
-      <div className="flex items-center gap-4 rounded-xl border border-white/5 bg-[#0D0B14] px-4 py-3.5">
+      <div className="flex items-center gap-4 rounded-xl border border-white/5 bg-surface-panel px-4 py-3.5">
         <div className="w-10 h-10 rounded-full border border-white/8 bg-white/[0.03] flex items-center justify-center flex-shrink-0">
-          <svg viewBox="0 0 20 20" className="w-4 h-4 text-zinc-700" fill="currentColor" aria-hidden>
+          <svg viewBox="0 0 20 20" className="w-4 h-4 text-zinc-500" fill="currentColor" aria-hidden>
             <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.34-5.89a1.5 1.5 0 000-2.54L6.3 2.84z"/>
           </svg>
         </div>
         <div>
-          <p className="font-saira text-xs font-semibold text-zinc-500">{t("library.audioGuided")}</p>
-          <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-700">
+          <p className="font-saira text-xs font-semibold text-zinc-300">{t("library.audioGuided")}</p>
+          <p className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-500">
             {t("library.audioComingSoon")}
           </p>
         </div>
@@ -519,7 +519,7 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
           <button
             type="button"
             onClick={() => setErrored(false)}
-            className="font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
+            className="font-saira text-[10px] text-zinc-400 hover:text-zinc-400 underline transition"
           >
             {t("common.retry")}
           </button>
@@ -530,7 +530,7 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
 
   // ── Active player ───────────────────────────────────────────
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0D0B14] p-4">
+    <div className="rounded-xl border border-white/10 bg-surface-panel p-4">
       <audio
         ref={audioRef}
         src={url}
@@ -584,8 +584,8 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
             />
           </div>
           <div className="flex justify-between mt-1.5">
-            <span className="font-saira text-[10px] text-zinc-600 tabular-nums">{fmt(currentTime)}</span>
-            <span className="font-saira text-[10px] text-zinc-600 tabular-nums">{duration ? fmt(duration) : "--:--"}</span>
+            <span className="font-saira text-[10px] text-zinc-400 tabular-nums">{fmt(currentTime)}</span>
+            <span className="font-saira text-[10px] text-zinc-400 tabular-nums">{duration ? fmt(duration) : "--:--"}</span>
           </div>
         </div>
       </div>
@@ -678,7 +678,7 @@ export default function ToolsPage() {
   // No early paywall — opener tier gets Relaxation tools; other sections show a locked preview.
 
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-8 sm:px-6 max-w-lg mx-auto md:max-w-3xl">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-8 sm:px-6 max-w-lg mx-auto md:max-w-3xl">
 
       {/* ── Header ────────────────────────────────────────────── */}
       <div className="mb-8">
@@ -688,7 +688,7 @@ export default function ToolsPage() {
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-2">
           {t("library.title")}
         </h1>
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           {t("library.subtitle")}
         </p>
       </div>
@@ -718,7 +718,7 @@ export default function ToolsPage() {
           <div className="mt-2 text-center">
             <Link
               href="/scripts"
-              className="font-saira text-xs text-zinc-500 hover:text-zinc-300 transition"
+              className="font-saira text-xs text-zinc-300 hover:text-zinc-300 transition"
             >
               {t("library.savedScripts")}
             </Link>
@@ -733,17 +733,17 @@ export default function ToolsPage() {
 
           return (
             <div key={section}>
-              <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-500 mb-3">
+              <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-300 mb-3">
                 {t(SECTION_KEY[section] ?? `library.section${section}`)}
               </p>
 
               {/* ── Locked section preview ─────────────────── */}
               {!sectionUnlocked ? (
-                <div className="rounded-2xl border border-white/5 bg-[#0D0B14] p-4">
+                <div className="rounded-2xl border border-white/5 bg-surface-panel p-4">
                   <div className="flex items-center justify-between gap-3 mb-4">
                     <div className="flex items-center gap-2">
-                      <span className="font-saira text-sm text-zinc-600">🔒</span>
-                      <p className="font-saira text-xs text-zinc-500">
+                      <span className="font-saira text-sm text-zinc-400">🔒</span>
+                      <p className="font-saira text-xs text-zinc-300">
                         {t(minTier === "pr" ? "library.toolsCountPR" : "library.toolsCountSecond", { count: items.length })}
                       </p>
                     </div>
@@ -756,13 +756,13 @@ export default function ToolsPage() {
                   </div>
                   <div className="space-y-1.5 select-none pointer-events-none opacity-[0.22]">
                     {items.map((tool) => (
-                      <div key={tool.id} className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#17131F] px-4 py-3">
-                        <div className="w-9 h-9 rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center font-saira text-[10px] font-bold text-zinc-500">
+                      <div key={tool.id} className="flex items-center gap-3 rounded-xl border border-white/5 bg-surface-card px-4 py-3">
+                        <div className="w-9 h-9 rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center font-saira text-[10px] font-bold text-zinc-300">
                           {tool.icon}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-saira text-sm font-semibold text-zinc-400">{t(`tools.${tool.i18nKey}.title`)}</p>
-                          <p className="font-saira text-[11px] text-zinc-600">{t(`tools.${tool.i18nKey}.tagline`)}</p>
+                          <p className="font-saira text-[11px] text-zinc-400">{t(`tools.${tool.i18nKey}.tagline`)}</p>
                         </div>
                       </div>
                     ))}
@@ -779,7 +779,7 @@ export default function ToolsPage() {
                         key={tool.id}
                         id={tool.id}
                         className={`rounded-2xl border transition-colors ${
-                          open ? `${c.border} ${c.bg}` : "border-white/5 bg-[#17131F]"
+                          open ? `${c.border} ${c.bg}` : "border-white/5 bg-surface-card"
                         }`}
                       >
                         {/* Header row */}
@@ -794,12 +794,12 @@ export default function ToolsPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-saira text-sm font-semibold text-white">{t(`tools.${tool.i18nKey}.title`)}</p>
-                              <p className="font-saira text-[11px] text-zinc-500">
+                              <p className="font-saira text-[11px] text-zinc-300">
                                 {t(`tools.${tool.i18nKey}.tagline`)}
-                                {tool.duration && <span className="ml-2 text-zinc-700">{tool.duration}</span>}
+                                {tool.duration && <span className="ml-2 text-zinc-500">{tool.duration}</span>}
                               </p>
                             </div>
-                            <span className={`font-saira text-sm text-zinc-600 transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
+                            <span className={`font-saira text-sm text-zinc-400 transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
                               →
                             </span>
                           </button>
@@ -815,7 +815,7 @@ export default function ToolsPage() {
                               <span className={`text-lg leading-none ${
                                 favoriteRelaxId === tool.id
                                   ? "text-amber-400"
-                                  : "text-zinc-700 hover:text-zinc-400"
+                                  : "text-zinc-500 hover:text-zinc-400"
                               }`}>
                                 {favoriteRelaxId === tool.id ? "★" : "☆"}
                               </span>
@@ -863,23 +863,23 @@ export default function ToolsPage() {
 
         {/* ── Suggest a tool ───────────────────────────────────── */}
         <div>
-          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-500 mb-3">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-300 mb-3">
             {t("library.suggestATool")}
           </p>
-          <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5">
+          <div className="rounded-2xl border border-white/5 bg-surface-card p-5">
             {requestState === "sent" ? (
               <div className="flex flex-col items-center gap-3 py-4 text-center">
                 <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-lg">
                   ✓
                 </div>
                 <p className="font-saira text-sm font-semibold text-emerald-300">{t("library.requestSent")}</p>
-                <p className="font-saira text-xs text-zinc-500 max-w-[240px]">
+                <p className="font-saira text-xs text-zinc-300 max-w-[240px]">
                   {t("library.requestThanks")}
                 </p>
                 <button
                   type="button"
                   onClick={() => setRequestState("idle")}
-                  className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-600 hover:text-zinc-400 underline transition"
+                  className="font-saira text-[10px] uppercase tracking-[0.16em] text-zinc-400 hover:text-zinc-400 underline transition"
                 >
                   {t("library.submitAnother")}
                 </button>
@@ -895,10 +895,10 @@ export default function ToolsPage() {
                   placeholder={t("library.suggestPlaceholder")}
                   rows={4}
                   maxLength={500}
-                  className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark] mb-3"
+                  className="w-full rounded-xl border border-white/10 bg-surface-panel px-3 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark] mb-3"
                 />
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-saira text-[10px] text-zinc-600 tabular-nums">
+                  <span className="font-saira text-[10px] text-zinc-400 tabular-nums">
                     {requestText.length}/500
                   </span>
                   <button

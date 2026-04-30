@@ -99,7 +99,7 @@ export default function VoicesCastPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#050608]">
+      <div className="flex items-center justify-center min-h-screen bg-surface-base">
         <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
       </div>
     );
@@ -109,9 +109,9 @@ export default function VoicesCastPage() {
 
   if (voices.length === 0) {
     return (
-      <div className="min-h-screen bg-[#050608]">
+      <div className="min-h-screen bg-surface-base">
         {/* Sticky back header */}
-        <div className="sticky top-0 z-40 bg-[#050608]/95 backdrop-blur-sm border-b border-white/5">
+        <div className="sticky top-0 z-40 bg-surface-base/95 backdrop-blur-sm border-b border-white/5">
           <div className="max-w-lg mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
             <button
               type="button"
@@ -123,8 +123,8 @@ export default function VoicesCastPage() {
               </svg>
               {t("voices.back")}
             </button>
-            <span className="text-zinc-700">·</span>
-            <span className="font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-600">{t("voices.title")}</span>
+            <span className="text-zinc-500">·</span>
+            <span className="font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-400">{t("voices.title")}</span>
           </div>
         </div>
 
@@ -137,7 +137,7 @@ export default function VoicesCastPage() {
             <blockquote className="font-saira text-sm text-zinc-400 leading-relaxed mb-2 max-w-xs italic">
               &ldquo;It&rsquo;s part of you and you need it in order to function well. You created it, so you must need it. The task is to not be over-active &mdash; only come when I need you.&rdquo;
             </blockquote>
-            <p className="font-saira text-[10px] text-zinc-600 mb-10">&mdash; Coach</p>
+            <p className="font-saira text-[10px] text-zinc-400 mb-10">&mdash; Coach</p>
 
             <button
               type="button"
@@ -163,9 +163,9 @@ export default function VoicesCastPage() {
   const voiceMap = new Map(voices.map((v) => [v.id, v]));
 
   return (
-    <div className="min-h-screen bg-[#050608]">
+    <div className="min-h-screen bg-surface-base">
       {/* Sticky back header */}
-      <div className="sticky top-0 z-40 bg-[#050608]/95 backdrop-blur-sm border-b border-white/5">
+      <div className="sticky top-0 z-40 bg-surface-base/95 backdrop-blur-sm border-b border-white/5">
         <div className="max-w-lg mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
           <button
             type="button"
@@ -177,8 +177,8 @@ export default function VoicesCastPage() {
             </svg>
             {t("voices.back")}
           </button>
-          <span className="text-zinc-700">·</span>
-          <span className="font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-600">{t("voices.title")}</span>
+          <span className="text-zinc-500">·</span>
+          <span className="font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-400">{t("voices.title")}</span>
         </div>
       </div>
 
@@ -191,7 +191,7 @@ export default function VoicesCastPage() {
             </p>
             <h1 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white">
               {t("voices.title")}{" "}
-              <span className="text-zinc-600 text-lg font-semibold">({voices.length})</span>
+              <span className="text-zinc-400 text-lg font-semibold">({voices.length})</span>
             </h1>
           </div>
           <button
@@ -210,7 +210,7 @@ export default function VoicesCastPage() {
             <Link
               key={voice.id}
               href={`/voices/${voice.id}`}
-              className="flex items-center gap-4 rounded-2xl border border-white/5 bg-[#17131F] px-4 py-4 hover:border-purple-500/20 hover:bg-[#1e1830] transition group"
+              className="flex items-center gap-4 rounded-2xl border border-white/5 bg-surface-card px-4 py-4 hover:border-purple-500/20 hover:bg-[#1e1830] transition group"
             >
               {/* Glyph */}
               <div className="flex-shrink-0">
@@ -225,10 +225,10 @@ export default function VoicesCastPage() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="font-saira text-sm font-bold text-white truncate">{voice.name}</p>
-                <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
+                <p className="font-saira text-[11px] text-zinc-300 mt-0.5">
                   {voice.shape} · {DISTANCE_LABELS[voice.current_distance]}
                 </p>
-                <p className="font-saira text-[10px] text-zinc-600 mt-0.5">
+                <p className="font-saira text-[10px] text-zinc-400 mt-0.5">
                   {voice.thought_count} {voice.thought_count !== 1 ? t("voices.thoughts") : t("voices.thought")}
                   {voice.body_locations.length > 0
                     ? ` · ${voice.body_locations.join(", ").replace(/_/g, " ")}`
@@ -237,7 +237,7 @@ export default function VoicesCastPage() {
               </div>
 
               {/* Chevron */}
-              <span className="flex-shrink-0 font-saira text-zinc-600 group-hover:text-purple-400 transition">
+              <span className="flex-shrink-0 font-saira text-zinc-400 group-hover:text-purple-400 transition">
                 →
               </span>
             </Link>
@@ -247,7 +247,7 @@ export default function VoicesCastPage() {
         {/* Recent thoughts rail */}
         {recentThoughts.length > 0 && (
           <div>
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-3">
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-300 mb-3">
               {t("voices.recentThoughts")}
             </p>
             <div className="space-y-2">
@@ -256,7 +256,7 @@ export default function VoicesCastPage() {
                 return (
                   <div
                     key={entry.id}
-                    className="flex items-start gap-3 rounded-xl border border-white/5 bg-[#0e0b15] px-4 py-3"
+                    className="flex items-start gap-3 rounded-xl border border-white/5 bg-surface-panel px-4 py-3"
                   >
                     {voice && (
                       <div className="flex-shrink-0 mt-0.5">
@@ -271,7 +271,7 @@ export default function VoicesCastPage() {
                     <p className="flex-1 font-saira text-xs text-zinc-300 leading-relaxed truncate">
                       &ldquo;{entry.content.slice(0, 80)}{entry.content.length > 80 ? "…" : ""}&rdquo;
                     </p>
-                    <span className="flex-shrink-0 font-saira text-[10px] text-zinc-600 whitespace-nowrap">
+                    <span className="flex-shrink-0 font-saira text-[10px] text-zinc-400 whitespace-nowrap">
                       {timeSince(entry.created_at, t)}
                     </span>
                   </div>

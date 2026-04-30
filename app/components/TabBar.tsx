@@ -45,7 +45,7 @@ export default function TabBar({ planTier = "pr", role }: Props) {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {/* Blur backdrop */}
-      <div className="absolute inset-0 bg-[#0D0B14]/90 backdrop-blur-md border-t border-white/8" />
+      <div className="absolute inset-0 bg-surface-panel/90 backdrop-blur-md border-t border-white/8" />
 
       <div className="relative flex items-stretch justify-around px-1">
         {TABS.map(({ href, labelKey, icon: Icon }) => {
@@ -60,17 +60,17 @@ export default function TabBar({ planTier = "pr", role }: Props) {
               key={href}
               href={dest}
               className={`relative flex flex-col items-center justify-center gap-1 flex-1 py-2.5 transition-colors ${
-                active ? "text-purple-300" : locked ? "text-zinc-700" : "text-zinc-600 hover:text-zinc-400"
+                active ? "text-purple-300" : locked ? "text-zinc-500" : "text-zinc-400 hover:text-zinc-400"
               }`}
             >
               <div className="relative">
                 <Icon active={active} />
                 {showBadge && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 ring-1 ring-[#0D0B14]" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 ring-1 ring-surface-panel" />
                 )}
                 {locked && (
                   <span className="absolute -top-0.5 -right-1.5">
-                    <svg viewBox="0 0 10 12" className="w-2.5 h-2.5 text-zinc-600" fill="none">
+                    <svg viewBox="0 0 10 12" className="w-2.5 h-2.5 text-zinc-400" fill="none">
                       <rect x="1" y="5" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
                       <path d="M3 5V3.5a2 2 0 0 1 4 0V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                     </svg>

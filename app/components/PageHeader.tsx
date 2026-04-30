@@ -26,7 +26,7 @@ export default function PageHeader({
       {backHref && (
         <Link
           href={backHref}
-          className="mb-4 flex items-center gap-1.5 font-saira text-[11px] text-zinc-500 hover:text-zinc-300 transition md:hidden"
+          className="mb-4 flex items-center gap-1.5 font-saira text-[11px] text-zinc-300 hover:text-zinc-300 transition md:hidden"
         >
           <span aria-hidden>←</span>
           {backLabel}

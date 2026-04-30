@@ -208,7 +208,7 @@ export default function DasTestPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-[#050608] pt-24 text-white">
+      <div className="min-h-screen bg-surface-base pt-24 text-white">
         <div className="mx-auto max-w-3xl px-4 py-12 text-center font-saira text-sm text-zinc-400">
           Loading&hellip;
         </div>
@@ -217,7 +217,7 @@ export default function DasTestPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#050608] pt-24 text-white">
+    <div className="relative min-h-screen bg-surface-base pt-24 text-white">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(168,85,247,0.14),transparent_55%)]" />
       </div>
@@ -258,7 +258,7 @@ export default function DasTestPage() {
 
         {/* Intro */}
         {page === 0 && (
-          <section className="mt-10 rounded-2xl border border-white/5 bg-[#13151A] p-6 shadow-[0_18px_50px_rgba(0,0,0,0.55)] sm:p-8">
+          <section className="mt-10 rounded-2xl border border-white/5 bg-surface-section p-6 shadow-[0_18px_50px_rgba(0,0,0,0.55)] sm:p-8">
             <h2 className="font-saira text-sm font-semibold uppercase tracking-[0.28em] text-purple-300">
               {t.intro}
             </h2>
@@ -274,7 +274,7 @@ export default function DasTestPage() {
                   required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-700/70 bg-[#0D0F14] px-3 py-2.5 font-saira text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full rounded-xl border border-zinc-700/70 bg-surface-input px-3 py-2.5 font-saira text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40"
                 />
               </label>
               <label className="space-y-2">
@@ -286,7 +286,7 @@ export default function DasTestPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-700/70 bg-[#0D0F14] px-3 py-2.5 font-saira text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full rounded-xl border border-zinc-700/70 bg-surface-input px-3 py-2.5 font-saira text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40"
                 />
               </label>
             </div>
@@ -304,7 +304,7 @@ export default function DasTestPage() {
                     className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 font-saira text-xs uppercase tracking-[0.12em] transition ${
                       lang === L
                         ? "border-purple-400 bg-purple-500/20 text-white"
-                        : "border-zinc-700 bg-[#0D0F14] text-zinc-200 hover:border-purple-400"
+                        : "border-zinc-700 bg-surface-input text-zinc-200 hover:border-purple-400"
                     }`}
                   >
                     {L === "en" ? "English" : L === "hu" ? "Magyar" : "Deutsch"}
@@ -335,11 +335,11 @@ export default function DasTestPage() {
                       ? "border-red-500/40 bg-red-950/10"
                       : value !== undefined
                         ? "border-purple-500/25 bg-gradient-to-br from-purple-600/8 to-transparent"
-                        : "border-white/5 bg-[#13151A]"
+                        : "border-white/5 bg-surface-section"
                   }`}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="font-saira text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                    <div className="font-saira text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-300">
                       {String(item.id).padStart(2, "0")}
                     </div>
                     <p className="flex-1 font-saira text-sm text-zinc-100 sm:text-base">
@@ -382,7 +382,7 @@ export default function DasTestPage() {
             type="button"
             onClick={onBack}
             disabled={page === 0}
-            className="rounded-full border border-purple-500/50 px-6 py-2 font-saira text-xs font-semibold uppercase tracking-[0.18em] text-purple-200 transition hover:border-purple-400 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:text-zinc-600"
+            className="rounded-full border border-purple-500/50 px-6 py-2 font-saira text-xs font-semibold uppercase tracking-[0.18em] text-purple-200 transition hover:border-purple-400 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:text-zinc-400"
           >
             {t.back}
           </button>
@@ -408,7 +408,7 @@ export default function DasTestPage() {
           )}
         </div>
 
-        <div className="mt-8 text-center font-saira text-[11px] text-zinc-500">
+        <div className="mt-8 text-center font-saira text-[11px] text-zinc-300">
           <Link
             href="/tests"
             className="underline decoration-zinc-600 hover:text-white"
@@ -437,7 +437,7 @@ function AnswerButton({
       className={`w-full rounded-xl border px-3 py-2.5 font-saira text-[11px] font-semibold tracking-[0.08em] transition text-center ${
         checked
           ? "border-purple-400 bg-purple-500/80 text-white shadow-[0_0_18px_rgba(168,85,247,0.55)]"
-          : "border-zinc-700 bg-[#0D0F14] text-zinc-300 hover:border-purple-400"
+          : "border-zinc-700 bg-surface-input text-zinc-300 hover:border-purple-400"
       }`}
     >
       {label}

@@ -84,7 +84,7 @@ export default function PaywallScreen({ required, current }: Props) {
       </Link>
 
       {current && (
-        <p className="mt-5 text-xs text-zinc-600">
+        <p className="mt-5 text-xs text-zinc-400">
           {t("paywall.currentPlan")}: {t(TIER_KEY[current])}
         </p>
       )}

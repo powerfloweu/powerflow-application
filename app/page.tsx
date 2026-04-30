@@ -499,7 +499,7 @@ export default function PowerFlowApplicationPage() {
             />
           </div>
 
-          <p className="mt-6 text-center font-saira text-[11px] text-zinc-500">
+          <p className="mt-6 text-center font-saira text-[11px] text-zinc-300">
             {t.disclaimer}
           </p>
         </FormCard>
@@ -563,7 +563,7 @@ export default function PowerFlowApplicationPage() {
       </section>
 
       {/* Intro strip */}
-      <section className="border-b border-white/5 bg-[#0B0C10]">
+      <section className="border-b border-white/5 bg-surface-base">
         <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
           <p className="font-saira text-sm text-zinc-300 sm:text-base">{t.intro}</p>
         </div>
@@ -651,7 +651,7 @@ export default function PowerFlowApplicationPage() {
                   type="button"
                   onClick={goBack}
                   disabled={step === 0}
-                  className="rounded-full border border-purple-500/50 px-6 py-2 font-saira text-xs font-semibold uppercase tracking-[0.18em] text-purple-200 transition hover:border-purple-400 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:text-zinc-600"
+                  className="rounded-full border border-purple-500/50 px-6 py-2 font-saira text-xs font-semibold uppercase tracking-[0.18em] text-purple-200 transition hover:border-purple-400 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:text-zinc-400"
                 >
                   {t.labels.back}
                 </button>
@@ -690,7 +690,7 @@ type FormCardProps = {
 
 function FormCard({ title, children }: FormCardProps) {
   return (
-    <section className="rounded-2xl border border-white/5 bg-[#13151A] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.55)] sm:p-8">
+    <section className="rounded-2xl border border-white/5 bg-surface-section p-5 shadow-[0_18px_50px_rgba(0,0,0,0.55)] sm:p-8">
       {/* tracking-[0.28em] was overflowing on narrow phones with longer
           German titles. Tighter tracking on mobile, full tracking from sm: up. */}
       <h2 className="font-saira text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] sm:tracking-[0.28em] text-purple-300">
@@ -755,13 +755,13 @@ function TextField({
           // text-base on mobile (16px) prevents iOS Safari from auto-zooming
           // the page when the input gains focus. Drops to text-sm at sm: where
           // the keyboard-zoom behaviour does not apply.
-          className="w-full rounded-xl border border-zinc-700/70 bg-[#0D0F14] px-3 py-2.5 font-saira text-base sm:text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40 [color-scheme:dark]"
+          className="w-full rounded-xl border border-zinc-700/70 bg-surface-input px-3 py-2.5 font-saira text-base sm:text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40 [color-scheme:dark]"
         />
         {type === "date" && showPickerButton && (
           <button
             type="button"
             onClick={handleOpenPicker}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-purple-500/50 bg-[#0D0F14] text-purple-200 transition hover:border-purple-400 hover:text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-purple-500/50 bg-surface-input text-purple-200 transition hover:border-purple-400 hover:text-white"
           >
             📅
           </button>
@@ -800,7 +800,7 @@ function TextareaField({
         required={required}
         rows={4}
         // text-base on mobile prevents iOS Safari focus-zoom (see TextField)
-        className="w-full rounded-xl border border-zinc-700/70 bg-[#0D0F14] px-3 py-2.5 font-saira text-base sm:text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40 resize-y"
+        className="w-full rounded-xl border border-zinc-700/70 bg-surface-input px-3 py-2.5 font-saira text-base sm:text-sm text-zinc-50 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-500/40 resize-y"
       />
     </div>
   );
@@ -824,7 +824,7 @@ function FieldLabel({ label, description, required, hint }: FieldLabelProps) {
         {hint && <Hint text={hint} />}
       </label>
       {description && (
-        <p className="font-saira text-[11px] leading-snug text-zinc-500">{description}</p>
+        <p className="font-saira text-[11px] leading-snug text-zinc-300">{description}</p>
       )}
     </div>
   );
@@ -842,7 +842,7 @@ function Hint({ text }: { text: string }) {
        * 80vw on phones so it always fits within the viewport regardless of
        * where the icon sits horizontally.
        */}
-      <span className="pointer-events-none absolute left-0 top-full z-10 mt-2 hidden w-max max-w-[80vw] sm:max-w-[260px] rounded-md bg-[#0B0C10] px-3 py-2 text-[11px] leading-snug text-zinc-100 shadow-lg ring-1 ring-purple-500/50 group-hover:block group-focus-within:block">
+      <span className="pointer-events-none absolute left-0 top-full z-10 mt-2 hidden w-max max-w-[80vw] sm:max-w-[260px] rounded-md bg-surface-base px-3 py-2 text-[11px] leading-snug text-zinc-100 shadow-lg ring-1 ring-purple-500/50 group-hover:block group-focus-within:block">
         {text}
       </span>
     </span>
@@ -867,7 +867,7 @@ function RadioPill({
   icon,
 }: RadioPillProps) {
   return (
-    <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-zinc-700/80 bg-[#0D0F14] px-4 py-2 text-xs font-saira text-zinc-100 transition hover:border-purple-400">
+    <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-zinc-700/80 bg-surface-input px-4 py-2 text-xs font-saira text-zinc-100 transition hover:border-purple-400">
       <input
         type="radio"
         name={name}
@@ -900,12 +900,12 @@ function ScaleRow({ name, label, description }: ScaleRowProps) {
             {label}
           </p>
           {description && (
-            <p className="font-saira text-[11px] text-zinc-500">
+            <p className="font-saira text-[11px] text-zinc-300">
               {description}
             </p>
           )}
         </div>
-        <div className="mt-1 flex items-center gap-2 text-[10px] text-zinc-500 sm:mt-0">
+        <div className="mt-1 flex items-center gap-2 text-[10px] text-zinc-300 sm:mt-0">
           <span>1</span>
           <div className="h-px flex-1 bg-zinc-700/70" />
           <span>10</span>
@@ -925,7 +925,7 @@ function ScaleRow({ name, label, description }: ScaleRowProps) {
               value={value}
               className="peer sr-only"
             />
-            <span className="flex aspect-square w-full items-center justify-center rounded-full border border-zinc-700/80 bg-[#0D0F14] text-[11px] sm:text-xs font-saira text-zinc-100 transition hover:border-purple-400 peer-checked:scale-110 peer-checked:border-purple-400 peer-checked:bg-purple-500 peer-checked:text-white peer-checked:shadow-[0_0_25px_rgba(168,85,247,0.35)]">
+            <span className="flex aspect-square w-full items-center justify-center rounded-full border border-zinc-700/80 bg-surface-input text-[11px] sm:text-xs font-saira text-zinc-100 transition hover:border-purple-400 peer-checked:scale-110 peer-checked:border-purple-400 peer-checked:bg-purple-500 peer-checked:text-white peer-checked:shadow-[0_0_25px_rgba(168,85,247,0.35)]">
               {value}
             </span>
           </label>
@@ -957,7 +957,7 @@ function CheckboxGroup({
         {options.map((opt) => (
           <label
             key={opt.value}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-700/80 bg-[#0D0F14] px-4 py-2 font-saira text-xs text-zinc-100 transition hover:border-purple-400"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-700/80 bg-surface-input px-4 py-2 font-saira text-xs text-zinc-100 transition hover:border-purple-400"
           >
             <input
               type="radio"

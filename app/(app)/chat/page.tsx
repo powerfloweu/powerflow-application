@@ -106,12 +106,12 @@ function ScriptBlock({
             <button
               type="button"
               onClick={onStop}
-              className="ml-auto font-saira text-[10px] uppercase tracking-wider text-zinc-600 hover:text-zinc-400 transition"
+              className="ml-auto font-saira text-[10px] uppercase tracking-wider text-zinc-400 hover:text-zinc-400 transition"
             >
               {t("common.cancel")}
             </button>
           </div>
-          <p className="font-saira text-[10px] text-zinc-600">
+          <p className="font-saira text-[10px] text-zinc-400">
             {t("chat.keepScreenOpen")}
           </p>
         </div>
@@ -126,7 +126,7 @@ function ScriptBlock({
           </div>
           {/* Time */}
           {audioTime && audioTime.duration > 0 && (
-            <div className="flex justify-between font-saira text-[10px] text-zinc-600">
+            <div className="flex justify-between font-saira text-[10px] text-zinc-400">
               <span>{fmtTime(audioTime.current)}</span>
               <span>{fmtTime(audioTime.duration)}</span>
             </div>
@@ -155,7 +155,7 @@ function ScriptBlock({
               10s →
             </button>
           </div>
-          <p className="font-saira text-[10px] text-zinc-700 text-center">
+          <p className="font-saira text-[10px] text-zinc-500 text-center">
             {t("chat.noSound")}
           </p>
         </div>
@@ -238,7 +238,7 @@ function renderContent(
       return (
         <pre
           key={i}
-          className="bg-[#0e0b15] rounded-lg p-3 text-[13px] sm:text-xs mt-2 whitespace-pre-wrap font-mono overflow-x-auto"
+          className="bg-surface-panel rounded-lg p-3 text-[13px] sm:text-xs mt-2 whitespace-pre-wrap font-mono overflow-x-auto"
         >
           {body}
         </pre>
@@ -270,7 +270,7 @@ function renderContent(
 function TypingIndicator() {
   return (
     <div className="flex justify-start mb-4">
-      <div className="bg-[#17131F] border border-white/8 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
+      <div className="bg-surface-card border border-white/8 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
         <div className="flex items-center gap-1.5 h-4">
           {[0, 1, 2].map((i) => (
             <span
@@ -306,7 +306,7 @@ function WelcomeCard({ onChip }: { onChip: (text: string) => void }) {
             {t("chat.welcomeDesc")}
           </p>
         </div>
-        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-600 mb-3 text-center">
+        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-400 mb-3 text-center">
           {t("chat.quickStartsLabel")}
         </p>
         <div className="flex flex-col gap-2">
@@ -315,7 +315,7 @@ function WelcomeCard({ onChip }: { onChip: (text: string) => void }) {
               key={qs}
               type="button"
               onClick={() => onChip(qs)}
-              className="w-full text-left rounded-xl border border-white/8 bg-[#17131F] hover:border-purple-500/30 hover:bg-purple-500/5 px-4 py-3 font-saira text-sm text-zinc-400 hover:text-zinc-200 transition"
+              className="w-full text-left rounded-xl border border-white/8 bg-surface-card hover:border-purple-500/30 hover:bg-purple-500/5 px-4 py-3 font-saira text-sm text-zinc-400 hover:text-zinc-200 transition"
             >
               {qs}
             </button>
@@ -748,18 +748,18 @@ export default function ChatPage() {
   const hasMessages = messages.length > 0 || streaming;
 
   return (
-    <div className="chat-screen flex flex-col bg-[#050608]">
+    <div className="chat-screen flex flex-col bg-surface-base">
 
       {/* ── Sticky header ───────────────────────────────────────
           3-column grid keeps the centre title visually centred even when
           the side columns have different widths. On narrow phones we drop
           the "Scripts" label to just an emoji icon so the right column
           doesn't collide with the title. */}
-      <header className="sticky top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:px-4 py-3 border-b border-white/6 bg-[#050608]/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:px-4 py-3 border-b border-white/6 bg-surface-base/95 backdrop-blur-sm">
         <div className="justify-self-start">
           <Link
             href="/library"
-            className="inline-block font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.14em] sm:tracking-[0.18em] transition"
+            className="inline-block font-saira text-[11px] text-zinc-300 hover:text-purple-300 uppercase tracking-[0.14em] sm:tracking-[0.18em] transition"
           >
             ← {t("common.back")}
           </Link>
@@ -774,7 +774,7 @@ export default function ChatPage() {
           <Link
             href="/scripts"
             aria-label="Saved scripts"
-            className="font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.14em] transition"
+            className="font-saira text-[11px] text-zinc-300 hover:text-purple-300 uppercase tracking-[0.14em] transition"
           >
             <span className="sm:hidden text-base leading-none">📜</span>
             <span className="hidden sm:inline">📜 {t("chat.scriptsLink")}</span>
@@ -783,7 +783,7 @@ export default function ChatPage() {
             type="button"
             onClick={() => setShowClearConfirm(true)}
             disabled={!hasMessages || streaming}
-            className="font-saira text-[11px] text-zinc-600 hover:text-zinc-400 uppercase tracking-[0.14em] transition disabled:opacity-30"
+            className="font-saira text-[11px] text-zinc-400 hover:text-zinc-400 uppercase tracking-[0.14em] transition disabled:opacity-30"
           >
             {t("chat.clear")}
           </button>
@@ -793,18 +793,18 @@ export default function ChatPage() {
       {/* ── Clear confirmation dialog ──────────────────────────── */}
       {showClearConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6">
-          <div className="w-full max-w-xs rounded-2xl border border-white/10 bg-[#17131F] p-6 text-center">
+          <div className="w-full max-w-xs rounded-2xl border border-white/10 bg-surface-card p-6 text-center">
             <p className="font-saira text-sm font-semibold text-white mb-2">
               {t("chat.clearTitle")}
             </p>
-            <p className="font-saira text-xs text-zinc-500 mb-5">
+            <p className="font-saira text-xs text-zinc-300 mb-5">
               {t("chat.clearDesc")}
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setShowClearConfirm(false)}
-                className="flex-1 rounded-xl border border-white/10 bg-[#0D0B14] py-2.5 font-saira text-xs font-semibold text-zinc-400 hover:text-white transition"
+                className="flex-1 rounded-xl border border-white/10 bg-surface-panel py-2.5 font-saira text-xs font-semibold text-zinc-400 hover:text-white transition"
               >
                 {t("common.cancel")}
               </button>
@@ -838,7 +838,7 @@ export default function ChatPage() {
                     className={`font-saira text-sm text-zinc-200 px-4 py-3 w-full ${
                       msg.role === "user"
                         ? "bg-purple-500/20 border border-purple-500/30 rounded-2xl rounded-tr-sm"
-                        : "bg-[#17131F] border border-white/8 rounded-2xl rounded-tl-sm"
+                        : "bg-surface-card border border-white/8 rounded-2xl rounded-tl-sm"
                     }`}
                   >
                     {msg.role === "assistant"
@@ -878,7 +878,7 @@ export default function ChatPage() {
             {streaming &&
               (streamingContent ? (
                 <div className="flex justify-start mb-4">
-                  <div className="bg-[#17131F] border border-white/8 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] font-saira text-sm text-zinc-200">
+                  <div className="bg-surface-card border border-white/8 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] font-saira text-sm text-zinc-200">
                     {renderContent(streamingContent, scriptRenderProps)}
                   </div>
                 </div>
@@ -892,7 +892,7 @@ export default function ChatPage() {
       </div>
 
       {/* ── Sticky input footer ────────────────────────────────── */}
-      <footer className="sticky bottom-0 z-10 border-t border-white/6 bg-[#050608]/95 backdrop-blur-sm px-4 py-3">
+      <footer className="sticky bottom-0 z-10 border-t border-white/6 bg-surface-base/95 backdrop-blur-sm px-4 py-3">
         <div className="max-w-lg mx-auto flex items-end gap-3">
           <textarea
             ref={inputRef}
@@ -904,7 +904,7 @@ export default function ChatPage() {
             disabled={streaming}
             // text-base on mobile (16px) prevents iOS Safari from auto-zooming
             // when the textarea is focused. Drops to text-sm at sm: breakpoint.
-            className="flex-1 rounded-2xl border border-white/10 bg-[#17131F] px-4 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/40 resize-none overflow-hidden disabled:opacity-50 [color-scheme:dark]"
+            className="flex-1 rounded-2xl border border-white/10 bg-surface-card px-4 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/40 resize-none overflow-hidden disabled:opacity-50 [color-scheme:dark]"
             style={{ minHeight: "48px", maxHeight: "200px" }}
           />
           <button
@@ -919,7 +919,7 @@ export default function ChatPage() {
             </svg>
           </button>
         </div>
-        <p className="font-saira text-[10px] text-zinc-700 text-center mt-1.5">
+        <p className="font-saira text-[10px] text-zinc-500 text-center mt-1.5">
           {t("chat.sendHint")}
         </p>
       </footer>

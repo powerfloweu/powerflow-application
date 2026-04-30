@@ -10,6 +10,7 @@ import type { SelfTalkMode } from "@/lib/voices";
 import { DevLogViewer } from "@/app/components/NotificationModal";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 
 function localeForDate(loc: string): string {
   if (loc === "de") return "de-DE";
@@ -156,12 +157,12 @@ export default function YouPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto">
 
       {/* ── Back ────────────────────────────────────────────── */}
       <Link
         href="/today"
-        className="inline-block mb-5 font-saira text-[11px] text-zinc-500 hover:text-purple-300 uppercase tracking-[0.18em] transition"
+        className="inline-block mb-5 font-saira text-[11px] text-zinc-300 hover:text-purple-300 uppercase tracking-[0.18em] transition"
       >
         ← {t("nav.home")}
       </Link>
@@ -186,7 +187,7 @@ export default function YouPage() {
 
       {/* ── Identity card ───────────────────────────────────── */}
       {profile && (
-        <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-6">
+        <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-6">
           <div className="flex items-center gap-4 mb-4">
             {profile.avatar_url ? (
               <img src={profile.avatar_url} alt={profile.display_name}
@@ -202,7 +203,7 @@ export default function YouPage() {
               {profile.role}
             </span>
           </div>
-          <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
+          <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300 mb-1.5">
             {t("you.name")}
           </label>
           <div className="flex items-center gap-2">
@@ -212,7 +213,7 @@ export default function YouPage() {
               onChange={(e) => setDisplayName(e.target.value)}
               maxLength={80}
               placeholder={t("you.namePlaceholder")}
-              className="flex-1 rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
+              className="flex-1 rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50"
             />
             <SaveButton
               label={btnLabel("name")}
@@ -234,7 +235,7 @@ export default function YouPage() {
             type="date"
             value={meetDate}
             onChange={(e) => setMeetDate(e.target.value)}
-            className="flex-1 rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
+            className="flex-1 rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-base sm:text-sm text-white focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
           />
           <SaveButton
             label={btnLabel("meet")}
@@ -245,7 +246,7 @@ export default function YouPage() {
         {meetDate && (
           <button type="button"
             onClick={() => { setMeetDate(""); save("meet", { meet_date: null }); }}
-            className="mt-2 font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition">
+            className="mt-2 font-saira text-[10px] text-zinc-400 hover:text-zinc-400 underline transition">
             Clear date
           </button>
         )}
@@ -259,13 +260,13 @@ export default function YouPage() {
         <div className="grid grid-cols-2 gap-3 mb-3">
           {/* Gender */}
           <div>
-            <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
+            <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300 mb-1.5">
               {t("you.gender")}
             </label>
             <select
               value={gender}
               onChange={(e) => setGender(e.target.value as "male" | "female" | "")}
-              className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
+              className="w-full rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
             >
               <option value="">—</option>
               <option value="male">{t("you.male")}</option>
@@ -274,7 +275,7 @@ export default function YouPage() {
           </div>
           {/* Bodyweight */}
           <div>
-            <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
+            <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300 mb-1.5">
               {t("you.bodyweight")} (kg)
             </label>
             <input
@@ -282,19 +283,19 @@ export default function YouPage() {
               value={bodyweight}
               onChange={(e) => setBodyweight(e.target.value)}
               placeholder="e.g. 93.4"
-              className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
+              className="w-full rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
             />
           </div>
         </div>
         {/* Weight category */}
         <div className="mb-3">
-          <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
+          <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300 mb-1.5">
             {t("you.weightCategory")}
           </label>
           <select
             value={weightCat}
             onChange={(e) => setWeightCat(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
+            className="w-full rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
           >
             <option value="">— select —</option>
             {(gender ? WEIGHT_CATEGORIES[gender] : [...WEIGHT_CATEGORIES.male, ...WEIGHT_CATEGORIES.female]).map((c) => (
@@ -328,7 +329,7 @@ export default function YouPage() {
           ] as [string, string, React.Dispatch<React.SetStateAction<string>>, string, React.Dispatch<React.SetStateAction<string>>][]).map(
             ([label, cur, setCur, goal, setGoal]) => (
               <div key={label}>
-                <p className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-1.5">
+                <p className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300 mb-1.5">
                   {label}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -337,14 +338,14 @@ export default function YouPage() {
                     value={cur}
                     onChange={(e) => setCur(e.target.value)}
                     placeholder={t("you.currentKg")}
-                    className="rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
+                    className="rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
                   />
                   <input
                     type="number" step="0.5" min="0" max="1000"
                     value={goal}
                     onChange={(e) => setGoal(e.target.value)}
                     placeholder={t("you.goalKg")}
-                    className="rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
+                    className="rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
                   />
                 </div>
               </div>
@@ -392,7 +393,7 @@ export default function YouPage() {
                   ? t("onboarding.goalRequired", { n: i + 1 })
                   : t("onboarding.goalOptional", { n: i + 1 })}
                 maxLength={200}
-                className="flex-1 rounded-xl border border-white/10 bg-[#0D0B14] px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
+                className="flex-1 rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
               />
             </div>
           ))}
@@ -411,7 +412,7 @@ export default function YouPage() {
         label={t("you.sectionTrainingSchedule")}
         summary={trainingDays ? `${trainingDays}${t("you.timesPerWeek")}` : t("you.notSet")}
       >
-        <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 mb-2">
+        <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300 mb-2">
           {t("you.trainingDaysWeek")}
         </label>
         <div className="flex gap-2 mb-3">
@@ -423,7 +424,7 @@ export default function YouPage() {
               className={`flex-1 rounded-xl border py-2 font-saira text-xs font-semibold transition ${
                 trainingDays === n
                   ? "border-purple-500 bg-purple-600 text-white"
-                  : "border-white/10 bg-[#0D0B14] text-zinc-400 hover:border-purple-500/40 hover:text-white"
+                  : "border-white/10 bg-surface-panel text-zinc-400 hover:border-purple-500/40 hover:text-white"
               }`}
             >
               {n}
@@ -479,12 +480,12 @@ export default function YouPage() {
                     </p>
                   </div>
                 ) : (
-                  <p className="font-saira text-sm text-zinc-500 mb-3">{t("you.coachNotConnected")}</p>
+                  <p className="font-saira text-sm text-zinc-300 mb-3">{t("you.coachNotConnected")}</p>
                 )}
                 <button
                   type="button"
                   onClick={openPicker}
-                  className="rounded-xl border border-white/10 bg-[#0D0B14] hover:border-purple-500/40 hover:text-white px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400 transition"
+                  className="rounded-xl border border-white/10 bg-surface-panel hover:border-purple-500/40 hover:text-white px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400 transition"
                 >
                   {coachId ? t("you.changeCoach") : t("you.chooseCoach")}
                 </button>
@@ -506,7 +507,7 @@ export default function YouPage() {
                     className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition ${
                       coachId === null
                         ? "border-purple-500 bg-purple-500/10"
-                        : "border-white/10 bg-[#0D0B14] hover:border-white/20"
+                        : "border-white/10 bg-surface-panel hover:border-white/20"
                     }`}
                   >
                     <div className="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
@@ -525,7 +526,7 @@ export default function YouPage() {
                       className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition ${
                         coachId === coach.id
                           ? "border-purple-500 bg-purple-500/10"
-                          : "border-white/10 bg-[#0D0B14] hover:border-white/20"
+                          : "border-white/10 bg-surface-panel hover:border-white/20"
                       }`}
                     >
                       {coach.avatar_url ? (
@@ -555,7 +556,7 @@ export default function YouPage() {
               <button
                 type="button"
                 onClick={() => setShowCoachPicker(false)}
-                className="mt-3 font-saira text-[10px] text-zinc-600 hover:text-zinc-400 underline transition"
+                className="mt-3 font-saira text-[10px] text-zinc-400 hover:text-zinc-400 underline transition"
               >
                 {t("common.cancel")}
               </button>
@@ -570,10 +571,10 @@ export default function YouPage() {
           label={t("you.sectionPracticeMode")}
           summary={selfTalkMode === "beta_voice_work" ? t("you.voiceWorkLabel") : t("you.classicLabel")}
         >
-          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 mb-1">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-1">
             Self-Talk Log
           </p>
-          <p className="font-saira text-xs text-zinc-500 leading-relaxed mb-4">
+          <p className="font-saira text-xs text-zinc-300 leading-relaxed mb-4">
             Classic mode uses the standard journal for your thoughts.
             Voice work maps the recurring voices in your head &mdash; naming
             them, locating them, and giving each one a purpose.
@@ -604,7 +605,7 @@ export default function YouPage() {
                   className={`flex-1 rounded-xl border py-2 font-saira text-xs font-semibold transition ${
                     isActive
                       ? "border-purple-500 bg-purple-600 text-white"
-                      : "border-white/10 bg-[#0D0B14] text-zinc-400 hover:border-purple-500/40 hover:text-white"
+                      : "border-white/10 bg-surface-panel text-zinc-400 hover:border-purple-500/40 hover:text-white"
                   } disabled:opacity-60`}
                 >
                   {label}
@@ -626,7 +627,7 @@ export default function YouPage() {
       {/* ── Guide link ───────────────────────────────────────── */}
       <Link
         href="/guide"
-        className="flex items-center justify-between w-full mt-2 rounded-2xl border border-white/5 bg-[#17131F] px-5 py-4 font-saira text-sm text-zinc-400 hover:text-purple-300 hover:border-purple-500/20 transition group"
+        className="flex items-center justify-between w-full mt-2 rounded-2xl border border-white/5 bg-surface-card px-5 py-4 font-saira text-sm text-zinc-400 hover:text-purple-300 hover:border-purple-500/20 transition group"
       >
         <div className="flex items-center gap-3">
           <span className="text-lg">📖</span>
@@ -634,16 +635,19 @@ export default function YouPage() {
             <p className="font-saira text-sm font-semibold text-zinc-300 group-hover:text-purple-300 transition">
               User guide
             </p>
-            <p className="font-saira text-[10px] text-zinc-600">
+            <p className="font-saira text-[10px] text-zinc-400">
               How to use PowerFlow · includes printable PDF
             </p>
           </div>
         </div>
-        <span className="text-zinc-600 group-hover:text-purple-400 transition">→</span>
+        <span className="text-zinc-400 group-hover:text-purple-400 transition">→</span>
       </Link>
 
       {/* ── Language ─────────────────────────────────────────── */}
       <LanguageSwitcher />
+
+      {/* ── Appearance ───────────────────────────────────────── */}
+      <AppearanceRow />
 
       {/* ── What's new ───────────────────────────────────────── */}
       <Section label={t("you.sectionWhatsNew")}>
@@ -652,6 +656,44 @@ export default function YouPage() {
 
       {/* ── Sign out ─────────────────────────────────────────── */}
       <SignOutButton />
+    </div>
+  );
+}
+
+function AppearanceRow() {
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+  return (
+    <div className="rounded-2xl border border-white/5 bg-surface-card mb-4 px-5 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
+            Appearance
+          </p>
+          <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
+            {isDark ? "Dark mode" : "Light mode"} — tap to switch
+          </p>
+        </div>
+        <button
+          onClick={toggleTheme}
+          aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+          className={`relative inline-flex h-7 w-13 flex-shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 focus:outline-none ${
+            isDark
+              ? "border-purple-500/30 bg-purple-500/20"
+              : "border-amber-400/40 bg-amber-400/15"
+          }`}
+          style={{ width: "3.25rem" }}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full shadow transition-transform duration-200 ${
+              isDark
+                ? "translate-x-0 bg-purple-400"
+                : "translate-x-6 bg-amber-400"
+            }`}
+            style={{ margin: "1px" }}
+          />
+        </button>
+      </div>
     </div>
   );
 }
@@ -665,7 +707,7 @@ function SignOutButton() {
         await fetch("/auth/sign-out", { method: "POST" });
         router.replace("/auth/sign-in");
       }}
-      className="w-full mt-2 rounded-2xl border border-white/5 bg-[#17131F] py-4 font-saira text-sm text-zinc-500 hover:text-rose-400 hover:border-rose-500/20 transition"
+      className="w-full mt-2 rounded-2xl border border-white/5 bg-surface-card py-4 font-saira text-sm text-zinc-300 hover:text-rose-400 hover:border-rose-500/20 transition"
     >
       {t("auth.signOut")}
     </button>
@@ -687,7 +729,7 @@ function Section({
 }) {
   const [open, setOpen] = React.useState(defaultOpen);
   return (
-    <div className="rounded-2xl border border-white/5 bg-[#17131F] mb-4 overflow-hidden">
+    <div className="rounded-2xl border border-white/5 bg-surface-card mb-4 overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -698,7 +740,7 @@ function Section({
             {label}
           </p>
           {!open && summary && (
-            <span className="font-saira text-xs text-zinc-600 truncate">{summary}</span>
+            <span className="font-saira text-xs text-zinc-400 truncate">{summary}</span>
           )}
         </div>
         <ChevronIcon open={open} />
@@ -712,7 +754,7 @@ function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
       viewBox="0 0 16 16"
-      className={`w-4 h-4 flex-shrink-0 text-zinc-600 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+      className={`w-4 h-4 flex-shrink-0 text-zinc-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
       fill="none"
       aria-hidden
     >

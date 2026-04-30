@@ -242,7 +242,7 @@ function DasBarPreview() {
 
 export default function TestsIndexPage() {
   return (
-    <div className="relative min-h-screen bg-[#050608] pt-24 text-white">
+    <div className="relative min-h-screen bg-surface-base pt-24 text-white">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(168,85,247,0.18),transparent_55%)]" />
       </div>
@@ -352,7 +352,7 @@ export default function TestsIndexPage() {
             {/* Right: price + CTA */}
             <div className="flex flex-col items-start sm:items-end gap-2 flex-shrink-0">
               <div className="text-right">
-                <p className="font-saira text-[11px] text-zinc-500 line-through">€57 separately</p>
+                <p className="font-saira text-[11px] text-zinc-300 line-through">€57 separately</p>
                 <p className="font-saira text-3xl font-extrabold text-white">€49</p>
               </div>
               <BundleCta />
@@ -361,12 +361,12 @@ export default function TestsIndexPage() {
         </div>
 
         {/* Journal CTA */}
-        <div className="mt-10 flex items-center justify-between rounded-2xl border border-white/6 bg-[#0F1117] px-6 py-4">
+        <div className="mt-10 flex items-center justify-between rounded-2xl border border-white/6 bg-surface-alt px-6 py-4">
           <div>
             <p className="font-saira text-xs font-semibold text-zinc-200">
               Already training mentally?
             </p>
-            <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
+            <p className="font-saira text-[11px] text-zinc-300 mt-0.5">
               Log your self-talk between sessions and track your thought patterns over time.
             </p>
           </div>
@@ -378,7 +378,7 @@ export default function TestsIndexPage() {
           </Link>
         </div>
 
-        <p className="mt-8 text-center font-saira text-[11px] text-zinc-500">
+        <p className="mt-8 text-center font-saira text-[11px] text-zinc-300">
           Our tests are screening and self-reflection tools, not clinical diagnoses.
           If you are looking for 1:1 coaching, see the{" "}
           <Link href="/" className="underline decoration-zinc-600 hover:text-white">
@@ -460,7 +460,7 @@ function TestCard({
           className={`inline-flex items-center justify-center rounded-full px-6 py-2.5 font-saira text-[11px] font-semibold uppercase tracking-[0.22em] transition ${
             available
               ? "bg-purple-500 text-white group-hover:bg-purple-400"
-              : "border border-zinc-700/70 text-zinc-500"
+              : "border border-zinc-700/70 text-zinc-300"
           }`}
         >
           {cta}

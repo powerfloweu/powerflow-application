@@ -41,7 +41,7 @@ function SignInContent() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#050608] flex items-center justify-center px-4 py-[env(safe-area-inset-top)]">
+    <div className="relative min-h-screen bg-surface-base flex items-center justify-center px-4 py-[env(safe-area-inset-top)]">
       {/* Background glow */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.13),transparent_55%)]" />
@@ -56,13 +56,13 @@ function SignInContent() {
           <h1 className="font-saira text-2xl font-extrabold uppercase tracking-[0.1em] text-white">
             {t("auth.welcomeBack")}
           </h1>
-          <p className="mt-2 font-saira text-sm text-zinc-500">
+          <p className="mt-2 font-saira text-sm text-zinc-300">
             {t("auth.welcomeSubtitle")}
           </p>
         </div>
 
         {/* Card */}
-        <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-6 sm:p-8 space-y-4">
+        <div className="rounded-3xl border border-white/8 bg-surface-alt p-6 sm:p-8 space-y-4">
 
           {/* Athlete sign-in */}
           <button
@@ -81,7 +81,7 @@ function SignInContent() {
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-white/5" />
-            <span className="font-saira text-[10px] text-zinc-700 uppercase tracking-[0.2em]">{t("auth.or")}</span>
+            <span className="font-saira text-[10px] text-zinc-500 uppercase tracking-[0.2em]">{t("auth.or")}</span>
             <div className="flex-1 h-px bg-white/5" />
           </div>
 
@@ -106,7 +106,7 @@ function SignInContent() {
         </div>
 
         {/* Footer note */}
-        <p className="mt-6 text-center font-saira text-[11px] text-zinc-700 leading-relaxed">
+        <p className="mt-6 text-center font-saira text-[11px] text-zinc-500 leading-relaxed">
           {t("auth.privacyNote")}
           <br />
           {t("auth.privacyNote2")}
@@ -119,7 +119,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <React.Suspense fallback={
-      <div className="min-h-screen bg-[#050608] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="w-5 h-5 rounded-full border-2 border-purple-500/40 border-t-purple-400 animate-spin" />
       </div>
     }>

@@ -57,7 +57,7 @@ function RatingRow({
                   : n >= 5
                   ? "bg-purple-500/80 text-white"
                   : "bg-rose-500/70 text-white"
-                : "bg-white/5 text-zinc-700 hover:bg-white/10"
+                : "bg-white/5 text-zinc-500 hover:bg-white/10"
             }`}
           >
             {n}
@@ -66,8 +66,8 @@ function RatingRow({
       </div>
       {(lowLabel || highLabel) && (
         <div className="flex justify-between mt-1">
-          <span className="font-saira text-[9px] text-zinc-700">{lowLabel}</span>
-          <span className="font-saira text-[9px] text-zinc-700">{highLabel}</span>
+          <span className="font-saira text-[9px] text-zinc-500">{lowLabel}</span>
+          <span className="font-saira text-[9px] text-zinc-500">{highLabel}</span>
         </div>
       )}
     </div>
@@ -124,10 +124,10 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onSkip} />
 
       {/* Sheet */}
-      <div className="relative w-full sm:max-w-xl max-h-[92dvh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[#0F1117] border border-white/8 shadow-2xl">
+      <div className="relative w-full sm:max-w-xl max-h-[92dvh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface-alt border border-white/8 shadow-2xl">
 
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-start justify-between px-6 pt-6 pb-4 bg-[#0F1117] border-b border-white/5">
+        <div className="sticky top-0 z-10 flex items-start justify-between px-6 pt-6 pb-4 bg-surface-alt border-b border-white/5">
           <div>
             <p className="font-saira text-[10px] font-bold uppercase tracking-[0.28em] text-purple-400 mb-1">
               Weekly Check-In
@@ -139,7 +139,7 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
           {onSkip && (
             <button
               onClick={onSkip}
-              className="mt-0.5 w-7 h-7 rounded-full flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-white/5 transition"
+              className="mt-0.5 w-7 h-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-300 hover:bg-white/5 transition"
               aria-label="Skip for now"
             >
               <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
@@ -153,7 +153,7 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
 
           {/* Ratings */}
           <div className="space-y-5">
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300">
               Rate your week  ·  1 = very low · 10 = excellent
             </p>
             <RatingRow label="Overall mood"       value={mood}      onChange={setMood}      lowLabel="Low" highLabel="Great" />
@@ -165,7 +165,7 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
 
           {/* Text questions */}
           <div className="space-y-4">
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300">
               Reflect  ·  all optional
             </p>
 
@@ -227,7 +227,7 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
               <button
                 type="button"
                 onClick={onSkip}
-                className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-500 hover:text-zinc-300 hover:border-white/20 transition"
+                className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-300 hover:text-zinc-300 hover:border-white/20 transition"
               >
                 Later
               </button>

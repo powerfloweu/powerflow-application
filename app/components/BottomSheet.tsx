@@ -54,7 +54,7 @@ export default function BottomSheet({ open, onClose, title, children, footer }: 
         role="dialog"
         aria-modal
         className={[
-          "fixed z-[70] bg-[#0F1117] flex flex-col",
+          "fixed z-[70] bg-surface-alt flex flex-col",
           // Mobile: bottom sheet
           "bottom-0 inset-x-0 rounded-t-2xl max-h-[90dvh]",
           // Desktop: centred modal
@@ -76,7 +76,7 @@ export default function BottomSheet({ open, onClose, title, children, footer }: 
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full text-zinc-500 hover:text-white hover:bg-white/5 transition"
+            className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/5 transition"
           >
             ✕
           </button>

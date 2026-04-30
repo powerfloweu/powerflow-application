@@ -170,7 +170,7 @@ export default function TodayPage() {
   // ── No entry for selected date (or loading a different date) ────────────────
   if (entry === "loading" || entry === null) {
     return (
-      <div className="min-h-screen bg-[#050608]">
+      <div className="min-h-screen bg-surface-base">
         {/* Date tabs always visible */}
         <div className="pt-10 px-4 sm:px-6 max-w-lg mx-auto md:max-w-2xl">
           <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
@@ -194,7 +194,7 @@ export default function TodayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-2xl">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-2xl">
 
       {/* ── Date tabs ─────────────────────────────────────────── */}
       <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
@@ -209,7 +209,7 @@ export default function TodayPage() {
             ? `${t(greetingKey())}${profile ? `, ${firstName(profile.display_name)}` : ""}`
             : dateLabel}
         </h1>
-        <p className="font-saira text-sm text-zinc-500">{formatDateForYmd(selectedDate, locale)}</p>
+        <p className="font-saira text-sm text-zinc-300">{formatDateForYmd(selectedDate, locale)}</p>
       </div>
 
       {/* ── Entry ✓ card ───────────────────────────────────────── */}
@@ -229,7 +229,7 @@ export default function TodayPage() {
         <button
           type="button"
           onClick={() => setEntry(null)}
-          className="flex-shrink-0 font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
+          className="flex-shrink-0 font-saira text-[10px] text-zinc-300 hover:text-purple-300 transition underline"
         >
           {t("today.change")}
         </button>
@@ -245,7 +245,7 @@ export default function TodayPage() {
             <p className="font-saira text-sm font-semibold text-purple-300 group-hover:text-white transition mb-0.5">
               {t("journal.logForDate").replace("{date}", dateLabel.toLowerCase())}
             </p>
-            <p className="font-saira text-xs text-zinc-500">
+            <p className="font-saira text-xs text-zinc-300">
               {t("journal.trainingDay")} · {t("journal.pageLabel")}
             </p>
           </div>
@@ -255,10 +255,10 @@ export default function TodayPage() {
 
       {/* ── Phase block ───────────────────────────────────────── */}
       {phase ? (
-        <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-5">
+        <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
-              <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-2">
+              <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-300 mb-2">
                 {t("today.trainingPhase")}
               </p>
               <PhaseBadge phase={phase.phase} />
@@ -267,7 +267,7 @@ export default function TodayPage() {
               <p className="font-saira text-2xl font-bold text-white tabular-nums">
                 {phase.daysUntil}
               </p>
-              <p className="font-saira text-[10px] text-zinc-500 uppercase tracking-[0.14em]">
+              <p className="font-saira text-[10px] text-zinc-300 uppercase tracking-[0.14em]">
                 {t("today.daysToGo")}
               </p>
             </div>
@@ -290,7 +290,7 @@ export default function TodayPage() {
             <p className="font-saira text-sm font-semibold text-purple-300 group-hover:text-white transition mb-0.5">
               {t("today.setNextCompetition")}
             </p>
-            <p className="font-saira text-xs text-zinc-500">
+            <p className="font-saira text-xs text-zinc-300">
               {t("today.unlockPhaseTracking")}
             </p>
           </div>
@@ -320,10 +320,10 @@ export default function TodayPage() {
           </ul>
         </div>
       ) : profile && (
-        <div className="rounded-2xl border border-white/5 bg-[#17131F] px-5 py-4 mb-6 flex items-center justify-between gap-4">
+        <div className="rounded-2xl border border-white/5 bg-surface-card px-5 py-4 mb-6 flex items-center justify-between gap-4">
           <div>
             <p className="font-saira text-xs font-semibold text-zinc-400 mb-0.5">{t("today.noAffirmations")}</p>
-            <p className="font-saira text-[11px] text-zinc-600 leading-relaxed">
+            <p className="font-saira text-[11px] text-zinc-400 leading-relaxed">
               {t("today.selfTalkAppears")}
             </p>
           </div>
@@ -375,7 +375,7 @@ function DayPickerScreen({
             ? new Date().toLocaleDateString(localeForDate(locale), { weekday: "long" })
             : dateLabel}
         </h1>
-        <p className="font-saira text-sm text-zinc-500 mb-10 text-center">
+        <p className="font-saira text-sm text-zinc-300 mb-10 text-center">
           {t("today.howsTodayLooking")}
         </p>
         <div className="space-y-3">
@@ -420,7 +420,7 @@ function StrengthCard({
   const gt = profile ? goalTotal(profile) : null;
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-4">
+    <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-4">
       <div className="flex items-center justify-between mb-4">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
           {t("today.strengthGoals")}
@@ -430,12 +430,12 @@ function StrengthCard({
             <p className="font-saira text-lg font-bold text-purple-300 tabular-nums leading-none">
               {glPoints}
             </p>
-            <p className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-600">{t("today.glPts")}</p>
+            <p className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-400">{t("today.glPts")}</p>
           </div>
         ) : (
           <Link
             href="/you"
-            className="font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
+            className="font-saira text-[10px] text-zinc-300 hover:text-purple-300 transition underline"
           >
             {t("today.addWeight")}
           </Link>
@@ -455,7 +455,7 @@ function StrengthCard({
           ))}
           {(ct || gt) && (
             <div className="pt-2 mt-2 border-t border-white/5 flex items-center justify-between">
-              <span className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+              <span className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300">
                 {t("today.total")}
               </span>
               <div className="flex items-center gap-2">
@@ -465,7 +465,7 @@ function StrengthCard({
                   </span>
                 )}
                 {gt !== null && (
-                  <span className="font-saira text-xs text-zinc-500 tabular-nums">
+                  <span className="font-saira text-xs text-zinc-300 tabular-nums">
                     → {gt} kg
                   </span>
                 )}
@@ -475,7 +475,7 @@ function StrengthCard({
         </div>
       ) : (
         <div className="flex items-center justify-between">
-          <p className="font-saira text-sm text-zinc-500">{t("today.noLiftsYet")}</p>
+          <p className="font-saira text-sm text-zinc-300">{t("today.noLiftsYet")}</p>
           <Link
             href="/you"
             className="font-saira text-xs text-purple-300 hover:text-purple-200 transition"
@@ -500,7 +500,7 @@ function LiftRow({
   if (!current && !goal) return null;
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="font-saira text-[11px] uppercase tracking-[0.14em] text-zinc-500 w-16 flex-shrink-0">
+      <span className="font-saira text-[11px] uppercase tracking-[0.14em] text-zinc-300 w-16 flex-shrink-0">
         {label}
       </span>
       <div className="flex-1 flex items-center gap-2 justify-end">
@@ -511,7 +511,7 @@ function LiftRow({
         )}
         {goal !== null && (
           <>
-            <span className="text-zinc-600 text-xs">→</span>
+            <span className="text-zinc-400 text-xs">→</span>
             <span className="font-saira text-sm text-purple-300 tabular-nums">{goal} kg</span>
           </>
         )}
@@ -527,14 +527,14 @@ function MentalGoalsCard({ goals }: { goals: string[] }) {
   const filtered = goals.filter(Boolean);
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-5">
+    <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-5">
       <div className="flex items-center justify-between mb-3">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
           {t("today.mentalGoals")}
         </p>
         <Link
           href="/you"
-          className="font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline"
+          className="font-saira text-[10px] text-zinc-300 hover:text-purple-300 transition underline"
         >
           {filtered.length ? t("common.edit") : t("today.setGoals")}
         </Link>
@@ -551,7 +551,7 @@ function MentalGoalsCard({ goals }: { goals: string[] }) {
           ))}
         </ul>
       ) : (
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           {t("today.setMentalGoalsHint")}{" "}
           <Link href="/you" className="text-purple-300 hover:text-purple-200 transition underline">
             {t("today.addNowArrow")}

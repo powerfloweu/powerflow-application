@@ -70,7 +70,7 @@ export default function UpgradePage() {
     tier === "second" ? t("upgrade.upgradeToSecond") : t("upgrade.upgradeToPR");
 
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-12 pb-24">
+    <div className="min-h-screen bg-surface-base px-4 pt-12 pb-24">
       {/* Header */}
       <div className="max-w-2xl mx-auto text-center mb-10">
         <p className="font-saira text-[10px] uppercase tracking-[0.3em] text-purple-400 mb-3">
@@ -108,12 +108,12 @@ export default function UpgradePage() {
 
               {/* Tier name */}
               <div className="mb-4">
-                <p className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-500 mb-1">
+                <p className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-300 mb-1">
                   {t(TIER_SUBTITLE_KEY[tier])}
                 </p>
                 <h2 className="text-lg font-bold text-white">{t(TIER_KEY[tier])}</h2>
                 <p className="text-2xl font-bold text-white mt-1">{t(TIER_PRICE_KEY[tier])}</p>
-                <p className="text-xs text-zinc-500 mt-1">{t(TIER_DESC_KEY[tier])}</p>
+                <p className="text-xs text-zinc-300 mt-1">{t(TIER_DESC_KEY[tier])}</p>
               </div>
 
               {/* Features */}
@@ -128,7 +128,7 @@ export default function UpgradePage() {
 
               {/* CTA */}
               {isCurrent ? (
-                <div className="text-center py-2.5 rounded-xl border border-white/10 text-zinc-500 font-saira text-[10px] uppercase tracking-[0.2em]">
+                <div className="text-center py-2.5 rounded-xl border border-white/10 text-zinc-300 font-saira text-[10px] uppercase tracking-[0.2em]">
                   {t("upgrade.currentPlan")}
                 </div>
               ) : isHigher ? (
@@ -139,7 +139,7 @@ export default function UpgradePage() {
                   {ctaForTier(tier)}
                 </button>
               ) : (
-                <div className="text-center py-2.5 rounded-xl border border-white/10 text-zinc-600 font-saira text-[10px] uppercase tracking-[0.2em]">
+                <div className="text-center py-2.5 rounded-xl border border-white/10 text-zinc-400 font-saira text-[10px] uppercase tracking-[0.2em]">
                   {t("upgrade.downgrade")}
                 </div>
               )}
@@ -150,7 +150,7 @@ export default function UpgradePage() {
 
       {/* Coach billing note */}
       <div className="max-w-2xl mx-auto mt-8 text-center">
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-zinc-400">
           {t("upgrade.coachQuestion")}{" "}
           <Link href="/coach" className="text-zinc-400 underline underline-offset-2">
             {t("upgrade.coachLink")}
@@ -161,7 +161,7 @@ export default function UpgradePage() {
 
       {/* Back */}
       <div className="text-center mt-6">
-        <Link href="/today" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">
+        <Link href="/today" className="text-xs text-zinc-400 hover:text-zinc-400 transition-colors">
           {t("upgrade.backToApp")}
         </Link>
       </div>

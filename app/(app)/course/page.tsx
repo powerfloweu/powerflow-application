@@ -171,7 +171,7 @@ export default function CourseIndexPage() {
   const currentPos  = currentWeek ? planWeeks.indexOf(currentWeek) + 1 : null;
 
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto">
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="mb-6">
@@ -181,14 +181,14 @@ export default function CourseIndexPage() {
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-1">
           {t("course.indexTitle")}
         </h1>
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           {t("course.weeksAthletePaced", { count: planWeeks.length })}
           {plan.type === "ai" && t("course.aiPersonalisedSuffix")}
         </p>
       </div>
 
       {/* ── Progress bar ────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-white/5 bg-[#17131F] p-5 mb-6">
+      <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-6">
         <div className="flex items-baseline justify-between mb-2">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
             {t("course.progress")}
@@ -215,7 +215,7 @@ export default function CourseIndexPage() {
             <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300">
               {t("course.stepOf", { pos: currentPos ?? 1, total: planWeeks.length })}
             </p>
-            <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500 border border-white/10 rounded-full px-2 py-0.5">
+            <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-300 border border-white/10 rounded-full px-2 py-0.5">
               {currentWeek.theme}
             </span>
           </div>
@@ -234,8 +234,8 @@ export default function CourseIndexPage() {
 
       {/* ── AI rationale ────────────────────────────────────────────────────── */}
       {plan.rationale && (
-        <div className="rounded-xl border border-white/5 bg-[#17131F] px-4 py-3 mb-6">
-          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-1">
+        <div className="rounded-xl border border-white/5 bg-surface-card px-4 py-3 mb-6">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-300 mb-1">
             {t("course.whyThisPlan")}
           </p>
           <p className="font-saira text-xs text-zinc-400 leading-relaxed">{plan.rationale}</p>
@@ -262,7 +262,7 @@ export default function CourseIndexPage() {
       <div className="mt-10 text-center">
         <button
           onClick={() => setUiStage({ stage: "editing", plan })}
-          className="font-saira text-xs text-zinc-600 hover:text-zinc-400 transition underline underline-offset-2"
+          className="font-saira text-xs text-zinc-400 hover:text-zinc-400 transition underline underline-offset-2"
         >
           {t("course.editOrRegenerate")}
         </button>
@@ -270,12 +270,12 @@ export default function CourseIndexPage() {
 
       {/* ── Bonus: post-meet module ──────────────────────────────────────────── */}
       <div className="mt-8 pt-8 border-t border-white/5">
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-600 mb-3">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-3">
           {t("course.afterYourMeet")}
         </p>
         <Link
           href="/course/m/w16-post-meet"
-          className="flex items-start gap-4 rounded-2xl border border-white/5 bg-[#17131F] hover:bg-[#1e1828] p-4 transition group"
+          className="flex items-start gap-4 rounded-2xl border border-white/5 bg-surface-card hover:bg-[#1e1828] p-4 transition group"
         >
           <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-lg bg-purple-500/10 border border-purple-500/20">
             🏆
@@ -284,11 +284,11 @@ export default function CourseIndexPage() {
             <p className="font-saira text-sm font-semibold text-white group-hover:text-purple-300 transition">
               {t("course.postMeetTitle")}
             </p>
-            <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
+            <p className="font-saira text-[11px] text-zinc-300 mt-0.5">
               {t("course.postMeetSubtitle")}
             </p>
           </div>
-          <span className="font-saira text-zinc-600 group-hover:text-purple-400 transition mt-0.5">→</span>
+          <span className="font-saira text-zinc-400 group-hover:text-purple-400 transition mt-0.5">→</span>
         </Link>
       </div>
     </div>
@@ -326,7 +326,7 @@ function PlanWeekCard({
           ? "bg-purple-500/10 text-purple-400 border border-purple-500/25"
           : isUnlocked
           ? "bg-white/5 text-zinc-400 border border-white/5"
-          : "bg-white/[0.02] text-zinc-700 border border-white/[0.04]"
+          : "bg-white/[0.02] text-zinc-500 border border-white/[0.04]"
       }`}>
         {done ? "✓" : isUnlocked ? position : "🔒"}
       </div>
@@ -336,7 +336,7 @@ function PlanWeekCard({
         <div className="flex items-center gap-2 mb-0.5">
           <p className={`font-saira text-sm font-semibold truncate transition ${
             done ? "text-emerald-200"
-            : !isUnlocked ? "text-zinc-700"
+            : !isUnlocked ? "text-zinc-500"
             : "text-white group-hover:text-purple-300"
           }`}>
             {week.title}
@@ -351,23 +351,23 @@ function PlanWeekCard({
           <>
             <StepDots row={row} />
             {isPractice && practiceTarget > 0 && (
-              <p className="font-saira text-[10px] text-zinc-600 mt-0.5">
+              <p className="font-saira text-[10px] text-zinc-400 mt-0.5">
                 {practiceCount}/{practiceTarget} practice sessions
               </p>
             )}
           </>
         ) : (
-          <p className={`font-saira text-[11px] truncate ${isUnlocked ? "text-zinc-600" : "text-zinc-800"}`}>
+          <p className={`font-saira text-[11px] truncate ${isUnlocked ? "text-zinc-400" : "text-zinc-800"}`}>
             {isPractice ? `${week.theme} · ${practiceTarget} sessions` : week.theme}
           </p>
         )}
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="font-saira text-[10px] text-zinc-700">{position}/{total}</span>
+        <span className="font-saira text-[10px] text-zinc-500">{position}/{total}</span>
         {isUnlocked && (
           <span className={`font-saira text-sm transition flex-shrink-0 ${
-            done ? "text-emerald-500" : "text-zinc-600 group-hover:text-purple-400"
+            done ? "text-emerald-500" : "text-zinc-400 group-hover:text-purple-400"
           }`}>→</span>
         )}
       </div>
@@ -380,10 +380,10 @@ function PlanWeekCard({
       : isCurrent
       ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10"
       : isHighlighted && isUnlocked
-      ? "border-purple-500/20 bg-[#17131F] hover:bg-[#1e1828]"
+      ? "border-purple-500/20 bg-surface-card hover:bg-[#1e1828]"
       : isUnlocked
-      ? "border-white/5 bg-[#17131F] hover:bg-[#1e1828]"
-      : "border-white/[0.03] bg-[#0e0c14] cursor-default"
+      ? "border-white/5 bg-surface-card hover:bg-[#1e1828]"
+      : "border-white/[0.03] bg-surface-input cursor-default"
   }`;
 
   if (!isUnlocked) {
@@ -423,7 +423,7 @@ function Dot({ filled, label }: { filled: boolean; label: string }) {
 
 function NoPlanPage({ onGenerate, generating }: { onGenerate: () => void; generating: boolean }) {
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto flex flex-col">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto flex flex-col">
 
       {/* Header */}
       <div className="mb-8">
@@ -433,7 +433,7 @@ function NoPlanPage({ onGenerate, generating }: { onGenerate: () => void; genera
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-1">
           Mental Training
         </h1>
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           Your personalised plan hasn't been set up yet.
         </p>
       </div>
@@ -449,7 +449,7 @@ function NoPlanPage({ onGenerate, generating }: { onGenerate: () => void; genera
         <p className="font-saira text-sm text-zinc-400 leading-relaxed text-center mb-2">
           Based on your mental goals and self-assessment, Claude will build a personalised training sequence from the full 15-module library.
         </p>
-        <p className="font-saira text-xs text-zinc-600 text-center mb-6">
+        <p className="font-saira text-xs text-zinc-400 text-center mb-6">
           12–16 weeks is recommended for athletes without prior sports psychology experience. You can customise the plan before saving it.
         </p>
 
@@ -468,25 +468,25 @@ function NoPlanPage({ onGenerate, generating }: { onGenerate: () => void; genera
           )}
         </button>
 
-        <p className="font-saira text-[10px] text-zinc-600 text-center mt-3">
+        <p className="font-saira text-[10px] text-zinc-400 text-center mt-3">
           Takes about 10 seconds · you review before it saves
         </p>
       </div>
 
       {/* Blurred library preview */}
-      <div className="relative rounded-2xl border border-white/5 bg-[#17131F] p-5 overflow-hidden flex-1">
-        <div className="absolute inset-0 backdrop-blur-[2px] bg-[#050608]/60 z-10 flex items-center justify-center rounded-2xl">
-          <span className="font-saira text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+      <div className="relative rounded-2xl border border-white/5 bg-surface-card p-5 overflow-hidden flex-1">
+        <div className="absolute inset-0 backdrop-blur-[2px] bg-surface-base/60 z-10 flex items-center justify-center rounded-2xl">
+          <span className="font-saira text-[10px] uppercase tracking-[0.24em] text-zinc-300">
             Available after plan is generated
           </span>
         </div>
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-3">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-300 mb-3">
           Module library
         </p>
         <div className="space-y-2 opacity-30">
           {weeksByTheme().map(({ theme, weeks }) => (
             <div key={theme}>
-              <p className="font-saira text-[10px] uppercase tracking-wider text-zinc-500 mb-1">{theme}</p>
+              <p className="font-saira text-[10px] uppercase tracking-wider text-zinc-300 mb-1">{theme}</p>
               {weeks.map((w) => (
                 <div key={w.slug} className="font-saira text-sm text-zinc-300 py-0.5">{w.title}</div>
               ))}
@@ -561,7 +561,7 @@ function PlanEditor({
   const tooShort = slugs.length < 8;
 
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto">
 
       {/* Header */}
       <div className="mb-6">
@@ -571,7 +571,7 @@ function PlanEditor({
         <h1 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-1">
           Your plan is ready
         </h1>
-        <p className="font-saira text-sm text-zinc-500">
+        <p className="font-saira text-sm text-zinc-300">
           {slugs.length} week{slugs.length !== 1 ? "s" : ""} ·{" "}
           <span className={slugs.length >= 12 ? "text-emerald-400" : "text-amber-400"}>
             {slugs.length < 8
@@ -606,14 +606,14 @@ function PlanEditor({
               className={`flex items-center gap-3 rounded-xl border px-3 py-3 ${
                 isHighlighted
                   ? "border-purple-500/20 bg-purple-500/5"
-                  : "border-white/5 bg-[#17131F]"
+                  : "border-white/5 bg-surface-card"
               }`}
             >
               {/* Position bubble */}
               <div className={`w-7 h-7 rounded-full flex items-center justify-center font-saira text-xs flex-shrink-0 ${
                 isHighlighted
                   ? "bg-purple-500/15 text-purple-400 border border-purple-500/25"
-                  : "bg-white/5 text-zinc-500"
+                  : "bg-white/5 text-zinc-300"
               }`}>
                 {idx + 1}
               </div>
@@ -628,7 +628,7 @@ function PlanEditor({
                     </span>
                   )}
                 </div>
-                <p className="font-saira text-[11px] text-zinc-600 truncate">{w.theme}</p>
+                <p className="font-saira text-[11px] text-zinc-400 truncate">{w.theme}</p>
               </div>
 
               {/* Controls */}
@@ -636,19 +636,19 @@ function PlanEditor({
                 <button
                   onClick={() => moveUp(idx)}
                   disabled={idx === 0}
-                  className="w-6 h-6 flex items-center justify-center text-zinc-600 hover:text-white disabled:opacity-20 transition rounded"
+                  className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 transition rounded"
                   title="Move up"
                 >↑</button>
                 <button
                   onClick={() => moveDown(idx)}
                   disabled={idx === slugs.length - 1}
-                  className="w-6 h-6 flex items-center justify-center text-zinc-600 hover:text-white disabled:opacity-20 transition rounded"
+                  className="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 transition rounded"
                   title="Move down"
                 >↓</button>
                 <button
                   onClick={() => remove(idx)}
                   disabled={isAnchor || slugs.length <= 8}
-                  className="w-6 h-6 flex items-center justify-center text-zinc-700 hover:text-red-400 disabled:opacity-20 disabled:cursor-not-allowed transition rounded ml-1"
+                  className="w-6 h-6 flex items-center justify-center text-zinc-500 hover:text-red-400 disabled:opacity-20 disabled:cursor-not-allowed transition rounded ml-1"
                   title={isAnchor ? "Required week" : slugs.length <= 8 ? "Minimum 8 weeks" : "Remove"}
                 >✕</button>
               </div>
@@ -661,8 +661,8 @@ function PlanEditor({
       {available.length > 0 && (
         <div className="mb-6">
           {addOpen ? (
-            <div className="rounded-xl border border-white/10 bg-[#17131F] p-3">
-              <p className="font-saira text-[10px] uppercase tracking-wider text-zinc-500 mb-2">
+            <div className="rounded-xl border border-white/10 bg-surface-card p-3">
+              <p className="font-saira text-[10px] uppercase tracking-wider text-zinc-300 mb-2">
                 Add a module
               </p>
               <div className="space-y-1 max-h-60 overflow-y-auto">
@@ -671,7 +671,7 @@ function PlanEditor({
                   if (!avail.length) return null;
                   return (
                     <div key={theme} className="mb-2">
-                      <p className="font-saira text-[10px] text-zinc-600 uppercase tracking-wider px-2 mb-1">
+                      <p className="font-saira text-[10px] text-zinc-400 uppercase tracking-wider px-2 mb-1">
                         {theme}
                       </p>
                       {avail.map((w) => (
@@ -689,7 +689,7 @@ function PlanEditor({
               </div>
               <button
                 onClick={() => setAddOpen(false)}
-                className="mt-2 font-saira text-xs text-zinc-600 hover:text-zinc-400 transition"
+                className="mt-2 font-saira text-xs text-zinc-400 hover:text-zinc-400 transition"
               >
                 Cancel
               </button>
@@ -697,7 +697,7 @@ function PlanEditor({
           ) : (
             <button
               onClick={() => setAddOpen(true)}
-              className="w-full rounded-xl border border-dashed border-white/10 py-3 font-saira text-sm text-zinc-500 hover:border-purple-500/40 hover:text-purple-300 transition"
+              className="w-full rounded-xl border border-dashed border-white/10 py-3 font-saira text-sm text-zinc-300 hover:border-purple-500/40 hover:text-purple-300 transition"
             >
               + Add a module
             </button>
@@ -754,7 +754,7 @@ const PREVIEW_THEMES = [
 
 function CourseLockedPage() {
   return (
-    <div className="min-h-screen bg-[#050608] px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto flex flex-col">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto flex flex-col">
 
       <div className="mb-8">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">
@@ -800,25 +800,25 @@ function CourseLockedPage() {
         >
           Get Access →
         </a>
-        <p className="font-saira text-[10px] text-zinc-600 mt-2">
+        <p className="font-saira text-[10px] text-zinc-400 mt-2">
           One-time purchase · instant access
         </p>
       </div>
 
-      <div className="relative rounded-2xl border border-white/5 bg-[#17131F] p-5 overflow-hidden">
-        <div className="absolute inset-0 backdrop-blur-[2px] bg-[#050608]/60 z-10 flex items-center justify-center rounded-2xl">
-          <span className="font-saira text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+      <div className="relative rounded-2xl border border-white/5 bg-surface-card p-5 overflow-hidden">
+        <div className="absolute inset-0 backdrop-blur-[2px] bg-surface-base/60 z-10 flex items-center justify-center rounded-2xl">
+          <span className="font-saira text-[10px] uppercase tracking-[0.24em] text-zinc-300">
             Unlocks with access
           </span>
         </div>
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500 mb-3">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-300 mb-3">
           What's inside
         </p>
         <div className="space-y-2 opacity-40">
           {PREVIEW_THEMES.map(({ theme, weeks }) => (
             <div key={theme} className="flex items-center justify-between">
               <span className="font-saira text-sm text-white">{theme}</span>
-              <span className="font-saira text-[11px] text-zinc-500">{weeks}</span>
+              <span className="font-saira text-[11px] text-zinc-300">{weeks}</span>
             </div>
           ))}
         </div>

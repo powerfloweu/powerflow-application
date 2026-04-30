@@ -214,7 +214,7 @@ function WeekBar({ entries }: { entries: JournalEntry[] }) {
             ) : (
               <div className="w-full rounded-sm bg-white/5" style={{ height: "4px" }} />
             )}
-            <span className={`font-saira text-[9px] uppercase tracking-wide ${isToday ? "text-purple-300" : "text-zinc-600"}`}>
+            <span className={`font-saira text-[9px] uppercase tracking-wide ${isToday ? "text-purple-300" : "text-zinc-400"}`}>
               {d.label}
             </span>
           </div>
@@ -383,7 +383,7 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
       </div>
 
       {error && <p className="mt-2 font-saira text-[11px] text-red-400">{error}</p>}
-      <p className="mt-2 font-saira text-[10px] text-zinc-700 hidden sm:block">{t("journal.quickSubmit")}</p>
+      <p className="mt-2 font-saira text-[10px] text-zinc-500 hidden sm:block">{t("journal.quickSubmit")}</p>
     </div>
   );
 }
@@ -410,7 +410,7 @@ function TrainingDayCard({ entry }: { entry: TrainingEntry }) {
           {t("journal.trainingDayLog")}
         </p>
         {entry.mood_rating != null && (
-          <span className="ml-auto font-saira text-[10px] text-zinc-500">
+          <span className="ml-auto font-saira text-[10px] text-zinc-300">
             {t("journal.moodOf", { value: entry.mood_rating })}
           </span>
         )}
@@ -418,7 +418,7 @@ function TrainingDayCard({ entry }: { entry: TrainingEntry }) {
       <div className="space-y-3">
         {fields.map((f) => (
           <div key={f.label}>
-            <p className="font-saira text-[10px] uppercase tracking-wider text-zinc-600 mb-0.5">{f.label}</p>
+            <p className="font-saira text-[10px] uppercase tracking-wider text-zinc-400 mb-0.5">{f.label}</p>
             <p className="font-saira text-sm text-zinc-300 leading-relaxed">{f.value}</p>
           </div>
         ))}
@@ -428,7 +428,7 @@ function TrainingDayCard({ entry }: { entry: TrainingEntry }) {
           <p className="font-saira text-xs text-zinc-400 italic leading-relaxed">
             &ldquo;{entry.coach_note}&rdquo;
           </p>
-          <p className="font-saira text-[10px] text-zinc-600 mt-0.5">{t("journal.coachNote")}</p>
+          <p className="font-saira text-[10px] text-zinc-400 mt-0.5">{t("journal.coachNote")}</p>
         </div>
       )}
     </div>
@@ -449,10 +449,10 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-5 space-y-5">
+      <div className="rounded-3xl border border-white/8 bg-surface-alt p-5 space-y-5">
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-purple-300">{t("journal.digestThisWeek")}</p>
-          <p className="font-saira text-[11px] text-zinc-600 mt-0.5">
+          <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
             {new Date(Date.now() - 6 * 86400000).toLocaleDateString(localeForDate(locale), { day: "numeric", month: "short" })}
             {" — "}
             {new Date().toLocaleDateString(localeForDate(locale), { day: "numeric", month: "short" })}
@@ -475,13 +475,13 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
         </div>
 
         <div>
-          <p className="font-saira text-[10px] text-zinc-600 mb-2 uppercase tracking-[0.18em]">{t("journal.digestDailyVolume")}</p>
+          <p className="font-saira text-[10px] text-zinc-400 mb-2 uppercase tracking-[0.18em]">{t("journal.digestDailyVolume")}</p>
           <WeekBar entries={entries} />
         </div>
       </div>
 
       {themes.length > 0 && (
-        <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-5">
+        <div className="rounded-3xl border border-white/8 bg-surface-alt p-5">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-purple-300 mb-3">
             {t("journal.digestThemes")}
           </p>
@@ -490,7 +490,7 @@ function WeeklyDigest({ entries }: { entries: JournalEntry[] }) {
               <TagChip key={def.label} label={def.label} color={def.color} count={count} />
             ))}
           </div>
-          <p className="mt-3 font-saira text-[10px] text-zinc-600 leading-relaxed">
+          <p className="mt-3 font-saira text-[10px] text-zinc-400 leading-relaxed">
             {t("journal.digestThemesNote")}
           </p>
         </div>
@@ -504,7 +504,7 @@ function StatRow({ dot, label, value }: { dot: string; label: string; value: num
   return (
     <div className="flex items-center gap-2">
       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dot}`} />
-      <span className="font-saira text-[11px] text-zinc-500 flex-1">{label}</span>
+      <span className="font-saira text-[11px] text-zinc-300 flex-1">{label}</span>
       <span className="font-saira text-[11px] font-semibold text-zinc-200">{value}</span>
     </div>
   );
@@ -514,7 +514,7 @@ function StatPill({ label, value, highlight = false }: { label: string; value: s
   return (
     <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2.5 text-center">
       <p className={`font-saira text-sm font-bold ${highlight ? "text-purple-300" : "text-zinc-100"}`}>{value}</p>
-      <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mt-0.5">{label}</p>
+      <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mt-0.5">{label}</p>
     </div>
   );
 }
@@ -529,12 +529,12 @@ function CoachPromptBanner({ onDismiss }: { onDismiss: () => void }) {
         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-sm">🧠</div>
         <div className="min-w-0">
           <p className="font-saira text-xs font-semibold text-purple-200">{t("journal.coachBannerTitle")}</p>
-          <p className="font-saira text-[11px] text-zinc-500 mt-0.5">
+          <p className="font-saira text-[11px] text-zinc-300 mt-0.5">
             {t("journal.coachBannerBody")}
           </p>
         </div>
       </div>
-      <button onClick={onDismiss} className="font-saira text-[11px] text-zinc-700 hover:text-zinc-400 transition flex-shrink-0">✕</button>
+      <button onClick={onDismiss} className="font-saira text-[11px] text-zinc-500 hover:text-zinc-400 transition flex-shrink-0">✕</button>
     </div>
   );
 }
@@ -565,8 +565,8 @@ function PastDateForm({
 
   if (entry === null) {
     return (
-      <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-5 sm:p-6">
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-500 mb-1">
+      <div className="rounded-3xl border border-white/8 bg-surface-alt p-5 sm:p-6">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-300 mb-1">
           {dateLabel}
         </p>
         <p className="font-saira text-sm text-zinc-400 mb-5">
@@ -596,11 +596,11 @@ function PastDateForm({
 
   if (!entry.is_training_day) {
     return (
-      <div className="rounded-3xl border border-white/8 bg-[#0F1117] p-5 sm:p-6">
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-500 mb-1">
+      <div className="rounded-3xl border border-white/8 bg-surface-alt p-5 sm:p-6">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-300 mb-1">
           {dateLabel}
         </p>
-        <p className="font-saira text-sm text-zinc-500">{t("journal.pastRestDay")}</p>
+        <p className="font-saira text-sm text-zinc-300">{t("journal.pastRestDay")}</p>
       </div>
     );
   }
@@ -608,7 +608,7 @@ function PastDateForm({
   // Training day → show the journal form
   return (
     <div>
-      <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-500 mb-3">
+      <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-300 mb-3">
         {t("journal.logForDate").replace("{date}", dateLabel.toLowerCase())}
       </p>
       <TrainingJournalForm entry={entry} onSave={onSave} />
@@ -633,10 +633,10 @@ function UserHeader({ profile }: { profile: UserProfile }) {
         )}
         <div>
           <p className="font-saira text-xs font-semibold text-zinc-200">{profile.display_name}</p>
-          <p className="font-saira text-[10px] text-zinc-600 capitalize">{profile.role}</p>
+          <p className="font-saira text-[10px] text-zinc-400 capitalize">{profile.role}</p>
         </div>
       </div>
-      <a href="/auth/sign-out" className="font-saira text-[10px] text-zinc-700 hover:text-zinc-400 transition underline underline-offset-2">
+      <a href="/auth/sign-out" className="font-saira text-[10px] text-zinc-500 hover:text-zinc-400 transition underline underline-offset-2">
         {t("auth.signOut")}
       </a>
     </div>
@@ -779,14 +779,14 @@ export default function JournalPage() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-[#050608] flex items-center justify-center">
+      <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="w-5 h-5 rounded-full border-2 border-purple-500/40 border-t-purple-400 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#050608] pt-8 text-white">
+    <div className="relative min-h-screen bg-surface-base pt-8 text-white">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.13),transparent_55%)]" />
       </div>
@@ -894,7 +894,7 @@ export default function JournalPage() {
                     ) / 10;
                     const avgColor = avg >= 7.5 ? "text-emerald-400" : avg >= 5 ? "text-purple-300" : "text-rose-400";
                     return (
-                      <div key={key} className="rounded-2xl border border-white/6 bg-[#0F1117] overflow-hidden">
+                      <div key={key} className="rounded-2xl border border-white/6 bg-surface-alt overflow-hidden">
                         <button
                           type="button"
                           onClick={() => setExpandedWeeks((prev) => {
@@ -907,7 +907,7 @@ export default function JournalPage() {
                           <span className="font-saira text-[11px] font-semibold text-zinc-300">{label}</span>
                           <div className="flex items-center gap-3">
                             <span className={`font-saira text-sm font-bold tabular-nums ${avgColor}`}>{avg.toFixed(1)}</span>
-                            <svg viewBox="0 0 16 16" className={`w-3.5 h-3.5 text-zinc-600 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none">
+                            <svg viewBox="0 0 16 16" className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none">
                               <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </div>
@@ -925,26 +925,26 @@ export default function JournalPage() {
                               ].map(({ label: rl, v }) => (
                                 <div key={rl} className="text-center">
                                   <p className={`font-saira text-lg font-extrabold tabular-nums ${v >= 8 ? "text-emerald-400" : v >= 5 ? "text-purple-300" : "text-rose-400"}`}>{v}</p>
-                                  <p className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-600 leading-tight">{rl}</p>
+                                  <p className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-400 leading-tight">{rl}</p>
                                 </div>
                               ))}
                             </div>
                             {/* Text responses */}
                             {ci.biggest_win && (
                               <div>
-                                <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Biggest win</p>
+                                <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Biggest win</p>
                                 <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_win}</p>
                               </div>
                             )}
                             {ci.biggest_challenge && (
                               <div>
-                                <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Main challenge</p>
+                                <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Main challenge</p>
                                 <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_challenge}</p>
                               </div>
                             )}
                             {ci.focus_next_week && (
                               <div>
-                                <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-600 mb-1">Focus next week</p>
+                                <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Focus next week</p>
                                 <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.focus_next_week}</p>
                               </div>
                             )}
@@ -976,19 +976,19 @@ export default function JournalPage() {
             )}
 
             {grouped.length === 0 ? (
-              <div className="rounded-3xl border border-white/5 bg-[#0F1117] p-10 text-center">
-                <p className="font-saira text-sm text-zinc-600">{t("journal.empty")}</p>
+              <div className="rounded-3xl border border-white/5 bg-surface-alt p-10 text-center">
+                <p className="font-saira text-sm text-zinc-400">{t("journal.empty")}</p>
               </div>
             ) : (
               <div className="space-y-8">
                 {grouped.map(([dateKey, dayItems]) => (
                   <div key={dateKey}>
                     <div className="flex items-center gap-3 mb-3">
-                      <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+                      <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-300">
                         {dayLabel(feedItemDate(dayItems[0]), t, locale)}
                       </span>
                       <div className="flex-1 h-px bg-white/5" />
-                      <span className="font-saira text-[10px] text-zinc-700">
+                      <span className="font-saira text-[10px] text-zinc-500">
                         {t(dayItems.length === 1 ? "journal.entryCountSingular" : "journal.entryCountPlural", { n: dayItems.length })}
                       </span>
                     </div>
@@ -1004,7 +1004,7 @@ export default function JournalPage() {
                                 <p className="font-saira text-xs text-zinc-400 italic leading-relaxed">
                                   &ldquo;{coachFeedback[item.entry.id].content}&rdquo;
                                 </p>
-                                <p className="font-saira text-[10px] text-zinc-600 mt-0.5">
+                                <p className="font-saira text-[10px] text-zinc-400 mt-0.5">
                                   — {coachFeedback[item.entry.id].coach_name} (coach) · {timeSinceJournal(coachFeedback[item.entry.id].created_at, t)}
                                 </p>
                               </div>
@@ -1025,7 +1025,7 @@ export default function JournalPage() {
         </div>
 
         <div className="mt-14 flex flex-wrap items-center justify-center gap-6">
-          <Link href="/tests" className="font-saira text-[11px] text-zinc-700 underline decoration-zinc-700 hover:text-zinc-400 transition">
+          <Link href="/tests" className="font-saira text-[11px] text-zinc-500 underline decoration-zinc-700 hover:text-zinc-400 transition">
             {t("journal.backToTests")}
           </Link>
           <span className="text-zinc-800">·</span>
