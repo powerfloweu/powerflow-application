@@ -17,9 +17,10 @@ const TABS = [
 
 interface Props {
   planTier?: PlanTier;
+  role?: string;
 }
 
-export default function TabBar({ planTier = "pr" }: Props) {
+export default function TabBar({ planTier = "pr", role }: Props) {
   const pathname = usePathname();
   const { t } = useT();
   const [checkinDone, setCheckinDone] = React.useState(true); // optimistic: no badge flash on load
@@ -82,6 +83,24 @@ export default function TabBar({ planTier = "pr" }: Props) {
             </Link>
           );
         })}
+
+        {/* Coach tab — extra tab visible only for coach accounts */}
+        {role === "coach" && (() => {
+          const active = pathname === "/coach" || pathname.startsWith("/coach/");
+          return (
+            <Link
+              href="/coach"
+              className={`relative flex flex-col items-center justify-center gap-1 flex-1 py-2.5 transition-colors ${
+                active ? "text-emerald-300" : "text-emerald-800 hover:text-emerald-500"
+              }`}
+            >
+              <CoachTabIcon active={active} />
+              <span className="font-saira text-[9px] uppercase tracking-[0.16em]">
+                {t("nav.coach")}
+              </span>
+            </Link>
+          );
+        })()}
       </div>
     </nav>
   );
@@ -141,6 +160,17 @@ function YouIcon({ active }: { active: boolean }) {
       <circle cx="10" cy="7" r="3" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} />
       <path d="M3 17c0-3.314 3.134-6 7-6s7 2.686 7 6"
         stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CoachTabIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none" aria-hidden>
+      <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} />
+      <path d="M1.5 16c0-2.485 2.462-4.5 5.5-4.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" />
+      <circle cx="14" cy="7" r="2.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} />
+      <path d="M18.5 16c0-2.485-2.462-4.5-5.5-4.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" />
     </svg>
   );
 }

@@ -31,8 +31,9 @@ export default function AppShell({ children }: Props) {
   const { t } = useT();
   const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
   const [planTier, setPlanTier] = React.useState<PlanTier>("pr"); // optimistic: show all until we know
+  const [role, setRole] = React.useState<string | null>(null);
 
-  // Fetch notifications + plan tier on mount
+  // Fetch notifications + plan tier + role on mount
   React.useEffect(() => {
     fetch("/api/notifications")
       .then((r) => r.ok ? r.json() : null)
@@ -47,6 +48,7 @@ export default function AppShell({ children }: Props) {
       .then((r) => r.ok ? r.json() : null)
       .then((p) => {
         if (p?.plan_tier) setPlanTier(p.plan_tier as PlanTier);
+        if (p?.role) setRole(p.role as string);
       })
       .catch(() => {});
   }, []);
@@ -64,7 +66,7 @@ export default function AppShell({ children }: Props) {
         </div>
 
         {/* Nav links */}
-        <nav className="flex-1 py-4 px-3 space-y-0.5">
+        <nav className="flex-1 py-4 px-3 space-y-0.5 flex flex-col">
           {NAV_LINKS.map(({ href, labelKey, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             const locked =
@@ -94,6 +96,23 @@ export default function AppShell({ children }: Props) {
               </Link>
             );
           })}
+
+          {/* Coach dashboard link — only for coach accounts */}
+          {role === "coach" && (
+            <div className="mt-auto pt-3 border-t border-white/5">
+              <Link
+                href="/coach"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-[11px] uppercase tracking-[0.16em] transition ${
+                  pathname === "/coach" || pathname.startsWith("/coach/")
+                    ? "bg-emerald-500/15 text-emerald-300 font-semibold"
+                    : "text-emerald-700 hover:text-emerald-400 hover:bg-white/5"
+                }`}
+              >
+                <CoachSidebarIcon active={pathname === "/coach" || pathname.startsWith("/coach/")} />
+                {t("nav.coach")}
+              </Link>
+            </div>
+          )}
         </nav>
 
         {/* Version/footer */}
@@ -111,7 +130,7 @@ export default function AppShell({ children }: Props) {
       </main>
 
       {/* ── Mobile bottom tab bar ───────────────────────────────── */}
-      <TabBar planTier={planTier} />
+      <TabBar planTier={planTier} role={role ?? undefined} />
 
       {/* ── Daily check-in reminder (invisible, schedules notification) ── */}
       <CheckinReminderScheduler />
@@ -183,6 +202,17 @@ function YouIcon({ active }: { active: boolean }) {
       <circle cx="10" cy="7" r="3" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} />
       <path d="M3 17c0-3.314 3.134-6 7-6s7 2.686 7 6"
         stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CoachSidebarIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" className="w-4 h-4 flex-shrink-0" fill="none" aria-hidden>
+      <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} />
+      <path d="M1.5 16c0-2.485 2.462-4.5 5.5-4.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" />
+      <circle cx="14" cy="7" r="2.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} />
+      <path d="M18.5 16c0-2.485-2.462-4.5-5.5-4.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" />
     </svg>
   );
 }

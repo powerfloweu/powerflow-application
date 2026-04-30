@@ -102,11 +102,6 @@ export default function TodayPage() {
       .catch(() => setEntry(null));
   }, [selectedDate]);
 
-  // Coaches go to their dashboard
-  React.useEffect(() => {
-    if (profile?.role === "coach") router.replace("/coach");
-  }, [profile, router]);
-
   // ── Select day type — saves immediately ─────────────────────────────────────
   const selectDayType = async (mode: "training" | "rest") => {
     if (dayTypeSaving) return;

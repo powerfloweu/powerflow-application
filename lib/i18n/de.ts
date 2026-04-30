@@ -21,6 +21,7 @@ export const de: Dict = {
     course: "Kurs",
     tools: "Tools",
     you: "Du",
+    coach: "Coach",
   },
 
   common: {

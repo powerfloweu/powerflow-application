@@ -17,6 +17,7 @@ export const en = {
     course: "Course",
     tools: "Tools",
     you: "You",
+    coach: "Coach",
   },
 
   // Reused atoms

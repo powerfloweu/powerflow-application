@@ -19,6 +19,7 @@ export const hu: Dict = {
     course: "Tanfolyam",
     tools: "Eszközök",
     you: "Te",
+    coach: "Edző",
   },
 
   common: {
