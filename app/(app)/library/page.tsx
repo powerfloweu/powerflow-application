@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { hasAccess, type PlanTier } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
+import VizLiveSession from "@/app/components/VizLiveSession";
 
 const SECTION_KEY: Record<string, string> = {
   Relaxation: "library.sectionRelaxation",
@@ -607,6 +608,8 @@ export default function ToolsPage() {
   const [profileLoaded, setProfileLoaded]   = React.useState(false);
   const [aiAccess, setAiAccess]             = React.useState(false);
   const [planTier, setPlanTier]             = React.useState<PlanTier>("pr"); // optimistic
+  // Track which viz tool is in "live" mode (null = listen/audio mode)
+  const [vizLiveModeId, setVizLiveModeId]   = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const stored = localStorage.getItem("relax-favorite");
@@ -847,7 +850,48 @@ export default function ToolsPage() {
                                     onSave={(kws) => saveVizKeywords(tool.id, kws)}
                                   />
                                 )}
-                                <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
+
+                                {/* Listen / Live toggle for viz tools */}
+                                {tool.usesVizKeywords ? (
+                                  <>
+                                    {/* Mode pills */}
+                                    <div className="flex gap-1.5 mb-4">
+                                      <button
+                                        type="button"
+                                        onClick={() => setVizLiveModeId(null)}
+                                        className={`rounded-full px-3 py-1 font-saira text-[10px] font-semibold uppercase tracking-[0.16em] transition ${
+                                          vizLiveModeId !== tool.id
+                                            ? "bg-purple-600 text-white"
+                                            : "border border-white/10 text-zinc-400 hover:text-zinc-300"
+                                        }`}
+                                      >
+                                        🎧 Listen
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setVizLiveModeId(tool.id)}
+                                        className={`rounded-full px-3 py-1 font-saira text-[10px] font-semibold uppercase tracking-[0.16em] transition ${
+                                          vizLiveModeId === tool.id
+                                            ? "bg-purple-600 text-white"
+                                            : "border border-white/10 text-zinc-400 hover:text-zinc-300"
+                                        }`}
+                                      >
+                                        🎙 Live
+                                      </button>
+                                    </div>
+
+                                    {vizLiveModeId === tool.id ? (
+                                      <VizLiveSession
+                                        toolId={tool.id as "viz-squat" | "viz-bench" | "viz-deadlift"}
+                                        onClose={() => setVizLiveModeId(null)}
+                                      />
+                                    ) : (
+                                      <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
+                                    )}
+                                  </>
+                                ) : (
+                                  <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
+                                )}
                               </>
                             )}
                           </div>
