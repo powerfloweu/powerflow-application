@@ -2,6 +2,7 @@
 
 import React from "react";
 import { weekLabel } from "@/lib/weeklyCheckin";
+import { useT } from "@/lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -21,12 +22,14 @@ interface Props {
 
 function RatingRow({
   label,
+  tapToRate,
   value,
   onChange,
   lowLabel,
   highLabel,
 }: {
   label: string;
+  tapToRate: string;
   value: number | null;
   onChange: (v: number) => void;
   lowLabel?: string;
@@ -39,7 +42,7 @@ function RatingRow({
           {label}
         </span>
         {value === null && (
-          <span className="font-saira text-[9px] text-zinc-600 uppercase tracking-[0.14em]">tap to rate</span>
+          <span className="font-saira text-[9px] text-zinc-500 uppercase tracking-[0.14em]">{tapToRate}</span>
         )}
       </div>
       <div className="grid grid-cols-10 gap-1 sm:gap-1.5">
@@ -71,6 +74,7 @@ function RatingRow({
 // ── Main modal ────────────────────────────────────────────────────────────────
 
 export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props) {
+  const { t } = useT();
   const label = weekLabel(targetWeek.week, targetWeek.weekStart);
 
   const [mood,      setMood]      = React.useState<number | null>(null);
@@ -124,7 +128,7 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
         <div className="sticky top-0 z-10 flex items-start justify-between px-6 pt-6 pb-4 bg-surface-alt border-b border-white/5">
           <div>
             <p className="font-saira text-[10px] font-bold uppercase tracking-[0.28em] text-purple-400 mb-1">
-              Weekly Check-In
+              {t("checkin.weeklyTitle")}
             </p>
             <h2 className="font-saira text-lg font-extrabold uppercase tracking-[0.08em]">
               {label}
@@ -148,34 +152,34 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
           {/* Ratings */}
           <div className="space-y-5">
             <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300">
-              Rate your week  ·  1 = very low · 10 = excellent
+              {t("checkin.rateYourWeek")}
             </p>
-            <RatingRow label="Overall mood"       value={mood}      onChange={setMood}      lowLabel="Low" highLabel="Great" />
-            <RatingRow label="Training quality"   value={training}  onChange={setTraining}  lowLabel="Poor" highLabel="Peak" />
-            <RatingRow label="Energy levels"      value={energy}    onChange={setEnergy}    lowLabel="Drained" highLabel="Strong" />
-            <RatingRow label="Sleep quality"      value={sleep}     onChange={setSleep}     lowLabel="Poor" highLabel="Excellent" />
-            <RatingRow label="Readiness for next week" value={readiness} onChange={setReadiness} lowLabel="Not ready" highLabel="Very ready" />
+            <RatingRow label={t("checkin.labelMood")}      tapToRate={t("checkin.tapToRate")} value={mood}      onChange={setMood}      lowLabel={t("checkin.lowMood")}      highLabel={t("checkin.highMood")} />
+            <RatingRow label={t("checkin.labelTraining")}  tapToRate={t("checkin.tapToRate")} value={training}  onChange={setTraining}  lowLabel={t("checkin.lowTraining")}  highLabel={t("checkin.highTraining")} />
+            <RatingRow label={t("checkin.labelEnergy")}    tapToRate={t("checkin.tapToRate")} value={energy}    onChange={setEnergy}    lowLabel={t("checkin.lowEnergy")}    highLabel={t("checkin.highEnergy")} />
+            <RatingRow label={t("checkin.labelSleep")}     tapToRate={t("checkin.tapToRate")} value={sleep}     onChange={setSleep}     lowLabel={t("checkin.lowSleep")}     highLabel={t("checkin.highSleep")} />
+            <RatingRow label={t("checkin.labelReadiness")} tapToRate={t("checkin.tapToRate")} value={readiness} onChange={setReadiness} lowLabel={t("checkin.lowReadiness")} highLabel={t("checkin.highReadiness")} />
           </div>
 
           {/* Text questions */}
           <div className="space-y-4">
             <div className="flex items-baseline gap-2">
               <p className="font-saira text-base font-extrabold uppercase tracking-[0.12em] text-white">
-                Reflect
+                {t("checkin.reflect")}
               </p>
               <p className="font-saira text-[10px] text-zinc-500 uppercase tracking-[0.18em]">
-                all optional
+                {t("common.optional")}
               </p>
             </div>
 
             <div>
               <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">
-                What was your biggest win or positive moment this week?
+                {t("checkin.qBiggestWin")}
               </label>
               <textarea
                 value={biggestWin}
                 onChange={(e) => setBiggestWin(e.target.value)}
-                placeholder="Something that went well…"
+                placeholder={t("checkin.placeholderWin")}
                 rows={2}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition"
               />
@@ -183,12 +187,12 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
 
             <div>
               <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">
-                What was the main challenge you faced?
+                {t("checkin.qMainChallenge")}
               </label>
               <textarea
                 value={biggestChallenge}
                 onChange={(e) => setBiggestChallenge(e.target.value)}
-                placeholder="A difficulty, doubt, or obstacle…"
+                placeholder={t("checkin.placeholderChallenge")}
                 rows={2}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition"
               />
@@ -196,12 +200,12 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
 
             <div>
               <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">
-                One thing to focus on next week
+                {t("checkin.qFocusNext")}
               </label>
               <textarea
                 value={focusNextWeek}
                 onChange={(e) => setFocusNextWeek(e.target.value)}
-                placeholder="An intention, goal, or process cue…"
+                placeholder={t("checkin.placeholderFocus")}
                 rows={2}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition"
               />
@@ -213,14 +217,14 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
               <span className="text-rose-400 flex-shrink-0">!</span>
               <p className="font-saira text-xs text-rose-300">{error}</p>
               <button type="button" onClick={handleSubmit} disabled={saving} className="ml-auto font-saira text-xs text-rose-300 underline hover:text-rose-200 transition flex-shrink-0">
-                Retry
+                {t("common.retry")}
               </button>
             </div>
           )}
 
           {/* Actions */}
           {[mood, training, readiness, energy, sleep].some((v) => v === null) && (
-            <p className="font-saira text-[10px] text-zinc-500 text-center">Rate all 5 areas to submit</p>
+            <p className="font-saira text-[10px] text-zinc-500 text-center">{t("checkin.rateAllToSubmit")}</p>
           )}
           <div className="flex gap-3 pb-2">
             <button
@@ -229,7 +233,7 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
               disabled={saving || [mood, training, readiness, energy, sleep].some((v) => v === null)}
               className="flex-1 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
             >
-              {saving ? "Saving…" : "Submit check-in"}
+              {saving ? t("common.saving") : t("checkin.submitCheckin")}
             </button>
             {onSkip && (
               <button
@@ -237,7 +241,7 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
                 onClick={onSkip}
                 className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-300 hover:text-zinc-300 hover:border-white/20 transition"
               >
-                Later
+                {t("checkin.later")}
               </button>
             )}
           </div>

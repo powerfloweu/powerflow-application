@@ -2,6 +2,7 @@
 
 import React from "react";
 import { weekLabel } from "@/lib/weeklyCheckin";
+import { useT } from "@/lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -100,6 +101,7 @@ function SectionHeading({
 // ── Main modal ────────────────────────────────────────────────────────────────
 
 export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Props) {
+  const { t } = useT();
   const label = weekLabel(targetWeek.week, targetWeek.weekStart);
 
   // Step 1 = weekly ratings + reflections, Step 2 = monthly deep dive
@@ -168,7 +170,7 @@ export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Prop
         <div className="sticky top-0 z-10 flex items-start justify-between px-6 pt-6 pb-4 bg-surface-alt border-b border-white/5">
           <div>
             <p className="font-saira text-[10px] font-bold uppercase tracking-[0.28em] text-amber-400 mb-1">
-              Monthly Check-In
+              {t("checkin.monthlyTitle")}
             </p>
             <h2 className="font-saira text-lg font-extrabold uppercase tracking-[0.08em]">
               {label}
@@ -195,7 +197,7 @@ export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Prop
               style={{ width: `${step === 1 ? 50 : 100}%` }}
             />
           </div>
-          <span className="font-saira text-[10px] text-zinc-500 flex-shrink-0">Step {step} / 2</span>
+          <span className="font-saira text-[10px] text-zinc-500 flex-shrink-0">{t("checkin.stepOf").replace("{n}", String(step))}</span>
         </div>
 
         <div className="px-6 py-5 space-y-6">
@@ -205,34 +207,34 @@ export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Prop
               {/* ── Weekly ratings ───────────────────────────────────────────── */}
               <div className="space-y-5">
                 <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300">
-                  Rate your week  ·  1 = very low · 10 = excellent
+                  {t("checkin.rateYourWeek")}
                 </p>
-                <RatingRow label="Overall mood"            value={mood}      onChange={setMood}      lowLabel="Low"       highLabel="Great"      />
-                <RatingRow label="Training quality"        value={training}  onChange={setTraining}  lowLabel="Poor"      highLabel="Peak"       />
-                <RatingRow label="Energy levels"           value={energy}    onChange={setEnergy}    lowLabel="Drained"   highLabel="Strong"     />
-                <RatingRow label="Sleep quality"           value={sleep}     onChange={setSleep}     lowLabel="Poor"      highLabel="Excellent"  />
-                <RatingRow label="Readiness for next week" value={readiness} onChange={setReadiness} lowLabel="Not ready" highLabel="Very ready" />
+                <RatingRow label={t("checkin.labelMood")}      value={mood}      onChange={setMood}      lowLabel={t("checkin.lowMood")}      highLabel={t("checkin.highMood")} />
+                <RatingRow label={t("checkin.labelTraining")}  value={training}  onChange={setTraining}  lowLabel={t("checkin.lowTraining")}  highLabel={t("checkin.highTraining")} />
+                <RatingRow label={t("checkin.labelEnergy")}    value={energy}    onChange={setEnergy}    lowLabel={t("checkin.lowEnergy")}    highLabel={t("checkin.highEnergy")} />
+                <RatingRow label={t("checkin.labelSleep")}     value={sleep}     onChange={setSleep}     lowLabel={t("checkin.lowSleep")}     highLabel={t("checkin.highSleep")} />
+                <RatingRow label={t("checkin.labelReadiness")} value={readiness} onChange={setReadiness} lowLabel={t("checkin.lowReadiness")} highLabel={t("checkin.highReadiness")} />
               </div>
 
               {/* ── Weekly reflection ─────────────────────────────────────────── */}
               <div className="space-y-4">
-                <SectionHeading title="Reflect" sub="all optional" />
+                <SectionHeading title={t("checkin.reflect")} sub={t("common.optional")} />
                 <div>
-                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">What was your biggest win or positive moment this week?</label>
-                  <textarea value={biggestWin} onChange={(e) => setBiggestWin(e.target.value)} placeholder="Something that went well…" rows={2} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition" />
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">{t("checkin.qBiggestWin")}</label>
+                  <textarea value={biggestWin} onChange={(e) => setBiggestWin(e.target.value)} placeholder={t("checkin.placeholderWin")} rows={2} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition" />
                 </div>
                 <div>
-                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">What was the main challenge you faced?</label>
-                  <textarea value={biggestChallenge} onChange={(e) => setBiggestChallenge(e.target.value)} placeholder="A difficulty, doubt, or obstacle…" rows={2} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition" />
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">{t("checkin.qMainChallenge")}</label>
+                  <textarea value={biggestChallenge} onChange={(e) => setBiggestChallenge(e.target.value)} placeholder={t("checkin.placeholderChallenge")} rows={2} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition" />
                 </div>
                 <div>
-                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">One thing to focus on next week</label>
-                  <textarea value={focusNextWeek} onChange={(e) => setFocusNextWeek(e.target.value)} placeholder="An intention, goal, or process cue…" rows={2} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition" />
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">{t("checkin.qFocusNext")}</label>
+                  <textarea value={focusNextWeek} onChange={(e) => setFocusNextWeek(e.target.value)} placeholder={t("checkin.placeholderFocus")} rows={2} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition" />
                 </div>
               </div>
 
               {[mood, training, readiness, energy, sleep].some((v) => v === null) && (
-                <p className="font-saira text-[10px] text-zinc-500 text-center">Rate all 5 areas to continue</p>
+                <p className="font-saira text-[10px] text-zinc-500 text-center">{t("checkin.rateAllToContinue")}</p>
               )}
               <div className="flex gap-3 pb-2">
                 <button
@@ -241,11 +243,11 @@ export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Prop
                   disabled={[mood, training, readiness, energy, sleep].some((v) => v === null)}
                   className="flex-1 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
                 >
-                  Next: Monthly Reflection →
+                  {t("checkin.nextMonthlyStep")}
                 </button>
                 {onSkip && (
                   <button type="button" onClick={onSkip} className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-300 hover:border-white/20 transition">
-                    Later
+                    {t("checkin.later")}
                   </button>
                 )}
               </div>
@@ -255,24 +257,24 @@ export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Prop
               {/* ── Monthly-specific section ──────────────────────────────────── */}
               <div className="space-y-5">
                 <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300">
-                  How was your month overall?  ·  1 = very low · 10 = excellent
+                  {t("checkin.rateYourMonth")}
                 </p>
-                <RatingRow label="Overall monthly progress" value={overallProgress} onChange={setOverallProgress} lowLabel="Stalled" highLabel="On fire" accent="amber" />
+                <RatingRow label={t("checkin.labelMonthlyProgress")} value={overallProgress} onChange={setOverallProgress} lowLabel={t("checkin.lowMonthly")} highLabel={t("checkin.highMonthly")} accent="amber" />
               </div>
 
               <div className="space-y-4">
-                <SectionHeading title="Look back" sub="all optional" accent />
+                <SectionHeading title={t("checkin.lookBack")} sub={t("common.optional")} accent />
                 <div>
-                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">What was your biggest breakthrough or achievement this month?</label>
-                  <textarea value={biggestBreakthrough} onChange={(e) => setBiggestBreakthrough(e.target.value)} placeholder="A result, realisation, or moment of growth…" rows={2} className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition" />
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">{t("checkin.qBreakthrough")}</label>
+                  <textarea value={biggestBreakthrough} onChange={(e) => setBiggestBreakthrough(e.target.value)} placeholder={t("checkin.placeholderBreakthrough")} rows={2} className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition" />
                 </div>
                 <div>
-                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">What's the most important thing you learned about yourself this month?</label>
-                  <textarea value={keyLesson} onChange={(e) => setKeyLesson(e.target.value)} placeholder="A pattern, strength, or area to work on…" rows={2} className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition" />
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">{t("checkin.qKeyLesson")}</label>
+                  <textarea value={keyLesson} onChange={(e) => setKeyLesson(e.target.value)} placeholder={t("checkin.placeholderKeyLesson")} rows={2} className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition" />
                 </div>
                 <div>
-                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">What's your main intention going into next month?</label>
-                  <textarea value={nextMonthIntention} onChange={(e) => setNextMonthIntention(e.target.value)} placeholder="A goal, process focus, or mindset shift…" rows={2} className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition" />
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">{t("checkin.qNextMonthIntention")}</label>
+                  <textarea value={nextMonthIntention} onChange={(e) => setNextMonthIntention(e.target.value)} placeholder={t("checkin.placeholderNextMonth")} rows={2} className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition" />
                 </div>
               </div>
 
@@ -280,24 +282,24 @@ export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Prop
                 <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 flex items-center gap-3">
                   <span className="text-rose-400 flex-shrink-0">!</span>
                   <p className="font-saira text-xs text-rose-300">{error}</p>
-                  <button type="button" onClick={handleSubmit} disabled={saving} className="ml-auto font-saira text-xs text-rose-300 underline hover:text-rose-200 transition flex-shrink-0">Retry</button>
+                  <button type="button" onClick={handleSubmit} disabled={saving} className="ml-auto font-saira text-xs text-rose-300 underline hover:text-rose-200 transition flex-shrink-0">{t("common.retry")}</button>
                 </div>
               )}
 
               {/* Actions */}
               <div className="flex gap-3 pb-2">
-                <button type="button" onClick={() => setStep(1)} className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-400 hover:text-zinc-300 hover:border-white/20 transition">← Back</button>
+                <button type="button" onClick={() => setStep(1)} className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-400 hover:text-zinc-300 hover:border-white/20 transition">← {t("common.back")}</button>
                 <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={saving}
                   className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
                 >
-                  {saving ? "Saving…" : "Submit check-in"}
+                  {saving ? t("common.saving") : t("checkin.submitCheckin")}
                 </button>
                 {onSkip && (
                   <button type="button" onClick={onSkip} className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-300 hover:border-white/20 transition">
-                    Later
+                    {t("checkin.later")}
                   </button>
                 )}
               </div>
