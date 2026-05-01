@@ -10,7 +10,7 @@ import { dbSelect } from "@/lib/supabaseAdmin";
 import Anthropic from "@anthropic-ai/sdk";
 import type { AthleteProfile } from "@/lib/athlete";
 import type { Voice } from "@/lib/voices";
-import { canAccessPR } from "@/lib/plan";
+// canAccessPR no longer used for AI gate — ai_access field is the authoritative check
 
 export const runtime = "nodejs";
 
@@ -370,8 +370,10 @@ export async function POST(req: NextRequest) {
   });
 
   const profile = profiles[0] as AthleteProfile | undefined;
-  if (!profile || !canAccessPR(profile?.plan_tier ?? "opener")) {
-    return NextResponse.json({ error: "PR tier required for AI coach" }, { status: 403 });
+  // ai_access is the authoritative gate — checked in admin panel per user.
+  // plan_tier alone is not sufficient (admin may have disabled access for a PR user).
+  if (!profile || !profile.ai_access) {
+    return NextResponse.json({ error: "AI access not enabled for this account" }, { status: 403 });
   }
 
   // Fetch context in parallel

@@ -508,8 +508,9 @@ export default function ChatPage() {
       fetch("/api/chat/messages?limit=50").then((r) => r.json()),
     ])
       .then(([profile, history]) => {
-        const tier = profile?.plan_tier ?? "opener";
-        if (tier !== "pr") {
+        // ai_access is the authoritative gate — admin must enable it per user.
+        // plan_tier alone is not sufficient.
+        if (!profile?.ai_access) {
           router.replace("/upgrade");
           return;
         }
