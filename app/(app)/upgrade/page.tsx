@@ -26,9 +26,9 @@ const TIER_PRICE_KEY: Record<PlanTier, string> = {
 };
 
 const TIER_SUBTITLE_KEY: Record<PlanTier, string> = {
-  opener: "upgrade.priceFree",
-  second: "library.title",          // "Tools"
-  pr: "paywall.title",              // "Upgrade to unlock this" — repurpose subtitle
+  opener: "upgrade.subtitleOpener",
+  second: "upgrade.subtitleSecond",
+  pr:     "upgrade.subtitlePR",
 };
 
 const FEATURE_KEYS: Record<PlanTier, string[]> = {
@@ -128,18 +128,18 @@ export default function UpgradePage() {
 
               {/* CTA */}
               {isCurrent ? (
-                <div className="text-center py-2.5 rounded-xl border border-white/10 text-zinc-300 font-saira text-[10px] uppercase tracking-[0.2em]">
-                  {t("upgrade.currentPlan")}
+                <div className="text-center py-2.5 rounded-xl border-2 border-purple-500/60 bg-purple-500/10 text-purple-300 font-saira text-[10px] uppercase tracking-[0.2em] font-semibold">
+                  ✓ {t("upgrade.currentPlan")}
                 </div>
               ) : isHigher ? (
-                <button
-                  disabled
-                  className="w-full py-2.5 rounded-xl bg-purple-600/80 text-white font-saira text-[10px] uppercase tracking-[0.2em] opacity-60 cursor-not-allowed"
+                <a
+                  href="mailto:info@power-flow.eu?subject=Upgrade%20request"
+                  className="block w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-saira text-[10px] uppercase tracking-[0.2em] text-center transition"
                 >
-                  {ctaForTier(tier)}
-                </button>
+                  {t("upgrade.contactToUpgrade")}
+                </a>
               ) : (
-                <div className="text-center py-2.5 rounded-xl border border-white/10 text-zinc-400 font-saira text-[10px] uppercase tracking-[0.2em]">
+                <div className="text-center py-2.5 rounded-xl border border-white/10 text-zinc-500 font-saira text-[10px] uppercase tracking-[0.2em]">
                   {t("upgrade.downgrade")}
                 </div>
               )}

@@ -27,16 +27,21 @@ function RatingRow({
   highLabel,
 }: {
   label: string;
-  value: number;
+  value: number | null;
   onChange: (v: number) => void;
   lowLabel?: string;
   highLabel?: string;
 }) {
   return (
     <div className="space-y-2">
-      <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
-        {label}
-      </span>
+      <div className="flex items-center gap-2">
+        <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+          {label}
+        </span>
+        {value === null && (
+          <span className="font-saira text-[9px] text-zinc-600 uppercase tracking-[0.14em]">tap to rate</span>
+        )}
+      </div>
       <div className="grid grid-cols-10 gap-1 sm:gap-1.5">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
           <button
@@ -68,11 +73,11 @@ function RatingRow({
 export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props) {
   const label = weekLabel(targetWeek.week, targetWeek.weekStart);
 
-  const [mood,      setMood]      = React.useState(7);
-  const [training,  setTraining]  = React.useState(7);
-  const [readiness, setReadiness] = React.useState(7);
-  const [energy,    setEnergy]    = React.useState(7);
-  const [sleep,     setSleep]     = React.useState(7);
+  const [mood,      setMood]      = React.useState<number | null>(null);
+  const [training,  setTraining]  = React.useState<number | null>(null);
+  const [readiness, setReadiness] = React.useState<number | null>(null);
+  const [energy,    setEnergy]    = React.useState<number | null>(null);
+  const [sleep,     setSleep]     = React.useState<number | null>(null);
 
   const [biggestWin,       setBiggestWin]       = React.useState("");
   const [biggestChallenge, setBiggestChallenge] = React.useState("");
@@ -89,11 +94,11 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mood_rating:      mood,
-          training_quality: training,
-          readiness_rating: readiness,
-          energy_rating:    energy,
-          sleep_rating:     sleep,
+          mood_rating:      mood ?? 5,
+          training_quality: training ?? 5,
+          readiness_rating: readiness ?? 5,
+          energy_rating:    energy ?? 5,
+          sleep_rating:     sleep ?? 5,
           biggest_win:      biggestWin,
           biggest_challenge: biggestChallenge,
           focus_next_week:  focusNextWeek,
@@ -204,16 +209,25 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
           </div>
 
           {error && (
-            <p className="font-saira text-xs text-rose-400">{error}</p>
+            <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 flex items-center gap-3">
+              <span className="text-rose-400 flex-shrink-0">!</span>
+              <p className="font-saira text-xs text-rose-300">{error}</p>
+              <button type="button" onClick={handleSubmit} disabled={saving} className="ml-auto font-saira text-xs text-rose-300 underline hover:text-rose-200 transition flex-shrink-0">
+                Retry
+              </button>
+            </div>
           )}
 
           {/* Actions */}
+          {[mood, training, readiness, energy, sleep].some((v) => v === null) && (
+            <p className="font-saira text-[10px] text-zinc-500 text-center">Rate all 5 areas to submit</p>
+          )}
           <div className="flex gap-3 pb-2">
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={saving}
-              className="flex-1 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
+              disabled={saving || [mood, training, readiness, energy, sleep].some((v) => v === null)}
+              className="flex-1 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
             >
               {saving ? "Saving…" : "Submit check-in"}
             </button>

@@ -328,7 +328,9 @@ function PlanWeekCard({
           ? "bg-white/5 text-zinc-400 border border-white/5"
           : "bg-white/[0.02] text-zinc-500 border border-white/[0.04]"
       }`}>
-        {done ? "✓" : isUnlocked ? position : "🔒"}
+        {done ? "✓" : isUnlocked ? position : (
+          <span title="Complete the previous module to unlock">🔒</span>
+        )}
       </div>
 
       {/* Content */}
@@ -412,10 +414,14 @@ function StepDots({ row }: { row: CourseProgressRow | undefined }) {
 
 function Dot({ filled, label }: { filled: boolean; label: string }) {
   return (
-    <span
-      title={label}
-      className={`w-1.5 h-1.5 rounded-full transition ${filled ? "bg-purple-400" : "bg-white/15"}`}
-    />
+    <span className="flex items-center gap-1">
+      <span
+        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition ${filled ? "bg-purple-400" : "bg-white/15"}`}
+      />
+      <span className={`font-saira text-[9px] uppercase tracking-[0.1em] ${filled ? "text-purple-400" : "text-zinc-600"}`}>
+        {label}
+      </span>
+    </span>
   );
 }
 
@@ -799,13 +805,20 @@ function CourseLockedPage() {
           href="https://power-flow.eu/checkout/"
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full rounded-xl bg-purple-600 hover:bg-purple-500 py-3.5 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition"
+          className="block w-full rounded-xl bg-purple-600 hover:bg-purple-500 py-3.5 font-saira text-sm font-semibold uppercase tracking-[0.16em] text-white transition text-center"
         >
           Get Access →
         </a>
-        <p className="font-saira text-[10px] text-zinc-400 mt-2">
+        <p className="font-saira text-[10px] text-zinc-400 mt-2 text-center">
           One-time purchase · instant access
         </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="w-full mt-1 font-saira text-[10px] text-zinc-500 hover:text-purple-300 transition underline underline-offset-2"
+        >
+          Already purchased? Refresh to activate →
+        </button>
       </div>
 
       <div className="relative rounded-2xl border border-white/5 bg-surface-card p-5 overflow-hidden">

@@ -393,6 +393,10 @@ export const hu: Dict = {
     priceFree: "Ingyenes",
     priceSecond: "€9 / hó",
     pricePR: "€19 / hó",
+    subtitleOpener: "Napló és edzésnapló",
+    subtitleSecond: "Mentális teljesítmény eszközök",
+    subtitlePR: "Minden + AI coach",
+    contactToUpgrade: "Frissítés igénylése →",
   },
 
   paywall: {

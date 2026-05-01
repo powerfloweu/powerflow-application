@@ -99,6 +99,8 @@ function ScriptBlock({
   const { t } = useT();
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
+  const [naming, setNaming] = React.useState(false);
+  const [nameInput, setNameInput] = React.useState("");
   const isLoading = loadingId === blockId;
   const hasError = errorId !== null && (errorId === blockId || errorId.startsWith(blockId + "||"));
   const errorMsg = errorId?.startsWith(blockId + "||") ? errorId.split("||")[1] : "";
@@ -118,9 +120,14 @@ function ScriptBlock({
     ? Math.min((audioTime.current / audioTime.duration) * 100, 100)
     : 0;
 
+  const openNaming = () => {
+    setNameInput(suggestedTitle);
+    setNaming(true);
+  };
+
   const handleSave = async () => {
-    const name = window.prompt("Name this script:", suggestedTitle);
-    if (!name) return;
+    const name = nameInput.trim() || suggestedTitle;
+    setNaming(false);
     setSaving(true);
     try {
       await fetch("/api/scripts", {
@@ -211,26 +218,48 @@ function ScriptBlock({
           </p>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-3 mb-0">
-          <button
-            type="button"
-            onClick={() => onPlay(blockId, content)}
-            className="border border-purple-500/30 bg-purple-500/10 text-purple-300 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:bg-purple-500/20 transition"
-          >
-            {t("chat.play")}
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="border border-white/10 text-zinc-400 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:text-white hover:border-white/30 transition disabled:opacity-50"
-          >
-            {saved ? t("chat.savedScript") : saving ? t("chat.savingScript") : t("chat.saveScript")}
-          </button>
-          {hasError && (
-            <p className="w-full font-saira text-[10px] text-red-400 break-all">
-              {errorMsg || t("chat.audioFailed")}
-            </p>
+        <div className="space-y-2 mb-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onPlay(blockId, content)}
+              className="border border-purple-500/30 bg-purple-500/10 text-purple-300 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:bg-purple-500/20 transition"
+            >
+              {t("chat.play")}
+            </button>
+            <button
+              type="button"
+              onClick={saved ? undefined : openNaming}
+              disabled={saving}
+              className="border border-white/10 text-zinc-400 rounded-xl px-4 py-2 font-saira text-xs uppercase tracking-wider hover:text-white hover:border-white/30 transition disabled:opacity-50"
+            >
+              {saved ? t("chat.savedScript") : saving ? t("chat.savingScript") : t("chat.saveScript")}
+            </button>
+            {hasError && (
+              <p className="w-full font-saira text-[10px] text-red-400 break-all">
+                {errorMsg || t("chat.audioFailed")}
+              </p>
+            )}
+          </div>
+          {/* Inline naming dialog */}
+          {naming && (
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") setNaming(false); }}
+                placeholder="Script name…"
+                autoFocus
+                className="flex-1 rounded-xl border border-white/10 bg-surface-card px-3 py-1.5 font-saira text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/40"
+              />
+              <button type="button" onClick={handleSave} className="rounded-xl bg-purple-600 hover:bg-purple-500 px-3 py-1.5 font-saira text-xs text-white transition">
+                Save
+              </button>
+              <button type="button" onClick={() => setNaming(false)} className="font-saira text-xs text-zinc-500 hover:text-zinc-300 transition px-1">
+                ✕
+              </button>
+            </div>
           )}
         </div>
       )}

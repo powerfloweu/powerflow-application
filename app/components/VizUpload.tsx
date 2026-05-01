@@ -33,6 +33,7 @@ export default function VizUpload({ toolId, hasExisting, onUploaded, onDeleted }
   const [uploadPct, setUploadPct]   = React.useState(0);
   const [error, setError]           = React.useState<string | null>(null);
   const [deleting, setDeleting]     = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [dragOver, setDragOver]     = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -130,7 +131,6 @@ export default function VizUpload({ toolId, hasExisting, onUploaded, onDeleted }
   };
 
   const handleDelete = async () => {
-    if (!confirm("Remove your voice note for this lift?")) return;
     setDeleting(true);
     try {
       await fetch(`/api/tools/viz-recording?toolId=${toolId}`, { method: "DELETE" });
@@ -244,27 +244,52 @@ export default function VizUpload({ toolId, hasExisting, onUploaded, onDeleted }
           </div>
         </div>
 
-        {/* Your voice note label */}
+        {/* Your voice note label + actions */}
         <div className="flex items-center justify-between">
           <p className="font-saira text-[10px] text-zinc-500">Your voice note</p>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="font-saira text-[10px] text-zinc-400 hover:text-purple-300 underline transition"
-            >
-              Replace
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="font-saira text-[10px] text-zinc-400 hover:text-rose-400 underline transition disabled:opacity-50"
-            >
-              {deleting ? "Removing…" : "Remove"}
-            </button>
-          </div>
+          {!confirmDelete ? (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="font-saira text-[10px] text-zinc-400 hover:text-purple-300 underline transition"
+              >
+                Replace
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="font-saira text-[10px] text-zinc-400 hover:text-rose-400 underline transition"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="font-saira text-[10px] text-zinc-400">Remove this note?</span>
+              <button
+                type="button"
+                onClick={() => { setConfirmDelete(false); handleDelete(); }}
+                disabled={deleting}
+                className="font-saira text-[10px] font-semibold text-rose-400 hover:text-rose-300 transition disabled:opacity-50"
+              >
+                {deleting ? "Removing…" : "Yes"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="font-saira text-[10px] text-zinc-500 hover:text-zinc-300 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Explain usage */}
+        <p className="font-saira text-[10px] text-zinc-600 leading-relaxed">
+          This recording plays as your personal cue during guided audio sessions.
+        </p>
 
         {/* Hidden file input for replace */}
         <input

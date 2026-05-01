@@ -28,7 +28,7 @@ function RatingRow({
   accent = "purple",
 }: {
   label: string;
-  value: number;
+  value: number | null;
   onChange: (v: number) => void;
   lowLabel?: string;
   highLabel?: string;
@@ -102,12 +102,15 @@ function SectionHeading({
 export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Props) {
   const label = weekLabel(targetWeek.week, targetWeek.weekStart);
 
+  // Step 1 = weekly ratings + reflections, Step 2 = monthly deep dive
+  const [step, setStep] = React.useState(1);
+
   // ── Weekly ratings ──────────────────────────────────────────────────────────
-  const [mood,      setMood]      = React.useState(7);
-  const [training,  setTraining]  = React.useState(7);
-  const [readiness, setReadiness] = React.useState(7);
-  const [energy,    setEnergy]    = React.useState(7);
-  const [sleep,     setSleep]     = React.useState(7);
+  const [mood,      setMood]      = React.useState<number | null>(null);
+  const [training,  setTraining]  = React.useState<number | null>(null);
+  const [readiness, setReadiness] = React.useState<number | null>(null);
+  const [energy,    setEnergy]    = React.useState<number | null>(null);
+  const [sleep,     setSleep]     = React.useState<number | null>(null);
 
   // ── Weekly reflection ───────────────────────────────────────────────────────
   const [biggestWin,       setBiggestWin]       = React.useState("");
@@ -115,7 +118,7 @@ export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Prop
   const [focusNextWeek,    setFocusNextWeek]    = React.useState("");
 
   // ── Monthly-specific ────────────────────────────────────────────────────────
-  const [overallProgress,      setOverallProgress]      = React.useState(7);
+  const [overallProgress,      setOverallProgress]      = React.useState<number | null>(null);
   const [biggestBreakthrough,  setBiggestBreakthrough]  = React.useState("");
   const [keyLesson,            setKeyLesson]            = React.useState("");
   const [nextMonthIntention,   setNextMonthIntention]   = React.useState("");
@@ -131,12 +134,12 @@ export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Prop
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mood_rating:          mood,
-          training_quality:     training,
-          readiness_rating:     readiness,
-          energy_rating:        energy,
-          sleep_rating:         sleep,
-          overall_progress:     overallProgress,
+          mood_rating:          mood ?? 5,
+          training_quality:     training ?? 5,
+          readiness_rating:     readiness ?? 5,
+          energy_rating:        energy ?? 5,
+          sleep_rating:         sleep ?? 5,
+          overall_progress:     overallProgress ?? 5,
           biggest_win:          biggestWin,
           biggest_challenge:    biggestChallenge,
           focus_next_week:      focusNextWeek,
@@ -184,155 +187,122 @@ export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Prop
           )}
         </div>
 
-        <div className="px-6 py-5 space-y-6">
-
-          {/* ── Weekly ratings ─────────────────────────────────────────────── */}
-          <div className="space-y-5">
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300">
-              Rate your week  ·  1 = very low · 10 = excellent
-            </p>
-            <RatingRow label="Overall mood"            value={mood}      onChange={setMood}      lowLabel="Low"       highLabel="Great"      />
-            <RatingRow label="Training quality"        value={training}  onChange={setTraining}  lowLabel="Poor"      highLabel="Peak"       />
-            <RatingRow label="Energy levels"           value={energy}    onChange={setEnergy}    lowLabel="Drained"   highLabel="Strong"     />
-            <RatingRow label="Sleep quality"           value={sleep}     onChange={setSleep}     lowLabel="Poor"      highLabel="Excellent"  />
-            <RatingRow label="Readiness for next week" value={readiness} onChange={setReadiness} lowLabel="Not ready" highLabel="Very ready" />
-          </div>
-
-          {/* ── Weekly reflection ──────────────────────────────────────────── */}
-          <div className="space-y-4">
-            <SectionHeading title="Reflect" sub="all optional" />
-
-            <div>
-              <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">
-                What was your biggest win or positive moment this week?
-              </label>
-              <textarea
-                value={biggestWin}
-                onChange={(e) => setBiggestWin(e.target.value)}
-                placeholder="Something that went well…"
-                rows={2}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition"
-              />
-            </div>
-
-            <div>
-              <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">
-                What was the main challenge you faced?
-              </label>
-              <textarea
-                value={biggestChallenge}
-                onChange={(e) => setBiggestChallenge(e.target.value)}
-                placeholder="A difficulty, doubt, or obstacle…"
-                rows={2}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition"
-              />
-            </div>
-
-            <div>
-              <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">
-                One thing to focus on next week
-              </label>
-              <textarea
-                value={focusNextWeek}
-                onChange={(e) => setFocusNextWeek(e.target.value)}
-                placeholder="An intention, goal, or process cue…"
-                rows={2}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition"
-              />
-            </div>
-          </div>
-
-          {/* ── Monthly reflection divider ──────────────────────────────────── */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-amber-500/20" />
-            <span className="font-saira text-[9px] font-bold uppercase tracking-[0.26em] text-amber-400/70">
-              Monthly Reflection
-            </span>
-            <div className="flex-1 h-px bg-amber-500/20" />
-          </div>
-
-          {/* ── Monthly-specific section ────────────────────────────────────── */}
-          <div className="space-y-5">
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300">
-              How was your month overall?  ·  1 = very low · 10 = excellent
-            </p>
-            <RatingRow
-              label="Overall monthly progress"
-              value={overallProgress}
-              onChange={setOverallProgress}
-              lowLabel="Stalled"
-              highLabel="On fire"
-              accent="amber"
+        {/* Step progress */}
+        <div className="px-6 pt-3 pb-1 flex items-center gap-2">
+          <div className="flex-1 h-1 rounded-full bg-white/8 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-amber-500 transition-[width] duration-300"
+              style={{ width: `${step === 1 ? 50 : 100}%` }}
             />
           </div>
+          <span className="font-saira text-[10px] text-zinc-500 flex-shrink-0">Step {step} / 2</span>
+        </div>
 
-          <div className="space-y-4">
-            <SectionHeading title="Look back" sub="all optional" accent />
+        <div className="px-6 py-5 space-y-6">
 
-            <div>
-              <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">
-                What was your biggest breakthrough or achievement this month?
-              </label>
-              <textarea
-                value={biggestBreakthrough}
-                onChange={(e) => setBiggestBreakthrough(e.target.value)}
-                placeholder="A result, realisation, or moment of growth…"
-                rows={2}
-                className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition"
-              />
-            </div>
+          {step === 1 ? (
+            <>
+              {/* ── Weekly ratings ───────────────────────────────────────────── */}
+              <div className="space-y-5">
+                <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300">
+                  Rate your week  ·  1 = very low · 10 = excellent
+                </p>
+                <RatingRow label="Overall mood"            value={mood}      onChange={setMood}      lowLabel="Low"       highLabel="Great"      />
+                <RatingRow label="Training quality"        value={training}  onChange={setTraining}  lowLabel="Poor"      highLabel="Peak"       />
+                <RatingRow label="Energy levels"           value={energy}    onChange={setEnergy}    lowLabel="Drained"   highLabel="Strong"     />
+                <RatingRow label="Sleep quality"           value={sleep}     onChange={setSleep}     lowLabel="Poor"      highLabel="Excellent"  />
+                <RatingRow label="Readiness for next week" value={readiness} onChange={setReadiness} lowLabel="Not ready" highLabel="Very ready" />
+              </div>
 
-            <div>
-              <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">
-                What's the most important thing you learned about yourself this month?
-              </label>
-              <textarea
-                value={keyLesson}
-                onChange={(e) => setKeyLesson(e.target.value)}
-                placeholder="A pattern, strength, or area to work on…"
-                rows={2}
-                className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition"
-              />
-            </div>
+              {/* ── Weekly reflection ─────────────────────────────────────────── */}
+              <div className="space-y-4">
+                <SectionHeading title="Reflect" sub="all optional" />
+                <div>
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">What was your biggest win or positive moment this week?</label>
+                  <textarea value={biggestWin} onChange={(e) => setBiggestWin(e.target.value)} placeholder="Something that went well…" rows={2} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition" />
+                </div>
+                <div>
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">What was the main challenge you faced?</label>
+                  <textarea value={biggestChallenge} onChange={(e) => setBiggestChallenge(e.target.value)} placeholder="A difficulty, doubt, or obstacle…" rows={2} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition" />
+                </div>
+                <div>
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">One thing to focus on next week</label>
+                  <textarea value={focusNextWeek} onChange={(e) => setFocusNextWeek(e.target.value)} placeholder="An intention, goal, or process cue…" rows={2} className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-purple-400/50 resize-none transition" />
+                </div>
+              </div>
 
-            <div>
-              <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">
-                What's your main intention going into next month?
-              </label>
-              <textarea
-                value={nextMonthIntention}
-                onChange={(e) => setNextMonthIntention(e.target.value)}
-                placeholder="A goal, process focus, or mindset shift…"
-                rows={2}
-                className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition"
-              />
-            </div>
-          </div>
+              {[mood, training, readiness, energy, sleep].some((v) => v === null) && (
+                <p className="font-saira text-[10px] text-zinc-500 text-center">Rate all 5 areas to continue</p>
+              )}
+              <div className="flex gap-3 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  disabled={[mood, training, readiness, energy, sleep].some((v) => v === null)}
+                  className="flex-1 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
+                >
+                  Next: Monthly Reflection →
+                </button>
+                {onSkip && (
+                  <button type="button" onClick={onSkip} className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-300 hover:border-white/20 transition">
+                    Later
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* ── Monthly-specific section ──────────────────────────────────── */}
+              <div className="space-y-5">
+                <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300">
+                  How was your month overall?  ·  1 = very low · 10 = excellent
+                </p>
+                <RatingRow label="Overall monthly progress" value={overallProgress} onChange={setOverallProgress} lowLabel="Stalled" highLabel="On fire" accent="amber" />
+              </div>
 
-          {error && (
-            <p className="font-saira text-xs text-rose-400">{error}</p>
+              <div className="space-y-4">
+                <SectionHeading title="Look back" sub="all optional" accent />
+                <div>
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">What was your biggest breakthrough or achievement this month?</label>
+                  <textarea value={biggestBreakthrough} onChange={(e) => setBiggestBreakthrough(e.target.value)} placeholder="A result, realisation, or moment of growth…" rows={2} className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition" />
+                </div>
+                <div>
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">What's the most important thing you learned about yourself this month?</label>
+                  <textarea value={keyLesson} onChange={(e) => setKeyLesson(e.target.value)} placeholder="A pattern, strength, or area to work on…" rows={2} className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition" />
+                </div>
+                <div>
+                  <label className="block font-saira text-[11px] text-zinc-400 mb-1.5">What's your main intention going into next month?</label>
+                  <textarea value={nextMonthIntention} onChange={(e) => setNextMonthIntention(e.target.value)} placeholder="A goal, process focus, or mindset shift…" rows={2} className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-700 outline-none focus:border-amber-400/40 resize-none transition" />
+                </div>
+              </div>
+
+              {error && (
+                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 flex items-center gap-3">
+                  <span className="text-rose-400 flex-shrink-0">!</span>
+                  <p className="font-saira text-xs text-rose-300">{error}</p>
+                  <button type="button" onClick={handleSubmit} disabled={saving} className="ml-auto font-saira text-xs text-rose-300 underline hover:text-rose-200 transition flex-shrink-0">Retry</button>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 pb-2">
+                <button type="button" onClick={() => setStep(1)} className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-400 hover:text-zinc-300 hover:border-white/20 transition">← Back</button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={saving}
+                  className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
+                >
+                  {saving ? "Saving…" : "Submit check-in"}
+                </button>
+                {onSkip && (
+                  <button type="button" onClick={onSkip} className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-300 hover:border-white/20 transition">
+                    Later
+                  </button>
+                )}
+              </div>
+            </>
           )}
-
-          {/* Actions */}
-          <div className="flex gap-3 pb-2">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={saving}
-              className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
-            >
-              {saving ? "Saving…" : "Submit check-in"}
-            </button>
-            {onSkip && (
-              <button
-                type="button"
-                onClick={onSkip}
-                className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-300 hover:text-zinc-300 hover:border-white/20 transition"
-              >
-                Later
-              </button>
-            )}
-          </div>
         </div>
       </div>
     </div>

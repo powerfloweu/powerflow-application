@@ -404,6 +404,10 @@ export const en = {
     priceFree: "Free",
     priceSecond: "€9 / mo",
     pricePR: "€19 / mo",
+    subtitleOpener: "Journal & session tracking",
+    subtitleSecond: "Full mental performance toolkit",
+    subtitlePR: "Everything + AI coach",
+    contactToUpgrade: "Contact us to upgrade →",
   },
 
   // Paywall on a locked page

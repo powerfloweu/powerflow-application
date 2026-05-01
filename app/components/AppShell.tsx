@@ -215,7 +215,7 @@ export default function AppShell({ children }: Props) {
                   <Icon active={active} />
                   {t(labelKey)}
                   {locked && (
-                    <svg viewBox="0 0 16 16" className="w-3 h-3 ml-auto text-zinc-400" fill="none">
+                    <svg viewBox="0 0 16 16" className="w-3 h-3 ml-auto text-zinc-400" fill="none" aria-label="Upgrade to unlock">
                       <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
                       <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                     </svg>

@@ -395,6 +395,10 @@ export const de: Dict = {
     priceFree: "Kostenlos",
     priceSecond: "€9 / Monat",
     pricePR: "€19 / Monat",
+    subtitleOpener: "Journal & Trainingsprotokoll",
+    subtitleSecond: "Mentale Performance Tools",
+    subtitlePR: "Alles + KI-Coach",
+    contactToUpgrade: "Upgrade anfragen →",
   },
 
   paywall: {

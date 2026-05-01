@@ -636,9 +636,9 @@ function UserHeader({ profile }: { profile: UserProfile }) {
           <p className="font-saira text-[10px] text-zinc-400 capitalize">{profile.role}</p>
         </div>
       </div>
-      <a href="/auth/sign-out" className="font-saira text-[10px] text-zinc-500 hover:text-zinc-400 transition underline underline-offset-2">
-        {t("auth.signOut")}
-      </a>
+      <Link href="/you" className="font-saira text-[10px] text-zinc-500 hover:text-zinc-400 transition underline underline-offset-2">
+        {t("you.pageLabel")} →
+      </Link>
     </div>
   );
 }

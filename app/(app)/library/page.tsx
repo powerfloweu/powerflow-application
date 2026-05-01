@@ -280,7 +280,12 @@ function VizKeywords({
     setEditing(false);
   };
 
-  const placeholders = ["e.g. tight", "e.g. explode", "e.g. breathe"];
+  const placeholders =
+    toolId === "viz-squat"
+      ? ["e.g. chest up", "e.g. push the floor", "e.g. sit back"]
+      : toolId === "viz-bench"
+      ? ["e.g. squeeze the bar", "e.g. leg drive", "e.g. arch tight"]
+      : ["e.g. hips back", "e.g. explode", "e.g. lock out"];
 
   if (editing || keywords.length === 0) {
     return (
@@ -611,7 +616,7 @@ export default function ToolsPage() {
   const [affirmations, setAffirmations]       = React.useState<string[]>([]);
   const [profileLoaded, setProfileLoaded]     = React.useState(false);
   const [aiAccess, setAiAccess]               = React.useState(false);
-  const [planTier, setPlanTier]               = React.useState<PlanTier>("pr"); // optimistic
+  const [planTier, setPlanTier]               = React.useState<PlanTier>("opener"); // conservative until loaded
   // "audio" | "live" | "upload" — selected mode per viz tool
   const [vizModes, setVizModes] = React.useState<Record<string, "audio" | "live" | "upload">>({});
 
@@ -969,7 +974,7 @@ export default function ToolsPage() {
                   className="w-full rounded-xl border border-white/10 bg-surface-panel px-3 py-3 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark] mb-3"
                 />
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-saira text-[10px] text-zinc-400 tabular-nums">
+                  <span className={`font-saira text-[10px] tabular-nums ${requestText.length >= 450 ? "text-amber-400" : "text-zinc-400"}`}>
                     {requestText.length}/500
                   </span>
                   <button

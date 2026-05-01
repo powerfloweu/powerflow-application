@@ -301,9 +301,24 @@ export default function YouPage() {
             className="w-full rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-sm text-white focus:outline-none focus:border-purple-500/50 [color-scheme:dark]"
           >
             <option value="">— select —</option>
-            {(gender ? WEIGHT_CATEGORIES[gender] : [...WEIGHT_CATEGORIES.male, ...WEIGHT_CATEGORIES.female]).map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            {gender ? (
+              WEIGHT_CATEGORIES[gender].map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))
+            ) : (
+              <>
+                <optgroup label={t("you.male")}>
+                  {WEIGHT_CATEGORIES.male.map((c) => (
+                    <option key={`m-${c}`} value={c}>{c}</option>
+                  ))}
+                </optgroup>
+                <optgroup label={t("you.female")}>
+                  {WEIGHT_CATEGORIES.female.map((c) => (
+                    <option key={`f-${c}`} value={c}>{c}</option>
+                  ))}
+                </optgroup>
+              </>
+            )}
           </select>
         </div>
         <SaveButton
@@ -568,7 +583,20 @@ export default function YouPage() {
         })()}
       </Section>
 
-      {/* ── Practice mode (ai_access gate) ─────────────────── */}
+      {/* ── Practice mode ───────────────────────────────────── */}
+      {!profile?.ai_access && (
+        <div className="rounded-2xl border border-white/5 bg-surface-card mb-4 px-5 py-4 flex items-center justify-between gap-4 opacity-60">
+          <div>
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
+              {t("you.sectionPracticeMode")}
+            </p>
+            <p className="font-saira text-xs text-zinc-500 mt-1">
+              Enabled by your coach or admin
+            </p>
+          </div>
+          <span className="text-zinc-600 text-lg">🔒</span>
+        </div>
+      )}
       {profile?.ai_access && (
         <Section
           label={t("you.sectionPracticeMode")}
@@ -732,6 +760,9 @@ function Section({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = React.useState(defaultOpen);
+  const { t } = useT();
+  // "Not set" means the section is empty — show a grey dot; otherwise green
+  const isFilled = summary && summary !== t("you.notSet");
   return (
     <div className="rounded-2xl border border-white/5 bg-surface-card mb-4 overflow-hidden">
       <button
@@ -740,6 +771,8 @@ function Section({
         className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left"
       >
         <div className="flex items-center gap-3 min-w-0">
+          {/* Filled / empty indicator dot */}
+          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isFilled ? "bg-emerald-400" : "bg-zinc-600"}`} />
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 flex-shrink-0">
             {label}
           </p>
