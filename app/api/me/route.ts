@@ -24,7 +24,7 @@ const SELECT_COLS = [
   "self_competition_anxiety", "self_emotional_recovery",
   "expectations", "previous_tools", "anything_else",
   // v4 — tools
-  "affirmations", "viz_keywords",
+  "affirmations", "viz_keywords", "viz_recordings",
   // v5 — voice work
   "ai_access", "self_talk_mode",
   // v6 — adaptive course
@@ -86,6 +86,7 @@ export async function GET() {
       anything_else: null,
       affirmations: [],
       viz_keywords: {},
+      viz_recordings: {},
       ai_access: false,
       self_talk_mode: 'classic',
       course_plan: null,
@@ -134,7 +135,7 @@ export async function PATCH(req: NextRequest) {
     "self_competition_anxiety", "self_emotional_recovery",
     "expectations", "previous_tools", "anything_else",
     // v4 — tools
-    "affirmations", "viz_keywords",
+    "affirmations", "viz_keywords", "viz_recordings",
     // v5 — voice work
     "self_talk_mode",
     // v8 — i18n

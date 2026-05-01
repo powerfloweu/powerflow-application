@@ -83,6 +83,8 @@ export type AthleteProfile = {
   // v4 — tools
   affirmations: string[];
   viz_keywords: Record<string, string[]>;
+  /** User-uploaded voice note paths in Supabase Storage. toolId → storage path. */
+  viz_recordings: Record<string, string>;
   // v5 — voice work
   /** Whether AI-powered features (Voice Work beta) are unlocked for this user. */
   ai_access: boolean;

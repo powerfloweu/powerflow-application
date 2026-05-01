@@ -5,6 +5,7 @@ import Link from "next/link";
 import { hasAccess, type PlanTier } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
 import VizLiveSession from "@/app/components/VizLiveSession";
+import VizUpload from "@/app/components/VizUpload";
 
 const SECTION_KEY: Record<string, string> = {
   Relaxation: "library.sectionRelaxation",
@@ -603,13 +604,14 @@ export default function ToolsPage() {
   const [requestState, setRequestState] = React.useState<"idle" | "sending" | "sent" | "error">("idle");
   const [favoriteRelaxId, setFavoriteRelaxId] = React.useState<string | null>(null);
 
-  const [vizKeywordsMap, setVizKeywordsMap] = React.useState<Record<string, string[]>>({});
-  const [affirmations, setAffirmations]     = React.useState<string[]>([]);
-  const [profileLoaded, setProfileLoaded]   = React.useState(false);
-  const [aiAccess, setAiAccess]             = React.useState(false);
-  const [planTier, setPlanTier]             = React.useState<PlanTier>("pr"); // optimistic
-  // Track which viz tool is in "live" mode (null = listen/audio mode)
-  const [vizLiveModeId, setVizLiveModeId]   = React.useState<string | null>(null);
+  const [vizKeywordsMap, setVizKeywordsMap]   = React.useState<Record<string, string[]>>({});
+  const [vizRecordingsMap, setVizRecordingsMap] = React.useState<Record<string, string>>({});
+  const [affirmations, setAffirmations]       = React.useState<string[]>([]);
+  const [profileLoaded, setProfileLoaded]     = React.useState(false);
+  const [aiAccess, setAiAccess]               = React.useState(false);
+  const [planTier, setPlanTier]               = React.useState<PlanTier>("pr"); // optimistic
+  // "audio" | "live" | "upload" — selected mode per viz tool
+  const [vizModes, setVizModes] = React.useState<Record<string, "audio" | "live" | "upload">>({});
 
   React.useEffect(() => {
     const stored = localStorage.getItem("relax-favorite");
@@ -621,6 +623,7 @@ export default function ToolsPage() {
       .then((r) => r.json())
       .then((p) => {
         setVizKeywordsMap(p.viz_keywords ?? {});
+        setVizRecordingsMap(p.viz_recordings ?? {});
         setAffirmations(Array.isArray(p.affirmations) ? p.affirmations : []);
         setAiAccess(!!p.ai_access);
         setPlanTier((p?.plan_tier ?? "opener") as PlanTier);
@@ -841,58 +844,80 @@ export default function ToolsPage() {
                             </ul>
                             {tool.id === "affirmations" ? (
                               <AffirmationsInputs affirmations={affirmations} onSave={saveAffirmations} />
-                            ) : (
-                              <>
-                                {tool.usesVizKeywords && (
+                            ) : tool.usesVizKeywords ? (() => {
+                              // ── Viz tools: keywords + mode picker ─────────────
+                              const liftName =
+                                tool.id === "viz-squat" ? "squat"
+                                : tool.id === "viz-bench" ? "bench"
+                                : "deadlift";
+                              const mode = vizModes[tool.id];
+                              const setMode = (m: "audio" | "live" | "upload") =>
+                                setVizModes((prev) => ({ ...prev, [tool.id]: m }));
+
+                              return (
+                                <>
                                   <VizKeywords
                                     toolId={tool.id}
                                     keywords={vizKeywordsMap[tool.id] ?? []}
                                     onSave={(kws) => saveVizKeywords(tool.id, kws)}
                                   />
-                                )}
 
-                                {/* Listen / Live toggle for viz tools */}
-                                {tool.usesVizKeywords ? (
-                                  <>
-                                    {/* Mode pills */}
-                                    <div className="flex gap-1.5 mb-4">
-                                      <button
-                                        type="button"
-                                        onClick={() => setVizLiveModeId(null)}
-                                        className={`rounded-full px-3 py-1 font-saira text-[10px] font-semibold uppercase tracking-[0.16em] transition ${
-                                          vizLiveModeId !== tool.id
-                                            ? "bg-purple-600 text-white"
-                                            : "border border-white/10 text-zinc-400 hover:text-zinc-300"
-                                        }`}
-                                      >
-                                        🎧 Listen
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => setVizLiveModeId(tool.id)}
-                                        className={`rounded-full px-3 py-1 font-saira text-[10px] font-semibold uppercase tracking-[0.16em] transition ${
-                                          vizLiveModeId === tool.id
-                                            ? "bg-purple-600 text-white"
-                                            : "border border-white/10 text-zinc-400 hover:text-zinc-300"
-                                        }`}
-                                      >
-                                        🎙 Live
-                                      </button>
-                                    </div>
+                                  {!mode ? (
+                                    /* CTA — not yet chosen a mode */
+                                    <button
+                                      type="button"
+                                      onClick={() => setMode("audio")}
+                                      className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
+                                    >
+                                      Build your perfect {liftName}
+                                    </button>
+                                  ) : (
+                                    <>
+                                      {/* Mode tab strip */}
+                                      <div className="flex gap-1.5 mb-4">
+                                        {(["audio", "live", "upload"] as const).map((m) => {
+                                          const labels = { audio: "🎧 Guided audio", live: "🎙 Live session", upload: "📁 Voice note" };
+                                          return (
+                                            <button
+                                              key={m}
+                                              type="button"
+                                              onClick={() => setMode(m)}
+                                              className={`flex-1 rounded-xl px-2 py-2 font-saira text-[10px] font-semibold tracking-[0.12em] transition ${
+                                                mode === m
+                                                  ? "bg-purple-600 text-white"
+                                                  : "border border-white/10 text-zinc-400 hover:text-zinc-300 hover:border-white/20"
+                                              }`}
+                                            >
+                                              {labels[m]}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
 
-                                    {vizLiveModeId === tool.id ? (
-                                      <VizLiveSession
-                                        toolId={tool.id as "viz-squat" | "viz-bench" | "viz-deadlift"}
-                                        onClose={() => setVizLiveModeId(null)}
-                                      />
-                                    ) : (
-                                      <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
-                                    )}
-                                  </>
-                                ) : (
-                                  <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
-                                )}
-                              </>
+                                      {/* Active mode content */}
+                                      {mode === "audio" && (
+                                        <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
+                                      )}
+                                      {mode === "live" && (
+                                        <VizLiveSession
+                                          toolId={tool.id as "viz-squat" | "viz-bench" | "viz-deadlift"}
+                                          onClose={() => setVizModes((prev) => { const n = { ...prev }; delete n[tool.id]; return n; })}
+                                        />
+                                      )}
+                                      {mode === "upload" && (
+                                        <VizUpload
+                                          toolId={tool.id as "viz-squat" | "viz-bench" | "viz-deadlift"}
+                                          hasExisting={!!vizRecordingsMap[tool.id]}
+                                          onUploaded={(path) => setVizRecordingsMap((prev) => ({ ...prev, [tool.id]: path }))}
+                                          onDeleted={() => setVizRecordingsMap((prev) => { const n = { ...prev }; delete n[tool.id]; return n; })}
+                                        />
+                                      )}
+                                    </>
+                                  )}
+                                </>
+                              );
+                            })() : (
+                              <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
                             )}
                           </div>
                         )}
