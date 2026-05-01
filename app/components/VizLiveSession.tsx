@@ -7,104 +7,232 @@ import React from "react";
 const VIZ_PROMPTS: Record<string, { prompt: string; hint: string }[]> = {
   "viz-squat": [
     {
-      prompt: "Settle in. You are about to step onto the platform.",
-      hint: "Your breathing, your focus, how your body feels right now.",
+      prompt: "What do you do before you approach the bar?",
+      hint: "Think about your routine — breathing, mindset, anything you do to prepare.",
     },
     {
-      prompt: "Walk to the bar. It is loaded. This is your lift.",
-      hint: "What does it look like? What weight is on it? What do you notice first?",
+      prompt: "How and where do you grip the bar?",
+      hint: "Width, hand position, wrist angle — describe exactly where you hold it.",
     },
     {
-      prompt: "Step under the bar. Feel it settle across your back.",
-      hint: "Where does it sit? How does the contact feel? Are you balanced?",
+      prompt: "What do you do with your hands?",
+      hint: "Squeeze, hook, press — what do your hands do once they're on the bar?",
     },
     {
-      prompt: "Set your stance. Feet exactly where they belong.",
-      hint: "Feel the floor through your feet. Tension building from the ground up.",
+      prompt: "What do you do with your feet?",
+      hint: "Stance width, toe angle, pressure distribution — describe your foot position.",
     },
     {
-      prompt: "Take a big breath. Brace hard. Every muscle locks in.",
-      hint: "What does maximum tension feel like in your torso and legs?",
+      prompt: "What do you do to make your back solid?",
+      hint: "Upper back tightness, chest position, lats — how do you create rigidity?",
     },
     {
-      prompt: "Begin the descent. Control every centimetre.",
-      hint: "Hips back and down. Bar stays balanced. What are you feeling?",
+      prompt: "How do you walk out?",
+      hint: "Number of steps, direction, how you find your stance after unracking.",
     },
     {
-      prompt: "Hit depth. Drive. Push the floor away.",
-      hint: "Chest up, knees tracking, every muscle firing. Feel the rep through.",
+      prompt: "How do you breathe before initiating the lift?",
+      hint: "Timing, depth, where you feel the air go — describe your breath sequence.",
     },
     {
-      prompt: "Lock out. Breathe. You made that lift.",
-      hint: "Stay with the feeling of a perfect rep. What does it feel like to own it?",
+      prompt: "Where do you look?",
+      hint: "Eye position and gaze — where do your eyes go and why?",
+    },
+    {
+      prompt: "How do you know you are ready to start?",
+      hint: "What signal or feeling tells you it's time to begin the descent?",
+    },
+    {
+      prompt: "How do you initiate the movement?",
+      hint: "What moves first? What cue starts the squat?",
+    },
+    {
+      prompt: "How does the movement itself feel after you've started?",
+      hint: "Sensations in your legs, back, core — what do you notice on the way down?",
+    },
+    {
+      prompt: "How do you breathe during the lift?",
+      hint: "Do you hold, release, or anything else during the movement?",
+    },
+    {
+      prompt: "How do you know you've reached depth?",
+      hint: "What tells you — a feeling, a position, a cue?",
+    },
+    {
+      prompt: "What muscles do you activate?",
+      hint: "Which muscle groups do you consciously engage and when?",
+    },
+    {
+      prompt: "What do you do at the sticking point?",
+      hint: "Where does it get hard and what do you do to push through?",
+    },
+    {
+      prompt: "What do you do when it is hard?",
+      hint: "Your mental and physical response when the lift fights back.",
+    },
+    {
+      prompt: "How do you finish the squat?",
+      hint: "Lockout, rerack, breath — what does the end of the lift look like?",
+    },
+    {
+      prompt: "What are the critical points you want to focus on while performing a squat?",
+      hint: "Distil everything — what are the two or three things that matter most?",
     },
   ],
   "viz-bench": [
     {
-      prompt: "You are lying on the bench. Get tight.",
-      hint: "Upper back and glutes pressing down. How much tension can you create?",
+      prompt: "What do you do before you approach the bench?",
+      hint: "Your pre-lift routine — breathing, focus, anything that sets you up.",
     },
     {
-      prompt: "Set your grip. Bar settled in your hands.",
-      hint: "Where exactly does the bar sit in your palm? How hard are you squeezing?",
+      prompt: "How and where do you grip the bar?",
+      hint: "Grip width, hand position, where the bar sits in your palm.",
     },
     {
-      prompt: "Unrack. Feel the weight transfer to you.",
-      hint: "Take a moment with the bar locked out. How does it feel in your hands?",
+      prompt: "What do you do with your hands?",
+      hint: "Squeeze direction, wrist position — what are your hands doing?",
     },
     {
-      prompt: "Lower the bar — controlled, tight, on your path.",
-      hint: "Feel the bar track to your chest. Where is your touch point?",
+      prompt: "What do you do with your feet?",
+      hint: "Foot placement, drive through the floor — describe your foot position and role.",
     },
     {
-      prompt: "Touch. Pause. The tension is coiled and ready.",
-      hint: "The bar is on your chest. Every muscle waiting. What do you feel?",
+      prompt: "What do you do to reach your best bridge?",
+      hint: "Back arch, upper back position, glute drive — how do you set your bridge?",
     },
     {
-      prompt: "Press. Drive your back into the bench.",
-      hint: "Push yourself away from the bar. Feel the force leave your body.",
+      prompt: "What do you do to make your back solid?",
+      hint: "Upper back tightness, scapula position — how do you create a stable base?",
     },
     {
-      prompt: "Lock out. Clean. Rerack smooth.",
-      hint: "The lift is yours. How did your body feel from first breath to lockout?",
+      prompt: "How do you breathe before initiating the lift?",
+      hint: "When do you breathe, how deep, where does the air go?",
     },
     {
-      prompt: "Breathe. Stay with the feeling of a perfect bench.",
-      hint: "Carry this exactly as it felt into your next attempt.",
+      prompt: "How do you take the bar out?",
+      hint: "The unrack — who helps, how you move it, where it ends up.",
+    },
+    {
+      prompt: "Where do you look?",
+      hint: "Eye position during the lift — fixed point, ceiling, bar?",
+    },
+    {
+      prompt: "How do you know you are ready to start?",
+      hint: "What signal or feeling tells you to begin lowering the bar?",
+    },
+    {
+      prompt: "How do you initiate the movement?",
+      hint: "What moves first? What cue starts the descent?",
+    },
+    {
+      prompt: "How does the movement itself feel after you've started?",
+      hint: "Sensations in your chest, shoulders, lats — what do you notice on the way down?",
+    },
+    {
+      prompt: "How do you breathe during the lift?",
+      hint: "Held breath, bracing, release — describe the breathing through the rep.",
+    },
+    {
+      prompt: "Where on your chest do you touch the bar?",
+      hint: "Exact contact point — describe where the bar lands.",
+    },
+    {
+      prompt: "How do you keep yourself tight while holding the bar at your chest?",
+      hint: "Tension in chest, lats, legs — how do you stay rigid at the bottom?",
+    },
+    {
+      prompt: "What muscles do you activate?",
+      hint: "Which muscle groups do you consciously engage and when?",
+    },
+    {
+      prompt: "How do you use your legs?",
+      hint: "Leg drive, foot position, pushing into the floor — describe your leg role.",
+    },
+    {
+      prompt: "What do you do at the dead centre?",
+      hint: "The sticking point mid-press — what do you do to push through?",
+    },
+    {
+      prompt: "What do you do when it is hard?",
+      hint: "Your mental and physical response when the bar slows or stalls.",
+    },
+    {
+      prompt: "How do you finish the bench press?",
+      hint: "Lockout, rerack, breath — what does the end of the lift look like?",
+    },
+    {
+      prompt: "What are the critical points you want to focus on while performing a bench press?",
+      hint: "Distil everything — what are the two or three things that matter most?",
     },
   ],
   "viz-deadlift": [
     {
-      prompt: "Approach the bar. Look at it.",
-      hint: "It is loaded exactly right. This is your pull. What do you feel standing over it?",
+      prompt: "What do you do before you approach the bar?",
+      hint: "Your pre-lift routine — chalk, music, breathing, focus cues.",
     },
     {
-      prompt: "Set your stance. Feel your feet connect to the floor.",
-      hint: "Feet exactly where they belong. How is your weight distributed?",
+      prompt: "How and where do you grip the bar?",
+      hint: "Grip type, hand width, where the bar sits in your palm.",
     },
     {
-      prompt: "Hinge to the bar. Take your grip.",
-      hint: "Feel the knurling in your hands. Your lats engage. You are ready.",
+      prompt: "What do you do with your hands?",
+      hint: "Hook grip, straps, squeeze — what exactly do your hands do?",
     },
     {
-      prompt: "Pull the slack out. Feel the tension before it moves.",
-      hint: "The bar bends before it breaks the floor. What does that resistance feel like?",
+      prompt: "What do you do with your feet?",
+      hint: "Stance width, toe angle, shin contact — describe your foot position.",
     },
     {
-      prompt: "Big breath. Brace. Every muscle engaged.",
-      hint: "Maximum tension, maximum air. You are coiled and ready.",
+      prompt: "How do you know you've reached your best stance?",
+      hint: "What does it feel like when everything is in the right position?",
     },
     {
-      prompt: "Push the floor away. Bar stays close.",
-      hint: "Hips and shoulders rise together. Feel the bar track up your legs.",
+      prompt: "What do you do to make your whole body solid?",
+      hint: "Lats, core, upper back — how do you create full-body tension?",
     },
     {
-      prompt: "Hips through. Stand tall. Lock out.",
-      hint: "Squeeze every muscle at the top. You are standing with the bar.",
+      prompt: "How do you breathe before initiating the lift?",
+      hint: "When, how deep, where the air goes — describe the full breath sequence.",
     },
     {
-      prompt: "Hold it. You made that lift.",
-      hint: "Stay in this moment. How does a perfect deadlift feel in your body?",
+      prompt: "Where do you look?",
+      hint: "Eye position and gaze during the pull.",
+    },
+    {
+      prompt: "How do you know you are ready to start?",
+      hint: "What signal or feeling tells you it's time to initiate the pull?",
+    },
+    {
+      prompt: "How do you initiate the movement?",
+      hint: "What moves first? What cue starts the deadlift?",
+    },
+    {
+      prompt: "How does the movement itself feel after you've started?",
+      hint: "Sensations in your legs, back, grip — what do you notice as the bar leaves the floor?",
+    },
+    {
+      prompt: "How do you breathe during the lift?",
+      hint: "Held breath, bracing, when you exhale — describe it through the rep.",
+    },
+    {
+      prompt: "What muscles do you activate?",
+      hint: "Which muscle groups do you consciously engage and when?",
+    },
+    {
+      prompt: "What do you do at the dead centre?",
+      hint: "The sticking point at or above the knee — what gets you through?",
+    },
+    {
+      prompt: "What do you do when it is hard?",
+      hint: "Your mental and physical response when the pull slows or fights back.",
+    },
+    {
+      prompt: "How do you finish the deadlift?",
+      hint: "Hips through, lockout, lower — what does the top of the lift look like?",
+    },
+    {
+      prompt: "What are the critical points you want to focus on while performing a deadlift?",
+      hint: "Distil everything — what are the two or three things that matter most?",
     },
   ],
 };
@@ -268,8 +396,9 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
             Live Session · {prompts.length} prompts
           </p>
           <p className="font-saira text-sm text-zinc-300 leading-relaxed">
-            Speak your mental imagery aloud — or type it. Each prompt gives you space
-            to picture your perfect lift in as much detail as you can.
+            Answer each question in your own words — speak or type. Your answers
+            become the building blocks of your personal visualization: exactly how
+            {" "}<em>you</em> perform each lift, in your own language.
             {supported && " Your voice is captured in real time."}
             {!supported && " Your browser doesn't support voice input, but you can type your responses."}
           </p>
