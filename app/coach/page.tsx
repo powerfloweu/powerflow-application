@@ -135,14 +135,22 @@ function computeClient(a: AthleteRaw) {
     return Math.round((dayE.filter((e) => e.sentiment === "positive").length / dayE.length) * 100);
   });
 
-  // Themes
+  // Flatten all text from a training log entry into a single searchable string
+  const trainingText = (e: { thoughts_before?: string | null; thoughts_after?: string | null; what_went_well?: string | null; frustrations?: string | null; next_session?: string | null }) =>
+    [e.thoughts_before, e.thoughts_after, e.what_went_well, e.frustrations, e.next_session]
+      .filter(Boolean).join(" ").toLowerCase();
+
+  // Themes — journal entries + training logs both contribute
   const themes = THEME_DEFS.map((def) => {
-    const weekCount = weekEntries.filter((e) =>
-      def.keywords.some((kw) => e.content.toLowerCase().includes(kw))
-    ).length;
-    const prevCount = prevEntries.filter((e) =>
-      def.keywords.some((kw) => e.content.toLowerCase().includes(kw))
-    ).length;
+    const weekCount =
+      weekEntries.filter((e) => def.keywords.some((kw) => e.content.toLowerCase().includes(kw))).length +
+      weekTrainingLogs.filter((e) => def.keywords.some((kw) => trainingText(e).includes(kw))).length;
+    const prevTrainingLogs = trainingLogsWithContent.filter(
+      (e) => new Date(e.entry_date + "T12:00:00") >= cutPrev && new Date(e.entry_date + "T12:00:00") < cutWeek,
+    );
+    const prevCount =
+      prevEntries.filter((e) => def.keywords.some((kw) => e.content.toLowerCase().includes(kw))).length +
+      prevTrainingLogs.filter((e) => def.keywords.some((kw) => trainingText(e).includes(kw))).length;
     return {
       label: def.label,
       count: weekCount,
@@ -151,11 +159,11 @@ function computeClient(a: AthleteRaw) {
     };
   }).filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
 
-  // All-time themes (for pattern analysis using all entries)
+  // All-time themes — journal + all training logs with content
   const allThemes = THEME_DEFS.map((def) => {
-    const count = a.entries.filter((e) =>
-      def.keywords.some((kw) => e.content.toLowerCase().includes(kw))
-    ).length;
+    const count =
+      a.entries.filter((e) => def.keywords.some((kw) => e.content.toLowerCase().includes(kw))).length +
+      trainingLogsWithContent.filter((e) => def.keywords.some((kw) => trainingText(e).includes(kw))).length;
     return { label: def.label, count };
   }).filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
 
@@ -191,6 +199,8 @@ function computeClient(a: AthleteRaw) {
     themes,
     allThemes,
     allEntries: a.entries,
+    allTrainingWithContent: trainingLogsWithContent,
+    allContentCount: a.entries.length + trainingLogsWithContent.length,
     recentEntries: a.entries.slice(0, 5),
     testScores: { sat: a.sat, acsi: a.acsi, csai: a.csai, das: a.das },
     lastActive,
@@ -840,7 +850,8 @@ function computeSentimentTrajectory(allEntries: EntryRow[]): { label: string; ra
 }
 
 function PatternAnalysis({ client }: { client: Client }) {
-  const entryCount = client.allEntries.length;
+  // Count both journal entries and training logs with content
+  const entryCount = client.allContentCount;
 
   if (entryCount < 5) {
     return (
@@ -854,7 +865,7 @@ function PatternAnalysis({ client }: { client: Client }) {
           </p>
         </div>
         <p className="font-saira text-xs leading-relaxed text-zinc-300">
-          Insufficient data — at least 5 journal entries are needed for pattern analysis.
+          Insufficient data — at least 5 entries are needed for pattern analysis.
         </p>
       </div>
     );
@@ -1356,18 +1367,36 @@ function ClientCard({
     return client.allEntries.filter((e) => new Date(e.created_at) >= cut);
   }, [client.allEntries, sentimentWindow]);
 
+  // Training logs within the same window (used for entry count + theme detection)
+  const windowedTrainingLogs = React.useMemo(() => {
+    const cut = new Date();
+    cut.setDate(cut.getDate() - sentimentWindow);
+    return client.allTrainingWithContent.filter(
+      (e) => new Date(e.entry_date + "T12:00:00") >= cut,
+    );
+  }, [client.allTrainingWithContent, sentimentWindow]);
+
+  // Total entries in window = journal + training logs with content
+  const windowedTotalCount = windowedEntries.length + windowedTrainingLogs.length;
+
+  // Sentiment % stays journal-only (training logs don't carry a sentiment field)
   const windowedPositiveRate = windowedEntries.length
     ? Math.round((windowedEntries.filter((e) => e.sentiment === "positive").length / windowedEntries.length) * 100)
     : 0;
 
   const windowedThemes = React.useMemo(() => {
     return THEME_DEFS.map((def) => {
-      const count = windowedEntries.filter((e) =>
+      const journalCount = windowedEntries.filter((e) =>
         def.keywords.some((kw) => e.content.toLowerCase().includes(kw))
       ).length;
-      return { label: def.label, count, color: def.color };
+      const trainingCount = windowedTrainingLogs.filter((e) => {
+        const text = [e.thoughts_before, e.thoughts_after, e.what_went_well, e.frustrations, e.next_session]
+          .filter(Boolean).join(" ").toLowerCase();
+        return def.keywords.some((kw) => text.includes(kw));
+      }).length;
+      return { label: def.label, count: journalCount + trainingCount, color: def.color };
     }).filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
-  }, [windowedEntries]);
+  }, [windowedEntries, windowedTrainingLogs]);
 
   // Training week navigation
   const trainingByWeek = React.useMemo(() => {
@@ -1571,18 +1600,18 @@ function ClientCard({
                   </div>
                 ) : (
                   <p className="font-saira text-sm text-zinc-400 py-2">
-                    {windowedEntries.length === 0 ? `No entries in the last ${sentimentWindow} days.` : "No recurring themes detected."}
+                    {windowedTotalCount === 0 ? `No entries in the last ${sentimentWindow} days.` : "No recurring themes detected."}
                   </p>
                 )}
 
                 {/* Stats summary */}
-                {windowedEntries.length > 0 && (
+                {windowedTotalCount > 0 && (
                   <div className="rounded-2xl border border-white/5 bg-surface-input p-5">
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
                       Last {sentimentWindow} days at a glance
                     </p>
                     <div className="grid grid-cols-3 gap-3">
-                      <MiniStat label="Entries" value={String(windowedEntries.length)} />
+                      <MiniStat label="Entries" value={String(windowedTotalCount)} />
                       <MiniStat
                         label="Positive"
                         value={`${windowedPositiveRate}%`}
