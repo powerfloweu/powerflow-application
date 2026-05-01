@@ -13,9 +13,19 @@ export type DevLogEntry = {
   items: string[];
 };
 
-export const CURRENT_DEVLOG_VERSION = "2026-04-30.3";
+export const CURRENT_DEVLOG_VERSION = "2026-05-01";
 
 export const DEVLOG: DevLogEntry[] = [
+  {
+    version: "2026-05-01",
+    date: "1 May 2026",
+    title: "Visualisation modes · polish & quality of life",
+    items: [
+      "Three visualisation modes now available in the Tools section — choose between a guided audio session, a live real-time session with on-screen cues, or recording your own voice note to play back during training.",
+      "Dozens of small UX improvements across the whole app: cleaner navigation, better feedback when actions are loading or disabled, wider layouts on desktop, and skeleton screens instead of blank spinners while pages load.",
+      "Multilingual polish — several strings that were previously English-only are now fully translated into German and Hungarian.",
+    ],
+  },
   {
     version: "2026-04-30.3",
     date: "30 Apr 2026",
