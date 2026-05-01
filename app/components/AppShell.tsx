@@ -139,24 +139,29 @@ export default function AppShell({ children }: Props) {
     <div className="min-h-screen bg-surface-base pt-[env(safe-area-inset-top)]">
 
       {/* ── Desktop left sidebar (hidden on mobile) ─────────────── */}
-      {/* Outer wrapper keeps the sidebar in the fixed-position flow */}
+      {/* Outer wrapper keeps the sidebar in the fixed-position flow.
+          Coaches collapse to an icon rail (w-12) instead of w-0 so
+          navigation is always reachable. */}
       <div
         className={`hidden md:block fixed left-0 top-0 bottom-0 z-50 transition-[width] duration-200 ease-in-out overflow-hidden ${
-          !sidebarReady || sidebarOpen ? "w-56" : "w-0"
+          !sidebarReady ? "w-56" : sidebarOpen ? "w-56" : canCollapse ? "w-12" : "w-56"
         }`}
       >
         <aside className="flex flex-col w-56 h-full border-r border-white/5 bg-surface-panel/95 backdrop-blur-md">
           {/* Brand */}
           <div className="relative border-b border-white/5 flex flex-col items-center pt-5 pb-3">
-            {/* Collapse button — coaches only, top-right corner */}
+            {/* Collapse / expand button — coaches only, top-right corner */}
             {canCollapse && (
               <button
                 onClick={toggleSidebar}
-                aria-label="Collapse athlete panel"
+                aria-label={sidebarOpen ? "Collapse athlete panel" : "Expand athlete panel"}
                 className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded text-zinc-400 hover:text-zinc-200 transition"
               >
                 <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none">
-                  <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d={sidebarOpen ? "M10 3L5 8l5 5" : "M6 3l5 5-5 5"}
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             )}
@@ -247,17 +252,73 @@ export default function AppShell({ children }: Props) {
         </aside>
       </div>
 
-      {/* Re-open tab — fixed at left edge when sidebar is collapsed (coaches only) */}
+      {/* Icon rail — visible in the w-12 collapsed state (coaches only).
+          Sits on top of the sidebar overflow: absolute overlay within the
+          fixed wrapper so it aligns with the icon positions in the full sidebar. */}
       {canCollapse && sidebarReady && !sidebarOpen && (
-        <button
-          onClick={toggleSidebar}
-          aria-label="Expand athlete panel"
-          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-50 flex-col items-center justify-center w-5 h-12 rounded-r-lg bg-surface-panel/95 border border-l-0 border-white/10 text-zinc-400 hover:text-purple-300 hover:border-purple-400/30 transition"
-        >
-          <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none">
-            <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <div className="hidden md:flex fixed left-0 top-0 bottom-0 z-50 w-12 flex-col border-r border-white/5 bg-surface-panel/95 backdrop-blur-md">
+          {/* Expand button at top */}
+          <div className="flex justify-center pt-4 pb-3 border-b border-white/5">
+            <button
+              onClick={toggleSidebar}
+              aria-label="Expand athlete panel"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-purple-300 hover:bg-purple-500/10 transition"
+            >
+              <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
+                <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Icon-only nav links */}
+          <nav className="flex-1 py-4 flex flex-col items-center gap-1">
+            {NAV_LINKS.map(({ href, icon: Icon, labelKey }) => {
+              const active = pathname === href || pathname.startsWith(href + "/");
+              const locked =
+                (href === "/library" && !canAccessTools(planTier)) ||
+                (href === "/course" && !canAccessPR(planTier));
+              const dest = locked ? "/upgrade" : href;
+              return (
+                <Link
+                  key={href}
+                  href={dest}
+                  title={t(labelKey)}
+                  className={`w-9 h-9 flex items-center justify-center rounded-xl transition ${
+                    active
+                      ? "bg-purple-500/15 text-purple-300"
+                      : locked
+                      ? "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                      : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                  }`}
+                >
+                  <Icon active={active} />
+                </Link>
+              );
+            })}
+
+            {/* Coach dashboard icon */}
+            {role === "coach" && (
+              <div className="mt-auto pb-1 border-t border-white/5 pt-3 w-full flex justify-center">
+                <Link
+                  href="/coach"
+                  title={t("nav.coach")}
+                  className={`w-9 h-9 flex items-center justify-center rounded-xl transition ${
+                    pathname === "/coach" || pathname.startsWith("/coach/")
+                      ? "bg-emerald-500/15 text-emerald-300"
+                      : "text-emerald-700 hover:text-emerald-400 hover:bg-white/5"
+                  }`}
+                >
+                  <CoachSidebarIcon active={pathname === "/coach" || pathname.startsWith("/coach/")} />
+                </Link>
+              </div>
+            )}
+          </nav>
+
+          {/* Theme toggle at bottom */}
+          <div className="pb-5 pt-3 border-t border-white/5 flex justify-center">
+            <ThemeToggle className="w-7 h-7" />
+          </div>
+        </div>
       )}
 
       {/* ── Mobile top bar (logo) — hidden on desktop ───────────── */}
@@ -290,7 +351,7 @@ export default function AppShell({ children }: Props) {
       {/* ── Page content ────────────────────────────────────────── */}
       <main
         className={`pt-20 md:pt-0 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0 transition-[padding] duration-200 ease-in-out ${
-          !sidebarReady || sidebarOpen ? "md:pl-56" : "md:pl-0"
+          !sidebarReady ? "md:pl-56" : sidebarOpen ? "md:pl-56" : canCollapse ? "md:pl-12" : "md:pl-56"
         }`}
       >
         {children}
