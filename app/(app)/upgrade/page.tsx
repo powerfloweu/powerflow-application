@@ -19,12 +19,6 @@ const TIER_DESC_KEY: Record<PlanTier, string> = {
   pr: "paywall.descPR",
 };
 
-const TIER_PRICE_KEY: Record<PlanTier, string> = {
-  opener: "upgrade.priceFree",
-  second: "upgrade.priceSecond",
-  pr: "upgrade.pricePR",
-};
-
 const TIER_SUBTITLE_KEY: Record<PlanTier, string> = {
   opener: "upgrade.subtitleOpener",
   second: "upgrade.subtitleSecond",
@@ -112,7 +106,6 @@ export default function UpgradePage() {
                   {t(TIER_SUBTITLE_KEY[tier])}
                 </p>
                 <h2 className="text-lg font-bold text-white">{t(TIER_KEY[tier])}</h2>
-                <p className="text-2xl font-bold text-white mt-1">{t(TIER_PRICE_KEY[tier])}</p>
                 <p className="text-xs text-zinc-300 mt-1">{t(TIER_DESC_KEY[tier])}</p>
               </div>
 
@@ -146,17 +139,6 @@ export default function UpgradePage() {
             </div>
           );
         })}
-      </div>
-
-      {/* Coach billing note */}
-      <div className="max-w-2xl mx-auto mt-8 text-center">
-        <p className="text-xs text-zinc-400">
-          {t("upgrade.coachQuestion")}{" "}
-          <Link href="/coach" className="text-zinc-400 underline underline-offset-2">
-            {t("upgrade.coachLink")}
-          </Link>
-          {" "}{t("upgrade.coachNote")}
-        </p>
       </div>
 
       {/* Back */}

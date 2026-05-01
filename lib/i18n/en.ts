@@ -115,6 +115,7 @@ export const en = {
     yesChange: "Yes, change",
     mentalTests: "Mental Tests",
     mentalTestsSub: "Self-awareness · Coping skills · Competitive anxiety",
+    viewAll: "View all",
   },
 
   // Journal page
@@ -355,6 +356,9 @@ export const en = {
     classicLabel: "Classic",
     changeCoach: "Change coach",
     chooseCoach: "Choose a coach",
+    clearDate: "Clear date",
+    clearDateConfirm: "This removes phase tracking from Today.",
+    clearDateYes: "Yes, clear",
 
     name: "Name",
     email: "Email",
@@ -407,7 +411,7 @@ export const en = {
   upgrade: {
     pageLabel: "PLANS",
     title: "Train your mind like you train your body",
-    subtitle: "Start free. Unlock your tools when you're ready. Go all-in when you want the full programme.",
+    subtitle: "Each tier unlocks more tools to support your mental performance.",
     bestValue: "Best value",
     currentPlan: "Current plan",
     upgradeToSecond: "Upgrade to Second",

@@ -117,6 +117,7 @@ export const de: Dict = {
     yesChange: "Ja, ändern",
     mentalTests: "Mentaltests",
     mentalTestsSub: "Selbstwahrnehmung · Bewältigungsstrategien · Wettkampfangst",
+    viewAll: "Alle anzeigen",
   },
 
   journal: {
@@ -349,6 +350,9 @@ export const de: Dict = {
     classicLabel: "Klassisch",
     changeCoach: "Coach ändern",
     chooseCoach: "Coach wählen",
+    clearDate: "Datum löschen",
+    clearDateConfirm: "Damit wird die Phasenverfolgung von der Heute-Seite entfernt.",
+    clearDateYes: "Ja, löschen",
 
     name: "Name",
     email: "E-Mail",
@@ -398,7 +402,7 @@ export const de: Dict = {
   upgrade: {
     pageLabel: "PLÄNE",
     title: "Trainiere deinen Geist wie deinen Körper",
-    subtitle: "Starte kostenlos. Schalte deine Tools frei, wenn du bereit bist. Geh All-in für das volle Programm.",
+    subtitle: "Jede Stufe schaltet weitere Tools zur Unterstützung deiner mentalen Performance frei.",
     bestValue: "Bestes Angebot",
     currentPlan: "Aktueller Plan",
     upgradeToSecond: "Upgrade auf Second",

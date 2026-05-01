@@ -115,6 +115,7 @@ export const hu: Dict = {
     yesChange: "Igen, változtasd",
     mentalTests: "Mentális tesztek",
     mentalTestsSub: "Önismeret · Megküzdési készségek · Versenyhelyzetbeli szorongás",
+    viewAll: "Összes megtekintése",
   },
 
   journal: {
@@ -347,6 +348,9 @@ export const hu: Dict = {
     classicLabel: "Klasszikus",
     changeCoach: "Edző cseréje",
     chooseCoach: "Edző kiválasztása",
+    clearDate: "Dátum törlése",
+    clearDateConfirm: "Ezzel eltávolítja a fáziskövetést a Ma oldalról.",
+    clearDateYes: "Igen, törlés",
 
     name: "Név",
     email: "E-mail",
@@ -396,7 +400,7 @@ export const hu: Dict = {
   upgrade: {
     pageLabel: "CSOMAGOK",
     title: "Eddz a szellemedet, ahogy az izmadat edzed",
-    subtitle: "Kezdd ingyen. Oldd fel az eszközöket, ha készen állsz. Menj teljesre, ha a teljes programot akarod.",
+    subtitle: "Minden szint további eszközöket old fel a mentális teljesítmény támogatásához.",
     bestValue: "Legjobb ár-érték",
     currentPlan: "Jelenlegi csomag",
     upgradeToSecond: "Frissítés Second-re",

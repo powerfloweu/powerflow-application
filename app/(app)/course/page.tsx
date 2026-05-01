@@ -538,10 +538,11 @@ function PlanEditor({
   onSave: (plan: CoursePlan) => Promise<void>;
   onRegenerate: () => void;
 }) {
-  const [slugs, setSlugs]       = React.useState<string[]>(plan.slugs);
+  const [slugs, setSlugs]           = React.useState<string[]>(plan.slugs);
   const highlightSet = React.useMemo(() => new Set(plan.highlights ?? []), [plan.highlights]);
-  const [saving, setSaving]   = React.useState(false);
-  const [addOpen, setAddOpen] = React.useState(false);
+  const [saving, setSaving]         = React.useState(false);
+  const [addOpen, setAddOpen]       = React.useState(false);
+  const [confirmRegen, setConfirmRegen] = React.useState(false);
 
   const weekMap = React.useMemo(() => {
     const m: Record<string, CourseModule> = {};
@@ -751,16 +752,33 @@ function PlanEditor({
           )}
         </button>
 
-        <button
-          onClick={() => {
-            if (!window.confirm("Regenerate the plan? Any edits you haven't saved yet will be lost.")) return;
-            onRegenerate();
-          }}
-          disabled={saving}
-          className="w-full rounded-xl border border-white/8 py-3 font-saira text-sm text-zinc-400 hover:text-white hover:border-white/20 transition"
-        >
-          Regenerate plan
-        </button>
+        {confirmRegen ? (
+          <div className="flex items-center gap-3 rounded-xl border border-white/8 px-4 py-2.5">
+            <p className="font-saira text-[11px] text-zinc-400 flex-1">Unsaved edits will be lost.</p>
+            <button
+              type="button"
+              onClick={() => { setConfirmRegen(false); onRegenerate(); }}
+              className="font-saira text-[11px] font-semibold text-purple-300 hover:text-purple-200 transition flex-shrink-0"
+            >
+              Regenerate
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmRegen(false)}
+              className="font-saira text-[11px] text-zinc-500 hover:text-zinc-300 transition flex-shrink-0"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmRegen(true)}
+            disabled={saving}
+            className="w-full rounded-xl border border-white/8 py-3 font-saira text-sm text-zinc-400 hover:text-white hover:border-white/20 transition"
+          >
+            Regenerate plan
+          </button>
+        )}
       </div>
 
       {tooShort && (

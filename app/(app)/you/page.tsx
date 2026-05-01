@@ -52,6 +52,7 @@ export default function YouPage() {
   const [savingSection, setSavingSection] = React.useState<string | null>(null);
   const [savedSection, setSavedSection]   = React.useState<string | null>(null);
   const [saveError, setSaveError]         = React.useState<string | null>(null);
+  const [confirmClearDate, setConfirmClearDate] = React.useState(false);
 
   // ── Local form state ───────────────────────────────────────
   const [displayName, setDisplayName]     = React.useState("");
@@ -243,15 +244,33 @@ export default function YouPage() {
             onClick={() => save("meet", { meet_date: meetDate || null })}
           />
         </div>
-        {meetDate && (
+        {meetDate && !confirmClearDate && (
           <button type="button"
-            onClick={() => {
-              if (!window.confirm("Clear your competition date? This will also remove phase tracking from the Today page.")) return;
-              setMeetDate(""); save("meet", { meet_date: null });
-            }}
+            onClick={() => setConfirmClearDate(true)}
             className="mt-2 font-saira text-[10px] text-zinc-400 hover:text-rose-400 underline transition">
-            Clear date
+            {t("you.clearDate")}
           </button>
+        )}
+        {confirmClearDate && (
+          <div className="mt-2 flex items-center gap-3 border-t border-white/5 pt-2">
+            <p className="font-saira text-[11px] text-zinc-400 flex-1">
+              {t("you.clearDateConfirm")}
+            </p>
+            <button
+              type="button"
+              onClick={() => { setConfirmClearDate(false); setMeetDate(""); save("meet", { meet_date: null }); }}
+              className="font-saira text-[11px] font-semibold text-rose-400 hover:text-rose-300 transition flex-shrink-0"
+            >
+              {t("you.clearDateYes")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmClearDate(false)}
+              className="font-saira text-[11px] text-zinc-500 hover:text-zinc-300 transition flex-shrink-0"
+            >
+              {t("common.cancel")}
+            </button>
+          </div>
         )}
       </Section>
 

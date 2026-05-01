@@ -171,12 +171,13 @@ type Phase = "intro" | "session" | "done";
 export default function VizLiveSession({ toolId, onClose }: Props) {
   const prompts = VIZ_PROMPTS[toolId] ?? [];
 
-  const [phase,     setPhase]     = React.useState<Phase>("intro");
-  const [step,      setStep]      = React.useState(0);
-  const [responses, setResponses] = React.useState<string[]>(() => prompts.map(() => ""));
-  const [saving,    setSaving]    = React.useState(false);
-  const [saved,     setSaved]     = React.useState(false);
-  const [saveError, setSaveError] = React.useState<string | null>(null);
+  const [phase,        setPhase]        = React.useState<Phase>("intro");
+  const [step,         setStep]         = React.useState(0);
+  const [responses,    setResponses]    = React.useState<string[]>(() => prompts.map(() => ""));
+  const [saving,       setSaving]       = React.useState(false);
+  const [saved,        setSaved]        = React.useState(false);
+  const [saveError,    setSaveError]    = React.useState<string | null>(null);
+  const [confirmExit,  setConfirmExit]  = React.useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const liftLabel =
@@ -485,10 +486,7 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
         {/* Close */}
         <button
           type="button"
-          onClick={() => {
-            if (!window.confirm("Exit the session? Your progress will be lost.")) return;
-            stop(); onClose();
-          }}
+          onClick={() => setConfirmExit(true)}
           className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:border-white/20 transition flex-shrink-0"
           aria-label="Exit session"
         >
@@ -497,6 +495,29 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
           </svg>
         </button>
       </div>
+
+      {/* Exit confirm banner */}
+      {confirmExit && (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-rose-500/30 bg-rose-500/[0.06] px-4 py-2.5">
+          <p className="font-saira text-[11px] text-zinc-300">Exit? Progress will be lost.</p>
+          <div className="flex gap-3 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => { stop(); onClose(); }}
+              className="font-saira text-[11px] font-semibold text-rose-400 hover:text-rose-300 transition"
+            >
+              Exit
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmExit(false)}
+              className="font-saira text-[11px] text-zinc-400 hover:text-zinc-300 transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Skip hint */}
       <p className="font-saira text-[10px] text-zinc-400 text-center">

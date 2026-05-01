@@ -367,7 +367,7 @@ export default function TodayPage() {
               onClick={() => setConfirmingChange(false)}
               className="font-saira text-[11px] text-zinc-500 hover:text-zinc-300 transition"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         )}
@@ -705,7 +705,7 @@ function MentalGoalsCard({ goals }: { goals: string[] }) {
           ))}
           {filtered.length > 3 && (
             <li className="font-saira text-[10px] text-zinc-500 pl-8">
-              +{filtered.length - 3} more · <Link href="/you" className="text-purple-400 hover:text-purple-300 underline transition">view all</Link>
+              +{filtered.length - 3} more · <Link href="/you" className="text-purple-400 hover:text-purple-300 underline transition">{t("today.viewAll")}</Link>
             </li>
           )}
         </ul>
