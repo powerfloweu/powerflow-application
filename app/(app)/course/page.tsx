@@ -723,7 +723,10 @@ function PlanEditor({
         </button>
 
         <button
-          onClick={onRegenerate}
+          onClick={() => {
+            if (!window.confirm("Regenerate the plan? Any edits you haven't saved yet will be lost.")) return;
+            onRegenerate();
+          }}
           disabled={saving}
           className="w-full rounded-xl border border-white/8 py-3 font-saira text-sm text-zinc-400 hover:text-white hover:border-white/20 transition"
         >

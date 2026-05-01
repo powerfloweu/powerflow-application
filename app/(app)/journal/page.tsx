@@ -804,13 +804,13 @@ export default function JournalPage() {
 
         {/* Voice work banner — shown when user is in beta_voice_work mode */}
         {profile?.ai_access && profile.self_talk_mode === "beta_voice_work" && (
-          <a
+          <Link
             href="/voices"
             className="flex items-center justify-between gap-3 mb-4 rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-2.5 font-saira text-xs text-purple-300 hover:border-purple-500/40 hover:text-purple-200 transition"
           >
             <span>{t("journal.voiceModeBanner")}</span>
             <span>→</span>
-          </a>
+          </Link>
         )}
 
         {showCoachPrompt && <CoachPromptBanner onDismiss={() => setCoachPromptDismissed(true)} />}

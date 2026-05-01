@@ -186,9 +186,9 @@ export default function AppShell({ children }: Props) {
               />
             </Link>
 
-            {/* Athlete badge */}
+            {/* Role badge */}
             <span className="font-saira text-[9px] font-bold uppercase tracking-[0.32em] text-purple-300/80 -mt-1 mb-1">
-              Athlete
+              {role === "coach" ? "Coach" : "Athlete"}
             </span>
           </div>
 

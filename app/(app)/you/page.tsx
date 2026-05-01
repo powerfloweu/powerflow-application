@@ -245,8 +245,11 @@ export default function YouPage() {
         </div>
         {meetDate && (
           <button type="button"
-            onClick={() => { setMeetDate(""); save("meet", { meet_date: null }); }}
-            className="mt-2 font-saira text-[10px] text-zinc-400 hover:text-zinc-400 underline transition">
+            onClick={() => {
+              if (!window.confirm("Clear your competition date? This will also remove phase tracking from the Today page.")) return;
+              setMeetDate(""); save("meet", { meet_date: null });
+            }}
+            className="mt-2 font-saira text-[10px] text-zinc-400 hover:text-rose-400 underline transition">
             Clear date
           </button>
         )}

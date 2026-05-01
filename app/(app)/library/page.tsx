@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { hasAccess, type PlanTier } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
 import VizLiveSession from "@/app/components/VizLiveSession";
@@ -599,7 +600,8 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
 
 export default function ToolsPage() {
   const { t } = useT();
-  const [openId, setOpenId]             = React.useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const [openId, setOpenId]             = React.useState<string | null>(() => searchParams.get("open"));
   const [requestText, setRequestText]   = React.useState("");
   const [requestState, setRequestState] = React.useState<"idle" | "sending" | "sent" | "error">("idle");
   const [favoriteRelaxId, setFavoriteRelaxId] = React.useState<string | null>(null);

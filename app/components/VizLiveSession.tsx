@@ -174,7 +174,40 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
   const [phase,     setPhase]     = React.useState<Phase>("intro");
   const [step,      setStep]      = React.useState(0);
   const [responses, setResponses] = React.useState<string[]>(() => prompts.map(() => ""));
+  const [saving,    setSaving]    = React.useState(false);
+  const [saved,     setSaved]     = React.useState(false);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const liftLabel =
+    toolId === "viz-squat" ? "Squat" :
+    toolId === "viz-bench" ? "Bench" : "Deadlift";
+
+  const saveToJournal = async () => {
+    setSaving(true);
+    setSaveError(null);
+    const lines: string[] = [`── Visualization: ${liftLabel} ──`];
+    prompts.forEach((p, i) => {
+      lines.push(`${i + 1}. ${p.prompt}`);
+      lines.push(responses[i].trim() ? `   ${responses[i].trim()}` : "   (skipped)");
+    });
+    const text = lines.join("\n");
+    try {
+      const today = new Date();
+      const ymd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      const res = await fetch("/api/training/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entry_date: ymd, thoughts_before: text }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setSaved(true);
+    } catch {
+      setSaveError("Couldn't save — please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Accumulate STT results into the current step's response
   const { listening, supported, toggle, stop } = useSingleShotSpeech((text) => {
@@ -294,6 +327,25 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
             </div>
           ))}
         </div>
+
+        {/* Save to journal */}
+        {!saved ? (
+          <button
+            type="button"
+            onClick={saveToJournal}
+            disabled={saving}
+            className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-2.5 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition flex items-center justify-center gap-2"
+          >
+            {saving ? (
+              <><span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Saving…</>
+            ) : "Save to today's journal"}
+          </button>
+        ) : (
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-2.5 text-center">
+            <p className="font-saira text-[11px] text-emerald-400 font-semibold">Saved to your journal ✓</p>
+          </div>
+        )}
+        {saveError && <p className="font-saira text-[10px] text-rose-400 text-center -mt-1">{saveError}</p>}
 
         {/* Actions */}
         <div className="flex gap-3">
@@ -433,7 +485,10 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
         {/* Close */}
         <button
           type="button"
-          onClick={() => { stop(); onClose(); }}
+          onClick={() => {
+            if (!window.confirm("Exit the session? Your progress will be lost.")) return;
+            stop(); onClose();
+          }}
           className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:border-white/20 transition flex-shrink-0"
           aria-label="Exit session"
         >
@@ -444,7 +499,7 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
       </div>
 
       {/* Skip hint */}
-      <p className="font-saira text-[10px] text-zinc-600 text-center">
+      <p className="font-saira text-[10px] text-zinc-400 text-center">
         Nothing to say? Tap Next → to move on
       </p>
     </div>

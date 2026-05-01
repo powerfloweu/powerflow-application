@@ -110,7 +110,7 @@ export default function WeeklyCheckinModal({ targetWeek, onDone, onSkip }: Props
   return (
     /* Backdrop */
     <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onSkip} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
       {/* Sheet */}
       <div className="relative w-full sm:max-w-xl max-h-[92dvh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-surface-alt border border-white/8 shadow-2xl">

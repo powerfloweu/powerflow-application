@@ -1153,10 +1153,12 @@ export default function ChatPage() {
               type="button"
               onClick={() => {
                 if (!listening) {
-                  // Fresh recording session — clear any leftover text first
-                  setInput("");
+                  // Reset interim tracker but keep any typed text — voice will append
                   interimRef.current = "";
-                  if (inputRef.current) inputRef.current.style.height = "auto";
+                  if (inputRef.current) {
+                    inputRef.current.style.height = "auto";
+                    inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+                  }
                 }
                 toggleMic();
               }}

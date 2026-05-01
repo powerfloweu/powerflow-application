@@ -89,6 +89,7 @@ export default function TodayPage() {
   /** "loading" = fetching, null = no entry for this date, TrainingEntry = found */
   const [entry, setEntry]               = React.useState<TrainingEntry | null | "loading">("loading");
   const [dayTypeSaving, setDayTypeSaving] = React.useState(false);
+  const [confirmingChange, setConfirmingChange] = React.useState(false);
   const isFirstMount = React.useRef(true);
 
   // Initial load — profile + entry for selected (today) date in parallel
@@ -296,39 +297,67 @@ export default function TodayPage() {
         </p>
         <h1 className="font-saira text-3xl font-extrabold uppercase tracking-tight text-white mb-1">
           {isToday
-            ? `${t(greetingKey())}${profile ? `, ${firstName(profile.display_name)}` : ""}`
+            ? (() => {
+                const name = profile ? firstName(profile.display_name) : "";
+                return name ? `${t(greetingKey())}, ${name}` : t(greetingKey());
+              })()
             : dateLabel}
         </h1>
         <p className="font-saira text-sm text-zinc-300">{formatDateForYmd(selectedDate, locale)}</p>
       </div>
 
       {/* ── Entry ✓ card ───────────────────────────────────────── */}
-      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 mb-5 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="font-saira text-xs font-semibold text-emerald-300">
-            {dateLabel} ✓
-          </span>
-          <span className={`rounded-full border px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] ${
-            entry.is_training_day
-              ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
-              : "border-zinc-600/40 bg-zinc-600/10 text-zinc-400"
-          }`}>
-            {entry.is_training_day ? t("today.training") : t("today.rest")}
-          </span>
+      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 mb-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="font-saira text-xs font-semibold text-emerald-300">
+              {dateLabel} ✓
+            </span>
+            <span className={`rounded-full border px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] ${
+              entry.is_training_day
+                ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
+                : "border-zinc-600/40 bg-zinc-600/10 text-zinc-400"
+            }`}>
+              {entry.is_training_day ? t("today.training") : t("today.rest")}
+            </span>
+          </div>
+          {!confirmingChange && (
+            <button
+              type="button"
+              onClick={() => setConfirmingChange(true)}
+              className="flex-shrink-0 font-saira text-[10px] text-zinc-400 hover:text-purple-300 transition underline"
+            >
+              {t("today.change")}
+            </button>
+          )}
         </div>
-        <button
-          type="button"
-          onClick={() => setEntry(null)}
-          className="flex-shrink-0 font-saira text-[10px] text-zinc-300 hover:text-purple-300 transition underline"
-        >
-          {t("today.change")}
-        </button>
+        {confirmingChange && (
+          <div className="mt-3 flex items-center gap-3 border-t border-white/5 pt-3">
+            <p className="font-saira text-[11px] text-zinc-400 flex-1">
+              Change day type?
+            </p>
+            <button
+              type="button"
+              onClick={() => { setEntry(null); setConfirmingChange(false); }}
+              className="font-saira text-[11px] font-semibold text-purple-300 hover:text-purple-200 transition"
+            >
+              Yes, change
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingChange(false)}
+              className="font-saira text-[11px] text-zinc-500 hover:text-zinc-300 transition"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Past training day → link to journal for details ───── */}
       {!isToday && entry.is_training_day && (
         <Link
-          href="/journal"
+          href={`/journal?date=${selectedDate}`}
           className="flex items-center justify-between rounded-2xl border border-purple-500/30 bg-purple-500/[0.08] p-4 mb-5 group hover:border-purple-400/50 transition"
         >
           <div>
@@ -418,7 +447,7 @@ export default function TodayPage() {
             </p>
           </div>
           <Link
-            href="/library#affirmations"
+            href="/library?open=affirmations"
             className="flex-shrink-0 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 font-saira text-[10px] uppercase tracking-[0.14em] text-purple-300 hover:bg-purple-500/20 transition"
           >
             {t("today.setUpArrow")}
@@ -499,7 +528,7 @@ function DayPickerScreen({
             disabled={saving}
             className="w-full rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50 py-5 font-saira text-base font-bold text-zinc-300 transition"
           >
-            {saving ? "…" : t("today.restDayBtn")}
+            {saving ? t("common.saving") : t("today.restDayBtn")}
           </button>
         </div>
       </div>
@@ -532,7 +561,7 @@ function StrengthCard({
           {t("today.strengthGoals")}
         </p>
         {glPoints !== null ? (
-          <div className="text-right">
+          <div className="text-right" title="Goodlift Points — a bodyweight-adjusted strength score used in powerlifting">
             <p className="font-saira text-lg font-bold text-purple-300 tabular-nums leading-none">
               {glPoints}
             </p>
@@ -655,6 +684,11 @@ function MentalGoalsCard({ goals }: { goals: string[] }) {
               <span className="font-saira text-sm text-zinc-200 leading-snug">{g}</span>
             </li>
           ))}
+          {filtered.length > 3 && (
+            <li className="font-saira text-[10px] text-zinc-500 pl-8">
+              +{filtered.length - 3} more · <Link href="/you" className="text-purple-400 hover:text-purple-300 underline transition">view all</Link>
+            </li>
+          )}
         </ul>
       ) : (
         <p className="font-saira text-sm text-zinc-300">
