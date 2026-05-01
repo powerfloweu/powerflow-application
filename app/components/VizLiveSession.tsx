@@ -237,48 +237,61 @@ const VIZ_PROMPTS: Record<string, { prompt: string; hint: string }[]> = {
   ],
 };
 
-// ── Speech recognition (single-utterance, auto-stops on silence) ──────────────
+// ── Speech recognition ────────────────────────────────────────────────────────
+// Creates a FRESH SpeechRecognition instance on every start() call.
+// Reusing the same instance across questions causes Chrome to silently ignore
+// r.start() once the instance has fired onend, which is why speech stopped
+// working after the first couple of questions.
+// onResultRef keeps the callback current so the step value is never stale.
 
-function useSingleShotSpeech(onResult: (text: string) => void) {
-  const [listening, setListening]   = React.useState(false);
-  const [supported, setSupported]   = React.useState(false);
-  const recogRef = React.useRef<SpeechRecognition | null>(null);
+type SRConstructor = new () => SpeechRecognition;
+
+function useSpeech(onResult: (text: string) => void) {
+  const [listening, setListening] = React.useState(false);
+  const [supported, setSupported] = React.useState(false);
+
+  // Keep callback fresh without recreating start/stop
+  const onResultRef = React.useRef(onResult);
+  React.useLayoutEffect(() => { onResultRef.current = onResult; });
+
+  const SRClassRef = React.useRef<SRConstructor | null>(null);
+  const recogRef   = React.useRef<SpeechRecognition | null>(null);
 
   React.useEffect(() => {
-    const SR =
-      (window as Window & typeof globalThis & { SpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ??
-      (window as Window & typeof globalThis & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
-    setSupported(!!SR);
-    if (!SR) return;
-    const r = new SR();
-    r.continuous      = true;
-    r.interimResults  = false;
-    r.lang            = "";
+    const SR: SRConstructor | undefined =
+      (window as Window & typeof globalThis & { SpeechRecognition?: SRConstructor }).SpeechRecognition ??
+      (window as Window & typeof globalThis & { webkitSpeechRecognition?: SRConstructor }).webkitSpeechRecognition;
+    if (SR) { SRClassRef.current = SR; setSupported(true); }
+  }, []);
+
+  const start = React.useCallback(() => {
+    if (listening || !SRClassRef.current) return;
+    // Always create a fresh instance — spent instances can't be restarted
+    const SR = SRClassRef.current;
+    const r  = new SR();
+    r.continuous     = true;
+    r.interimResults = false;
+    r.lang           = "";
     r.onresult = (e: SpeechRecognitionEvent) => {
       const texts: string[] = [];
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) texts.push(e.results[i][0].transcript.trim());
       }
-      if (texts.length) onResult(texts.join(" "));
+      if (texts.length) onResultRef.current(texts.join(" "));
     };
-    r.onend  = () => setListening(false);
+    r.onend   = () => setListening(false);
     r.onerror = () => setListening(false);
     recogRef.current = r;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const start = React.useCallback(() => {
-    const r = recogRef.current;
-    if (!r || listening) return;
     try { r.start(); setListening(true); } catch { /* already running */ }
   }, [listening]);
 
   const stop = React.useCallback(() => {
     const r = recogRef.current;
-    if (!r || !listening) return;
-    r.stop();
+    if (!r) return;
+    try { r.stop(); } catch { /* already stopped */ }
+    recogRef.current = null;
     setListening(false);
-  }, [listening]);
+  }, []);
 
   const toggle = React.useCallback(() => {
     listening ? stop() : start();
@@ -339,7 +352,7 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
   };
 
   // Accumulate STT results into the current step's response
-  const { listening, supported, toggle, stop } = useSingleShotSpeech((text) => {
+  const { listening, supported, toggle, stop } = useSpeech((text) => {
     setResponses((prev) => {
       const next = [...prev];
       const sep = next[step] && !next[step].endsWith(" ") ? " " : "";
