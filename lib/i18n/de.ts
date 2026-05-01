@@ -106,6 +106,17 @@ export const de: Dict = {
     tabToday: "Heute",
     tabYesterday: "Gestern",
     tabDayBefore: "Vorgestern",
+
+    coachWantsTest: "Dein Coach möchte, dass du einen Test machst",
+    takeTestArrow: "Test starten →",
+    weeklyCheckinLabel: "Wöchentliches Check-In",
+    monthlyCheckinLabel: "Monatliches Check-In",
+    completeWeeklyCheckin: "Schließe dein wöchentliches Check-In ab",
+    completeMonthlyCheckin: "Schließe dein monatliches Check-In ab",
+    changeDayType: "Tagestyp ändern?",
+    yesChange: "Ja, ändern",
+    mentalTests: "Mentaltests",
+    mentalTestsSub: "Selbstwahrnehmung · Bewältigungsstrategien · Wettkampfangst",
   },
 
   journal: {
@@ -139,6 +150,7 @@ export const de: Dict = {
     textMode: "Text",
     voiceComingSoon: "Sprach-Einträge bald verfügbar",
     saveFailed: "Konnte nicht gespeichert werden — bitte erneut versuchen.",
+    fillOneToSave: "Füll mindestens eine Antwort aus, um zu speichern.",
 
     today: "Heute",
     yesterday: "Gestern",
@@ -237,6 +249,10 @@ export const de: Dict = {
 
     pageLabelYourPlan: "DEIN PLAN",
     indexTitle: "Mentales Training",
+    buildPlan: "Erstelle deinen Plan",
+    analysingProfile: "Profil wird analysiert…",
+    generatePlanArrow: "Meinen Plan erstellen →",
+    planNotSetUp: "Dein persönlicher Plan wurde noch nicht eingerichtet.",
     weeksAthletePaced: "{count} Wochen · in deinem Tempo",
     aiPersonalisedSuffix: " · KI-personalisiert",
     progress: "Fortschritt",
@@ -521,6 +537,7 @@ export const de: Dict = {
     title: "Was ist neu",
     devlogTitle: "Letztes Update",
     fromCoach: "Von deinem Coach",
+    announcement: "Ankündigung",
     whatsNewWith: "Was ist neu",
     latestBadge: "Neu",
     readMore: "Mehr lesen",

@@ -86,7 +86,7 @@ function BroadcastPanel({
       <div className="flex items-center gap-2">
         <span className="text-xl">📣</span>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-300">
-          {t("notifications.fromCoach")}
+          {t("notifications.announcement")}
         </p>
       </div>
 
@@ -195,8 +195,30 @@ export default function NotificationModal({
 
   const open = phase === "broadcast" || phase === "devlog";
 
+  // Allow X / backdrop to dismiss — marks item as seen then advances so it
+  // won't appear again on the next load.
+  const handleClose = React.useCallback(async () => {
+    if (phase === "broadcast" && state.broadcast) {
+      await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "broadcast", id: state.broadcast.id }),
+      }).catch(() => {});
+      afterBroadcast();
+    } else if (phase === "devlog") {
+      await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "devlog" }),
+      }).catch(() => {});
+      afterDevlog();
+    }
+  // afterBroadcast / afterDevlog are stable closures — deps covered by phase
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, state.broadcast]);
+
   return (
-    <BottomSheet open={open} onClose={() => {}} /* no tap-outside dismiss */>
+    <BottomSheet open={open} onClose={handleClose}>
       {phase === "broadcast" && state.broadcast && (
         <BroadcastPanel broadcast={state.broadcast} onDismiss={afterBroadcast} />
       )}

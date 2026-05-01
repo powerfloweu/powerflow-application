@@ -303,6 +303,11 @@ function TrainingJournalForm({
       </div>
 
       <div className="mt-4 flex items-center gap-3">
+        {!hasAny && !saving && !saved && (
+          <p className="font-saira text-[10px] text-zinc-500 flex-1">
+            {t("journal.fillOneToSave")}
+          </p>
+        )}
         <button
           type="button"
           onClick={handleSave}
@@ -779,8 +784,43 @@ export default function JournalPage() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-surface-base flex items-center justify-center">
-        <div className="w-5 h-5 rounded-full border-2 border-purple-500/40 border-t-purple-400 animate-spin" />
+      <div className="min-h-screen bg-surface-base px-4 pt-10 pb-8 sm:px-6">
+        <div className="relative z-10 mx-auto max-w-5xl animate-pulse">
+          <div className="mb-8 space-y-2">
+            <div className="h-3 w-32 rounded bg-white/8" />
+            <div className="h-10 w-48 rounded-xl bg-white/10" />
+            <div className="h-4 w-72 rounded bg-white/6" />
+          </div>
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            <div className="flex-1 space-y-4">
+              {/* Entry form skeleton */}
+              <div className="rounded-3xl border border-white/8 bg-surface-alt p-5 sm:p-6 space-y-3">
+                <div className="h-4 w-28 rounded bg-white/8" />
+                <div className="h-20 w-full rounded-xl bg-white/6" />
+                <div className="h-8 w-24 rounded-full bg-white/8 ml-auto" />
+              </div>
+              {/* Feed skeleton */}
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-2xl border border-white/5 bg-surface-card p-4 space-y-2">
+                  <div className="h-3 w-20 rounded bg-white/8" />
+                  <div className="h-4 w-full rounded bg-white/6" />
+                  <div className="h-4 w-3/4 rounded bg-white/6" />
+                </div>
+              ))}
+            </div>
+            <div className="w-full lg:w-60 flex-shrink-0">
+              <div className="rounded-3xl border border-white/8 bg-surface-alt p-5 space-y-4">
+                <div className="h-3 w-24 rounded bg-white/8" />
+                <div className="flex items-center gap-4">
+                  <div className="w-[72px] h-[72px] rounded-full bg-white/8 flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    {[1, 2, 3].map((i) => <div key={i} className="h-3 w-full rounded bg-white/6" />)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -871,7 +911,10 @@ export default function JournalPage() {
                   >
                     <div className="text-left">
                       <p className="font-saira text-[10px] font-bold uppercase tracking-[0.22em] text-purple-400 mb-0.5">
-                        {weekLabel(checkinTarget.week, checkinTarget.weekStart)} · Due now
+                        {weekLabel(checkinTarget.week, checkinTarget.weekStart)} · Due {
+                          new Date(new Date(checkinTarget.weekStart + "T12:00:00").getTime() + 7 * 86400000)
+                            .toLocaleDateString(localeForDate(locale), { weekday: "short", day: "numeric", month: "short" })
+                        }
                       </p>
                       <p className="font-saira text-xs text-zinc-400">
                         Take 2 minutes to reflect on your week
@@ -1019,7 +1062,7 @@ export default function JournalPage() {
             )}
           </div>
 
-          <div className="w-full lg:w-72 flex-shrink-0">
+          <div className="w-full lg:w-60 flex-shrink-0 lg:sticky lg:top-6">
             <WeeklyDigest entries={entries} />
           </div>
         </div>

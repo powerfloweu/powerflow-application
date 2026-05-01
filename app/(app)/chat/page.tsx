@@ -939,12 +939,13 @@ export default function ChatPage() {
           doesn't collide with the title. */}
       <header className="sticky top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:px-4 py-3 border-b border-white/6 bg-surface-base/95 backdrop-blur-sm">
         <div className="justify-self-start">
-          <Link
-            href="/library"
-            className="inline-block font-saira text-[11px] text-zinc-300 hover:text-purple-300 uppercase tracking-[0.14em] sm:tracking-[0.18em] transition"
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="font-saira text-[11px] text-zinc-300 hover:text-purple-300 uppercase tracking-[0.14em] sm:tracking-[0.18em] transition"
           >
             ← {t("common.back")}
-          </Link>
+          </button>
         </div>
         <div className="flex items-center gap-1.5 justify-self-center min-w-0">
           <span className="text-purple-400 text-sm">✦</span>
@@ -1075,7 +1076,7 @@ export default function ChatPage() {
 
       {/* ── Daily feedback banner ─────────────────────────────── */}
       {showFeedback && !fbDone && (
-        <div className="sticky bottom-0 z-20 border-t border-purple-500/20 bg-surface-panel/95 backdrop-blur-sm px-4 py-4">
+        <div className="border-t border-purple-500/20 bg-surface-panel/95 px-4 py-4">
           <div className="max-w-lg mx-auto space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -1163,6 +1164,13 @@ export default function ChatPage() {
 
       {/* ── Sticky input footer ────────────────────────────────── */}
       <footer className="sticky bottom-0 z-10 border-t border-white/6 bg-surface-base/95 backdrop-blur-sm px-3 py-2.5">
+        {input.length > 400 && (
+          <p className={`max-w-lg mx-auto font-saira text-[10px] text-right mb-1 ${
+            input.length > 900 ? "text-rose-400" : input.length > 700 ? "text-amber-400" : "text-zinc-500"
+          }`}>
+            {input.length} / 1000
+          </p>
+        )}
         <div className="max-w-lg mx-auto flex items-end gap-1.5">
           <textarea
             ref={inputRef}

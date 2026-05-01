@@ -108,8 +108,23 @@ export default function CourseIndexPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   if (uiStage.stage === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+      <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto md:max-w-2xl animate-pulse">
+        <div className="mb-8 space-y-2">
+          <div className="h-3 w-28 rounded bg-white/8" />
+          <div className="h-9 w-56 rounded-xl bg-white/10" />
+        </div>
+        {/* Progress bar skeleton */}
+        <div className="h-2 w-full rounded-full bg-white/8 mb-6" />
+        {/* Module card skeletons */}
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="rounded-2xl border border-white/5 bg-surface-card p-4 mb-3 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-white/8 flex-shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-32 rounded bg-white/8" />
+              <div className="h-3 w-48 rounded bg-white/6" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -171,7 +186,7 @@ export default function CourseIndexPage() {
   const currentPos  = currentWeek ? planWeeks.indexOf(currentWeek) + 1 : null;
 
   return (
-    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto md:max-w-2xl">
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="mb-6">
@@ -428,8 +443,9 @@ function Dot({ filled, label }: { filled: boolean; label: string }) {
 // ── NoPlanPage ────────────────────────────────────────────────────────────────
 
 function NoPlanPage({ onGenerate, generating }: { onGenerate: () => void; generating: boolean }) {
+  const { t } = useT();
   return (
-    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto flex flex-col">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto md:max-w-2xl flex flex-col">
 
       {/* Header */}
       <div className="mb-8">
@@ -440,7 +456,7 @@ function NoPlanPage({ onGenerate, generating }: { onGenerate: () => void; genera
           Mental Training
         </h1>
         <p className="font-saira text-sm text-zinc-300">
-          Your personalised plan hasn't been set up yet.
+          {t("course.planNotSetUp")}
         </p>
       </div>
 
@@ -450,13 +466,20 @@ function NoPlanPage({ onGenerate, generating }: { onGenerate: () => void; genera
           ✦
         </div>
         <h2 className="font-saira text-xl font-bold text-white text-center mb-2">
-          Build your plan
+          {t("course.buildPlan")}
         </h2>
         <p className="font-saira text-sm text-zinc-400 leading-relaxed text-center mb-2">
           Based on your mental goals and self-assessment, Claude will build a personalised training sequence from the full 15-module library.
         </p>
-        <p className="font-saira text-xs text-zinc-400 text-center mb-6">
+        <p className="font-saira text-xs text-zinc-400 text-center mb-2">
           12–16 weeks is recommended for athletes without prior sports psychology experience. You can customise the plan before saving it.
+        </p>
+        <p className="font-saira text-xs text-zinc-500 text-center mb-6">
+          For the best results, make sure your{" "}
+          <a href="/you" className="text-purple-400 hover:text-purple-300 underline underline-offset-2 transition">
+            mental goals and profile
+          </a>{" "}
+          are filled in first.
         </p>
 
         <button
@@ -467,10 +490,10 @@ function NoPlanPage({ onGenerate, generating }: { onGenerate: () => void; genera
           {generating ? (
             <>
               <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-              Analysing your profile…
+              {t("course.analysingProfile")}
             </>
           ) : (
-            "Generate my plan →"
+            t("course.generatePlanArrow")
           )}
         </button>
 
@@ -567,7 +590,7 @@ function PlanEditor({
   const tooShort = slugs.length < 8;
 
   return (
-    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto md:max-w-2xl">
 
       {/* Header */}
       <div className="mb-6">
@@ -763,7 +786,7 @@ const PREVIEW_THEMES = [
 
 function CourseLockedPage() {
   return (
-    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto flex flex-col">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto md:max-w-2xl flex flex-col">
 
       <div className="mb-8">
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-400 mb-1">

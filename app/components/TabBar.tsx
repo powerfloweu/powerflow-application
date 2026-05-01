@@ -7,12 +7,20 @@ import { isCheckinDone, checkinKey } from "@/lib/checkinReminder";
 import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
 
-const TABS = [
+const ATHLETE_TABS = [
   { href: "/today",   labelKey: "nav.home",    icon: TodayIcon   },
   { href: "/journal", labelKey: "nav.journal", icon: JournalIcon },
   { href: "/course",  labelKey: "nav.course",  icon: CourseIcon  },
   { href: "/library", labelKey: "nav.tools",   icon: LibraryIcon },
   { href: "/you",     labelKey: "nav.you",     icon: YouIcon     },
+] as const;
+
+// Coaches only get 4 tabs — Course & You are on desktop sidebar; Coach replaces them
+const COACH_TABS = [
+  { href: "/today",   labelKey: "nav.home",    icon: TodayIcon,     isCoach: false },
+  { href: "/journal", labelKey: "nav.journal", icon: JournalIcon,   isCoach: false },
+  { href: "/library", labelKey: "nav.tools",   icon: LibraryIcon,   isCoach: false },
+  { href: "/coach",   labelKey: "nav.coach",   icon: CoachTabIcon,  isCoach: true  },
 ] as const;
 
 interface Props {
@@ -39,6 +47,9 @@ export default function TabBar({ planTier = "pr", role }: Props) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  const isCoach = role === "coach";
+  const tabs = isCoach ? COACH_TABS : ATHLETE_TABS;
+
   return (
     <nav
       className="fixed bottom-0 inset-x-0 z-50 md:hidden"
@@ -48,19 +59,27 @@ export default function TabBar({ planTier = "pr", role }: Props) {
       <div className="absolute inset-0 bg-surface-panel/90 backdrop-blur-md border-t border-white/8" />
 
       <div className="relative flex items-stretch justify-around px-1">
-        {TABS.map(({ href, labelKey, icon: Icon }) => {
+        {tabs.map(({ href, labelKey, icon: Icon, ...rest }) => {
+          const isCoachTab = "isCoach" in rest && rest.isCoach;
           const active = pathname === href || pathname.startsWith(href + "/");
-          const showBadge = href === "/today" && !checkinDone && !active;
-          const locked =
+          const showBadge = href === "/today" && !checkinDone;
+          const locked = !isCoach && (
             (href === "/library" && !canAccessTools(planTier)) ||
-            (href === "/course" && !canAccessPR(planTier));
+            (href === "/course" && !canAccessPR(planTier))
+          );
           const dest = locked ? "/upgrade" : href;
           return (
             <Link
               key={href}
               href={dest}
               className={`relative flex flex-col items-center justify-center gap-1 flex-1 py-2.5 transition-colors ${
-                active ? "text-purple-300" : locked ? "text-zinc-500" : "text-zinc-400 hover:text-zinc-400"
+                active
+                  ? isCoachTab ? "text-emerald-300" : "text-purple-300"
+                  : locked
+                  ? "text-zinc-500"
+                  : isCoachTab
+                  ? "text-emerald-700 hover:text-emerald-500"
+                  : "text-zinc-400 hover:text-zinc-400"
               }`}
             >
               <div className="relative">
@@ -83,24 +102,6 @@ export default function TabBar({ planTier = "pr", role }: Props) {
             </Link>
           );
         })}
-
-        {/* Coach tab — extra tab visible only for coach accounts */}
-        {role === "coach" && (() => {
-          const active = pathname === "/coach" || pathname.startsWith("/coach/");
-          return (
-            <Link
-              href="/coach"
-              className={`relative flex flex-col items-center justify-center gap-1 flex-1 py-2.5 transition-colors ${
-                active ? "text-emerald-300" : "text-emerald-800 hover:text-emerald-500"
-              }`}
-            >
-              <CoachTabIcon active={active} />
-              <span className="font-saira text-[9px] uppercase tracking-[0.16em]">
-                {t("nav.coach")}
-              </span>
-            </Link>
-          );
-        })()}
       </div>
     </nav>
   );

@@ -191,8 +191,27 @@ export default function TodayPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+      <div className="min-h-screen bg-surface-base px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-3xl animate-pulse">
+        {/* Tab skeleton */}
+        <div className="flex gap-2 mb-8">
+          {[80, 64, 72].map((w) => (
+            <div key={w} className="h-8 rounded-xl bg-white/8" style={{ width: w }} />
+          ))}
+        </div>
+        {/* Greeting skeleton */}
+        <div className="mb-8 space-y-2">
+          <div className="h-3 w-24 rounded bg-white/8" />
+          <div className="h-9 w-64 rounded-xl bg-white/10" />
+          <div className="h-4 w-40 rounded bg-white/8" />
+        </div>
+        {/* Card skeletons */}
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-4 space-y-3">
+            <div className="h-3 w-24 rounded bg-white/8" />
+            <div className="h-5 w-48 rounded bg-white/10" />
+            <div className="h-3 w-full rounded bg-white/6" />
+          </div>
+        ))}
       </div>
     );
   }
@@ -202,7 +221,7 @@ export default function TodayPage() {
     return (
       <div className="min-h-screen bg-surface-base">
         {/* Date tabs always visible */}
-        <div className="pt-10 px-4 sm:px-6 max-w-lg mx-auto md:max-w-2xl">
+        <div className="pt-10 px-4 sm:px-6 max-w-lg mx-auto md:max-w-3xl">
           <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
         </div>
 
@@ -224,7 +243,7 @@ export default function TodayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-2xl">
+    <div className="min-h-screen bg-surface-base px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-3xl">
 
       {/* ── Date tabs ─────────────────────────────────────────── */}
       <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
@@ -239,7 +258,7 @@ export default function TodayPage() {
               <div key={a.test_slug} className="flex items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-500/8 px-4 py-3">
                 <div className="min-w-0">
                   <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-300 mb-0.5">
-                    Your coach wants you to take a test
+                    {t("today.coachWantsTest")}
                   </p>
                   <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{meta.label}</p>
                 </div>
@@ -248,7 +267,7 @@ export default function TodayPage() {
                     href={meta.href}
                     className="rounded-full bg-amber-500/20 border border-amber-500/40 px-3 py-1.5 font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200 hover:bg-amber-500/30 transition"
                   >
-                    Take test →
+                    {t("today.takeTestArrow")}
                   </Link>
                   <button
                     type="button"
@@ -280,10 +299,10 @@ export default function TodayPage() {
         >
           <div>
             <p className={`font-saira text-[10px] font-semibold uppercase tracking-[0.22em] mb-0.5 ${checkinIsMonthly ? "text-amber-400" : "text-purple-400"}`}>
-              {checkinIsMonthly ? "Monthly Check-In" : "Weekly Check-In"}
+              {checkinIsMonthly ? t("today.monthlyCheckinLabel") : t("today.weeklyCheckinLabel")}
             </p>
             <p className="font-saira text-sm font-semibold text-zinc-100">
-              {checkinIsMonthly ? "Complete your monthly check-in" : "Complete your weekly check-in"}
+              {checkinIsMonthly ? t("today.completeMonthlyCheckin") : t("today.completeWeeklyCheckin")}
             </p>
           </div>
           <span className={`text-lg group-hover:translate-x-0.5 transition-transform flex-shrink-0 ${checkinIsMonthly ? "text-amber-400" : "text-purple-400"}`}>→</span>
@@ -334,14 +353,14 @@ export default function TodayPage() {
         {confirmingChange && (
           <div className="mt-3 flex items-center gap-3 border-t border-white/5 pt-3">
             <p className="font-saira text-[11px] text-zinc-400 flex-1">
-              Change day type?
+              {t("today.changeDayType")}
             </p>
             <button
               type="button"
               onClick={() => { setEntry(null); setConfirmingChange(false); }}
               className="font-saira text-[11px] font-semibold text-purple-300 hover:text-purple-200 transition"
             >
-              Yes, change
+              {t("today.yesChange")}
             </button>
             <button
               type="button"
@@ -470,10 +489,10 @@ export default function TodayPage() {
       >
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-400 mb-1">
-            Mental Tests
+            {t("today.mentalTests")}
           </p>
           <p className="font-saira text-xs text-zinc-300">
-            Self-awareness · Coping skills · Competitive anxiety
+            {t("today.mentalTestsSub")}
           </p>
         </div>
         <span className="text-purple-400 text-lg group-hover:translate-x-0.5 transition-transform">→</span>

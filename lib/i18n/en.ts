@@ -104,6 +104,17 @@ export const en = {
     tabToday: "Today",
     tabYesterday: "Yesterday",
     tabDayBefore: "2 days ago",
+
+    coachWantsTest: "Your coach wants you to take a test",
+    takeTestArrow: "Take test →",
+    weeklyCheckinLabel: "Weekly Check-In",
+    monthlyCheckinLabel: "Monthly Check-In",
+    completeWeeklyCheckin: "Complete your weekly check-in",
+    completeMonthlyCheckin: "Complete your monthly check-in",
+    changeDayType: "Change day type?",
+    yesChange: "Yes, change",
+    mentalTests: "Mental Tests",
+    mentalTestsSub: "Self-awareness · Coping skills · Competitive anxiety",
   },
 
   // Journal page
@@ -138,6 +149,7 @@ export const en = {
     textMode: "Text",
     voiceComingSoon: "Voice entries coming soon",
     saveFailed: "Couldn't save — please try again.",
+    fillOneToSave: "Fill in at least one answer to save.",
 
     today: "Today",
     yesterday: "Yesterday",
@@ -238,6 +250,10 @@ export const en = {
 
     pageLabelYourPlan: "YOUR PLAN",
     indexTitle: "Mental Training",
+    buildPlan: "Build your plan",
+    analysingProfile: "Analysing your profile…",
+    generatePlanArrow: "Generate my plan →",
+    planNotSetUp: "Your personalised plan hasn't been set up yet.",
     weeksAthletePaced: "{count} weeks · athlete-paced",
     aiPersonalisedSuffix: " · AI-personalised",
     progress: "Progress",
@@ -543,6 +559,7 @@ export const en = {
     title: "What's new",
     devlogTitle: "Latest update",
     fromCoach: "From your coach",
+    announcement: "Announcement",
     whatsNewWith: "What's new",
     latestBadge: "Latest",
     readMore: "Read more",

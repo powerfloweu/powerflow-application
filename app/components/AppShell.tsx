@@ -123,7 +123,7 @@ export default function AppShell({ children }: Props) {
       .catch(() => {});
   }, []);
 
-  const canCollapse = role === "coach";
+  const canCollapse = !!role; // all authenticated users can collapse to icon rail
 
   const checkinCtxValue = React.useMemo(() => ({
     pendingCheckin: (weeklyCheckinTarget && checkinSkipped) ? weeklyCheckinTarget : null,

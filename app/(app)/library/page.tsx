@@ -603,7 +603,17 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+// `useSearchParams` requires a Suspense boundary for static rendering (Next.js 15+).
+// The actual page logic lives in ToolsPageInner; the default export wraps it.
 export default function ToolsPage() {
+  return (
+    <React.Suspense>
+      <ToolsPageInner />
+    </React.Suspense>
+  );
+}
+
+function ToolsPageInner() {
   const { t } = useT();
   const searchParams = useSearchParams();
   const [openId, setOpenId]             = React.useState<string | null>(() => searchParams.get("open"));

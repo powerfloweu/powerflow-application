@@ -104,6 +104,17 @@ export const hu: Dict = {
     tabToday: "Ma",
     tabYesterday: "Tegnap",
     tabDayBefore: "2 napja",
+
+    coachWantsTest: "Az edződ azt szeretné, hogy töltsd ki a tesztet",
+    takeTestArrow: "Teszt kitöltése →",
+    weeklyCheckinLabel: "Heti Check-In",
+    monthlyCheckinLabel: "Havi Check-In",
+    completeWeeklyCheckin: "Töltsd ki a heti check-int",
+    completeMonthlyCheckin: "Töltsd ki a havi check-int",
+    changeDayType: "Megváltoztatod a nap típusát?",
+    yesChange: "Igen, változtasd",
+    mentalTests: "Mentális tesztek",
+    mentalTestsSub: "Önismeret · Megküzdési készségek · Versenyhelyzetbeli szorongás",
   },
 
   journal: {
@@ -137,6 +148,7 @@ export const hu: Dict = {
     textMode: "Szöveg",
     voiceComingSoon: "Hangos bejegyzések hamarosan",
     saveFailed: "Nem sikerült menteni — kérlek, próbáld újra.",
+    fillOneToSave: "Legalább egy választ tölts ki a mentéshez.",
 
     today: "Ma",
     yesterday: "Tegnap",
@@ -235,6 +247,10 @@ export const hu: Dict = {
 
     pageLabelYourPlan: "A TERVED",
     indexTitle: "Mentális edzés",
+    buildPlan: "Tervezd meg a programod",
+    analysingProfile: "Profil elemzése…",
+    generatePlanArrow: "Program generálása →",
+    planNotSetUp: "A személyes programod még nem lett beállítva.",
     weeksAthletePaced: "{count} hét · a te tempoddal",
     aiPersonalisedSuffix: " · AI-személyre szabott",
     progress: "Haladás",
@@ -519,6 +535,7 @@ export const hu: Dict = {
     title: "Mi újság",
     devlogTitle: "Legújabb frissítés",
     fromCoach: "Az edződtől",
+    announcement: "Közlemény",
     whatsNewWith: "Mi újság",
     latestBadge: "Legújabb",
     readMore: "Tovább olvasom",
