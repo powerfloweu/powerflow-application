@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import EntryCard from "@/app/components/EntryCard";
 import TagChip from "@/app/components/TagChip";
-import { THEME_DEFS, type Sentiment, type Context } from "@/lib/journal";
+import { THEME_DEFS, detectSentiment, type Sentiment, type Context } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
 import { weekDays as currentWeekDaysLocal } from "@/lib/date";
 import { weekLabel, type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weeklyCheckin";
@@ -101,6 +101,12 @@ function computeClient(a: AthleteRaw) {
   const weekEntries = a.entries.filter((e) => new Date(e.created_at) >= cutWeek);
   const prevEntries = a.entries.filter((e) => new Date(e.created_at) >= cutPrev && new Date(e.created_at) < cutWeek);
 
+  // Flatten all text from a training log entry into a single searchable string.
+  // Defined early so both sentiment detection and theme detection can use it.
+  const trainingText = (e: { thoughts_before?: string | null; thoughts_after?: string | null; what_went_well?: string | null; frustrations?: string | null; next_session?: string | null }) =>
+    [e.thoughts_before, e.thoughts_after, e.what_went_well, e.frustrations, e.next_session]
+      .filter(Boolean).join(" ").toLowerCase();
+
   // Training logs with at least one content field filled in
   const trainingLogsWithContent = a.all_training_entries.filter((e) =>
     e.thoughts_before || e.thoughts_after || e.what_went_well || e.frustrations || e.next_session,
@@ -109,12 +115,28 @@ function computeClient(a: AthleteRaw) {
     (e) => new Date(e.entry_date + "T12:00:00") >= cutWeek,
   );
 
-  const positiveRate = weekEntries.length
-    ? Math.round((weekEntries.filter((e) => e.sentiment === "positive").length / weekEntries.length) * 100)
+  // Training logs carry no stored sentiment — auto-detect from their text so they
+  // contribute to the positiveRate. Without this, athletes who only log training
+  // days (never the free-form journal) always show 0% even with upbeat entries.
+  const prevTrainingLogsRaw = trainingLogsWithContent.filter(
+    (e) => new Date(e.entry_date + "T12:00:00") >= cutPrev && new Date(e.entry_date + "T12:00:00") < cutWeek,
+  );
+
+  const weekAllSentiments: Sentiment[] = [
+    ...weekEntries.map((e) => e.sentiment),
+    ...weekTrainingLogs.map((e) => detectSentiment(trainingText(e))),
+  ];
+  const prevAllSentiments: Sentiment[] = [
+    ...prevEntries.map((e) => e.sentiment),
+    ...prevTrainingLogsRaw.map((e) => detectSentiment(trainingText(e))),
+  ];
+
+  const positiveRate = weekAllSentiments.length
+    ? Math.round(weekAllSentiments.filter((s) => s === "positive").length / weekAllSentiments.length * 100)
     : 0;
 
-  const prevPositiveRate = prevEntries.length
-    ? Math.round((prevEntries.filter((e) => e.sentiment === "positive").length / prevEntries.length) * 100)
+  const prevPositiveRate = prevAllSentiments.length
+    ? Math.round(prevAllSentiments.filter((s) => s === "positive").length / prevAllSentiments.length * 100)
     : positiveRate;
 
   const trend: Trend = positiveRate > prevPositiveRate + 10 ? "up"
@@ -123,22 +145,25 @@ function computeClient(a: AthleteRaw) {
 
   const flag: Flag = positiveRate < 30 ? "attention" : positiveRate < 55 ? "monitor" : "stable";
 
-  // 7-day daily positive %
+  // 7-day daily positive % — journal entries + training logs combined
   const sentimentWeek = Array.from({ length: 7 }, (_, i) => {
     const dayStart = weekAgo(6 - i);
     const dayEnd   = weekAgo(6 - i - 1);
-    const dayE = a.entries.filter((e) => {
+    const dayJ = a.entries.filter((e) => {
       const d = new Date(e.created_at);
       return d >= dayStart && d < (i === 6 ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) : dayEnd);
     });
-    if (!dayE.length) return 0;
-    return Math.round((dayE.filter((e) => e.sentiment === "positive").length / dayE.length) * 100);
+    const dayT = trainingLogsWithContent.filter((e) => {
+      const d = new Date(e.entry_date + "T12:00:00");
+      return d >= dayStart && d < (i === 6 ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) : dayEnd);
+    });
+    const allDay: Sentiment[] = [
+      ...dayJ.map((e) => e.sentiment),
+      ...dayT.map((e) => detectSentiment(trainingText(e))),
+    ];
+    if (!allDay.length) return 0;
+    return Math.round(allDay.filter((s) => s === "positive").length / allDay.length * 100);
   });
-
-  // Flatten all text from a training log entry into a single searchable string
-  const trainingText = (e: { thoughts_before?: string | null; thoughts_after?: string | null; what_went_well?: string | null; frustrations?: string | null; next_session?: string | null }) =>
-    [e.thoughts_before, e.thoughts_after, e.what_went_well, e.frustrations, e.next_session]
-      .filter(Boolean).join(" ").toLowerCase();
 
   // Themes — journal entries + training logs both contribute
   const themes = THEME_DEFS.map((def) => {

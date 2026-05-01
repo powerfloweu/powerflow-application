@@ -47,12 +47,27 @@ export const CTX_CONFIG: Record<Context, { label: string; icon: string }> = {
 export type ThemeDef = { label: string; keywords: string[]; color: string };
 
 export const THEME_DEFS: ThemeDef[] = [
-  { label: "Perfectionism",    keywords: ["should have", "not good enough", "perfect", "mistake", "wrong", "failed", "can't execute", "better"], color: "rose"    },
-  { label: "Confidence",       keywords: ["believe", "can do", "strong", "confident", "trust", "coming back", "nailed", "belong"],                color: "emerald" },
-  { label: "Pre-comp anxiety", keywords: ["nervous", "worried", "anxious", "scared", "fear", "worst case", "not ready", "imagin"],                color: "amber"   },
-  { label: "Focus & flow",     keywords: ["zone", "clicked", "in the zone", "focused", "concentrate", "flow", "sharp", "locked"],                 color: "purple"  },
-  { label: "Motivation",       keywords: ["motivated", "excited", "look forward", "pay off", "progress", "great session", "solid"],               color: "sky"     },
-  { label: "Self-doubt",       keywords: ["can't", "unable", "brain shuts", "doubt", "overthinking", "not sure"],                                 color: "orange"  },
+  // Only phrases that unambiguously signal perfectionist pressure.
+  // Removed: "better", "perfect", "mistake", "wrong", "failed" — all fire on
+  // positive entries ("did better than ever", "felt perfect", "no mistakes today").
+  { label: "Perfectionism",    keywords: ["should have", "not good enough", "can't execute", "too hard on myself", "never satisfied", "not happy with how", "not happy with my", "beating myself up", "should have done"], color: "rose"    },
+
+  // "strong" alone is fine for confidence (kept). "trust" alone could match
+  // "I don't trust…" but it's rare enough to leave in.
+  { label: "Confidence",       keywords: ["believe in myself", "i can do", "feeling confident", "felt confident", "trust my", "trust the process", "nailed it", "nailed the", "i belong", "feel strong", "feeling strong"], color: "emerald" },
+
+  // Removed "imagin" — matches mental imagery / visualization (neutral/positive).
+  { label: "Pre-comp anxiety", keywords: ["nervous", "worried", "anxious", "scared", "afraid", "dreading", "worst case", "not ready for", "fear of"], color: "amber"   },
+
+  // "locked" alone could be ambiguous; "locked in" is the meaningful phrase.
+  { label: "Focus & flow",     keywords: ["in the zone", "zone out", "clicked", "locked in", "focused", "in a flow", "flow state", "sharp", "tunnel vision", "dialled in"], color: "purple"  },
+
+  // "solid" and "progress" alone are fine. Removed nothing — these were clean.
+  { label: "Motivation",       keywords: ["motivated", "excited", "look forward", "pay off", "great session", "solid session", "love training", "love this sport", "can't wait to train"], color: "sky"     },
+
+  // Removed "can't" — fires on "can't wait for the meet", "can't believe how well it went".
+  // Removed "not sure" — too vague, fires on "not sure which weight to open with".
+  { label: "Self-doubt",       keywords: ["doubt myself", "doubting myself", "brain shuts", "overthinking", "don't think i can", "questioning myself", "not sure i can", "unable to", "losing confidence"], color: "orange"  },
 ];
 
 export const THEME_CLS: Record<string, string> = {
