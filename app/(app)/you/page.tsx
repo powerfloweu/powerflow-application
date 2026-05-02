@@ -298,7 +298,7 @@ export default function YouPage() {
           {/* Bodyweight */}
           <div>
             <label className="block font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-300 mb-1.5">
-              {t("you.bodyweight")} (kg)
+              {t("you.bodyweight")}
             </label>
             <input
               type="number" step="0.1" min="30" max="300"

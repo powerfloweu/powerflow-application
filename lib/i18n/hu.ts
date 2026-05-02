@@ -370,7 +370,7 @@ export const hu: Dict = {
     deleteConfirm: "Írd be a DELETE szót a megerősítéshez",
     deleted: "Fiók törölve",
 
-    bodyweight: "Testsúly",
+    bodyweight: "Testsúly (kg)",
     weightCategory: "Súlycsoport",
     squat: "Squat",
     bench: "Bench",
@@ -584,6 +584,7 @@ export const hu: Dict = {
     savingScript: "Mentés…",
     audioFailed: "Az audio sikertelen — próbáld újra.",
     noSound: "🔔 Nincs hang? Ellenőrizd, hogy a telefonod nincs-e néma módban.",
+    listeningPlaceholder: "Hallgatom…",
     errorMsg: "Sajnos valami hiba történt. Kérlek, próbáld újra.",
     q1: "Ma kihagytam egy emelést, és nem tudok nem gondolni rá",
     q2: "Segíts felkészülni mentálisan a versenyemre",

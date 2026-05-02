@@ -372,7 +372,7 @@ export const de: Dict = {
     deleteConfirm: "Tippe DELETE zur Bestätigung",
     deleted: "Konto gelöscht",
 
-    bodyweight: "Körpergewicht",
+    bodyweight: "Körpergewicht (kg)",
     weightCategory: "Gewichtsklasse",
     squat: "Squat",
     bench: "Bench",
@@ -586,6 +586,7 @@ export const de: Dict = {
     savingScript: "Speichert…",
     audioFailed: "Audio fehlgeschlagen — erneut versuchen.",
     noSound: "🔔 Kein Ton? Prüfe, ob das Handy nicht auf stumm gestellt ist.",
+    listeningPlaceholder: "Hört zu…",
     errorMsg: "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
     q1: "Ich habe heute einen Lift verpasst und kann nicht aufhören, daran zu denken",
     q2: "Hilf mir, mich mental auf meinen Wettkampf vorzubereiten",

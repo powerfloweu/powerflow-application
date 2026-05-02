@@ -1181,7 +1181,7 @@ export default function ChatPage() {
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder={listening ? "Listening…" : t("chat.placeholder")}
+            placeholder={listening ? t("chat.listeningPlaceholder") : t("chat.placeholder")}
             rows={1}
             disabled={streaming}
             // text-base on mobile (16px) prevents iOS Safari from auto-zooming

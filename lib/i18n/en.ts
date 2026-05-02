@@ -380,7 +380,7 @@ export const en = {
     deleted: "Account deleted",
 
     // Stats
-    bodyweight: "Bodyweight",
+    bodyweight: "Bodyweight (kg)",
     weightCategory: "Weight category",
     squat: "Squat",
     bench: "Bench",
@@ -611,6 +611,7 @@ export const en = {
     savingScript: "Saving…",
     audioFailed: "Audio failed — try again.",
     noSound: "🔔 No sound? Check your phone is not on silent.",
+    listeningPlaceholder: "Listening…",
     errorMsg: "Sorry, something went wrong. Please try again.",
     q1: "I missed a lift today and can't stop thinking about it",
     q2: "Help me prepare mentally for my meet",
