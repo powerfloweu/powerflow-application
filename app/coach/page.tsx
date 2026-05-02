@@ -8,6 +8,7 @@ import { THEME_DEFS, detectSentiment, type Sentiment, type Context } from "@/lib
 import type { TrainingEntry } from "@/lib/training";
 import { weekDays as currentWeekDaysLocal } from "@/lib/date";
 import { weekLabel, type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weeklyCheckin";
+import { useT } from "@/lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -198,15 +199,16 @@ function computeClient(a: AthleteRaw) {
     ? Math.max(...trainingLogsWithContent.map((e) => new Date(e.updated_at).getTime()))
     : 0;
   const lastActivityTime = Math.max(lastJournalTime, lastTrainingTime);
-  let lastActive = "Never";
+  // Return a structured code instead of a hardcoded English string so it can be translated in JSX
+  let lastActive: { key: "never" } | { key: "justNow" } | { key: "hoursAgo"; h: number } | { key: "yesterday" } | { key: "daysAgo"; d: number } = { key: "never" };
   if (lastActivityTime > 0) {
     const diffMs = now.getTime() - lastActivityTime;
     const diffH  = Math.floor(diffMs / 3600000);
     const diffD  = Math.floor(diffMs / 86400000);
-    lastActive = diffH < 1 ? "Just now"
-      : diffH < 24 ? `${diffH}h ago`
-      : diffD === 1 ? "Yesterday"
-      : `${diffD} days ago`;
+    lastActive = diffH < 1 ? { key: "justNow" }
+      : diffH < 24 ? { key: "hoursAgo", h: diffH }
+      : diffD === 1 ? { key: "yesterday" }
+      : { key: "daysAgo", d: diffD };
   }
 
   return {
@@ -277,10 +279,10 @@ type Client = ReturnType<typeof computeClient>;
 
 // ── Visual helpers ─────────────────────────────────────────────────────────────
 
-const FLAG_CONFIG: Record<Flag, { label: string; dot: string; text: string; bg: string; border: string }> = {
-  attention: { label: "Needs attention", dot: "bg-rose-400",    text: "text-rose-300",    bg: "bg-rose-500/10",    border: "border-rose-500/30"    },
-  monitor:   { label: "Monitor",         dot: "bg-amber-400",   text: "text-amber-300",   bg: "bg-amber-500/10",   border: "border-amber-500/30"   },
-  stable:    { label: "On track",        dot: "bg-emerald-400", text: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/30" },
+const FLAG_CONFIG: Record<Flag, { labelKey: string; dot: string; text: string; bg: string; border: string }> = {
+  attention: { labelKey: "coach.flagAttention", dot: "bg-rose-400",    text: "text-rose-300",    bg: "bg-rose-500/10",    border: "border-rose-500/30"    },
+  monitor:   { labelKey: "coach.flagMonitor",   dot: "bg-amber-400",   text: "text-amber-300",   bg: "bg-amber-500/10",   border: "border-amber-500/30"   },
+  stable:    { labelKey: "coach.flagStable",    dot: "bg-emerald-400", text: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/30" },
 };
 
 
@@ -350,6 +352,7 @@ function ScaleBar({ label, value }: { label: string; value: number | null }) {
 }
 
 function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClient>["profile"] }) {
+  const { t } = useT();
   const [editingAff, setEditingAff] = React.useState(false);
   const [affDrafts, setAffDrafts]   = React.useState<[string, string, string]>(["", "", ""]);
   const [editingKw, setEditingKw]   = React.useState(false);
@@ -429,7 +432,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
             ))}
             <div className="flex gap-2 pt-1">
               <button onClick={saveAff} disabled={saving} className="rounded-lg bg-purple-500 px-3 py-1 font-saira text-[10px] uppercase tracking-wider text-white hover:bg-purple-400 disabled:opacity-50 transition">
-                {saving ? "Saving…" : "Save"}
+                {saving ? t("coach.savingNote") : t("coach.saveNote")}
               </button>
               <button onClick={() => setEditingAff(false)} className="font-saira text-[10px] text-zinc-300 hover:text-zinc-300 transition">
                 Cancel
@@ -475,7 +478,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
             ))}
             <div className="flex gap-2 pt-1">
               <button onClick={saveKw} disabled={saving} className="rounded-lg bg-purple-500 px-3 py-1 font-saira text-[10px] uppercase tracking-wider text-white hover:bg-purple-400 disabled:opacity-50 transition">
-                {saving ? "Saving…" : "Save"}
+                {saving ? t("coach.savingNote") : t("coach.saveNote")}
               </button>
               <button onClick={() => setEditingKw(false)} className="font-saira text-[10px] text-zinc-300 hover:text-zinc-300 transition">
                 Cancel
@@ -520,6 +523,7 @@ function CheckinsTab({
   checkins: WeeklyCheckin[];
   monthlyCheckins: MonthlyCheckin[];
 }) {
+  const { t } = useT();
   const [expandedWeeks, setExpandedWeeks] = React.useState<Set<string>>(new Set());
 
   // Merge weekly + monthly into one list, sorted newest-first
@@ -596,11 +600,11 @@ function CheckinsTab({
                 {/* Weekly ratings (both types) */}
                 <div className="grid grid-cols-5 gap-2">
                   {[
-                    { label: "Mood",      v: ci.mood_rating },
-                    { label: "Training",  v: ci.training_quality },
-                    { label: "Energy",    v: ci.energy_rating },
-                    { label: "Sleep",     v: ci.sleep_rating },
-                    { label: "Readiness", v: ci.readiness_rating },
+                    { label: t("coach.ciMood"),      v: ci.mood_rating },
+                    { label: t("coach.ciTraining"),  v: ci.training_quality },
+                    { label: t("coach.ciEnergy"),    v: ci.energy_rating },
+                    { label: t("coach.ciSleep"),     v: ci.sleep_rating },
+                    { label: t("coach.ciReadiness"), v: ci.readiness_rating },
                   ].map(({ label: rl, v }) => (
                     <div key={rl} className="text-center">
                       <p className={`font-saira text-lg font-extrabold tabular-nums ${ratingColor(v)}`}>{v}</p>
@@ -676,6 +680,7 @@ function CheckinsTab({
 }
 
 function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["profile"] }) {
+  const { t } = useT();
   const goals = profile.mental_goals.filter(Boolean);
   const hasLifts =
     profile.squat_current_kg || profile.bench_current_kg || profile.deadlift_current_kg ||
@@ -718,18 +723,18 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
             Personal &amp; sport
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <ProfileField label="Gender" value={profile.gender} />
+            <ProfileField label={t("coach.pfGender")} value={profile.gender} />
             <ProfileField
-              label="Instagram"
+              label={t("coach.pfInstagram")}
               value={profile.instagram ? `@${profile.instagram.replace(/^@/, "")}` : null}
               href={profile.instagram ? `https://instagram.com/${profile.instagram.replace(/^@/, "")}` : undefined}
             />
-            <ProfileField label="Federation" value={profile.federation} />
-            <ProfileField label="Years in sport" value={profile.years_powerlifting} />
-            <ProfileField label="Bodyweight" value={profile.bodyweight_kg ? `${profile.bodyweight_kg} kg` : null} />
-            <ProfileField label="Weight class" value={profile.weight_category} />
-            <ProfileField label="Next meet" value={profile.meet_date} />
-            <ProfileField label="Training days/week" value={profile.training_days_per_week} />
+            <ProfileField label={t("coach.pfFederation")} value={profile.federation} />
+            <ProfileField label={t("coach.pfYearsInSport")} value={profile.years_powerlifting} />
+            <ProfileField label={t("coach.pfBodyweight")} value={profile.bodyweight_kg ? `${profile.bodyweight_kg} kg` : null} />
+            <ProfileField label={t("coach.pfWeightClass")} value={profile.weight_category} />
+            <ProfileField label={t("coach.pfNextMeet")} value={profile.meet_date} />
+            <ProfileField label={t("coach.pfTrainingDays")} value={profile.training_days_per_week} />
           </div>
         </div>
       )}
@@ -794,11 +799,11 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
             Self-assessment (athlete&apos;s own rating, 1–10)
           </p>
           <div className="space-y-3">
-            <ScaleBar label="Confidence regulation"  value={profile.self_confidence_reg} />
-            <ScaleBar label="Focus under fatigue"    value={profile.self_focus_fatigue} />
-            <ScaleBar label="Handling pressure"      value={profile.self_handling_pressure} />
-            <ScaleBar label="Competition anxiety"    value={profile.self_competition_anxiety} />
-            <ScaleBar label="Emotional recovery"     value={profile.self_emotional_recovery} />
+            <ScaleBar label={t("coach.pfConfidenceReg")}    value={profile.self_confidence_reg} />
+            <ScaleBar label={t("coach.pfFocusFatigue")}     value={profile.self_focus_fatigue} />
+            <ScaleBar label={t("coach.pfHandlingPressure")} value={profile.self_handling_pressure} />
+            <ScaleBar label={t("coach.pfCompAnxiety")}      value={profile.self_competition_anxiety} />
+            <ScaleBar label={t("coach.pfEmotionalRecovery")} value={profile.self_emotional_recovery} />
           </div>
         </div>
       )}
@@ -810,10 +815,10 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
             Mindset assessment
           </p>
           <div className="space-y-4">
-            <ProfileField label="Main barrier to performance"             value={profile.main_barrier} />
-            <ProfileField label="When confidence breaks"                  value={profile.confidence_break} />
-            <ProfileField label="When they overthink / lose focus"        value={profile.overthinking_focus} />
-            <ProfileField label="Previous mental coaching / psych work"   value={profile.previous_mental_work} />
+            <ProfileField label={t("coach.pfMainBarrier")}         value={profile.main_barrier} />
+            <ProfileField label={t("coach.pfConfidenceBreak")}    value={profile.confidence_break} />
+            <ProfileField label={t("coach.pfOverthinking")}        value={profile.overthinking_focus} />
+            <ProfileField label={t("coach.pfPreviousMentalWork")} value={profile.previous_mental_work} />
           </div>
         </div>
       )}
@@ -825,9 +830,9 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
             Goals &amp; context
           </p>
           <div className="space-y-4">
-            <ProfileField label="Expectations from coaching"      value={profile.expectations} />
-            <ProfileField label="Mental strategies tried before"  value={profile.previous_tools} />
-            <ProfileField label="Anything else"                   value={profile.anything_else} />
+            <ProfileField label={t("coach.pfExpectations")}    value={profile.expectations} />
+            <ProfileField label={t("coach.pfPreviousTools")} value={profile.previous_tools} />
+            <ProfileField label={t("coach.pfAnythingElse")}  value={profile.anything_else} />
           </div>
         </div>
       )}
@@ -837,28 +842,30 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
 
 // ── Pattern Analysis component ─────────────────────────────────────────────────
 
-const THEME_DESCRIPTORS: Record<string, string> = {
-  "Perfectionism":      "High standards creating self-pressure",
-  "Confidence":         "Positive self-belief patterns",
-  "Pre-comp anxiety":   "Competition readiness stress",
-  "Focus & flow":       "Mental clarity and engagement",
-  "Motivation":         "Drive and purpose alignment",
-  "Self-doubt":         "Internal barriers to performance",
+// Map theme labels to i18n keys (used in JSX via t())
+const THEME_DESC_KEYS: Record<string, string> = {
+  "Perfectionism":    "coach.themeDescPerfectionism",
+  "Confidence":       "coach.themeDescConfidence",
+  "Pre-comp anxiety": "coach.themeDescPrecompAnxiety",
+  "Focus & flow":     "coach.themeDescFocusFlow",
+  "Motivation":       "coach.themeDescMotivation",
+  "Self-doubt":       "coach.themeDescSelfDoubt",
 };
 
-const CONVERSATION_STARTERS: Record<string, string> = {
-  "Perfectionism":    "Explore what 'good enough' looks like on a hard training day",
-  "Pre-comp anxiety": "What physical preparation routine helps them feel most ready before a meet?",
-  "Self-doubt":       "Ask them to recall a moment they surprised themselves — what made it possible?",
-  "Confidence":       "What specific belief or thought is driving their positive momentum?",
-  "Focus & flow":     "What conditions help them stay in flow? Can they engineer more of those?",
-  "Motivation":       "Connect recent entries to their long-term competition goal",
+const CONVERSATION_STARTER_KEYS: Record<string, string> = {
+  "Perfectionism":    "coach.starterPerfectionism",
+  "Pre-comp anxiety": "coach.starterPrecompAnxiety",
+  "Self-doubt":       "coach.starterSelfDoubt",
+  "Confidence":       "coach.starterConfidence",
+  "Focus & flow":     "coach.starterFocusFlow",
+  "Motivation":       "coach.starterMotivation",
 };
 
-function computeSentimentTrajectory(allEntries: EntryRow[]): { label: string; rate: number }[] {
+// weekLabelKey: index 0 = "3 weeks ago", 1 = "2 weeks ago", 2 = "This week"
+function computeSentimentTrajectory(allEntries: EntryRow[]): { labelKey: string; rate: number }[] {
   const now = new Date();
-  const result: { label: string; rate: number }[] = [];
-  const labels = ["3 weeks ago", "2 weeks ago", "This week"];
+  const result: { labelKey: string; rate: number }[] = [];
+  const labelKeys = ["coach.weekLabels0", "coach.weekLabels1", "coach.weekLabels2"];
   for (let w = 2; w >= 0; w--) {
     const start = new Date(now); start.setDate(now.getDate() - (w + 1) * 7); start.setHours(0, 0, 0, 0);
     const end   = new Date(now); end.setDate(now.getDate() - w * 7); end.setHours(0, 0, 0, 0);
@@ -869,12 +876,13 @@ function computeSentimentTrajectory(allEntries: EntryRow[]): { label: string; ra
     const rate = weekE.length
       ? Math.round((weekE.filter((e) => e.sentiment === "positive").length / weekE.length) * 100)
       : 0;
-    result.push({ label: labels[2 - w], rate });
+    result.push({ labelKey: labelKeys[2 - w], rate });
   }
   return result;
 }
 
 function PatternAnalysis({ client }: { client: Client }) {
+  const { t } = useT();
   // Count both journal entries and training logs with content
   const entryCount = client.allContentCount;
 
@@ -928,17 +936,17 @@ function PatternAnalysis({ client }: { client: Client }) {
     void mid; void variance;
   }
 
-  // Conversation starters
-  const starters: string[] = [];
+  // Conversation starters — collect i18n keys, then translate in JSX
+  const starterKeys: string[] = [];
   const dominantLabel = primaryTheme?.label ?? "";
-  if (CONVERSATION_STARTERS[dominantLabel]) {
-    starters.push(CONVERSATION_STARTERS[dominantLabel]);
+  if (CONVERSATION_STARTER_KEYS[dominantLabel]) {
+    starterKeys.push(CONVERSATION_STARTER_KEYS[dominantLabel]);
   }
-  if (secondaryTheme && CONVERSATION_STARTERS[secondaryTheme.label]) {
-    starters.push(CONVERSATION_STARTERS[secondaryTheme.label]);
+  if (secondaryTheme && CONVERSATION_STARTER_KEYS[secondaryTheme.label]) {
+    starterKeys.push(CONVERSATION_STARTER_KEYS[secondaryTheme.label]);
   }
-  if (starters.length < 2) {
-    starters.push("Review their onboarding mental goals — how does their current state align?");
+  if (starterKeys.length < 2) {
+    starterKeys.push("coach.starterGoals");
   }
 
   return (
@@ -964,8 +972,8 @@ function PatternAnalysis({ client }: { client: Client }) {
               <span className="font-saira text-[10px] text-purple-400 font-semibold w-14 flex-shrink-0 pt-0.5">Primary</span>
               <div>
                 <span className="font-saira text-xs text-zinc-200 font-semibold">{primaryTheme.label}</span>
-                {THEME_DESCRIPTORS[primaryTheme.label] && (
-                  <span className="font-saira text-[10px] text-zinc-300 ml-2">— {THEME_DESCRIPTORS[primaryTheme.label]}</span>
+                {THEME_DESC_KEYS[primaryTheme.label] && (
+                  <span className="font-saira text-[10px] text-zinc-300 ml-2">— {t(THEME_DESC_KEYS[primaryTheme.label])}</span>
                 )}
                 <span className="font-saira text-[10px] text-zinc-400 ml-2">({primaryTheme.count} mentions)</span>
               </div>
@@ -975,8 +983,8 @@ function PatternAnalysis({ client }: { client: Client }) {
                 <span className="font-saira text-[10px] text-zinc-300 w-14 flex-shrink-0 pt-0.5">Secondary</span>
                 <div>
                   <span className="font-saira text-xs text-zinc-400">{secondaryTheme.label}</span>
-                  {THEME_DESCRIPTORS[secondaryTheme.label] && (
-                    <span className="font-saira text-[10px] text-zinc-400 ml-2">— {THEME_DESCRIPTORS[secondaryTheme.label]}</span>
+                  {THEME_DESC_KEYS[secondaryTheme.label] && (
+                    <span className="font-saira text-[10px] text-zinc-400 ml-2">— {t(THEME_DESC_KEYS[secondaryTheme.label])}</span>
                   )}
                 </div>
               </div>
@@ -993,14 +1001,14 @@ function PatternAnalysis({ client }: { client: Client }) {
           </p>
           <div className="flex items-end gap-3 mb-1.5">
             {trajectory.map((pt) => (
-              <div key={pt.label} className="flex flex-col items-center gap-1 flex-1">
+              <div key={pt.labelKey} className="flex flex-col items-center gap-1 flex-1">
                 <div className="w-full rounded-sm bg-white/5 overflow-hidden h-6 flex items-end">
                   <div
                     className="w-full bg-purple-400/50 rounded-sm transition-all"
                     style={{ height: `${Math.max(4, pt.rate * 0.24)}px` }}
                   />
                 </div>
-                <span className="font-saira text-[9px] text-zinc-400 text-center leading-tight">{pt.label}</span>
+                <span className="font-saira text-[9px] text-zinc-400 text-center leading-tight">{t(pt.labelKey)}</span>
                 <span className={`font-saira text-[10px] font-semibold ${
                   pt.rate >= 60 ? "text-emerald-300" : pt.rate >= 40 ? "text-amber-300" : "text-rose-300"
                 }`}>{pt.rate}%</span>
@@ -1017,10 +1025,10 @@ function PatternAnalysis({ client }: { client: Client }) {
           Coaching conversation starters
         </p>
         <ul className="space-y-1.5">
-          {starters.slice(0, 3).map((s, i) => (
+          {starterKeys.slice(0, 3).map((sk, i) => (
             <li key={i} className="flex gap-2 items-start">
               <span className="font-saira text-[10px] text-purple-400 flex-shrink-0 mt-0.5">→</span>
-              <span className="font-saira text-xs text-zinc-400 leading-relaxed">{s}</span>
+              <span className="font-saira text-xs text-zinc-400 leading-relaxed">{t(sk)}</span>
             </li>
           ))}
         </ul>
@@ -1055,18 +1063,19 @@ function NotesTab({
   saving: boolean;
   onChange: (athleteId: string, value: string) => void;
 }) {
+  const { t } = useT();
   return (
     <div className="space-y-3">
       <textarea
         value={note}
         onChange={(e) => onChange(athleteId, e.target.value)}
-        placeholder="Session observations, follow-up items, patterns noticed..."
+        placeholder={t("coach.notesPlaceholder")}
         rows={6}
         className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
       />
       <div className="flex items-center gap-2 font-saira text-[10px] text-zinc-400">
         {saving ? (
-          <span className="text-amber-400">Saving...</span>
+          <span className="text-amber-400">{t("coach.savingNote")}</span>
         ) : savedAt ? (
           <span className="text-emerald-400">✓ Saved · {timeSince(savedAt)}</span>
         ) : (
@@ -1080,12 +1089,13 @@ function NotesTab({
 // ── Training day card (coach activity feed) ───────────────────────────────────
 
 function CoachTrainingCard({ entry }: { entry: TrainingEntry }) {
+  const { t } = useT();
   const fields = [
-    { label: "Before top sets", value: entry.thoughts_before },
-    { label: "After top sets",  value: entry.thoughts_after },
-    { label: "Went well",       value: entry.what_went_well },
-    { label: "Frustrated by",   value: entry.frustrations },
-    { label: "Next session",    value: entry.next_session },
+    { label: t("coach.trainingFieldBefore"),    value: entry.thoughts_before },
+    { label: t("coach.trainingFieldAfter"),     value: entry.thoughts_after },
+    { label: t("coach.trainingFieldWentWell"),  value: entry.what_went_well },
+    { label: t("coach.trainingFieldFrustrated"), value: entry.frustrations },
+    { label: t("coach.trainingFieldNext"),      value: entry.next_session },
   ].filter((f) => f.value);
 
   if (!fields.length) return null;
@@ -1130,6 +1140,7 @@ function EntryFeedbackSection({
   existing?: { id: string; content: string; created_at: string };
   onSaved: (entryId: string, feedback: { id: string; content: string; created_at: string }) => void;
 }) {
+  const { t } = useT();
   const [open, setOpen] = React.useState(false);
   const [draft, setDraft] = React.useState(existing?.content ?? "");
   const [saving, setSaving] = React.useState(false);
@@ -1193,7 +1204,7 @@ function EntryFeedbackSection({
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         rows={2}
-        placeholder="Add a coaching observation for this entry..."
+        placeholder={t("coach.entryNotePlaceholder")}
         className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 font-saira text-xs text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50"
       />
       <div className="flex gap-2">
@@ -1207,7 +1218,7 @@ function EntryFeedbackSection({
               : "bg-white/5 text-zinc-400 cursor-not-allowed"
           }`}
         >
-          {saving ? "Saving..." : "Save"}
+          {saving ? t("coach.savingNote") : t("coach.saveNote")}
         </button>
         <button
           type="button"
@@ -1234,6 +1245,7 @@ function TrainingFeedbackSection({
   existing?: string;
   onSaved: (note: string) => void;
 }) {
+  const { t } = useT();
   const [open, setOpen]           = React.useState(false);
   const [draft, setDraft]         = React.useState(existing ?? "");
   const [saving, setSaving]       = React.useState(false);
@@ -1296,7 +1308,7 @@ function TrainingFeedbackSection({
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         rows={2}
-        placeholder="Add a coaching observation for this session..."
+        placeholder={t("coach.sessionNotePlaceholder")}
         className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 font-saira text-xs text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50"
       />
       <div className="flex gap-2">
@@ -1310,7 +1322,7 @@ function TrainingFeedbackSection({
               : "bg-white/5 text-zinc-400 cursor-not-allowed"
           }`}
         >
-          {saving ? "Saving..." : "Save"}
+          {saving ? t("coach.savingNote") : t("coach.saveNote")}
         </button>
         <button
           type="button"
@@ -1355,6 +1367,7 @@ function ClientCard({
   onSentimentWindowChange: (athleteId: string, w: 7 | 30 | 60) => void;
   forceOpen?: boolean;
 }) {
+  const { t } = useT();
   const [expanded, setExpanded] = React.useState(false);
   const isOpen = forceOpen || expanded;
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("analysis");
@@ -1440,9 +1453,19 @@ function ClientCard({
 
   const currentWeekTraining = trainingByWeek[trainingWeekOffset] ?? [];
 
-  const weekLabel = trainingWeekOffset === 0 ? "This week"
-    : trainingWeekOffset === 1 ? "Last week"
-    : `${trainingWeekOffset} weeks ago`;
+  const weekLabel = trainingWeekOffset === 0 ? t("coach.trainingWeekThis")
+    : trainingWeekOffset === 1 ? t("coach.trainingWeekLast")
+    : t("coach.trainingWeekNAgo").replace("{n}", String(trainingWeekOffset));
+
+  // Helper: render lastActive code as translated string
+  const renderLastActive = (la: Client["lastActive"]): string => {
+    if (la.key === "never") return t("coach.lastActiveNever");
+    if (la.key === "justNow") return t("coach.lastActiveJustNow");
+    if (la.key === "yesterday") return t("coach.lastActiveYesterday");
+    if (la.key === "hoursAgo") return `${la.h}h ago`;
+    if (la.key === "daysAgo") return t("coach.lastActiveDaysAgo").replace("{n}", String(la.d));
+    return "";
+  };
 
   // Unified activity feed: journal entries + training day logs merged by date
   type ActivityItem =
@@ -1520,7 +1543,7 @@ function ClientCard({
         <div className="flex-1 min-w-0">
           <p className="font-saira text-sm font-semibold text-zinc-100">{client.name}</p>
           <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
-            Last active {client.lastActive} · {client.entriesThisWeek} entries this week
+            Last active {renderLastActive(client.lastActive)} · {client.entriesThisWeek} entries this week
           </p>
         </div>
 
@@ -1544,7 +1567,7 @@ function ClientCard({
 
           <span className={`rounded-full border px-3 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] ${flag.border} ${flag.bg} ${flag.text}`}>
             <span className={`mr-1.5 inline-block w-1.5 h-1.5 rounded-full ${flag.dot}`} />
-            {flag.label}
+            {t(flag.labelKey)}
           </span>
 
           <span className="font-saira text-[11px] text-zinc-400">{isOpen ? "▲" : "▼"}</span>
@@ -1558,13 +1581,13 @@ function ClientCard({
           {/* Tab bar */}
           <div className="flex gap-0 border-b border-white/5 px-5 sm:px-6 overflow-x-auto">
             {([
-              { key: "analysis",  label: "Analysis" },
-              { key: "entries",   label: "Activity" },
-              { key: "scores",    label: "Test scores" },
-              { key: "training",  label: "Training Log" },
-              { key: "checkins",  label: "Check-ins" },
-              { key: "profile",   label: "Profile" },
-              { key: "notes",     label: "Notes" },
+              { key: "analysis",  labelKey: "coach.tabAnalysis" },
+              { key: "entries",   labelKey: "coach.tabActivity" },
+              { key: "scores",    labelKey: "coach.tabScores" },
+              { key: "training",  labelKey: "coach.tabTraining" },
+              { key: "checkins",  labelKey: "coach.tabCheckins" },
+              { key: "profile",   labelKey: "coach.tabProfile" },
+              { key: "notes",     labelKey: "coach.tabNotes" },
             ] as const).map((tab) => (
               <button
                 key={tab.key}
@@ -1574,7 +1597,7 @@ function ClientCard({
                   activeTab === tab.key ? "text-white" : "text-zinc-300 hover:text-zinc-300"
                 }`}
               >
-                {tab.label}
+                {t(tab.labelKey)}
                 {activeTab === tab.key && (
                   <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-purple-400" />
                 )}
@@ -1601,7 +1624,7 @@ function ClientCard({
                             : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
                         }`}
                       >
-                        {w}d
+                        {w}{t("coach.sentimentWindowLabel")}
                       </button>
                     ))}
                   </div>
@@ -1625,7 +1648,9 @@ function ClientCard({
                   </div>
                 ) : (
                   <p className="font-saira text-sm text-zinc-400 py-2">
-                    {windowedTotalCount === 0 ? `No entries in the last ${sentimentWindow} days.` : "No recurring themes detected."}
+                    {windowedTotalCount === 0
+                      ? t("coach.noEntriesInWindow").replace("{n}", String(sentimentWindow))
+                      : t("coach.noThemesDetected")}
                   </p>
                 )}
 
@@ -1636,14 +1661,14 @@ function ClientCard({
                       Last {sentimentWindow} days at a glance
                     </p>
                     <div className="grid grid-cols-3 gap-3">
-                      <MiniStat label="Entries" value={String(windowedTotalCount)} />
+                      <MiniStat label={t("coach.statEntries")} value={String(windowedTotalCount)} />
                       <MiniStat
-                        label="Positive"
+                        label={t("coach.statPositive")}
                         value={`${windowedPositiveRate}%`}
                         color={windowedPositiveRate >= 60 ? "text-emerald-300" : windowedPositiveRate >= 40 ? "text-amber-300" : "text-rose-300"}
                       />
                       <MiniStat
-                        label="Trend"
+                        label={t("coach.statTrend")}
                         value={TREND_ICON[client.trend]}
                         color={TREND_COLOR[client.trend]}
                       />
@@ -1703,8 +1728,8 @@ function ClientCard({
                         const r = client.testScores.das[0];
                         return (
                           <>
-                            <ScoreCard label="Total score" value={`${r.total_score > 0 ? "+" : ""}${r.total_score}`} sub="of ±70" flag={r.depression_prone ? "rose" : r.total_score > 18 ? "amber" : "emerald"} />
-                            <ScoreCard label="Depression-prone" value={r.depression_prone ? "Yes" : "No"} sub="" flag={r.depression_prone ? "rose" : "emerald"} />
+                            <ScoreCard label={t("coach.tsTotal")} value={`${r.total_score > 0 ? "+" : ""}${r.total_score}`} sub="of ±70" flag={r.depression_prone ? "rose" : r.total_score > 18 ? "amber" : "emerald"} />
+                            <ScoreCard label={t("coach.tsDepressionProne")} value={r.depression_prone ? t("coach.tsYes") : t("coach.tsNo")} sub="" flag={r.depression_prone ? "rose" : "emerald"} />
                             <ScoreCard label="Submitted" value={new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} sub={r.paid ? "Paid" : "Free"} flag="amber" />
                           </>
                         );
@@ -1724,10 +1749,10 @@ function ClientCard({
                       const total = r.total_score ?? (r.score_coping + r.score_concentration + r.score_confidence + r.score_goal_setting);
                       return (
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <ScoreCard label="Total" value={String(total)} sub="of 196" flag={total >= 130 ? "emerald" : total >= 90 ? "amber" : "rose"} />
-                          <ScoreCard label="Coping" value={String(r.score_coping)} sub="of 28" flag={r.score_coping >= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label="Concentration" value={String(r.score_concentration)} sub="of 28" flag={r.score_concentration >= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label="Confidence" value={String(r.score_confidence)} sub="of 28" flag={r.score_confidence >= 18 ? "emerald" : "rose"} />
+                          <ScoreCard label={t("coach.tsTotal")} value={String(total)} sub="of 196" flag={total >= 130 ? "emerald" : total >= 90 ? "amber" : "rose"} />
+                          <ScoreCard label={t("coach.tsCoping")} value={String(r.score_coping)} sub="of 28" flag={r.score_coping >= 18 ? "emerald" : "rose"} />
+                          <ScoreCard label={t("coach.tsConcentration")} value={String(r.score_concentration)} sub="of 28" flag={r.score_concentration >= 18 ? "emerald" : "rose"} />
+                          <ScoreCard label={t("coach.tsConfidence")} value={String(r.score_confidence)} sub="of 28" flag={r.score_confidence >= 18 ? "emerald" : "rose"} />
                         </div>
                       );
                     })()}
@@ -1744,9 +1769,9 @@ function ClientCard({
                       const r = client.testScores.csai[0];
                       return (
                         <div className="grid grid-cols-3 gap-3">
-                          <ScoreCard label="Cognitive" value={String(r.score_cognitive)} sub="of 36" flag={r.score_cognitive <= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label="Somatic"   value={String(r.score_somatic)}   sub="of 36" flag={r.score_somatic <= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label="Confidence" value={String(r.score_confidence)} sub="of 36" flag={r.score_confidence >= 22 ? "emerald" : "rose"} />
+                          <ScoreCard label={t("coach.tsCognitive")} value={String(r.score_cognitive)} sub="of 36" flag={r.score_cognitive <= 18 ? "emerald" : "rose"} />
+                          <ScoreCard label={t("coach.tsSomatic")}   value={String(r.score_somatic)}   sub="of 36" flag={r.score_somatic <= 18 ? "emerald" : "rose"} />
+                          <ScoreCard label={t("coach.tsConfidence")} value={String(r.score_confidence)} sub="of 36" flag={r.score_confidence >= 22 ? "emerald" : "rose"} />
                         </div>
                       );
                     })()}
@@ -1763,7 +1788,7 @@ function ClientCard({
                       const r = client.testScores.sat[0];
                       return (
                         <div className="grid grid-cols-2 gap-3">
-                          <ScoreCard label="Total" value={String(r.total_score)} sub="of 165" flag="emerald" />
+                          <ScoreCard label={t("coach.tsTotal")} value={String(r.total_score)} sub="of 165" flag="emerald" />
                           <ScoreCard label="Submitted" value={new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} sub={r.paid ? "Paid" : "Free"} flag="amber" />
                         </div>
                       );
@@ -1783,15 +1808,16 @@ function ClientCard({
                 {/* ── Assign test ── */}
                 <div className="mt-4 pt-4 border-t border-white/5">
                   <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
-                    Assign a test to {client.name.split(" ")[0]}
+                    {t("coach.tsAssign")} — {client.name.split(" ")[0]}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {([
-                      { slug: "sat",  label: "Self-Awareness" },
-                      { slug: "acsi", label: "Coping Skills"  },
-                      { slug: "csai", label: "Competitive Anxiety" },
-                      { slug: "das",  label: "Att. Scale (DAS)"    },
-                    ] as const).map(({ slug, label }) => {
+                      { slug: "sat",  labelKey: "coach.tsLabelSAT" },
+                      { slug: "acsi", labelKey: "coach.tsLabelACSI" },
+                      { slug: "csai", labelKey: "coach.tsLabelCSAI" },
+                      { slug: "das",  labelKey: "coach.tsLabelDAS"  },
+                    ] as const).map(({ slug, labelKey }) => {
+                      const label = t(labelKey);
                       const isAssigned = assignedSlugs.includes(slug);
                       const isWorking  = assignWorking === slug;
                       return (
@@ -1945,6 +1971,7 @@ function MoodSparkline({ entries, weekDays }: { entries: TrainingEntry[]; weekDa
 }
 
 function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { trainingThisWeek: TrainingEntry[]; weekDays?: string[] }) {
+  const { t } = useT();
   const defaultWeekDays = React.useMemo(() => currentWeekDays(), []);
   const weekDays = propWeekDays ?? defaultWeekDays;
   const trainingDays = trainingThisWeek.filter((e) => e.is_training_day).length;
@@ -2014,7 +2041,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
                         ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
                         : "border-zinc-600/40 bg-zinc-600/10 text-zinc-400"
                     }`}>
-                      {e.is_training_day ? "Training" : "Rest"}
+                      {e.is_training_day ? t("coach.trainingDay") : t("coach.trainingRest")}
                     </span>
                     {e.mood_rating !== null && (
                       <span className={`font-saira text-[10px] font-semibold ${
@@ -2030,11 +2057,11 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
                     <div className="space-y-1.5 mt-2">
                       {(
                         [
-                          ["Before", e.thoughts_before],
-                          ["After",  e.thoughts_after],
-                          ["Went well", e.what_went_well],
-                          ["Frustrations", e.frustrations],
-                          ["Next session", e.next_session],
+                          [t("coach.trainingFieldBeforeShort"), e.thoughts_before],
+                          [t("coach.trainingFieldAfterShort"),  e.thoughts_after],
+                          [t("coach.trainingFieldWentWellShort"), e.what_went_well],
+                          [t("coach.trainingFieldFrustrationsShort"), e.frustrations],
+                          [t("coach.trainingFieldNextShort"), e.next_session],
                         ] as [string, string | null][]
                       ).map(([label, val]) =>
                         val ? (
@@ -2143,6 +2170,7 @@ function MiniStat({ label, value, color = "text-zinc-100" }: { label: string; va
 // ── Roster summary bar ─────────────────────────────────────────────────────────
 
 function RosterSummary({ clients }: { clients: Client[] }) {
+  const { t } = useT();
   const attention    = clients.filter((c) => c.flag === "attention").length;
   const monitor      = clients.filter((c) => c.flag === "monitor").length;
   const stable       = clients.filter((c) => c.flag === "stable").length;
@@ -2152,11 +2180,11 @@ function RosterSummary({ clients }: { clients: Client[] }) {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
-      <SummaryTile value={String(clients.length)}  label="Athletes"          color="text-zinc-100"     />
-      <SummaryTile value={String(attention)}        label="Attention"         color="text-rose-300"    dot="bg-rose-400"    />
-      <SummaryTile value={String(monitor)}          label="Monitor"           color="text-amber-300"   dot="bg-amber-400"   />
-      <SummaryTile value={String(stable)}           label="On track"          color="text-emerald-300" dot="bg-emerald-400" />
-      <SummaryTile value={`${avgPositive}%`}        label="Avg positive · 7d" color="text-purple-300"  />
+      <SummaryTile value={String(clients.length)}  label={t("coach.athletes")}    color="text-zinc-100"     />
+      <SummaryTile value={String(attention)}        label={t("coach.attention")}   color="text-rose-300"    dot="bg-rose-400"    />
+      <SummaryTile value={String(monitor)}          label={t("coach.monitor")}     color="text-amber-300"   dot="bg-amber-400"   />
+      <SummaryTile value={String(stable)}           label={t("coach.onTrack")}     color="text-emerald-300" dot="bg-emerald-400" />
+      <SummaryTile value={`${avgPositive}%`}        label={t("coach.avgPositive7d")} color="text-purple-300"  />
     </div>
   );
 }
@@ -2211,6 +2239,7 @@ function AttentionBanner({ attentionAthletes }: { attentionAthletes: Client[] })
 // ── Invite link panel ──────────────────────────────────────────────────────────
 
 function InvitePanel({ coachCode }: { coachCode: string }) {
+  const { t } = useT();
   const [copied, setCopied] = React.useState(false);
   const url = typeof window !== "undefined"
     ? `${window.location.origin}/join/${coachCode}`
@@ -2242,7 +2271,7 @@ function InvitePanel({ coachCode }: { coachCode: string }) {
               : "border-purple-400/40 bg-purple-500/10 text-purple-200 hover:bg-purple-500/20"
           }`}
         >
-          {copied ? "✓ Copied!" : "Copy link"}
+          {copied ? t("coach.copied") : t("coach.copyLink")}
         </button>
       </div>
       <p className="mt-2 font-saira text-[10px] text-zinc-400">
@@ -2319,7 +2348,17 @@ function CompactAthleteRow({
   selected: boolean;
   onClick: () => void;
 }) {
+  const { t } = useT();
   const flag = FLAG_CONFIG[client.flag];
+
+  const renderLastActive = (la: Client["lastActive"]): string => {
+    if (la.key === "never") return t("coach.lastActiveNever");
+    if (la.key === "justNow") return t("coach.lastActiveJustNow");
+    if (la.key === "yesterday") return t("coach.lastActiveYesterday");
+    if (la.key === "hoursAgo") return `${la.h}h ago`;
+    if (la.key === "daysAgo") return t("coach.lastActiveDaysAgo").replace("{n}", String(la.d));
+    return "";
+  };
   return (
     <button
       type="button"
@@ -2358,7 +2397,7 @@ function CompactAthleteRow({
           )}
         </div>
         <p className="font-saira text-xs text-zinc-300 mt-0.5">
-          {client.entriesThisWeek} entries · {client.lastActive}
+          {client.entriesThisWeek} entries · {renderLastActive(client.lastActive)}
         </p>
       </div>
       {/* Flag dot + positive % */}
@@ -2377,6 +2416,7 @@ function CompactAthleteRow({
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function CoachPage() {
+  const { t } = useT();
   const [clients, setClients]   = React.useState<Client[]>([]);
   const [profile, setProfile]   = React.useState<CoachProfile | null>(null);
   const [loading, setLoading]   = React.useState(true);
@@ -2416,13 +2456,13 @@ export default function CoachPage() {
         ]);
 
         if (!profileRes.ok || !athletesRes.ok) {
-          setError("Couldn't load data. Please refresh.");
+          setError(t("coach.errorLoad"));
           return;
         }
 
         const prof: CoachProfile = await profileRes.json();
         if (prof.role !== "coach") {
-          setError("This dashboard is for coaches only.");
+          setError(t("coach.errorCoachOnly"));
           return;
         }
 
@@ -2451,7 +2491,7 @@ export default function CoachPage() {
           setNotesSavedAt(savedAts);
         }
       } catch {
-        setError("Network error — please refresh.");
+        setError(t("coach.errorNetwork"));
       } finally {
         setLoading(false);
       }
@@ -2606,16 +2646,16 @@ export default function CoachPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search athletes…"
+                placeholder={t("coach.searchPlaceholder")}
                 className="rounded-xl border border-zinc-700/70 bg-surface-section px-4 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30 w-52"
               />
               <div className="flex gap-1.5 ml-auto">
                 <span className="font-saira text-[10px] text-zinc-400 self-center mr-1 uppercase tracking-[0.18em]">Sort</span>
                 {([
-                  { key: "flag",     label: "Priority" },
+                  { key: "flag",     label: t("coach.sortPriority") },
                   { key: "positive", label: "Positive %" },
-                  { key: "entries",  label: "Activity" },
-                  { key: "name",     label: "Name" },
+                  { key: "entries",  label: t("coach.sortActivity") },
+                  { key: "name",     label: t("coach.sortName") },
                 ] as { key: SortKey; label: string }[]).map((s) => (
                   <button
                     key={s.key}
@@ -2762,15 +2802,15 @@ export default function CoachPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search athletes…"
+                placeholder={t("coach.searchPlaceholder")}
                 className="w-full rounded-xl border border-zinc-700/70 bg-surface-section px-3 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30"
               />
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-saira text-xs text-zinc-400 mr-0.5 uppercase tracking-[0.1em]">Sort</span>
                 {([
-                  { key: "flag",     label: "Priority" },
+                  { key: "flag",     label: t("coach.sortPriority") },
                   { key: "positive", label: "+" },
-                  { key: "entries",  label: "Activity" },
+                  { key: "entries",  label: t("coach.sortActivity") },
                   { key: "name",     label: "A–Z" },
                 ] as { key: SortKey; label: string }[]).map((s) => (
                   <button
@@ -2852,7 +2892,15 @@ export default function CoachPage() {
                     )}
                   </div>
                   <p className="font-saira text-sm text-zinc-300 mt-1">
-                    Last active {selectedClient.lastActive} · {selectedClient.entriesThisWeek} entries this week · {selectedClient.positiveRate}% positive
+                    Last active {(() => {
+                      const la = selectedClient.lastActive;
+                      if (la.key === "never") return t("coach.lastActiveNever");
+                      if (la.key === "justNow") return t("coach.lastActiveJustNow");
+                      if (la.key === "yesterday") return t("coach.lastActiveYesterday");
+                      if (la.key === "hoursAgo") return `${la.h}h ago`;
+                      if (la.key === "daysAgo") return t("coach.lastActiveDaysAgo").replace("{n}", String(la.d));
+                      return "";
+                    })()} · {selectedClient.entriesThisWeek} entries this week · {selectedClient.positiveRate}% positive
                   </p>
                 </div>
                 {selectedClient.flag === "attention" && (

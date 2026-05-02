@@ -865,4 +865,150 @@ export const hu: Dict = {
     editBtn: "Hang szerkesztése",
     editSoon: "A hangszerkesztő a következő frissítésben érkezik.",
   },
+
+  // Coach dashboard
+  coach: {
+    // Page header
+    pageLabel: "EDZŐ MŰSZERFAL",
+    title: "Sportolóid",
+
+    // Summary tiles
+    athletes: "Sportolók",
+    attention: "Figyelem",
+    monitor: "Figyelés",
+    onTrack: "Jó úton",
+    avgPositive7d: "Átl. pozitív · 7n",
+
+    // Flag labels
+    flagAttention: "Beavatkozás szükséges",
+    flagMonitor: "Figyelés alatt",
+    flagStable: "Jó úton",
+
+    // Last active
+    lastActiveNever: "Soha",
+    lastActiveJustNow: "Az imént",
+    lastActiveYesterday: "Tegnap",
+    lastActiveDaysAgo: "{n} napja",
+
+    // Athlete detail tabs
+    tabAnalysis: "Elemzés",
+    tabActivity: "Aktivitás",
+    tabScores: "Teszteredmények",
+    tabTraining: "Edzésnapló",
+    tabCheckins: "Check-inek",
+    tabProfile: "Profil",
+    tabNotes: "Megjegyzések",
+
+    // Roster sort/filter
+    sortPriority: "Prioritás",
+    sortActivity: "Aktivitás",
+    sortName: "Név",
+    searchPlaceholder: "Sportolók keresése…",
+
+    // Analysis tab
+    sentimentWindowLabel: "nap",
+    noEntriesInWindow: "Nincs bejegyzés az elmúlt {n} napban.",
+    noThemesDetected: "Nem találhatók visszatérő témák.",
+    statEntries: "Bejegyzések",
+    statPositive: "Pozitív",
+    statTrend: "Trend",
+    weekLabels0: "3 hete",
+    weekLabels1: "2 hete",
+    weekLabels2: "Ezen a héten",
+
+    // Theme descriptions
+    themeDescPerfectionism: "Magas elvárások önnyomást okoznak",
+    themeDescConfidence: "Pozitív önhit minták",
+    themeDescPrecompAnxiety: "Verseny előtti felkészültségi stressz",
+    themeDescFocusFlow: "Mentális tisztaság és elkötelezettség",
+    themeDescMotivation: "Hajtóerő és céltudatosság",
+    themeDescSelfDoubt: "Belső teljesítménygátak",
+
+    // Conversation starters
+    starterPerfectionism: "Mit jelent egy nehéz edzésnapon, hogy 'elég jó'?",
+    starterPrecompAnxiety: "Milyen fizikai felkészülési rutin segít a legtöbbet verseny előtt?",
+    starterSelfDoubt: "Kérdd meg, hogy idézzen fel egy pillanatot, amikor meglepte önmagát — mi tette lehetővé?",
+    starterConfidence: "Milyen gondolat vagy hit hajtja a pozitív lendületet?",
+    starterFocusFlow: "Milyen körülmények segítenek a flow-ban maradni? Meg lehet teremteni ezeket?",
+    starterMotivation: "Kapcsold össze a legutóbbi bejegyzéseket a hosszú távú versencélokkal",
+    starterGoals: "Nézd át a bevezetőkori mentális célokat — hogyan illeszkedik a jelenlegi állapot?",
+
+    // Check-in fields
+    ciMood: "Hangulat",
+    ciTraining: "Edzés",
+    ciEnergy: "Energia",
+    ciSleep: "Alvás",
+    ciReadiness: "Felkészültség",
+
+    // Training log
+    trainingWeekThis: "Ezen a héten",
+    trainingWeekLast: "Múlt héten",
+    trainingWeekNAgo: "{n} hete",
+    trainingDay: "Edzés",
+    trainingRest: "Pihenő",
+    trainingFieldBefore: "Top szetek előtt",
+    trainingFieldAfter: "Top szetek után",
+    trainingFieldWentWell: "Jól ment",
+    trainingFieldFrustrated: "Frusztrált volt",
+    trainingFieldNext: "Következő edzés",
+    trainingFieldBeforeShort: "Előtte",
+    trainingFieldAfterShort: "Utána",
+    trainingFieldWentWellShort: "Jól ment",
+    trainingFieldFrustrationsShort: "Frusztrációk",
+    trainingFieldNextShort: "Következő edzés",
+
+    // Notes tab
+    notesPlaceholder: "Ülés megfigyelései, követendő pontok, észlelt minták…",
+    entryNotePlaceholder: "Edzői megfigyelés hozzáadása ehhez a bejegyzéshez…",
+    sessionNotePlaceholder: "Edzői megfigyelés hozzáadása ehhez az edzéshez…",
+    saveNote: "Mentés",
+    savingNote: "Mentés…",
+
+    // Profile tab fields
+    pfGender: "Nem",
+    pfInstagram: "Instagram",
+    pfFederation: "Szövetség",
+    pfYearsInSport: "Évek a sportban",
+    pfBodyweight: "Testsúly",
+    pfWeightClass: "Súlycsoport",
+    pfNextMeet: "Következő verseny",
+    pfTrainingDays: "Edzésnapok/hét",
+    pfConfidenceReg: "Önbizalom szabályozás",
+    pfFocusFatigue: "Fókusz fáradtság alatt",
+    pfHandlingPressure: "Nyomáskezelés",
+    pfCompAnxiety: "Versenyfélelemkezelés",
+    pfEmotionalRecovery: "Érzelmi felépülés",
+    pfMainBarrier: "Fő teljesítménygát",
+    pfConfidenceBreak: "Mikor törik meg az önbizalom",
+    pfOverthinking: "Mikor töpreng túl / veszíti el a fókuszt",
+    pfPreviousMentalWork: "Korábbi mentális coaching",
+    pfExpectations: "Elvárások a coachingtól",
+    pfPreviousTools: "Korábban kipróbált mentális stratégiák",
+    pfAnythingElse: "Egyéb",
+
+    // Test scores tab
+    tsAssign: "Teszt hozzárendelése",
+    tsLabelSAT: "Önismeret",
+    tsLabelACSI: "Megküzdési készségek",
+    tsLabelCSAI: "Versenyfélelemkezelés",
+    tsLabelDAS: "Figyelem skála (DAS)",
+    tsTotal: "Összpontszám",
+    tsDepressionProne: "Depresszióra hajlamos",
+    tsYes: "Igen",
+    tsNo: "Nem",
+    tsCoping: "Megküzdés",
+    tsConcentration: "Koncentráció",
+    tsConfidence: "Önbizalom",
+    tsCognitive: "Kognitív",
+    tsSomatic: "Szomatikus",
+
+    // Invite / copy link
+    copyLink: "Link másolása",
+    copied: "✓ Másolva!",
+
+    // Errors
+    errorLoad: "Az adatok nem tölthetők be. Kérlek, frissítsd az oldalt.",
+    errorCoachOnly: "Ez a műszerfal csak edzőknek elérhető.",
+    errorNetwork: "Hálózati hiba — kérlek, frissítsd az oldalt.",
+  },
 };

@@ -899,6 +899,152 @@ export const en = {
     editBtn: "Edit this voice",
     editSoon: "Voice editor coming in the next update.",
   },
+
+  // Coach dashboard
+  coach: {
+    // Page header
+    pageLabel: "COACH DASHBOARD",
+    title: "Your Athletes",
+
+    // Summary tiles
+    athletes: "Athletes",
+    attention: "Attention",
+    monitor: "Monitor",
+    onTrack: "On track",
+    avgPositive7d: "Avg positive · 7d",
+
+    // Flag labels (also used in roster)
+    flagAttention: "Needs attention",
+    flagMonitor: "Monitor",
+    flagStable: "On track",
+
+    // Last active
+    lastActiveNever: "Never",
+    lastActiveJustNow: "Just now",
+    lastActiveYesterday: "Yesterday",
+    lastActiveDaysAgo: "{n} days ago",
+
+    // Athlete detail tabs
+    tabAnalysis: "Analysis",
+    tabActivity: "Activity",
+    tabScores: "Test scores",
+    tabTraining: "Training Log",
+    tabCheckins: "Check-ins",
+    tabProfile: "Profile",
+    tabNotes: "Notes",
+
+    // Roster sort/filter
+    sortPriority: "Priority",
+    sortActivity: "Activity",
+    sortName: "Name",
+    searchPlaceholder: "Search athletes…",
+
+    // Analysis tab
+    sentimentWindowLabel: "days",
+    noEntriesInWindow: "No entries in the last {n} days.",
+    noThemesDetected: "No recurring themes detected.",
+    statEntries: "Entries",
+    statPositive: "Positive",
+    statTrend: "Trend",
+    weekLabels0: "3 weeks ago",
+    weekLabels1: "2 weeks ago",
+    weekLabels2: "This week",
+
+    // Theme descriptions (shown in analysis)
+    themeDescPerfectionism: "High standards creating self-pressure",
+    themeDescConfidence: "Positive self-belief patterns",
+    themeDescPrecompAnxiety: "Competition readiness stress",
+    themeDescFocusFlow: "Mental clarity and engagement",
+    themeDescMotivation: "Drive and purpose alignment",
+    themeDescSelfDoubt: "Internal barriers to performance",
+
+    // Conversation starters
+    starterPerfectionism: "Explore what 'good enough' looks like on a hard training day",
+    starterPrecompAnxiety: "What physical preparation routine helps them feel most ready before a meet?",
+    starterSelfDoubt: "Ask them to recall a moment they surprised themselves — what made it possible?",
+    starterConfidence: "What specific belief or thought is driving their positive momentum?",
+    starterFocusFlow: "What conditions help them stay in flow? Can they engineer more of those?",
+    starterMotivation: "Connect recent entries to their long-term competition goal",
+    starterGoals: "Review their onboarding mental goals — how does their current state align?",
+
+    // Check-in fields
+    ciMood: "Mood",
+    ciTraining: "Training",
+    ciEnergy: "Energy",
+    ciSleep: "Sleep",
+    ciReadiness: "Readiness",
+
+    // Training log
+    trainingWeekThis: "This week",
+    trainingWeekLast: "Last week",
+    trainingWeekNAgo: "{n} weeks ago",
+    trainingDay: "Training",
+    trainingRest: "Rest",
+    trainingFieldBefore: "Before top sets",
+    trainingFieldAfter: "After top sets",
+    trainingFieldWentWell: "Went well",
+    trainingFieldFrustrated: "Frustrated by",
+    trainingFieldNext: "Next session",
+    trainingFieldBeforeShort: "Before",
+    trainingFieldAfterShort: "After",
+    trainingFieldWentWellShort: "Went well",
+    trainingFieldFrustrationsShort: "Frustrations",
+    trainingFieldNextShort: "Next session",
+
+    // Notes tab
+    notesPlaceholder: "Session observations, follow-up items, patterns noticed…",
+    entryNotePlaceholder: "Add a coaching observation for this entry…",
+    sessionNotePlaceholder: "Add a coaching observation for this session…",
+    saveNote: "Save",
+    savingNote: "Saving…",
+
+    // Profile tab fields
+    pfGender: "Gender",
+    pfInstagram: "Instagram",
+    pfFederation: "Federation",
+    pfYearsInSport: "Years in sport",
+    pfBodyweight: "Bodyweight",
+    pfWeightClass: "Weight class",
+    pfNextMeet: "Next meet",
+    pfTrainingDays: "Training days/week",
+    pfConfidenceReg: "Confidence regulation",
+    pfFocusFatigue: "Focus under fatigue",
+    pfHandlingPressure: "Handling pressure",
+    pfCompAnxiety: "Competition anxiety",
+    pfEmotionalRecovery: "Emotional recovery",
+    pfMainBarrier: "Main barrier to performance",
+    pfConfidenceBreak: "When confidence breaks",
+    pfOverthinking: "When they overthink / lose focus",
+    pfPreviousMentalWork: "Previous mental coaching / psych work",
+    pfExpectations: "Expectations from coaching",
+    pfPreviousTools: "Mental strategies tried before",
+    pfAnythingElse: "Anything else",
+
+    // Test scores tab
+    tsAssign: "Assign a test",
+    tsLabelSAT: "Self-Awareness",
+    tsLabelACSI: "Coping Skills",
+    tsLabelCSAI: "Competitive Anxiety",
+    tsLabelDAS: "Att. Scale (DAS)",
+    tsTotal: "Total score",
+    tsDepressionProne: "Depression-prone",
+    tsYes: "Yes",
+    tsNo: "No",
+    tsCoping: "Coping",
+    tsConcentration: "Concentration",
+    tsConfidence: "Confidence",
+    tsCognitive: "Cognitive",
+    tsSomatic: "Somatic",
+
+    // Invite / copy link
+    copyLink: "Copy link",
+    copied: "✓ Copied!",
+
+    // Errors
+    errorLoad: "Couldn't load data. Please refresh.",
+    errorCoachOnly: "This dashboard is for coaches only.",
+    errorNetwork: "Network error — please refresh.",
+  },
 } as const;
 
 /** Recursively widen a const-asserted dict so other locales can supply any string. */
