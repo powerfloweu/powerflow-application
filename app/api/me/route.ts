@@ -49,6 +49,7 @@ export async function GET() {
   if (!rows.length) {
     return NextResponse.json({
       id: user.id,
+      coach_tts_voice_id: null,
       display_name: user.user_metadata?.full_name ?? user.email ?? "User",
       avatar_url: user.user_metadata?.avatar_url ?? null,
       role: "athlete" as const,
@@ -103,8 +104,25 @@ export async function GET() {
   const rawTier = (row as Record<string, unknown>).plan_tier as string | undefined;
   const planTier: string = rawTier ?? (row.course_access || row.ai_access ? "pr" : "opener");
 
+  // If athlete has a coach, look up the coach's cloned TTS voice ID.
+  // This is a cheap second query (indexed PK lookup) and keeps the voice ID
+  // off the athlete's own row — no extra column needed on the athlete.
+  let coach_tts_voice_id: string | null = null;
+  if (row.role === "athlete" && row.coach_id) {
+    const coachRows = await dbSelect<{ tts_voice_id: string | null }>("profiles", {
+      id: `eq.${row.coach_id}`,
+      select: "tts_voice_id",
+    });
+    coach_tts_voice_id = coachRows[0]?.tts_voice_id ?? null;
+  }
+
   // Normalise: mental_goals may come back as null from DB
-  return NextResponse.json({ ...row, mental_goals: row.mental_goals ?? [], plan_tier: planTier });
+  return NextResponse.json({
+    ...row,
+    mental_goals: row.mental_goals ?? [],
+    plan_tier: planTier,
+    coach_tts_voice_id,
+  });
 }
 
 export async function PATCH(req: NextRequest) {

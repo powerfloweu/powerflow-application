@@ -99,6 +99,13 @@ export type AthleteProfile = {
   // v8 — i18n
   /** UI language preference. Falls back to 'en' if unset. */
   language: import("@/lib/i18n").Locale;
+  // v9 — coach TTS voice
+  /**
+   * ElevenLabs voice ID of the athlete's coach.
+   * Not stored on the athlete's own profile row — joined in by /api/me at read time
+   * from the coach's tts_voice_id column. Null if coach has no cloned voice.
+   */
+  coach_tts_voice_id: string | null;
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */

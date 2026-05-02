@@ -476,6 +476,9 @@ export default function ChatPage() {
     setShowFeedback(false);
   };
 
+  // ElevenLabs voice ID of the athlete's coach (null = use env-var default)
+  const [coachVoiceId, setCoachVoiceId] = React.useState<string | null>(null);
+
   // ── Audio / script state ───────────────────────────────────────────────────
   const [playingScriptId, setPlayingScriptId] = React.useState<string | null>(null);
   const [loadingScriptId, setLoadingScriptId] = React.useState<string | null>(null);
@@ -543,6 +546,7 @@ export default function ChatPage() {
           router.replace("/upgrade");
           return;
         }
+        if (profile.coach_tts_voice_id) setCoachVoiceId(profile.coach_tts_voice_id);
         if (Array.isArray(history) && history.length > 0) {
           const loaded = history.map(
             (m: { id: string; role: "user" | "assistant"; content: string; created_at: string }) => ({
@@ -647,7 +651,7 @@ export default function ChatPage() {
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: content }),
+        body: JSON.stringify({ text: content, ...(coachVoiceId ? { voiceId: coachVoiceId } : {}) }),
         signal: controller.signal,
       });
       if (!res.ok) throw new Error(`TTS ${res.status}`);
