@@ -360,8 +360,8 @@ export default function AppShell({ children }: Props) {
       {/* ── Mobile bottom tab bar ───────────────────────────────── */}
       <TabBar planTier={planTier} role={role ?? undefined} />
 
-      {/* ── Daily check-in reminder (invisible, schedules notification) ── */}
-      <CheckinReminderScheduler />
+      {/* ── Daily check-in reminder (athletes only) ──────────────── */}
+      {role !== "coach" && <CheckinReminderScheduler />}
 
       {/* ── In-app broadcast + devlog modal ────────────────────────── */}
       {notifications && (
@@ -371,8 +371,8 @@ export default function AppShell({ children }: Props) {
         />
       )}
 
-      {/* ── Weekly / monthly check-in popup ──────────────────────── */}
-      {weeklyCheckinTarget && !checkinSkipped && !notifications && (
+      {/* ── Weekly / monthly check-in popup (athletes only) ─────── */}
+      {role !== "coach" && weeklyCheckinTarget && !checkinSkipped && !notifications && (
         checkinIsMonthly ? (
           <MonthlyCheckinModal
             targetWeek={weeklyCheckinTarget}
