@@ -15,19 +15,21 @@
  *                accessible immediately (soft gate) but the module stays
  *                "in progress" until the target is reached.
  *
- * Themes:
- *   1 — Self Knowledge               insight  × 2
- *   2 — Goal Setting                 insight  × 1
- *   3 — Athlete-Coach Relationship   insight  × 1
- *   4 — Altered State of Mind        practice × 4
- *   5 — Visualization & Mental Train practice × 4
- *   6 — Focus                        practice × 2
- *   7 — Performance                  insight  × 1
+ * 8-week core structure:
+ *   1 — Self Knowledge               insight
+ *   2 — Goal Setting                 insight
+ *   3 — Athlete-Coach Relationship   insight
+ *   4 — Altered State of Mind        practice × 14
+ *   5 — Squat Visualization          practice × 14
+ *   6 — Bench Visualization          practice × 14
+ *   7 — Deadlift Visualization       practice × 14
+ *   8 — All You (self-talk, focus, competition prep)  practice × 10
+ *   + bonus: Post-Meet Reflection    insight
  */
 
 import type { TrainingPhase } from "@/app/components/PhaseBadge";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export type CourseTheme =
   | "Self Knowledge"
@@ -35,7 +37,6 @@ export type CourseTheme =
   | "Athlete-Coach Relationship"
   | "Altered State of Mind"
   | "Visualization & Mental Training"
-  | "Focus"
   | "Performance";
 
 export type CourseQuestion = {
@@ -44,112 +45,68 @@ export type CourseQuestion = {
   placeholder?: string;
   /**
    * If true, saving this answer also creates/updates a journal entry
-   * with the "general" context and a `#course` theme tag, so reflections
-   * flow into the athlete's journal automatically.
+   * with the "general" context and a `#course` theme tag.
    */
   journalMirror?: boolean;
 };
 
-/**
- * "insight"  — complete in one session; next module unlocks immediately.
- * "practice" — content done once, then log daily practice until practiceTarget.
- *              Next module is accessible (soft gate) but this stays in-progress.
- */
 export type ModuleType = "insight" | "practice";
 
-/** A downloadable worksheet attached to a module */
 export type CourseDownload = {
-  /** Button label */
   label: string;
-  /** Path under /public — e.g. "/downloads/swot.pdf" */
   url: string;
-  /** One-line description shown below the button */
   description?: string;
 };
 
-/** A link from a course module to a library tool */
 export type CourseToolLink = {
-  /** Display name of the tool */
   label: string;
-  /** Route — e.g. "/library#pmr" */
   href: string;
-  /** One-line context for why this tool is relevant here */
   description?: string;
 };
 
 export type CourseModule = {
-  /** Stable URL-safe identifier — used in routes & DB (replaces week_num) */
   slug: string;
-  /**
-   * If true, this module is outside the main plan sequence.
-   * It won't appear in plan generation, plan editor, or the plan week list.
-   * Accessed directly via /course/m/[slug].
-   */
   bonus?: boolean;
-  /**
-   * Legacy week number — kept only for migrating existing progress rows.
-   * Do not use for routing or display.
-   * @deprecated use slug
-   */
+  /** @deprecated kept for legacy data migration only */
   weekNumber: number;
   theme: CourseTheme;
-  /** Short headline */
   title: string;
-  /** Subtitle / tagline */
   subtitle?: string;
-  /** Training phase this module is designed for */
   suggestedPhase: TrainingPhase;
-  /** 1-2 sentence overview */
   overview: string;
-  /** Module type — drives the completion model */
   moduleType: ModuleType;
-  /**
-   * For practice modules: number of logged sessions before the module is
-   * considered complete. Undefined for insight modules.
-   */
   practiceTarget?: number;
-  /** Optional Vidyard video UUID */
   vidyardUuid?: string;
-  /** Optional audio URL */
   audioUrl?: string;
-  /** ≤ 3 practical takeaways */
   keyPoints: string[];
-  /** Reflection prompts */
   questions: CourseQuestion[];
-  /** Optional practical exercise */
   exercise?: { title: string; body: string };
-  /** Optional downloadable worksheets (PDFs hosted in /public) */
   downloads?: CourseDownload[];
-  /** Optional links to library tools relevant to this module */
   toolLinks?: CourseToolLink[];
 };
 
 /** @deprecated Use CourseModule */
 export type CourseWeek = CourseModule;
 
-// ── Data ─────────────────────────────────────────────────────────────────────
-//
-// Vidyard UUIDs below are placeholders drawn from the 14 share URLs
-// originally provided. Replace individual `vidyardUuid` values as the real
-// assignments are confirmed — the player accepts any valid Vidyard UUID.
+// ── Data ──────────────────────────────────────────────────────────────────────
 
 export const COURSE_MODULES: CourseModule[] = [
-  // ── Theme 1 — Self Knowledge ────────────────────────────────────────────
+  // ── 1 · Know Thyself ──────────────────────────────────────────────────────
   {
-    slug: "w01-me-and-powerlifting",
+    slug: "know-thyself",
     weekNumber: 1,
     theme: "Self Knowledge",
-    title: "Me & Powerlifting",
-    subtitle: "Where you're starting from",
+    title: "Know Thyself",
+    subtitle: "Who you are as an athlete — inside and out",
     suggestedPhase: "Foundation",
     moduleType: "insight",
     overview:
-      "Before we can train the mind, we have to map it. This week is an honest audit of why you lift, what the sport gives you, and what it costs you.",
+      "Before training the mind, you have to map it. This module is a two-part audit: first through your own eyes, then through the eyes of people who know your lifting. Self-awareness corrects blind spots and sharpens the foundation everything else gets built on.",
     vidyardUuid: "uzfLhVxMTKLmwnuQ9haJFS",
     keyPoints: [
-      "Your relationship with the sport shapes every session you step into.",
-      "Naming what draws you to powerlifting clarifies what's worth protecting.",
-      "The costs are real — acknowledging them is how you stay in the sport long-term.",
+      "How you perceive yourself shapes how you approach the barbell under pressure.",
+      "Your biggest mental strengths are usually invisible to you — others see them first.",
+      "Feedback isn't criticism. It's data.",
     ],
     questions: [
       {
@@ -164,169 +121,143 @@ export const COURSE_MODULES: CourseModule[] = [
         placeholder: "Identity, discipline, community, control…",
       },
       {
-        id: "what-it-costs",
-        prompt: "What does powerlifting cost you? (time, relationships, energy, mood)",
-        placeholder: "Be specific. No judgement.",
-      },
-    ],
-    exercise: {
-      title: "Two-column audit",
-      body:
-        "Open a blank page. Left column: 'What the sport gives me.' Right column: 'What it costs me.' Spend 10 minutes. Come back tomorrow and add one more item to each side.",
-    },
-  },
-  {
-    slug: "w02-who-am-i",
-    weekNumber: 2,
-    theme: "Self Knowledge",
-    title: "Who Am I As An Athlete?",
-    subtitle: "Strengths, triggers, and the story you tell yourself",
-    suggestedPhase: "Foundation",
-    moduleType: "insight",
-    overview:
-      "Athletes with accurate self-knowledge recover faster from bad sessions and capitalise on good ones. This week you build that map — through your own eyes and through the eyes of people who know your lifting.",
-    vidyardUuid: "8s5ALpWJ388ZQJS7pQfSFV",
-    keyPoints: [
-      "Your biggest mental strengths are usually invisible to you — others see them first.",
-      "Triggers are specific, not general. 'I get nervous' isn't actionable; 'I freeze on my opener' is.",
-      "The story you tell yourself about being an athlete becomes the ceiling on what you attempt.",
-    ],
-    questions: [
-      {
         id: "mental-strengths",
-        prompt: "What are your three biggest mental strengths as an athlete?",
-        placeholder: "Composure under the bar, stubbornness, recovery from a bad lift…",
-      },
-      {
-        id: "triggers",
-        prompt: "Name a specific situation where you reliably lose composure. What triggers it?",
-      },
-      {
-        id: "identity-story",
-        prompt: "Finish the sentence: 'I am the kind of lifter who…'",
-        journalMirror: true,
+        prompt: "What are your biggest mental strengths as an athlete? What's still a work in progress?",
+        placeholder: "Composure under the bar, stubborn consistency, fast recovery from a miss…",
       },
       {
         id: "swot-strengths",
-        prompt: "SWOT — Strengths: What did others say are your best qualities as an athlete? (personality, physical, mentality)",
+        prompt: "SWOT — Strengths: What did your coach and training partners say are your best qualities as an athlete?",
         placeholder: "Share the SWOT template with your coach and 2–3 training partners, then record their answers here.",
       },
       {
         id: "swot-weaknesses",
-        prompt: "SWOT — Weaknesses: What did they say you should work on most to become better?",
+        prompt: "SWOT — Weaknesses: What do they say you need to work on most?",
       },
       {
         id: "swot-opportunities",
-        prompt: "SWOT — Opportunities: What are you not doing that would potentially help you become a stronger athlete?",
+        prompt: "SWOT — Opportunities: What could you be doing that you aren't doing yet?",
       },
       {
         id: "swot-threats",
-        prompt: "SWOT — Threats: What happens if you don't work on those weaknesses?",
+        prompt: "SWOT — Threats: What happens if you don't address those weaknesses?",
       },
     ],
+    exercise: {
+      title: "Moment of Success",
+      body:
+        "Listen to the Moment of Success audio. Relive your best powerlifting memory — record yourself or write it down in detail. Afterwards, read back what you wrote and find at least 2–3 recurring themes. Keep those close when doubt creeps in.",
+    },
     downloads: [
       {
         label: "Download SWOT template",
         url: "/downloads/swot.pdf",
-        description: "Share with your coach and 2–3 people who know your lifting. Collect their answers before filling in the questions above.",
+        description: "Share with your coach and 2–3 training partners. Collect their answers before filling in the questions above.",
+      },
+    ],
+    toolLinks: [
+      {
+        label: "Moment of Success",
+        href: "/library#resource-activation",
+        description: "Guided audio to relive your best powerlifting memory and anchor the feeling to a physical cue.",
       },
     ],
   },
 
-  // ── Theme 2 — Goal Setting ──────────────────────────────────────────────
+  // ── 2 · Goal Setting ──────────────────────────────────────────────────────
   {
-    slug: "w03-goals",
-    weekNumber: 3,
+    slug: "goal-setting",
+    weekNumber: 2,
     theme: "Goal Setting",
     title: "Goals That Actually Pull You",
     subtitle: "Outcome, performance, and process",
     suggestedPhase: "Foundation",
     moduleType: "insight",
     overview:
-      "Most lifters set outcome goals (a number on the bar). Champions set all three layers — outcome, performance, process — and know which one to focus on today.",
+      "Most lifters set outcome goals — a number on the bar. Champions set all three layers: outcome, performance, process — and know which one to focus on today. We start at the endpoint and break the path into pieces you can act on this week.",
     vidyardUuid: "QHTXHxz61eEGGosXzHH7Pa",
     keyPoints: [
       "Outcome goals motivate the block; process goals survive the session.",
       "If a goal doesn't scare you a little, it's probably not pulling you.",
-      "Write goals down. Unwritten goals are wishes.",
+      "Write it down. Unwritten goals are wishes.",
     ],
     questions: [
       {
         id: "outcome-goal",
         prompt: "What's the one outcome goal you'd be proud of in the next 12 months?",
+        placeholder: "Be specific — a total, a lift, a meet placement.",
         journalMirror: true,
       },
       {
         id: "performance-goal",
-        prompt: "What performance goal supports it? (e.g. 'hit 9/9 attempts at my next meet')",
+        prompt: "What performance goal supports it?",
+        placeholder: "e.g. 'Hit 9/9 attempts at my next meet', 'Open at 92% every session'",
       },
       {
         id: "process-goal",
-        prompt: "What is one process goal you can hit this week? Something in your control every single session.",
+        prompt: "What is one process goal you can act on this week — something entirely in your control?",
+        placeholder: "Sleep, technique cue, pre-lift routine…",
       },
     ],
     exercise: {
       title: "Write. Post. Review.",
       body:
-        "Write all three goals on an index card. Stick it where you see it before you train. At the end of the week, come back and rate honestly how aligned your sessions were.",
+        "Write all three goals on an index card or in your notes. Keep it somewhere you'll see it before you train. At the end of the week, honestly rate how aligned your sessions were with each goal.",
     },
     downloads: [
       {
         label: "Download SMART worksheet",
         url: "/downloads/smart.pdf",
-        description: "A printable version to fill out, post somewhere visible, and bring to coach check-ins.",
+        description: "Fill it out, post somewhere visible, bring to coach check-ins.",
       },
     ],
   },
 
-  // ── Theme 3 — Athlete-Coach Relationship ────────────────────────────────
+  // ── 3 · Coach Relationship ────────────────────────────────────────────────
   {
-    slug: "w04-coach-relationship",
-    weekNumber: 4,
+    slug: "coach-relationship",
+    weekNumber: 3,
     theme: "Athlete-Coach Relationship",
-    title: "The Athlete-Coach Relationship",
-    subtitle: "Trust, communication, autonomy",
+    title: "Common Ground",
+    subtitle: "Building a relationship worth having",
     suggestedPhase: "Foundation",
     moduleType: "insight",
     overview:
-      "Whether you're coached or self-coached, the quality of your working relationship with whoever programs your training is the single biggest predictor of long-term progress.",
+      "Everyone needs at least one person to hold them accountable. Whether that's a coach or a trusted training partner, formalising the relationship through a written commitment creates mutual clarity — and removes the awkward guesswork on both sides.",
     vidyardUuid: "ewTR1eickVpzMtNQWoPpmk",
     keyPoints: [
-      "Trust is built by small promises kept, not big ones made.",
+      "You cannot be fully objective with yourself. That's not a weakness — it's anatomy.",
       "Clear communication beats polite communication every time.",
-      "Your job is to be a great athlete to coach — specific, honest, coachable.",
+      "A signed commitment changes the psychological weight of a promise.",
     ],
     questions: [
       {
-        id: "coach-strengths",
-        prompt: "What do you most value about your coach (or your self-coaching)?",
+        id: "ideal-coach",
+        prompt: "What makes someone an ideal coach for you? What role do they play in your success?",
+        placeholder: "Think about what's non-negotiable vs. nice-to-have.",
       },
       {
-        id: "coach-friction",
-        prompt: "Where is there friction? What have you been avoiding saying?",
+        id: "relationship-score",
+        prompt: "On a scale of 1–10, how well does your current coach relationship work? What would move it one point higher?",
       },
       {
-        id: "coachable",
-        prompt: "On a scale of 1–10, how coachable are you right now? Why that number?",
+        id: "unsaid",
+        prompt: "What have you been meaning to say to your coach but haven't yet?",
+        journalMirror: true,
       },
       {
-        id: "contract-results",
-        prompt: "Contract — Results: What are the SMART goal(s) you want to work towards with your coach's support?",
-        placeholder: "Be as specific as possible — totals, attempts, milestones.",
+        id: "contract-goals",
+        prompt: "Contract — Goals: What are the specific outcomes you want your coach to support?",
+        placeholder: "Totals, attempts, milestones — be as specific as possible.",
       },
       {
         id: "contract-communication",
-        prompt: "Contract — Communication: How often, on which platform, and in what style will you communicate with your coach?",
-        placeholder: "e.g. Weekly WhatsApp voice note after sessions, written program update every 3 weeks…",
-      },
-      {
-        id: "contract-actions",
-        prompt: "Contract — Actions: What is required of each party for this to work?",
-        placeholder: "What do you commit to? What do you need from your coach?",
+        prompt: "Contract — Communication: How often, on which platform, and in what style will you communicate?",
+        placeholder: "e.g. Weekly voice note after sessions, written program update every 3 weeks…",
       },
       {
         id: "contract-accountability",
-        prompt: "Contract — Accountability: How often do you need feedback, and what are the key milestones to review together?",
+        prompt: "Contract — Accountability: What does each of you commit to? How will you review progress?",
       },
     ],
     downloads: [
@@ -338,477 +269,310 @@ export const COURSE_MODULES: CourseModule[] = [
     ],
   },
 
-  // ── Theme 4 — Altered State of Mind ─────────────────────────────────────
+  // ── 4 · Relaxation ────────────────────────────────────────────────────────
   {
-    slug: "w05-arousal-control",
-    weekNumber: 5,
+    slug: "relaxation",
+    weekNumber: 4,
     theme: "Altered State of Mind",
-    title: "Arousal Control",
-    subtitle: "Finding your optimal state",
+    title: "Altered State",
+    subtitle: "Training your nervous system to switch off",
     suggestedPhase: "Build",
     moduleType: "practice",
-    practiceTarget: 10,
+    practiceTarget: 14,
     overview:
-      "Every lifter has an optimal arousal zone. Too low, you're flat. Too high, you're shaky. This week you learn to read and adjust it.",
+      "The brain operates at different frequencies. Visualization — which comes next — requires an alpha state: calm, focused, receptive. This module teaches you to access that state on demand. Listen to both techniques, choose the one that connects, then build the daily habit over the next two weeks.",
     vidyardUuid: "9kAdtx7bQ52CCaheAJRUcY",
     keyPoints: [
-      "Arousal is a dial, not a switch — you can turn it up or down.",
-      "Breathing is the fastest lever you have.",
-      "Your optimal zone is personal. Know your number.",
+      "You can't force relaxation. You allow it — which is a trainable skill.",
+      "The technique matters less than the consistency. Daily practice beats perfect sessions.",
+      "This is the foundation visualization gets built on. Don't skip it.",
     ],
     questions: [
       {
-        id: "optimal-state",
-        prompt: "Describe your best lift ever — what was your mental state 60 seconds before?",
+        id: "technique-choice",
+        prompt: "After trying both techniques — which one connects better for you, and why?",
+        placeholder: "PMR (active tension-release) or Autogenic Training (passive body scan)…",
       },
       {
-        id: "worst-state",
-        prompt: "Describe your worst miss — what was your state then?",
+        id: "relaxation-signal",
+        prompt: "What physical sensations tell you that you've genuinely switched off?",
+        placeholder: "Heaviness, warmth, slow breath, jaw dropping…",
       },
       {
-        id: "my-dial",
-        prompt: "Do you tend to be too high or too low before a big lift? What works to adjust it?",
+        id: "safe-place",
+        prompt: "What place feels safest to you? Describe it in as much sensory detail as you can.",
+        placeholder: "This becomes an anchor you can return to anytime.",
         journalMirror: true,
       },
     ],
     exercise: {
-      title: "Box breathing (4-4-4-4)",
+      title: "Daily practice — 14 sessions",
       body:
-        "Before your next top set: inhale 4s, hold 4s, exhale 4s, hold 4s. Four rounds. Notice whether it dialled you up or down, and log it.",
+        "Listen to both recordings this week and decide which one works better for you. Then listen to that recording every day for the next two weeks. Log each session here. It takes time — don't judge the first few.",
     },
     toolLinks: [
       {
         label: "Progressive Muscle Relaxation",
         href: "/library#pmr",
-        description: "Use PMR to dial down pre-lift tension and regulate your arousal state before heavy attempts.",
+        description: "Active tension-and-release technique — good if you're someone who needs physical engagement to wind down.",
       },
       {
         label: "Autogenic Training",
         href: "/library#autogenic-training",
-        description: "Self-induced deep relaxation — ideal for resetting between sessions or the night before a meet.",
-      },
-    ],
-  },
-  {
-    slug: "w06-breath-and-body",
-    weekNumber: 6,
-    theme: "Altered State of Mind",
-    title: "Breath & Body",
-    subtitle: "Using the body to change the mind",
-    suggestedPhase: "Build",
-    moduleType: "practice",
-    practiceTarget: 10,
-    overview:
-      "The fastest way into a state is through the body. Posture, breath, and face all send signals the brain obeys.",
-    vidyardUuid: "FQEvTLER7oZdDRj6aXGFXF",
-    keyPoints: [
-      "Shallow chest breathing tells your brain you're in danger.",
-      "A clenched jaw leaks tension into your grip and lockout.",
-      "Posture in the walkout sets the tone for the attempt.",
-    ],
-    questions: [
-      {
-        id: "body-tell",
-        prompt: "What does your body do when you're anxious under the bar? (jaw, shoulders, grip, breathing)",
-      },
-      {
-        id: "body-reset",
-        prompt: "What's one physical cue that reliably brings you back to centre?",
-      },
-    ],
-    toolLinks: [
-      {
-        label: "Progressive Muscle Relaxation",
-        href: "/library#pmr",
-        description: "Combines breath and body — systematically tense and release to reset your physical state.",
-      },
-      {
-        label: "Autogenic Training",
-        href: "/library#autogenic-training",
-        description: "Use warmth and heaviness formulas to anchor body-based calm on demand.",
-      },
-    ],
-  },
-  {
-    slug: "w07-pressure",
-    weekNumber: 7,
-    theme: "Altered State of Mind",
-    title: "Training Under Pressure",
-    subtitle: "Make the room smaller",
-    suggestedPhase: "Build",
-    moduleType: "practice",
-    practiceTarget: 10,
-    overview:
-      "Pressure exists on the platform. If you never train it, meet day is the first time you meet it — and that's too late.",
-    vidyardUuid: "BeiAtWCyo4f2uDmcfV9DhC",
-    keyPoints: [
-      "You can manufacture pressure: single-attempt PRs, commanded lifts, filmed openers.",
-      "Performing under fatigue is a skill. So is performing while bored.",
-      "The only way out is through.",
-    ],
-    questions: [
-      {
-        id: "pressure-history",
-        prompt: "When have you performed your best under pressure? What was different?",
-      },
-      {
-        id: "pressure-practice",
-        prompt: "How will you manufacture pressure in training this week?",
-      },
-    ],
-    toolLinks: [
-      {
-        label: "Barrier",
-        href: "/library#barrier",
-        description: "Build a psychological barrier to external distractions — essential for performing under competition pressure.",
-      },
-    ],
-  },
-  {
-    slug: "w08-flow",
-    weekNumber: 8,
-    theme: "Altered State of Mind",
-    title: "Finding Flow",
-    subtitle: "When the bar feels light",
-    suggestedPhase: "Build",
-    moduleType: "practice",
-    practiceTarget: 10,
-    overview:
-      "Flow isn't magic — it's the intersection of skill and challenge when attention is fully engaged. You can set the conditions for it.",
-    vidyardUuid: "oqYyALnSkD7mpWBD5ANuz6",
-    keyPoints: [
-      "Flow requires clear goals and immediate feedback.",
-      "Ritual narrows attention. That's why champions have them.",
-      "You can't force flow, but you can invite it.",
-    ],
-    questions: [
-      {
-        id: "flow-moment",
-        prompt: "Describe a training session where time disappeared. What were the ingredients?",
-        journalMirror: true,
-      },
-      {
-        id: "flow-ritual",
-        prompt: "What's your pre-lift ritual? (walk-up, breath, cue) Is it consistent?",
-      },
-    ],
-    toolLinks: [
-      {
-        label: "Resource Activation",
-        href: "/library#resource-activation",
-        description: "Anchor your peak flow state to a physical cue — access it on demand before any attempt.",
+        description: "Passive body scan using warmth and heaviness — closer to meditation. Ideal for the night before a heavy session.",
       },
     ],
   },
 
-  // ── Theme 5 — Visualization & Mental Training ───────────────────────────
+  // ── 5 · Squat ─────────────────────────────────────────────────────────────
   {
-    slug: "w09-visualization-basics",
-    weekNumber: 9,
+    slug: "squat",
+    weekNumber: 5,
     theme: "Visualization & Mental Training",
-    title: "Visualization Basics",
-    subtitle: "Rehearsing the lift before it happens",
+    title: "Squat Visualization",
+    subtitle: "Your lift, in your own words",
     suggestedPhase: "Build",
     moduleType: "practice",
     practiceTarget: 14,
     overview:
-      "Elite athletes visualise. Not because it's magic, but because the brain partially can't tell the difference between vivid rehearsal and real reps.",
+      "Elite athletes visualize in first person, using their own sensory cues — not a generic script. This week you build your personal squat visualization: a detailed recording of how the lift feels and then compressed into three key points you can run through in under 10 seconds before any top set.",
     vidyardUuid: "2mizuQmGN1jcmvFsfm7jYo",
     keyPoints: [
-      "First-person, not third-person — see it through your own eyes.",
-      "Use all senses: sight, sound, breath, the chalk, the hum of the room.",
-      "Rehearse the successful execution, not the anxiety around it.",
+      "First person, not third — see the lift through your own eyes.",
+      "Your cues, your words. The more specific the rehearsal, the stronger the transfer.",
+      "Compress to three sentences: before, during, after. That's what you'll use under the bar.",
     ],
     questions: [
       {
-        id: "vis-current",
-        prompt: "Do you currently visualise? If yes, when and how?",
+        id: "squat-love",
+        prompt: "What do you love about the squat?",
+        placeholder: "The setup, the depth, the drive, the feeling of a smooth walk-out…",
       },
       {
-        id: "vis-detail",
-        prompt: "Close your eyes and visualise your opener squat. What details are vivid? What's blurry?",
+        id: "squat-work",
+        prompt: "What's the one technical thing you're still working on?",
+      },
+      {
+        id: "squat-cues",
+        prompt: "Describe your squat in three sentences: what matters before, during, and after?",
+        placeholder: "This becomes your compact visualization. Make it yours.",
+        journalMirror: true,
       },
     ],
     exercise: {
-      title: "Nightly walk-through",
+      title: "Visualize before every top set",
       body:
-        "Every night this week, 2 minutes: visualise tomorrow's heaviest set from the walkout to rack. First person. Include the breath.",
+        "This week, before every competition-style squat set, run your 3-sentence visualization. Log how each set felt in your training diary. After 2 weeks you'll notice the pattern.",
     },
     toolLinks: [
       {
         label: "Squat Visualization",
         href: "/library#viz-squat",
-        description: "Guided 6-minute first-person squat rehearsal — set your keywords to personalise it.",
+        description: "Guided first-person squat rehearsal — set your personal cues and run it before top sets.",
       },
       {
-        label: "Bench Visualization",
-        href: "/library#viz-bench",
-        description: "Guided 6-minute first-person bench press rehearsal.",
-      },
-      {
-        label: "Deadlift Visualization",
-        href: "/library#viz-deadlift",
-        description: "Guided 6-minute first-person deadlift rehearsal.",
+        label: "Moment of Success",
+        href: "/library#resource-activation",
+        description: "Use your anchor before the visualization to prime the right mental state.",
       },
     ],
   },
+
+  // ── 6 · Bench ─────────────────────────────────────────────────────────────
   {
-    slug: "w10-mental-rehearsal",
-    weekNumber: 10,
+    slug: "bench",
+    weekNumber: 6,
     theme: "Visualization & Mental Training",
-    title: "Mental Rehearsal",
-    subtitle: "From session to meet day",
+    title: "Bench Visualization",
+    subtitle: "Tightness from foot to fingertip",
+    suggestedPhase: "Build",
+    moduleType: "practice",
+    practiceTarget: 14,
+    overview:
+      "Bench is a technique lift first. Foot position, bridge, shoulder blade setup, bar path — each has to be automatic before load matters. This week you build your bench visualization using the same three-point format, paying particular attention to setup and tightness.",
+    vidyardUuid: "eosWqyDenTbc9C2SYZhHi7",
+    keyPoints: [
+      "Setup is everything. A shaky setup produces a shaky lift.",
+      "Tightness starts before you unrack, not after.",
+      "Your body knows what a good touch feels like. Rehearse that, not the anxiety around it.",
+    ],
+    questions: [
+      {
+        id: "bench-love",
+        prompt: "What do you love about bench?",
+      },
+      {
+        id: "bench-work",
+        prompt: "What's the one technical thing you're still working on?",
+        placeholder: "Bridge, leg drive, receiving the command, bar path…",
+      },
+      {
+        id: "bench-cues",
+        prompt: "Describe your bench in three sentences: what matters before, during, and after?",
+        journalMirror: true,
+      },
+    ],
+    exercise: {
+      title: "Visualize before every top set",
+      body:
+        "Before every competition-style bench set this week, run your 3-sentence visualization. Log how it felt. Note any difference compared to sets where you skipped it.",
+    },
+    toolLinks: [
+      {
+        label: "Bench Visualization",
+        href: "/library#viz-bench",
+        description: "Guided first-person bench rehearsal with setup, tightness, and execution cues.",
+      },
+    ],
+  },
+
+  // ── 7 · Deadlift ──────────────────────────────────────────────────────────
+  {
+    slug: "deadlift",
+    weekNumber: 7,
+    theme: "Visualization & Mental Training",
+    title: "Deadlift Visualization",
+    subtitle: "Setup wins the pull",
     suggestedPhase: "Peak",
     moduleType: "practice",
     practiceTarget: 14,
     overview:
-      "Mental rehearsal is visualisation applied to a specific performance moment — a session, an attempt, a whole meet — with full sensory detail.",
-    vidyardUuid: "eosWqyDenTbc9C2SYZhHi7",
-    keyPoints: [
-      "Rehearse the boring parts too — weigh-in, waiting, chalk up.",
-      "Include contingencies: what will you do if an opener is missed?",
-      "Repeat the same rehearsal. Familiarity is the point.",
-    ],
-    questions: [
-      {
-        id: "rehearsal-target",
-        prompt: "What specific moment do you want to rehearse this week?",
-      },
-      {
-        id: "contingency",
-        prompt: "What's one thing that might go wrong on meet day, and how will you respond?",
-      },
-    ],
-    toolLinks: [
-      {
-        label: "Squat Visualization",
-        href: "/library#viz-squat",
-        description: "Apply meet-day scenario rehearsal — walk through weigh-in, warm-ups, and each attempt in sequence.",
-      },
-      {
-        label: "Bench Visualization",
-        href: "/library#viz-bench",
-      },
-      {
-        label: "Deadlift Visualization",
-        href: "/library#viz-deadlift",
-      },
-    ],
-  },
-  {
-    slug: "w11-cues",
-    weekNumber: 11,
-    theme: "Visualization & Mental Training",
-    title: "Cues That Stick",
-    subtitle: "One word, one execution",
-    suggestedPhase: "Peak",
-    moduleType: "practice",
-    practiceTarget: 21,
-    overview:
-      "Under load there's no time for a paragraph. One short cue, anchored to one correct feeling, is worth more than a whole technique lecture.",
+      "A great deadlift starts before the bar moves. Stance, grip, lat tension, bracing — your setup determines the ceiling of the pull. This week you build your deadlift visualization and, with all three lifts mapped, start running a full SBD mental training day on rest days.",
     vidyardUuid: "TF5sVvNTRZddYKfmzBmWtQ",
     keyPoints: [
-      "Cues should be action-oriented, not corrective. 'Drive' beats 'don't round'.",
-      "One cue per lift. More than one is noise.",
-      "Test cues in training. Don't invent them on meet day.",
+      "Setup is not a formality. It's where the lift is won or lost.",
+      "Lat engagement before the pull takes tension off your lower back and into the bar.",
+      "A full SBD visualization day on rest days keeps the motor patterns sharp without loading the body.",
     ],
     questions: [
       {
-        id: "cue-squat",
-        prompt: "What's your one cue for squat?",
+        id: "deadlift-love",
+        prompt: "What do you love about the deadlift?",
       },
       {
-        id: "cue-bench",
-        prompt: "What's your one cue for bench?",
+        id: "deadlift-work",
+        prompt: "What's the one technical thing you're still working on?",
+        placeholder: "Stance, grip, lat tension, the lockout, staying over the bar…",
       },
       {
-        id: "cue-deadlift",
-        prompt: "What's your one cue for deadlift?",
+        id: "deadlift-cues",
+        prompt: "Describe your deadlift in three sentences: what matters before, during, and after?",
+        journalMirror: true,
       },
     ],
+    exercise: {
+      title: "Visualize before top sets + SBD rest day",
+      body:
+        "Run your visualization before every deadlift top set. On a day you don't train, listen to the SBD Training Day audio and run all three lifts mentally in competition order.",
+    },
     toolLinks: [
+      {
+        label: "Deadlift Visualization",
+        href: "/library#viz-deadlift",
+        description: "Guided first-person deadlift rehearsal with setup, tension, and execution cues.",
+      },
       {
         label: "Squat Visualization",
         href: "/library#viz-squat",
-        description: "Embed your new cues directly into guided visualization — repetition locks them in under load.",
+        description: "Run all three lifts in sequence on rest days to simulate a full competition day mentally.",
       },
       {
         label: "Bench Visualization",
         href: "/library#viz-bench",
       },
       {
-        label: "Deadlift Visualization",
-        href: "/library#viz-deadlift",
+        label: "Error Correction",
+        href: "/library#hibajavitas",
+        description: "If a lift has a recurring technical fault, use this movie-theater technique to correct it mentally before the next session.",
       },
     ],
   },
+
+  // ── 8 · All You ───────────────────────────────────────────────────────────
   {
-    slug: "w12-self-talk",
-    weekNumber: 12,
-    theme: "Visualization & Mental Training",
-    title: "Self-Talk",
-    subtitle: "The voice in your head is coachable",
-    suggestedPhase: "Peak",
+    slug: "all-you",
+    weekNumber: 8,
+    theme: "Performance",
+    title: "All You",
+    subtitle: "Self-talk, focus, and the competition plan",
+    suggestedPhase: "Meet week",
     moduleType: "practice",
     practiceTarget: 10,
     overview:
-      "You talk to yourself constantly. Most of it you don't notice. This week you audit it and rewrite the worst lines.",
+      "The last block before the platform. You know how to relax, how to visualize, how your lifts should feel. Now it's about protecting all of that under competitive conditions: managing your inner voice, blocking out distractions, and having a competition day plan so routine that your brain treats the meet as familiar.",
     vidyardUuid: "YYMSKvZF1nfm1Dy3m1SQsW",
     keyPoints: [
-      "Noticing is 80% of the work — you can't edit what you don't see.",
-      "Second person ('you've got this') often lands better than first person.",
-      "Replace, don't suppress. A vacuum fills with the old voice.",
+      "You can't silence the inner critic — but you can give it a better script.",
+      "Distraction is only a threat if you haven't already decided what you're focused on.",
+      "Familiarity reduces anxiety. The more you've mentally rehearsed the competition day, the less it surprises you.",
     ],
     questions: [
       {
         id: "inner-critic",
-        prompt: "What does your inner critic sound like in a bad session? Quote it exactly.",
+        prompt: "What does your inner critic say in a bad session? Quote it exactly.",
+        placeholder: "Don't soften it — write what it actually says.",
         journalMirror: true,
       },
       {
         id: "inner-coach",
         prompt: "What would a trusted coach say to you instead?",
+        placeholder: "Rewrite each critic line with the coach's voice.",
         journalMirror: true,
       },
-    ],
-    toolLinks: [
       {
-        label: "Self-Talk Affirmations",
-        href: "/library#affirmations",
-        description: "Write your inner-coach statements as personal affirmations and rehearse them before every session.",
-      },
-    ],
-  },
-
-  // ── Theme 6 — Focus ─────────────────────────────────────────────────────
-  {
-    slug: "w13-attention",
-    weekNumber: 13,
-    theme: "Focus",
-    title: "Attention Under Pressure",
-    subtitle: "What you look at, you become",
-    suggestedPhase: "Peak",
-    moduleType: "practice",
-    practiceTarget: 14,
-    overview:
-      "Focus isn't effort — it's direction. Under stress, attention narrows. The question is: does it narrow onto the right thing, or the wrong one?",
-    vidyardUuid: "YyHSt8pUVdW3fn4YUCHF5K",
-    keyPoints: [
-      "Narrow internal focus = cues. Narrow external = object. Both are useful.",
-      "Wide attention between attempts; narrow just before.",
-      "Your warm-ups are a focus rehearsal, not just a physical one.",
-    ],
-    questions: [
-      {
-        id: "attention-drift",
-        prompt: "Where does your attention drift during a long session? (phone, scoreboard, other lifters…)",
+        id: "distractions",
+        prompt: "What distracts you most in competition — and what commands must you hear above everything else?",
+        placeholder: "Crowd, music, other lifters, scoreboard, nerves…",
       },
       {
-        id: "attention-anchor",
-        prompt: "What's your anchor — one thing you can return attention to, reliably?",
-      },
-    ],
-    toolLinks: [
-      {
-        label: "Barrier",
-        href: "/library#barrier",
-        description: "Train selective attention with a guided audio that builds an internal boundary against distractions.",
-      },
-    ],
-  },
-  {
-    slug: "w14-refocus",
-    weekNumber: 14,
-    theme: "Focus",
-    title: "Refocus Routines",
-    subtitle: "Coming back after a miss",
-    suggestedPhase: "Meet week",
-    moduleType: "practice",
-    practiceTarget: 14,
-    overview:
-      "Every lifter loses focus sometimes. Champions have a pre-built routine for getting it back that doesn't require willpower in the moment.",
-    vidyardUuid: "BJHkBRWhpUEyUweLfHsjuu",
-    keyPoints: [
-      "Missed lift ≠ ruined meet, unless you let it become that.",
-      "Physical reset → breath → cue → walk up. Same every time.",
-      "Write it down. Practise it in training. Own it by meet day.",
-    ],
-    questions: [
-      {
-        id: "last-miss",
-        prompt: "Describe your last missed attempt. What did your mind do in the 60 seconds after?",
+        id: "comp-day-plan",
+        prompt: "Walk yourself through your competition day, hour by hour. What does your routine look like?",
+        placeholder: "Wake time, food, travel, weigh-in, warm-up, first attempt…",
       },
       {
-        id: "refocus-plan",
-        prompt: "Write your 3-step refocus routine. Short. Specific.",
-        journalMirror: true,
-      },
-    ],
-    exercise: {
-      title: "Missed-lift drill",
-      body:
-        "In training this week, after any failed rep, run your 3-step routine before touching the bar again. Build it into muscle memory.",
-    },
-    toolLinks: [
-      {
-        label: "Barrier",
-        href: "/library#barrier",
-        description: "Use the Barrier audio to train rapid re-focus — build the habit before you need it on the platform.",
-      },
-    ],
-  },
-
-  // ── Theme 7 — Performance ───────────────────────────────────────────────
-  {
-    slug: "w15-meet-day",
-    weekNumber: 15,
-    theme: "Performance",
-    title: "Meet Day",
-    subtitle: "Trust the work. Execute.",
-    suggestedPhase: "Meet week",
-    moduleType: "insight",
-    overview:
-      "The work is done. Meet day isn't where you build — it's where you express. This week is about protecting what you've built.",
-    // No video for final week — "the work is done"
-    keyPoints: [
-      "Your only job is to execute openers well. The rest follows.",
-      "Protect your attention: phone down, eyes on your own lane.",
-      "Whatever happens, you are more than your total.",
-    ],
-    questions: [
-      {
-        id: "meet-day-plan",
-        prompt: "Walk yourself through meet day, hour by hour. What time do you wake? What do you eat? When do you warm up?",
-      },
-      {
-        id: "meet-day-mantra",
+        id: "opener-mantra",
         prompt: "What's the one sentence you'll say to yourself before each opener?",
         journalMirror: true,
       },
     ],
     exercise: {
-      title: "Full dress rehearsal",
+      title: "Top sets with commands + Barrier",
       body:
-        "Two weeks out: simulate meet timing as closely as you can. Same breakfast, same warm-up timing, same order of lifts with commands. One opener, one second attempt per lift.",
+        "From now until the meet, every top set gets competition commands from a training partner or coach. After your visualization, stop the music — silence before the lift. Use the Barrier audio this week to train the mental block against distractions. Run the Competition Day visualization at least three times.",
     },
     toolLinks: [
       {
-        label: "Competition Day Mental Training",
-        href: "/library#comp-day-viz",
-        description: "12-minute guided walkthrough of your entire meet — from wake-up to final deadlift — personalized to your focus cues.",
+        label: "Self-Talk Affirmations",
+        href: "/library#affirmations",
+        description: "Turn your inner-coach rewrites into daily affirmations and rehearse them before every session.",
       },
       {
-        label: "Resource Activation",
+        label: "Barrier",
+        href: "/library#barrier",
+        description: "Build a mental veil that lets competition commands through and blocks everything else out.",
+      },
+      {
+        label: "Competition Day",
+        href: "/library#comp-day-viz",
+        description: "12-minute guided walkthrough of your entire meet — from wake-up to final deadlift. Run it three times before meet day.",
+      },
+      {
+        label: "Error Correction",
+        href: "/library#hibajavitas",
+        description: "Use the movie-theater technique to mentally fix any technical issue that surfaced in final prep.",
+      },
+      {
+        label: "Moment of Success",
         href: "/library#resource-activation",
-        description: "Access your peak performance state between attempts with a single anchor cue.",
+        description: "Access your peak state between attempts with your anchor cue.",
       },
     ],
   },
 
-  // ── Bonus — Post-Meet Reflection (not part of the plan sequence) ────────
+  // ── Bonus · Post-Meet ─────────────────────────────────────────────────────
   {
-    slug: "w16-post-meet",
-    weekNumber: 16,
+    slug: "post-meet",
+    weekNumber: 9,
     bonus: true,
     theme: "Performance",
     title: "Post-Meet Reflection",
@@ -816,34 +580,30 @@ export const COURSE_MODULES: CourseModule[] = [
     suggestedPhase: "Foundation",
     moduleType: "insight",
     overview:
-      "The competition is over. This is where the real learning happens. Without deliberate reflection, meets become experiences. With it, they become data.",
+      "The meet is over. This is where the real learning happens. Without deliberate reflection, competitions become experiences. With it, they become data. What you write here becomes the foundation of your next prep.",
     keyPoints: [
-      "The gap between what you expected and what happened is the most valuable feedback you have.",
+      "The gap between what you expected and what happened is your most valuable feedback.",
       "Good performances and bad ones both deserve honest analysis.",
-      "What you write down here becomes the foundation of your next prep.",
+      "What you write down now becomes the first page of your next prep.",
     ],
     questions: [
       {
-        id: "post-meet-overall",
-        prompt: "How do you feel about your competition overall? What's your honest first reaction?",
+        id: "post-meet-honest",
+        prompt: "How do you honestly feel about your competition? First reaction — don't edit it.",
         journalMirror: true,
       },
       {
         id: "post-meet-win",
-        prompt: "What was your biggest victory — on the platform or off it?",
+        prompt: "What was your biggest win — on the platform or off it?",
       },
       {
-        id: "post-meet-lesson",
-        prompt: "What is the single most valuable thing you learned about yourself in this prep?",
-        journalMirror: true,
-      },
-      {
-        id: "post-meet-mental",
-        prompt: "Rate your mental preparation out of 10. What earned that score?",
+        id: "post-meet-score",
+        prompt: "Rate your mental preparation out of 10. What specifically earned that score?",
       },
       {
         id: "post-meet-next",
-        prompt: "What is the one thing you'll do differently next prep?",
+        prompt: "What is the one thing you'll do differently in the next prep?",
+        journalMirror: true,
       },
     ],
     exercise: {
@@ -854,15 +614,12 @@ export const COURSE_MODULES: CourseModule[] = [
   },
 ];
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Backward-compat alias — prefer COURSE_MODULES in new code */
+/** @deprecated Use COURSE_MODULES in new code */
 export const COURSE_WEEKS = COURSE_MODULES;
 
-/**
- * Only the modules that belong in a plan (no bonus modules).
- * Use this everywhere plan generation and plan editing happens.
- */
+/** Only the modules that belong in a plan (no bonus modules). */
 export const PLAN_MODULES = COURSE_MODULES.filter((m) => !m.bonus);
 
 /** Lookup a module by slug — includes bonus modules */
@@ -880,7 +637,7 @@ export function getWeekByNum(weekNum: number): CourseModule | undefined {
   return COURSE_MODULES.find((m) => m.weekNumber === weekNum);
 }
 
-/** Group modules by theme */
+/** Group non-bonus modules by theme */
 export function weeksByTheme(): Array<{ theme: CourseTheme; weeks: CourseModule[] }> {
   const themeOrder: CourseTheme[] = [
     "Self Knowledge",
@@ -888,30 +645,27 @@ export function weeksByTheme(): Array<{ theme: CourseTheme; weeks: CourseModule[
     "Athlete-Coach Relationship",
     "Altered State of Mind",
     "Visualization & Mental Training",
-    "Focus",
     "Performance",
   ];
-  return themeOrder.map((theme) => ({
-    theme,
-    weeks: COURSE_MODULES.filter((m) => m.theme === theme),
-  }));
+  return themeOrder
+    .map((theme) => ({
+      theme,
+      weeks: COURSE_MODULES.filter((m) => m.theme === theme && !m.bonus),
+    }))
+    .filter((g) => g.weeks.length > 0);
 }
 
-/** Total modules in the library */
-export const TOTAL_WEEKS = COURSE_MODULES.length;
+/** Total non-bonus modules */
+export const TOTAL_WEEKS = PLAN_MODULES.length;
 
 /**
- * Pick the suggested week number based on days-to-meet.
- * Delegates to computeCourseWeek from lib/phase.ts where possible;
- * falls back to W1 when no meet is set.
- *
- * Kept here (in addition to computeCourseWeek) so course UI components only
- * need to import from lib/course.
+ * Suggest which module to start based on weeks until next meet.
+ * Maps an 8-week window: 8+ weeks out → module 1, meet week → module 8.
  */
 export function suggestedWeekNum(daysUntilMeet: number | null): number {
   if (daysUntilMeet === null || daysUntilMeet < 0) return 1;
   const weeksOut = Math.ceil(daysUntilMeet / 7);
-  return Math.max(1, Math.min(16, 17 - weeksOut));
+  return Math.max(1, Math.min(8, 9 - weeksOut));
 }
 
 /** @deprecated Use getWeekByNum + suggestedWeekNum instead */
@@ -921,30 +675,19 @@ export function suggestedWeek(daysUntilMeet: number | null): CourseWeek {
 
 // ── Course Plan ───────────────────────────────────────────────────────────────
 
-/**
- * A personalised course plan stored in profiles.course_plan (JSONB).
- * Contains an ordered list of week slugs drawn from COURSE_WEEKS.
- */
 export type CoursePlan = {
-  /** How the plan was created */
   type: "ai" | "coach" | "default";
-  /** Ordered array of week slugs from COURSE_WEEKS */
   slugs: string[];
-  /** AI-generated explanation personalised to the athlete (type === 'ai') */
   rationale?: string;
-  /** Slugs that should be visually emphasised as priority/anchor weeks */
   highlights?: string[];
-  /** ISO timestamp */
   generatedAt: string;
-  /** Coach user id, present when type === 'coach' */
   generatedBy?: string;
 };
 
-// ── DB row types (must match migration_course_v2.sql) ────────────────────────
+// ── DB row types (must match migration_course_v2.sql) ─────────────────────────
 
 export type CourseProgressRow = {
   user_id: string;
-  /** Primary key — module slug (replaces week_num) */
   module_slug: string;
   /** @deprecated kept for migration only */
   week_num: number;
@@ -952,7 +695,6 @@ export type CourseProgressRow = {
   exercise_done_at: string | null;
   quiz_done_at: string | null;
   completed_at: string | null;
-  /** Number of practice sessions logged (practice modules only) */
   practice_count: number;
   updated_at: string;
 };
@@ -960,7 +702,6 @@ export type CourseProgressRow = {
 export type CourseAnswerRow = {
   id: string;
   user_id: string;
-  /** Module slug (replaces week_num) */
   module_slug: string;
   /** @deprecated kept for migration only */
   week_num: number;
@@ -972,7 +713,7 @@ export type CourseAnswerRow = {
   updated_at: string;
 };
 
-// ── Step helpers ─────────────────────────────────────────────────────────────
+// ── Step helpers ──────────────────────────────────────────────────────────────
 
 export type ProgressStep = "video" | "exercise" | "quiz" | "practice";
 
@@ -983,13 +724,10 @@ export function stepsComplete(
   video: boolean;
   exercise: boolean;
   quiz: boolean;
-  /** For practice modules: have they hit the practiceTarget? */
   practiceGoal: boolean;
   practiceCount: number;
   practiceTarget: number;
-  /** Content steps (video + exercise + quiz) all done */
   contentDone: boolean;
-  /** Fully done: content + practice (for insight = same as contentDone) */
   all: boolean;
 } {
   const video    = !!row?.video_done_at;
@@ -1001,7 +739,7 @@ export function stepsComplete(
   const practiceTarget = mod?.practiceTarget ?? 0;
   const practiceGoal   = mod?.moduleType === "practice"
     ? practiceCount >= practiceTarget
-    : true; // insight modules have no practice requirement
+    : true;
 
   return {
     video,
