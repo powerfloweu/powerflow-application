@@ -3,8 +3,8 @@
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import VoiceGlyph from "@/app/components/VoiceGlyph";
-import type { BodyRegion, VoiceShape } from "@/lib/voices";
-import { VOICE_SHAPES } from "@/lib/voices";
+import type { BodyRegion, VoiceShape, DistanceBucket, SideBucket } from "@/lib/voices";
+import { VOICE_SHAPES, DISTANCE_LABELS, HELPS_WHEN_PRESETS } from "@/lib/voices";
 import { useT } from "@/lib/i18n";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -299,6 +299,222 @@ function Slider({
   );
 }
 
+// ── Spatial canvas (Step 4) ───────────────────────────────────────────────────
+
+const CX = 130, CY = 130;
+const RING_R: Record<DistanceBucket, number> = { on: 20, close: 50, arm: 82, meters: 112, gone: 126 };
+const SIDE_ANGLE: Record<SideBucket, number> = { front: -90, right: 0, back: 90, left: 180 };
+
+function toXY(d: DistanceBucket, s: SideBucket) {
+  const r = RING_R[d];
+  const a = (SIDE_ANGLE[s] * Math.PI) / 180;
+  return { x: CX + r * Math.cos(a), y: CY + r * Math.sin(a) };
+}
+
+function fromXY(x: number, y: number): { d: DistanceBucket; s: SideBucket } {
+  const dx = x - CX, dy = y - CY;
+  const r = Math.sqrt(dx * dx + dy * dy);
+  let d: DistanceBucket;
+  if (r <= 28) d = "on";
+  else if (r <= 62) d = "close";
+  else if (r <= 94) d = "arm";
+  else if (r <= 118) d = "meters";
+  else d = "gone";
+
+  const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+  let s: SideBucket;
+  if (r < 6) s = "front";
+  else if (angle >= -135 && angle < -45) s = "front";
+  else if (angle >= -45 && angle < 45) s = "right";
+  else if (angle >= 45 && angle < 135) s = "back";
+  else s = "left";
+
+  return { d, s };
+}
+
+function SpatialCanvas({
+  currentDistance, currentSide,
+  desiredDistance, desiredSide,
+  onChange,
+}: {
+  currentDistance: DistanceBucket;
+  currentSide: SideBucket;
+  desiredDistance: DistanceBucket;
+  desiredSide: SideBucket;
+  onChange: (which: "current" | "desired", d: DistanceBucket, s: SideBucket) => void;
+}) {
+  const [activePuck, setActivePuck] = React.useState<"current" | "desired">("current");
+  const svgRef = React.useRef<SVGSVGElement>(null);
+
+  const getSVGCoords = React.useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    const scaleX = 260 / rect.width;
+    const scaleY = 260 / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  }, []);
+
+  const placePuck = (clientX: number, clientY: number) => {
+    const coords = getSVGCoords(clientX, clientY);
+    if (!coords) return;
+    const dx = coords.x - CX, dy = coords.y - CY;
+    const r = Math.sqrt(dx * dx + dy * dy);
+    const scale = r > 126 ? 126 / r : 1;
+    const { d, s } = fromXY(CX + dx * scale, CY + dy * scale);
+    onChange(activePuck, d, s);
+  };
+
+  const currentPos = toXY(currentDistance, currentSide);
+  const desiredPos = toXY(desiredDistance, desiredSide);
+
+  const rings: [DistanceBucket, number][] = [
+    ["meters", RING_R.meters],
+    ["arm", RING_R.arm],
+    ["close", RING_R.close],
+    ["on", RING_R.on],
+  ];
+
+  return (
+    <div>
+      {/* Puck selector */}
+      <div className="flex gap-2 mb-4">
+        {(["current", "desired"] as const).map((which) => {
+          const isActive = activePuck === which;
+          const color = which === "current" ? "purple" : "blue";
+          return (
+            <button
+              key={which}
+              type="button"
+              onClick={() => setActivePuck(which)}
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2 font-saira text-[11px] font-semibold uppercase tracking-[0.14em] transition ${
+                isActive
+                  ? color === "purple"
+                    ? "border-purple-500/50 bg-purple-500/15 text-purple-300"
+                    : "border-blue-400/50 bg-blue-500/15 text-blue-300"
+                  : "border-white/8 bg-white/3 text-zinc-400 hover:border-white/15"
+              }`}
+            >
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  color === "purple" ? "bg-purple-400" : "bg-blue-400"
+                }`}
+              />
+              {which === "current" ? "Now" : "Want"}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Canvas */}
+      <div className="rounded-2xl border border-white/5 bg-surface-card p-2 mb-4">
+        <svg
+          ref={svgRef}
+          viewBox="0 0 260 260"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full select-none touch-none"
+          style={{ cursor: "crosshair" }}
+          onClick={(e) => placePuck(e.clientX, e.clientY)}
+        >
+          {/* Background fill */}
+          <circle cx={CX} cy={CY} r={128} fill="rgba(255,255,255,0.015)" />
+
+          {/* Distance rings */}
+          {rings.map(([label, r]) => (
+            <circle
+              key={label}
+              cx={CX} cy={CY} r={r}
+              fill="none"
+              stroke="rgba(255,255,255,0.07)"
+              strokeWidth={1}
+              strokeDasharray="4 3"
+            />
+          ))}
+          {/* Outer solid ring */}
+          <circle cx={CX} cy={CY} r={126} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth={1} />
+
+          {/* Crosshair lines */}
+          <line x1={CX} y1={4} x2={CX} y2={256} stroke="rgba(255,255,255,0.05)" strokeWidth={1} />
+          <line x1={4} y1={CY} x2={256} y2={CY} stroke="rgba(255,255,255,0.05)" strokeWidth={1} />
+
+          {/* Direction labels */}
+          <text x={CX} y={14} textAnchor="middle" fill="rgba(255,255,255,0.22)" fontSize={9} fontFamily="sans-serif">Front</text>
+          <text x={CX} y={255} textAnchor="middle" fill="rgba(255,255,255,0.22)" fontSize={9} fontFamily="sans-serif">Back</text>
+          <text x={6}   y={CY + 4} textAnchor="start" fill="rgba(255,255,255,0.22)" fontSize={9} fontFamily="sans-serif">Left</text>
+          <text x={254} y={CY + 4} textAnchor="end"   fill="rgba(255,255,255,0.22)" fontSize={9} fontFamily="sans-serif">Right</text>
+
+          {/* Ring distance labels (at ~45° NE) */}
+          {rings.map(([label, r]) => {
+            const lx = CX + r * 0.707 + 3;
+            const ly = CY - r * 0.707 - 3;
+            return (
+              <text key={label} x={lx} y={ly} fill="rgba(255,255,255,0.18)" fontSize={7} fontFamily="sans-serif">
+                {DISTANCE_LABELS[label]}
+              </text>
+            );
+          })}
+
+          {/* Connection line between pucks */}
+          <line
+            x1={currentPos.x} y1={currentPos.y}
+            x2={desiredPos.x} y2={desiredPos.y}
+            stroke="rgba(255,255,255,0.10)" strokeWidth={1.5} strokeDasharray="4 3"
+          />
+
+          {/* Desired puck */}
+          <g style={{ cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setActivePuck("desired"); }}>
+            <circle cx={desiredPos.x} cy={desiredPos.y} r={15}
+              fill="rgba(96,165,250,0.15)" stroke="#60A5FA" strokeWidth={activePuck === "desired" ? 2 : 1.5}
+              strokeDasharray={activePuck === "desired" ? undefined : "3 2"}
+            />
+            <text x={desiredPos.x} y={desiredPos.y + 3.5}
+              textAnchor="middle" fill="#93C5FD" fontSize={7} fontFamily="sans-serif" fontWeight="bold"
+              style={{ pointerEvents: "none" }}
+            >WANT</text>
+          </g>
+
+          {/* Current puck */}
+          <g style={{ cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setActivePuck("current"); }}>
+            <circle cx={currentPos.x} cy={currentPos.y} r={15}
+              fill="rgba(167,139,250,0.25)" stroke="#A78BFA" strokeWidth={activePuck === "current" ? 2 : 1.5}
+            />
+            <text x={currentPos.x} y={currentPos.y + 3.5}
+              textAnchor="middle" fill="white" fontSize={7} fontFamily="sans-serif" fontWeight="bold"
+              style={{ pointerEvents: "none" }}
+            >NOW</text>
+          </g>
+        </svg>
+      </div>
+
+      {/* Status summary */}
+      <div className="flex gap-3 text-center">
+        <div className="flex-1 rounded-xl border border-purple-500/15 bg-purple-500/5 px-3 py-2">
+          <p className="font-saira text-[9px] uppercase tracking-[0.14em] text-purple-300/70 mb-0.5">Now</p>
+          <p className="font-saira text-[11px] font-semibold text-white capitalize">
+            {DISTANCE_LABELS[currentDistance]}
+          </p>
+          <p className="font-saira text-[9px] text-zinc-400 capitalize">{currentSide}</p>
+        </div>
+        <div className="flex items-center text-zinc-500">
+          <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none">
+            <path d="M4 10h12M11 4l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <div className="flex-1 rounded-xl border border-blue-400/15 bg-blue-500/5 px-3 py-2">
+          <p className="font-saira text-[9px] uppercase tracking-[0.14em] text-blue-300/70 mb-0.5">Want</p>
+          <p className="font-saira text-[11px] font-semibold text-white capitalize">
+            {DISTANCE_LABELS[desiredDistance]}
+          </p>
+          <p className="font-saira text-[9px] text-zinc-400 capitalize">{desiredSide}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Wizard draft state ────────────────────────────────────────────────────────
 
 type WizardState = {
@@ -310,6 +526,12 @@ type WizardState = {
   shape: VoiceShape;
   color: string;
   size: 1 | 2 | 3 | 4 | 5;
+  currentDistance: DistanceBucket;
+  currentSide: SideBucket;
+  desiredDistance: DistanceBucket;
+  desiredSide: SideBucket;
+  helpsWhen: string[];
+  helpsNote: string;
 };
 
 // ── Wizard content ────────────────────────────────────────────────────────────
@@ -330,6 +552,8 @@ function WizardContent() {
     { id: string; name: string; shape: VoiceShape; color: string; size: number }[]
   >([]);
 
+  const [helpsError, setHelpsError] = React.useState<string | null>(null);
+
   const [wizard, setWizard] = React.useState<WizardState>({
     draftId: null,
     name: "",
@@ -339,34 +563,59 @@ function WizardContent() {
     shape: "cloud",
     color: SHAPE_COLORS[0],
     size: 3,
+    currentDistance: "close",
+    currentSide: "front",
+    desiredDistance: "arm",
+    desiredSide: "front",
+    helpsWhen: [],
+    helpsNote: "",
   });
 
   React.useEffect(() => {
     (async () => {
       const [draftRes, voicesRes] = await Promise.all([
-        fetch("/api/voice-drafts/current"),
+        fetch("/api/voice-drafts"),
         fetch("/api/voices"),
       ]);
 
+      let draftId: string | null = null;
+
       if (draftRes.ok) {
-        const d = await draftRes.json();
+        let d = await draftRes.json();
+        // No draft yet — create one
+        if (!d?.id) {
+          const createRes = await fetch("/api/voice-drafts", { method: "POST" });
+          if (createRes.ok) d = await createRes.json();
+        }
         if (d?.id) {
+          draftId = d.id;
           const s = d.state ?? {};
           setWizard((prev) => ({
             ...prev,
             draftId: d.id,
             name: s.name ?? "",
             bodyLocations: s.body_locations ?? [],
-            tone:   typeof s.tone   === "number" ? s.tone   : 50,
-            volume: typeof s.volume === "number" ? s.volume : 50,
-            shape:  s.shape ?? "cloud",
-            color:  s.color ?? SHAPE_COLORS[0],
-            size:   s.size  ?? 3,
+            tone:            typeof s.tone   === "number" ? s.tone   : 50,
+            volume:          typeof s.volume === "number" ? s.volume : 50,
+            shape:           s.shape ?? "cloud",
+            color:           s.color ?? SHAPE_COLORS[0],
+            size:            s.size  ?? 3,
+            currentDistance: s.current_distance ?? "close",
+            currentSide:     s.current_side     ?? "front",
+            desiredDistance: s.desired_distance ?? "arm",
+            desiredSide:     s.desired_side     ?? "front",
+            helpsWhen:       s.helps_when       ?? [],
+            helpsNote:       s.helps_note       ?? "",
           }));
           if (s.shape === "custom" && s.shape_custom_description) {
             setCustomShape(s.shape_custom_description);
           }
         }
+      }
+
+      // If still no draftId (auth not configured / offline), generate a client-side stub
+      if (!draftId) {
+        setWizard((prev) => ({ ...prev, draftId: "offline" }));
       }
 
       if (voicesRes.ok) {
@@ -450,6 +699,65 @@ function WizardContent() {
     });
     setSaving(false);
     router.push("/voices/new?step=4");
+  };
+
+  // ── Step 4 ─────────────────────────────────────────────────────────────────
+
+  const handleStep4Continue = async () => {
+    setSaving(true);
+    await patchDraft({
+      current_distance: wizard.currentDistance,
+      current_side:     wizard.currentSide,
+      desired_distance: wizard.desiredDistance,
+      desired_side:     wizard.desiredSide,
+      current_step: 5,
+    });
+    setSaving(false);
+    router.push("/voices/new?step=5");
+  };
+
+  // ── Step 5 ─────────────────────────────────────────────────────────────────
+
+  const handleStep5Save = async () => {
+    const noteOk = wizard.helpsNote.trim().length >= 10;
+    if (wizard.helpsWhen.length === 0 && !noteOk) {
+      setHelpsError(t("voices.step5MinChars"));
+      return;
+    }
+    setHelpsError(null);
+    setSaving(true);
+    try {
+      const body = {
+        name:                     wizard.name,
+        shape:                    wizard.shape,
+        shape_custom_description: wizard.shape === "custom" ? customShape : null,
+        color:                    wizard.color,
+        size:                     wizard.size,
+        tone:                     wizard.tone,
+        volume:                   wizard.volume,
+        body_locations:           wizard.bodyLocations,
+        current_distance:         wizard.currentDistance,
+        current_side:             wizard.currentSide,
+        desired_distance:         wizard.desiredDistance,
+        desired_side:             wizard.desiredSide,
+        helps_when:               wizard.helpsWhen,
+        helps_note:               wizard.helpsNote.trim(),
+      };
+      const res = await fetch("/api/voices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      const voice = await res.json();
+      // Clean up draft
+      if (wizard.draftId && wizard.draftId !== "offline") {
+        await fetch(`/api/voice-drafts/${wizard.draftId}`, { method: "DELETE" });
+      }
+      router.push(`/voices/${voice.id}`);
+    } catch {
+      setSaving(false);
+    }
   };
 
   // ── Loading ────────────────────────────────────────────────────────────────
@@ -802,14 +1110,144 @@ function WizardContent() {
           </>
         )}
 
-        {/* ── Steps 4–5: placeholder for PR 4 ──────────────────────────────── */}
-        {step >= 4 && (
-          <div className="rounded-2xl border border-white/5 bg-surface-card p-8 text-center">
-            <StepIndicator current={step} />
-            <p className="font-saira text-sm text-zinc-400 leading-relaxed">
-              {t("voices.step4Placeholder")}
+        {/* ── Step 4: Spatial canvas ───────────────────────────────────────── */}
+        {step === 4 && (
+          <>
+            <h1 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-2">
+              {t("voices.step4Title")}
+            </h1>
+            <p className="font-saira text-xs text-zinc-400 leading-relaxed mb-6">
+              {t("voices.step4Hint")}
             </p>
-          </div>
+
+            {wizard.name && (
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/20 bg-purple-500/5 px-3 py-1 mb-6">
+                <VoiceGlyph shape={wizard.shape} color={wizard.color} size={wizard.size} className="w-4 h-4" />
+                <span className="font-saira text-[10px] text-purple-300 font-semibold">{wizard.name}</span>
+              </div>
+            )}
+
+            <SpatialCanvas
+              currentDistance={wizard.currentDistance}
+              currentSide={wizard.currentSide}
+              desiredDistance={wizard.desiredDistance}
+              desiredSide={wizard.desiredSide}
+              onChange={(which, d, s) => {
+                if (which === "current") {
+                  setWizard((p) => ({ ...p, currentDistance: d, currentSide: s }));
+                } else {
+                  setWizard((p) => ({ ...p, desiredDistance: d, desiredSide: s }));
+                }
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={handleStep4Continue}
+              disabled={saving}
+              className="w-full mt-8 rounded-2xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 py-4 font-saira text-sm font-bold uppercase tracking-[0.18em] text-white transition"
+            >
+              {saving ? t("voices.saving") : t("voices.continueBtn")}
+            </button>
+          </>
+        )}
+
+        {/* ── Step 5: Purpose ──────────────────────────────────────────────── */}
+        {step === 5 && (
+          <>
+            <h1 className="font-saira text-2xl font-extrabold uppercase tracking-tight text-white mb-2">
+              {t("voices.step5Title")}
+            </h1>
+            <p className="font-saira text-xs text-zinc-400 leading-relaxed mb-8">
+              {t("voices.step5Hint")}
+            </p>
+
+            {/* Preview chip */}
+            {wizard.name && (
+              <div className="flex items-center gap-3 rounded-2xl border border-purple-500/15 bg-purple-500/5 px-4 py-3 mb-8">
+                <VoiceGlyph shape={wizard.shape} color={wizard.color} size={wizard.size} className="w-10 h-10 shrink-0" />
+                <div>
+                  <p className="font-saira text-sm font-bold text-white">{wizard.name}</p>
+                  <p className="font-saira text-[10px] text-zinc-400 capitalize mt-0.5">
+                    {wizard.shape} · {SIZE_LABELS[wizard.size - 1]} · {DISTANCE_LABELS[wizard.currentDistance]}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Preset checklist */}
+            <div className="space-y-2 mb-6">
+              {HELPS_WHEN_PRESETS.map((preset) => {
+                const checked = wizard.helpsWhen.includes(preset);
+                return (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => {
+                      setHelpsError(null);
+                      setWizard((p) => ({
+                        ...p,
+                        helpsWhen: checked
+                          ? p.helpsWhen.filter((w) => w !== preset)
+                          : [...p.helpsWhen, preset],
+                      }));
+                    }}
+                    className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+                      checked
+                        ? "border-purple-500/40 bg-purple-500/10"
+                        : "border-white/5 bg-surface-card hover:border-white/10"
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 shrink-0 rounded-[4px] border flex items-center justify-center transition ${
+                        checked
+                          ? "border-purple-500 bg-purple-600"
+                          : "border-white/20 bg-transparent"
+                      }`}
+                    >
+                      {checked && (
+                        <svg className="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
+                          <path d="M1.5 5L4 7.5 8.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className={`font-saira text-[12px] ${checked ? "text-white" : "text-zinc-300"}`}>
+                      {preset}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Free-text */}
+            <div className="mb-8">
+              <label className="block font-saira text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-300 mb-2">
+                {t("voices.step5InYourWords")}
+              </label>
+              <textarea
+                value={wizard.helpsNote}
+                onChange={(e) => {
+                  setHelpsError(null);
+                  setWizard((p) => ({ ...p, helpsNote: e.target.value }));
+                }}
+                placeholder={t("voices.step5InYourWordsPlaceholder")}
+                rows={3}
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-saira text-sm text-white placeholder:text-zinc-500 focus:border-purple-500/40 focus:outline-none resize-none transition"
+              />
+              {helpsError && (
+                <p className="mt-1.5 font-saira text-xs text-red-400">{helpsError}</p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleStep5Save}
+              disabled={saving}
+              className="w-full rounded-2xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 py-4 font-saira text-sm font-bold uppercase tracking-[0.18em] text-white transition"
+            >
+              {saving ? t("voices.saving") : t("voices.step5SaveBtn")}
+            </button>
+          </>
         )}
       </div>
     </div>

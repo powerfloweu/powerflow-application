@@ -904,10 +904,19 @@ export const en = {
     step3SizeLabel: "Size",
     step3CustomPrompt: "Describe the custom shape…",
     step3PreviewName: "Your voice",
+    // Wizard — Step 4
+    step4Title: "Place it in space",
+    step4Hint: "Where does this voice live right now? Tap to position it. Then move the blue puck to where you'd prefer it to be.",
+    // Wizard — Step 5
+    step5Title: "When does it help?",
+    step5Hint: "Select every situation where this voice shows up and does something useful.",
+    step5InYourWords: "In your own words",
+    step5InYourWordsPlaceholder: "Describe when this voice shows up and what it does for you…",
+    step5MinChars: "Select at least one situation, or write your own (min 10 characters).",
+    step5SaveBtn: "Save Voice →",
     // Shared wizard
     continueBtn: "Continue →",
     saving: "Saving…",
-    step4Placeholder: "Step 4 — Place it in space (coming next)",
     notFound: "Voice not found.",
     yourVoices: "Your voices",
     statsThoughts: "thoughts",
