@@ -315,6 +315,17 @@ export default function CsaiResultsPage() {
               if (profile?.test_access === true || tierOk) setUnlocked(true);
             })
             .catch(() => {});
+
+          // Check 5: coach-assigned test — opener-tier athletes see full results immediately
+          fetch("/api/athlete/assigned-tests")
+            .then((r) => r.ok ? r.json() : [])
+            .then((assignments: { test_slug: string }[]) => {
+              if (assignments.some((a) => a.test_slug === "csai")) {
+                try { localStorage.setItem(UNLOCK_KEY, "1"); } catch {}
+                setUnlocked(true);
+              }
+            })
+            .catch(() => {});
         }
       }
     }
