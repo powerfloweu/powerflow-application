@@ -13,9 +13,19 @@ export type DevLogEntry = {
   items: string[];
 };
 
-export const CURRENT_DEVLOG_VERSION = "2026-05-01";
+export const CURRENT_DEVLOG_VERSION = "2026-05-02";
 
 export const DEVLOG: DevLogEntry[] = [
+  {
+    version: "2026-05-02",
+    date: "2 May 2026",
+    title: "Voice Work Beta · 8-week course · guides updated",
+    items: [
+      "Voice Work Beta is now fully live — the complete 5-step wizard lets you map any inner voice: give it a name, locate it in your body, give it a visual shape and colour, place it in space (where it is now vs. where you want it), and define when it helps. Find it under the Voices tab.",
+      "Course restructured to an 8-week core programme — cleaner, more focused modules built around your competition timeline. Self-reflection questions have been populated with meaningful prompts, and each module now links directly to the corresponding library tool.",
+      "Both the Athlete Guide and Coach Guide have been fully refreshed to reflect everything that has been built since launch — Voice Work Beta, the 8-week course, light mode, back-dating, monthly check-ins, test assignment, AI voice input, and more.",
+    ],
+  },
   {
     version: "2026-05-01",
     date: "1 May 2026",
