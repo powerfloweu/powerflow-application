@@ -81,39 +81,60 @@ export const THEME_CLS: Record<string, string> = {
 
 // ── Auto sentiment detection ──────────────────────────────────────────────────
 
+// Phrases only appear in genuinely negative contexts.
+// Avoided: "pull"/"pulled" (fires on deadlifts), "sore" (normal training),
+// "never" (fires on "never felt this good"), "bad" (fires on "not bad"),
+// "miss"/"missed" (fires on "no missed lifts"), "hard" (fires on "worked hard"),
+// single words that appear inside their own negation ("confident" in NEGATIVE
+// so "not confident" adds negative AND "confident" adds positive — they wash out).
 const NEGATIVE_SIGNALS = [
-  // Emotions
-  "fear", "afraid", "anxious", "anxiety", "nervous", "worried", "worry",
-  "stress", "stressed", "depressed", "sad", "frustrated", "frustrating",
-  "scared", "hopeless", "overwhelmed", "dread", "dreading", "angry", "anger",
-  // Physical problems
-  "hurt", "hurts", "pain", "injury", "injured", "injure", "injuring",
-  "pulled", "pull", "strain", "strained", "sore", "ache", "aching",
-  "sick", "exhausted", "weak", "fatigued", "fatigue",
-  // Negation + enjoyment / ability
-  "not enjoy", "don't enjoy", "do not enjoy", "didn't enjoy",
-  "cannot", "can not", "can't", "couldn't", "unable", "unable to",
-  "don't want", "do not want", "didn't want",
-  "not ready", "not confident", "not sure", "not feeling good",
-  // Performance failure
-  "failed", "fail", "failing", "miss", "missed", "bombed", "bomb",
-  "struggle", "struggling", "struggled", "difficult", "hard time",
-  "blocked", "can't block", "distracted", "can't concentrate",
+  // Emotions — specific enough to only appear in negative contexts
+  "fear ", "afraid", "anxious", "anxiety", "nervous about", "worried about",
+  "stressed out", "depressed", "hopeless", "overwhelmed", "dreading",
+  "angry at", "anger",
+  // Physical — injury language only (not normal soreness)
+  "injury", "injured", "injure", "tore ", "torn ", "sprained", "fracture",
+  "in pain", "sharp pain", "really hurting", "can't train",
+  // Negation phrases — full phrase so they don't collide with positive use
+  "not enjoying", "didn't enjoy", "do not enjoy",
+  "can't do this", "couldn't do", "unable to complete",
+  "don't want to train", "didn't want to",
+  "not ready for", "not feeling good today", "not feeling well",
+  // Performance failure — specific phrases
+  "bombed out", "bomb out", "red-lighted all", "missed all",
+  "couldn't execute", "failed to execute", "lost focus completely",
+  "struggling badly", "struggling a lot", "really struggled",
   "no motivation", "unmotivated", "burned out", "burnt out",
+  "hard time today", "really difficult today",
   // Explicit negativity
-  "hate", "terrible", "awful", "horrible", "bad", "worst", "dread",
-  "never", "nothing works", "pointless", "useless",
-  // Doubt
-  "doubt", "self-doubt", "don't believe", "don't think i can",
+  "hate this", "hate training", "terrible session", "awful session",
+  "horrible", "worst session", "pointless", "useless",
+  "nothing is working", "nothing worked",
+  // Doubt — specific phrases
+  "self-doubt", "doubt myself", "don't believe in myself",
+  "don't think i can", "questioning myself",
 ];
 
+// Only phrases with a strong positive signal regardless of context.
+// Avoided single words like "good" (fires inside "not good"), "trust"
+// (fires in "don't trust my form"), "better" (fires in "could be better"),
+// "hit" (fires in "didn't hit"), "best" (fires in "not my best").
 const POSITIVE_SIGNALS = [
-  "great", "good", "amazing", "awesome", "solid", "strong", "confident",
-  "motivated", "excited", "proud", "happy", "crushed", "nailed", "hit",
-  "progress", "win", "pr", "record", "ready", "pumped", "believe", "trust",
-  "love", "best", "improved", "better", "coming back", "locked in", "dialed",
-  "enjoying", "enjoy", "fun", "fantastic", "excellent", "feel good",
-  "feeling good", "looking forward", "can't wait", "stoked",
+  "great session", "great training", "great day",
+  "amazing session", "amazing training", "felt amazing",
+  "solid session", "solid training", "felt solid",
+  "feeling strong", "felt strong", "feeling confident", "felt confident",
+  "feeling great", "felt great", "feeling good today",
+  "new pr", "hit a pr", "set a pr", "personal record", "personal best",
+  "nailed it", "nailed the", "crushed it", "crushed the",
+  "locked in", "dialled in", "dialed in", "in the zone",
+  "motivated", "excited for", "pumped for", "pumped up",
+  "proud of", "feeling proud",
+  "progressing", "making progress", "good progress",
+  "can't wait for", "looking forward to",
+  "love training", "love this sport", "love the process",
+  "everything clicked", "everything felt right",
+  "stoked", "fantastic",
 ];
 
 export function detectSentiment(text: string): Sentiment {
