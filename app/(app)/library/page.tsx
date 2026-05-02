@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { hasAccess, type PlanTier } from "@/lib/plan";
-import { useT } from "@/lib/i18n";
+import { useT, type Locale } from "@/lib/i18n";
 import VizLiveSession from "@/app/components/VizLiveSession";
 import VizUpload from "@/app/components/VizUpload";
 
@@ -19,7 +19,13 @@ const SECTION_KEY: Record<string, string> = {
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
 // Sections are ordered by minTier so unlocked content always appears first.
-// fileKey: filename in the Supabase "tools" storage bucket.
+//
+// fileKey: per-locale filenames in the Supabase "tools" storage bucket.
+// EN files live at the bucket root; DE/HU files live in de/ and hu/ subfolders.
+// AudioPlayer falls back to "en" if a locale-specific file hasn't been added yet.
+// Add DE/HU entries here once the recordings are uploaded to Supabase.
+
+type FileKeys = Partial<Record<Locale, string>>;
 
 const TOOLS: Array<{
   section: string;
@@ -33,7 +39,7 @@ const TOOLS: Array<{
     color: string;
     duration: string;
     citations: string[];
-    fileKey: string | null;
+    fileKey: FileKeys | null;
     /** If true, shows the VizKeywords personalisation UI when expanded */
     usesVizKeywords?: boolean;
   }>;
@@ -54,7 +60,11 @@ const TOOLS: Array<{
           "Maynard et al. (1995). The effect of a somatic intervention on competitive state anxiety and performance. Journal of Sports Sciences, 13(4), 289–300.",
           "Carlson & Hoyle (1993). Efficacy of abbreviated progressive muscle relaxation training. Journal of Consulting and Clinical Psychology, 61(6), 1059–1067.",
         ],
-        fileKey: "ProgRelax_EN_final.m4a" as string | null,
+        fileKey: {
+          en: "ProgRelax_EN_final.m4a",
+          de: "de/PR Grundlage ohne Musik.MP3",
+          // hu: "hu/...",
+        },
       },
       {
         id: "autogenic-training",
@@ -67,7 +77,11 @@ const TOOLS: Array<{
           "Ernst & Kanji (2000). Autogenic training for stress and anxiety: A systematic review. Complementary Therapies in Medicine, 8(2), 106–110.",
           "Linden (1994). Autogenic training: A narrative and quantitative review of clinical outcome. Biofeedback and Self-Regulation, 19(3), 227–264.",
         ],
-        fileKey: "AT_Base.m4a" as string | null,
+        fileKey: {
+          en: "AT_Base.m4a",
+          de: "de/AT Grundlage ohne Musik.MP3",
+          // hu: "hu/...",
+        },
       },
     ],
   },
@@ -87,7 +101,11 @@ const TOOLS: Array<{
           "Holmes & Collins (2001). The PETTLEP approach to motor imagery. Journal of Applied Sport Psychology, 13(1), 60–83.",
           "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
         ],
-        fileKey: "Visualization_Squat_EN_fin.m4a" as string | null,
+        fileKey: {
+          en: "Visualization_Squat_EN_fin.m4a",
+          de: "de/SQ Visualisierung ohne Musik.MP3",
+          // hu: "hu/...",
+        },
         usesVizKeywords: true,
       },
       {
@@ -100,7 +118,11 @@ const TOOLS: Array<{
           "Ranganathan et al. (2004). From mental power to muscle power. Neuropsychologia, 42(7), 944–956.",
           "Holmes & Collins (2001). The PETTLEP approach to motor imagery. Journal of Applied Sport Psychology, 13(1), 60–83.",
         ],
-        fileKey: "Visualization_Bench_EN_fin.m4a" as string | null,
+        fileKey: {
+          en: "Visualization_Bench_EN_fin.m4a",
+          de: "de/BP Visualisierung ohne Musik.MP3",
+          // hu: "hu/...",
+        },
         usesVizKeywords: true,
       },
       {
@@ -113,7 +135,11 @@ const TOOLS: Array<{
           "Guillot & Collet (2008). Construction of the motor imagery integrative model in sport. International Review of Sport and Exercise Psychology, 1(1), 31–44.",
           "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
         ],
-        fileKey: "Visualization_Deadlift_EN_fin.m4a" as string | null,
+        fileKey: {
+          en: "Visualization_Deadlift_EN_fin.m4a",
+          de: "de/Kreuzheben Visualisierung ohne Musik.MP3",
+          // hu: "hu/...",
+        },
         usesVizKeywords: true,
       },
     ],
@@ -132,7 +158,11 @@ const TOOLS: Array<{
           "Cotterill (2010). Pre-performance routines in sport. International Review of Sport and Exercise Psychology, 3(2), 132–153.",
           "Lidor & Singer (2000). Teaching pre-performance routines to beginners. Journal of Physical Education, Recreation & Dance, 71(7), 34–36.",
         ],
-        fileKey: "SikerPillanata_EN_fin.m4a" as string | null,
+        fileKey: {
+          en: "SikerPillanata_EN_fin.m4a",
+          de: "de/Der Moment des Erfolgs ohne Musik.MP3",
+          // hu: "hu/...",
+        },
       },
     ],
   },
@@ -151,7 +181,7 @@ const TOOLS: Array<{
           "Hardy (2006). Speaking clearly: A critical review of the self-talk literature. Psychology of Sport and Exercise, 7(1), 81–97.",
           "Theodorakis et al. (2000). Motivational vs. instructional self-talk effects on performance. The Sport Psychologist, 14(3), 253–272.",
         ],
-        fileKey: null as string | null,
+        fileKey: null,
       },
     ],
   },
@@ -172,7 +202,11 @@ const TOOLS: Array<{
           "Nideffer (1976). Test of attentional and interpersonal style. Journal of Personality and Social Psychology, 34(3), 394–404.",
           "Schmid & Peper (1993). Strategies for training concentration. In J. Williams (Ed.), Applied Sport Psychology (pp. 262–273).",
         ],
-        fileKey: "Barriers_EN_Final.m4a" as string | null,
+        fileKey: {
+          en: "Barriers_EN_Final.m4a",
+          de: "de/Fokus ohne Musik.MP3",
+          // hu: "hu/...",
+        },
         usesVizKeywords: true,
       },
       {
@@ -186,7 +220,11 @@ const TOOLS: Array<{
           "Vealey & Greenleaf (2010). Seeing is believing: Understanding and using imagery in sport. In J. Williams (Ed.), Applied Sport Psychology: Personal Growth to Peak Performance (pp. 267–304).",
           "Munroe-Chandler & Hall (2004). The effects of a mental skills training program on hockey players. The Sport Psychologist, 18(4), 399–409.",
         ],
-        fileKey: "Hibajavitas_EN_Final.m4a" as string | null,
+        fileKey: {
+          en: "Hibajavitas_EN_Final.m4a",
+          de: "de/Fehlerkorrektur ohne Musik.MP3",
+          // hu: "hu/...",
+        },
       },
     ],
   },
@@ -205,7 +243,11 @@ const TOOLS: Array<{
           "Driskell, Copper & Moran (1994). Does mental practice enhance performance? Journal of Applied Psychology, 79(4), 481–492.",
           "Jordet (2005). Perceptual training in soccer: An imagery intervention study with elite players. Journal of Applied Sport Psychology, 17(2), 140–156.",
         ],
-        fileKey: "Verseny_MentalTraining_EN_fin.m4a" as string | null,
+        fileKey: {
+          en: "Verseny_MentalTraining_EN_fin.m4a",
+          de: "de/Wettkampftag ohne Musik.MP3",
+          // hu: "hu/...",
+        },
         usesVizKeywords: true,
       },
     ],
@@ -455,8 +497,8 @@ function AffirmationsInputs({
 const STORAGE_BASE =
   "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/";
 
-function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolColor }) {
-  const { t } = useT();
+function AudioPlayer({ fileKey, color }: { fileKey: FileKeys | null; color: ToolColor }) {
+  const { t, locale } = useT();
   const audioRef  = React.useRef<HTMLAudioElement>(null);
   const [playing, setPlaying]         = React.useState(false);
   const [buffering, setBuffering]     = React.useState(false);
@@ -466,7 +508,12 @@ function AudioPlayer({ fileKey, color }: { fileKey: string | null; color: ToolCo
   const [duration, setDuration]       = React.useState(0);
   const c = COLOR_MAP[color];
 
-  const url = fileKey ? `${STORAGE_BASE}${encodeURIComponent(fileKey)}` : null;
+  // Resolve locale-specific key, fallback to "en"
+  const resolvedKey = fileKey ? (fileKey[locale] ?? fileKey["en"] ?? null) : null;
+  // Encode each path segment separately so folder slashes survive
+  const url = resolvedKey
+    ? `${STORAGE_BASE}${resolvedKey.split("/").map(encodeURIComponent).join("/")}`
+    : null;
 
   // play() is called synchronously — no await in front of it (iOS requirement)
   const toggle = () => {
