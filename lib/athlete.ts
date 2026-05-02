@@ -106,6 +106,19 @@ export type AthleteProfile = {
    * from the coach's tts_voice_id column. Null if coach has no cloned voice.
    */
   coach_tts_voice_id: string | null;
+  // v10 — custom journal prompts
+  /**
+   * Custom label text for the 5 training-journal questions (PR tier only).
+   * Stored as a text[] column on profiles. Null = use defaults.
+   * Max 5 entries; each maps in order to the 5 TrainingKey columns.
+   */
+  journal_prompt_labels: string[] | null;
+  /**
+   * Coach-set prompt labels for this athlete.
+   * Not stored on the athlete row — joined in by /api/me from coach_athlete_settings.
+   * When present, overrides the athlete's own journal_prompt_labels.
+   */
+  coach_journal_prompt_labels: string[] | null;
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */

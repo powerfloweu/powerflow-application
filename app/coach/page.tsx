@@ -1338,7 +1338,7 @@ function TrainingFeedbackSection({
 
 // ── Client card ────────────────────────────────────────────────────────────────
 
-type ActiveTab = "analysis" | "entries" | "scores" | "training" | "checkins" | "profile" | "notes";
+type ActiveTab = "analysis" | "entries" | "scores" | "training" | "checkins" | "profile" | "notes" | "prompts";
 
 function ClientCard({
   client,
@@ -1588,6 +1588,7 @@ function ClientCard({
               { key: "checkins",  labelKey: "coach.tabCheckins" },
               { key: "profile",   labelKey: "coach.tabProfile" },
               { key: "notes",     labelKey: "coach.tabNotes" },
+              { key: "prompts",   labelKey: "coach.tabPrompts" },
             ] as const).map((tab) => (
               <button
                 key={tab.key}
@@ -1906,9 +1907,144 @@ function ClientCard({
                 onChange={onNoteChange}
               />
             )}
+
+            {/* ── Tab: Prompts ── */}
+            {activeTab === "prompts" && (
+              <PromptsTab athleteId={client.id} />
+            )}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Prompts tab ───────────────────────────────────────────────────────────────
+
+function PromptsTab({ athleteId }: { athleteId: string }) {
+  const { t } = useT();
+  const DEFAULT_LABELS = [
+    "What were your primary thoughts BEFORE your top sets today?",
+    "What were your primary thoughts AFTER your top sets today?",
+    "What went really well today?",
+    "Is there anything you're frustrated with from today?",
+    "What would you like to work on in your next session?",
+  ];
+  const [fields, setFields]   = React.useState<string[]>(Array(5).fill(""));
+  const [loaded, setLoaded]   = React.useState(false);
+  const [saving, setSaving]   = React.useState(false);
+  const [saved, setSaved]     = React.useState(false);
+
+  // Load existing labels for this athlete
+  React.useEffect(() => {
+    (async () => {
+      const res = await fetch(`/api/coach/athlete-settings?athlete_id=${athleteId}`);
+      if (res.ok) {
+        const data: { journal_prompt_labels: string[] | null } = await res.json();
+        const labels = data.journal_prompt_labels ?? [];
+        setFields(Array.from({ length: 5 }, (_, i) => labels[i] ?? ""));
+      } else {
+        setFields(Array(5).fill(""));
+      }
+      setLoaded(true);
+    })();
+  }, [athleteId]);
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await fetch("/api/coach/athlete-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ athlete_id: athleteId, journal_prompt_labels: fields }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await fetch("/api/coach/athlete-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ athlete_id: athleteId, journal_prompt_labels: null }),
+      });
+      setFields(Array(5).fill(""));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!loaded) {
+    return (
+      <div className="space-y-3 animate-pulse">
+        {[1,2,3,4,5].map((i) => (
+          <div key={i} className="h-10 rounded-xl bg-white/6" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <p className="font-saira text-xs font-semibold text-purple-200">
+          {t("coach.journalPromptsTitle")}
+        </p>
+        <p className="mt-1 font-saira text-[11px] text-zinc-400">
+          {t("coach.journalPromptsBody")}
+        </p>
+      </div>
+
+      <div className="space-y-2.5">
+        {fields.map((val, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className="w-5 flex-shrink-0 font-saira text-[11px] text-zinc-500 text-right">{i + 1}.</span>
+            <input
+              type="text"
+              value={val}
+              onChange={(e) => setFields((prev) => {
+                const next = [...prev];
+                next[i] = e.target.value;
+                return next;
+              })}
+              placeholder={t("coach.journalPromptsPlaceholder").replace("{n}", String(i + 1)) || DEFAULT_LABELS[i]}
+              className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          type="button"
+          onClick={handleReset}
+          disabled={saving}
+          className="font-saira text-[11px] text-zinc-500 hover:text-zinc-300 transition underline underline-offset-2 disabled:opacity-40"
+        >
+          {t("coach.journalPromptsReset")}
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className={`ml-auto rounded-full px-6 py-2 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
+            saved
+              ? "bg-emerald-500 text-white"
+              : "bg-purple-500 text-white hover:bg-purple-400 disabled:opacity-40"
+          }`}
+        >
+          {saved ? t("coach.journalPromptsSaved") : saving ? t("common.saving") : t("coach.journalPromptsSave")}
+        </button>
+      </div>
     </div>
   );
 }

@@ -199,6 +199,16 @@ export const hu: Dict = {
     markAsTraining: "🏋️ Edzésnap",
     markAsRest: "😴 Pihenőnap",
     logForDate: "Napló — {date}",
+
+    // Custom journal prompts (PR tier)
+    customizePromptsBtn: "Kérdések testreszabása",
+    customizePromptsTitle: "Egyéni naplókérdések",
+    customizePromptsBody: "Cseréld le az alapértelmezett kérdéseket sajátokra. Legfeljebb 5 — hagyd üresen a kihagyandókat.",
+    customizePromptsSave: "Kérdések mentése",
+    customizePromptsReset: "Visszaállítás alapértelmezettre",
+    customizePromptsSaved: "Mentve ✓",
+    customizePromptsCoachNote: "Az edző egyéni kérdéseket állított be az edzésnaplódhoz.",
+    customizePromptsPlaceholder: "{n}. kérdés…",
   },
 
   course: {
@@ -898,6 +908,15 @@ export const hu: Dict = {
     tabCheckins: "Check-inek",
     tabProfile: "Profil",
     tabNotes: "Megjegyzések",
+    tabPrompts: "Kérdések",
+
+    // Journal prompts (per-athlete, set by coach)
+    journalPromptsTitle: "Naplókérdések",
+    journalPromptsBody: "Állíts be egyéni reflexiós kérdéseket ennek a sportolónak. Felülírja az alapértelmezettet és felváltja a sportoló saját beállításait. Hagyd üresen a kihagyandókat.",
+    journalPromptsSave: "Mentés",
+    journalPromptsReset: "Visszaállítás alapértelmezettre",
+    journalPromptsSaved: "Mentve ✓",
+    journalPromptsPlaceholder: "{n}. kérdés…",
 
     // Roster sort/filter
     sortPriority: "Prioritás",

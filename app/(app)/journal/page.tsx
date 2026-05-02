@@ -11,7 +11,13 @@ import {
   detectThemesWithCount,
   detectSentiment,
 } from "@/lib/journal";
-import { TRAINING_QUESTIONS, type TrainingEntry } from "@/lib/training";
+import {
+  TRAINING_QUESTIONS,
+  TRAINING_KEYS,
+  MAX_JOURNAL_PROMPTS,
+  resolvePromptLabels,
+  type TrainingEntry,
+} from "@/lib/training";
 import { ymdLocal } from "@/lib/date";
 import { DateTabs, offsetDate } from "@/app/components/DateTabs";
 import { useT } from "@/lib/i18n";
@@ -42,6 +48,9 @@ type UserProfile = {
   coach_id: string | null;
   ai_access?: boolean;
   self_talk_mode?: string;
+  plan_tier?: string;
+  journal_prompt_labels?: string[] | null;
+  coach_journal_prompt_labels?: string[] | null;
 };
 
 type CoachFeedbackItem = {
@@ -229,9 +238,11 @@ function WeekBar({ entries }: { entries: JournalEntry[] }) {
 function TrainingJournalForm({
   entry,
   onSave,
+  promptLabels,
 }: {
   entry: TrainingEntry;
   onSave: (updated: TrainingEntry) => void;
+  promptLabels: string[];
 }) {
   const { t } = useT();
   const [answers, setAnswers] = React.useState<Record<string, string>>(() => {
@@ -245,7 +256,7 @@ function TrainingJournalForm({
   const [saved, setSaved]     = React.useState(false);
   const [error, setError]     = React.useState<string | null>(null);
 
-  const hasAny = TRAINING_QUESTIONS.some((q) => answers[q.key].trim().length > 0);
+  const hasAny = promptLabels.some((_, i) => answers[TRAINING_KEYS[i]]?.trim().length > 0);
 
   const handleSave = async () => {
     if (saving) return;
@@ -286,20 +297,23 @@ function TrainingJournalForm({
       </div>
 
       <div className="space-y-4">
-        {TRAINING_QUESTIONS.map((q) => (
-          <div key={q.key}>
-            <label className="block font-saira text-xs text-zinc-400 mb-1.5">
-              {t(TRAINING_QKEY[q.key] ?? "")}
-            </label>
-            <textarea
-              rows={2}
-              value={answers[q.key]}
-              onChange={(e) => setAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
-              className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
-              placeholder="…"
-            />
-          </div>
-        ))}
+        {promptLabels.map((label, i) => {
+          const key = TRAINING_KEYS[i];
+          return (
+            <div key={key}>
+              <label className="block font-saira text-xs text-zinc-400 mb-1.5">
+                {label}
+              </label>
+              <textarea
+                rows={2}
+                value={answers[key]}
+                onChange={(e) => setAnswers((prev) => ({ ...prev, [key]: e.target.value }))}
+                className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
+                placeholder="…"
+              />
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-4 flex items-center gap-3">
@@ -322,6 +336,127 @@ function TrainingJournalForm({
         </button>
       </div>
       {error && <p className="mt-2 font-saira text-[11px] text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+// ── Prompt customizer (PR-tier athletes, no coach override) ───────────────────
+
+function PromptCustomizer({
+  currentLabels,
+  defaultLabels,
+  onSaved,
+}: {
+  currentLabels: string[];
+  defaultLabels: string[];
+  onSaved: (labels: string[] | null) => void;
+}) {
+  const { t } = useT();
+  const [open, setOpen]       = React.useState(false);
+  const [fields, setFields]   = React.useState<string[]>(() => {
+    const base = Array.from({ length: MAX_JOURNAL_PROMPTS }, (_, i) => currentLabels[i] ?? "");
+    return base;
+  });
+  const [saving, setSaving]   = React.useState(false);
+  const [saved, setSaved]     = React.useState(false);
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const cleaned = fields.map((f) => f.trim());
+      await fetch("/api/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ journal_prompt_labels: cleaned }),
+      });
+      const nonEmpty = cleaned.filter(Boolean);
+      onSaved(nonEmpty.length ? nonEmpty : null);
+      setSaved(true);
+      setTimeout(() => { setSaved(false); setOpen(false); }, 1500);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await fetch("/api/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ journal_prompt_labels: null }),
+      });
+      onSaved(null);
+      setFields(Array.from({ length: MAX_JOURNAL_PROMPTS }, (_, i) => defaultLabels[i] ?? ""));
+      setSaved(true);
+      setTimeout(() => { setSaved(false); setOpen(false); }, 1500);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mt-3">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="font-saira text-[11px] text-zinc-500 hover:text-purple-300 transition underline underline-offset-2"
+      >
+        {t("journal.customizePromptsBtn")}
+      </button>
+
+      {open && (
+        <div className="mt-3 rounded-2xl border border-white/8 bg-white/[0.03] p-5 space-y-4">
+          <div>
+            <p className="font-saira text-xs font-semibold text-purple-200">
+              {t("journal.customizePromptsTitle")}
+            </p>
+            <p className="mt-1 font-saira text-[11px] text-zinc-400">
+              {t("journal.customizePromptsBody")}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            {fields.map((val, i) => (
+              <input
+                key={i}
+                type="text"
+                value={val}
+                onChange={(e) => setFields((prev) => {
+                  const next = [...prev];
+                  next[i] = e.target.value;
+                  return next;
+                })}
+                placeholder={t("journal.customizePromptsPlaceholder").replace("{n}", String(i + 1))}
+                className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={saving}
+              className="font-saira text-[11px] text-zinc-500 hover:text-zinc-300 transition underline underline-offset-2 disabled:opacity-40"
+            >
+              {t("journal.customizePromptsReset")}
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className={`ml-auto rounded-full px-5 py-2 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
+                saved ? "bg-emerald-500 text-white" : "bg-purple-500 text-white hover:bg-purple-400 disabled:opacity-40"
+              }`}
+            >
+              {saved ? t("journal.customizePromptsSaved") : saving ? t("common.saving") : t("journal.customizePromptsSave")}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -559,12 +694,14 @@ function PastDateForm({
   onMark,
   marking,
   onSave,
+  promptLabels,
 }: {
   dateLabel: string;
   entry: TrainingEntry | null;
   onMark: (mode: "training" | "rest") => void;
   marking: boolean;
   onSave: (updated: TrainingEntry) => void;
+  promptLabels: string[];
 }) {
   const { t } = useT();
 
@@ -616,7 +753,7 @@ function PastDateForm({
       <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-300 mb-3">
         {t("journal.logForDate").replace("{date}", dateLabel.toLowerCase())}
       </p>
-      <TrainingJournalForm entry={entry} onSave={onSave} />
+      <TrainingJournalForm entry={entry} onSave={onSave} promptLabels={promptLabels} />
     </div>
   );
 }
@@ -659,6 +796,8 @@ export default function JournalPage() {
   const [ready, setReady]                 = React.useState(false);
   const [coachPromptDismissed, setCoachPromptDismissed] = React.useState(false);
   const [coachFeedback, setCoachFeedback] = React.useState<Record<string, CoachFeedbackItem>>({});
+  // Custom journal prompt labels — updated locally after PromptCustomizer saves
+  const [customPromptLabels, setCustomPromptLabels] = React.useState<string[] | null>(null);
 
   // ── Weekly check-ins ────────────────────────────────────────────────────────
   const [weeklyCheckins,    setWeeklyCheckins]    = React.useState<WeeklyCheckin[]>([]);
@@ -734,7 +873,11 @@ export default function JournalPage() {
         fetch("/api/journal/entry-feedback"),
         fetch("/api/weekly-checkin"),
       ]);
-      if (profileRes.ok) setProfile(await profileRes.json());
+      if (profileRes.ok) {
+        const p = await profileRes.json();
+        setProfile(p);
+        setCustomPromptLabels(p.journal_prompt_labels ?? null);
+      }
       if (entriesRes.ok) setEntries(await entriesRes.json());
       if (trainingRes.ok) {
         const all = (await trainingRes.json()) as TrainingEntry[];
@@ -781,6 +924,20 @@ export default function JournalPage() {
 
   const grouped = React.useMemo(() => groupByDay(feedItems), [feedItems]);
   const showCoachPrompt = !coachPromptDismissed && shouldPromptCoach(entries, profile);
+
+  // Resolve the effective prompt labels for the training form
+  const defaultPromptLabels = TRAINING_QUESTIONS.map((q) => q.label);
+  const effectivePromptLabels = React.useMemo(
+    () => resolvePromptLabels(
+      profile?.coach_journal_prompt_labels,
+      customPromptLabels,
+      defaultPromptLabels,
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [profile?.coach_journal_prompt_labels, customPromptLabels],
+  );
+  const hasCoachPromptOverride = !!profile?.coach_journal_prompt_labels?.filter(Boolean).length;
+  const isPrTier = profile?.plan_tier === "pr";
 
   if (!ready) {
     return (
@@ -865,15 +1022,30 @@ export default function JournalPage() {
             {selectedDate === todayStr ? (
               // Today — existing behaviour
               todayTraining?.is_training_day ? (
-                <TrainingJournalForm
-                  entry={todayTraining}
-                  onSave={(updated) => {
-                    setTodayTraining(updated);
-                    setAllTraining((prev) =>
-                      prev.map((e) => e.entry_date === updated.entry_date ? updated : e),
-                    );
-                  }}
-                />
+                <>
+                  {hasCoachPromptOverride && (
+                    <p className="mb-2 font-saira text-[11px] text-purple-300/80">
+                      {t("journal.customizePromptsCoachNote")}
+                    </p>
+                  )}
+                  <TrainingJournalForm
+                    entry={todayTraining}
+                    promptLabels={effectivePromptLabels}
+                    onSave={(updated) => {
+                      setTodayTraining(updated);
+                      setAllTraining((prev) =>
+                        prev.map((e) => e.entry_date === updated.entry_date ? updated : e),
+                      );
+                    }}
+                  />
+                  {isPrTier && !hasCoachPromptOverride && (
+                    <PromptCustomizer
+                      currentLabels={customPromptLabels ?? defaultPromptLabels}
+                      defaultLabels={defaultPromptLabels}
+                      onSaved={(labels) => setCustomPromptLabels(labels)}
+                    />
+                  )}
+                </>
               ) : (
                 <QuickEntry onAdd={handleAdd} />
               )
@@ -884,6 +1056,7 @@ export default function JournalPage() {
                 entry={selectedEntry}
                 onMark={(mode) => markPastDay(selectedDate, mode)}
                 marking={pastDayMarking}
+                promptLabels={effectivePromptLabels}
                 onSave={(updated) => {
                   setAllTraining((prev) =>
                     prev.map((e) => e.entry_date === updated.entry_date ? updated : e),

@@ -33,6 +33,8 @@ const SELECT_COLS = [
   "plan_tier",
   // v8 — i18n
   "language",
+  // v10 — custom journal prompts
+  "journal_prompt_labels",
 ].join(",");
 
 export async function GET() {
@@ -93,6 +95,8 @@ export async function GET() {
       course_plan: null,
       plan_tier: 'opener',
       language: 'en',
+      journal_prompt_labels: null,
+      coach_journal_prompt_labels: null,
     } satisfies AthleteProfile);
   }
 
@@ -104,16 +108,25 @@ export async function GET() {
   const rawTier = (row as Record<string, unknown>).plan_tier as string | undefined;
   const planTier: string = rawTier ?? (row.course_access || row.ai_access ? "pr" : "opener");
 
-  // If athlete has a coach, look up the coach's cloned TTS voice ID.
-  // This is a cheap second query (indexed PK lookup) and keeps the voice ID
-  // off the athlete's own row — no extra column needed on the athlete.
+  // If athlete has a coach, look up:
+  //   1. The coach's cloned TTS voice ID (cheap indexed PK lookup)
+  //   2. Any per-athlete journal prompt labels the coach has set
   let coach_tts_voice_id: string | null = null;
+  let coach_journal_prompt_labels: string[] | null = null;
   if (row.role === "athlete" && row.coach_id) {
-    const coachRows = await dbSelect<{ tts_voice_id: string | null }>("profiles", {
-      id: `eq.${row.coach_id}`,
-      select: "tts_voice_id",
-    });
+    const [coachRows, settingsRows] = await Promise.all([
+      dbSelect<{ tts_voice_id: string | null }>("profiles", {
+        id: `eq.${row.coach_id}`,
+        select: "tts_voice_id",
+      }),
+      dbSelect<{ journal_prompt_labels: string[] | null }>("coach_athlete_settings", {
+        coach_id: `eq.${row.coach_id}`,
+        athlete_id: `eq.${user.id}`,
+        select: "journal_prompt_labels",
+      }),
+    ]);
     coach_tts_voice_id = coachRows[0]?.tts_voice_id ?? null;
+    coach_journal_prompt_labels = settingsRows[0]?.journal_prompt_labels ?? null;
   }
 
   // Normalise: mental_goals may come back as null from DB
@@ -122,6 +135,7 @@ export async function GET() {
     mental_goals: row.mental_goals ?? [],
     plan_tier: planTier,
     coach_tts_voice_id,
+    coach_journal_prompt_labels,
   });
 }
 
@@ -158,6 +172,8 @@ export async function PATCH(req: NextRequest) {
     "self_talk_mode",
     // v8 — i18n
     "language",
+    // v10 — custom journal prompts (gated to PR tier below)
+    "journal_prompt_labels",
   ];
 
   const patch: Record<string, unknown> = {};
@@ -167,6 +183,29 @@ export async function PATCH(req: NextRequest) {
       // Null out empty strings for nullable numeric/text fields
       if (val === "") patch[key] = null;
       else patch[key] = val ?? null;
+    }
+  }
+
+  // Guard: journal_prompt_labels only for PR-tier athletes
+  if ("journal_prompt_labels" in patch) {
+    const profileRows = await dbSelect<{ plan_tier: string | null }>("profiles", {
+      id: `eq.${user.id}`,
+      select: "plan_tier",
+    });
+    const tier = profileRows[0]?.plan_tier ?? "opener";
+    if (tier !== "pr") {
+      delete patch.journal_prompt_labels;
+    } else {
+      // Sanitise: must be an array, max 5 non-empty strings
+      const raw = patch.journal_prompt_labels;
+      if (!Array.isArray(raw)) {
+        delete patch.journal_prompt_labels;
+      } else {
+        const cleaned = (raw as unknown[])
+          .map((v) => (typeof v === "string" ? v.trim() : ""))
+          .slice(0, 5);
+        patch.journal_prompt_labels = cleaned.length ? cleaned : null;
+      }
     }
   }
 

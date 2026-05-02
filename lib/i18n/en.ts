@@ -200,6 +200,16 @@ export const en = {
     markAsTraining: "🏋️ Training Day",
     markAsRest: "😴 Rest Day",
     logForDate: "Log for {date}",
+
+    // Custom journal prompts (PR tier)
+    customizePromptsBtn: "Customize questions",
+    customizePromptsTitle: "Custom journal questions",
+    customizePromptsBody: "Replace the default questions with your own. Up to 5 — leave a field blank to skip it.",
+    customizePromptsSave: "Save questions",
+    customizePromptsReset: "Reset to defaults",
+    customizePromptsSaved: "Saved ✓",
+    customizePromptsCoachNote: "Your coach has set custom questions for your training log.",
+    customizePromptsPlaceholder: "Question {n}…",
   },
 
   // Course
@@ -932,6 +942,15 @@ export const en = {
     tabCheckins: "Check-ins",
     tabProfile: "Profile",
     tabNotes: "Notes",
+    tabPrompts: "Prompts",
+
+    // Journal prompts (per-athlete, set by coach)
+    journalPromptsTitle: "Journal questions",
+    journalPromptsBody: "Set custom reflection questions for this athlete. Replaces the defaults and locks their own customization. Leave blank to skip.",
+    journalPromptsSave: "Save",
+    journalPromptsReset: "Reset to defaults",
+    journalPromptsSaved: "Saved ✓",
+    journalPromptsPlaceholder: "Question {n}…",
 
     // Roster sort/filter
     sortPriority: "Priority",

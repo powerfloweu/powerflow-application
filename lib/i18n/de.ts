@@ -201,6 +201,16 @@ export const de: Dict = {
     markAsTraining: "🏋️ Trainingstag",
     markAsRest: "😴 Ruhetag",
     logForDate: "Log für {date}",
+
+    // Custom journal prompts (PR tier)
+    customizePromptsBtn: "Fragen anpassen",
+    customizePromptsTitle: "Eigene Tagebuchfragen",
+    customizePromptsBody: "Ersetze die Standardfragen durch deine eigenen. Bis zu 5 — leer lassen, um eine Frage zu überspringen.",
+    customizePromptsSave: "Fragen speichern",
+    customizePromptsReset: "Zurücksetzen",
+    customizePromptsSaved: "Gespeichert ✓",
+    customizePromptsCoachNote: "Dein Coach hat eigene Fragen für dein Trainingslog festgelegt.",
+    customizePromptsPlaceholder: "Frage {n}…",
   },
 
   course: {
@@ -900,6 +910,15 @@ export const de: Dict = {
     tabCheckins: "Check-ins",
     tabProfile: "Profil",
     tabNotes: "Notizen",
+    tabPrompts: "Fragen",
+
+    // Journal prompts (per-athlete, set by coach)
+    journalPromptsTitle: "Tagebuchfragen",
+    journalPromptsBody: "Lege eigene Reflexionsfragen für diesen Athleten fest. Ersetzt die Standardfragen und sperrt die eigene Anpassung des Athleten. Leer lassen, um eine Frage zu überspringen.",
+    journalPromptsSave: "Speichern",
+    journalPromptsReset: "Auf Standard zurücksetzen",
+    journalPromptsSaved: "Gespeichert ✓",
+    journalPromptsPlaceholder: "Frage {n}…",
 
     // Roster sort/filter
     sortPriority: "Priorität",
