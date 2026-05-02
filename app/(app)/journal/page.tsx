@@ -892,8 +892,8 @@ export default function JournalPage() {
               />
             )}
 
-            {/* ── Weekly Check-ins section ────────────────────────── */}
-            {(weeklyCheckins.length > 0 || checkinWindowOpen) && (
+            {/* ── Weekly Check-ins section (athletes only) ────────── */}
+            {profile?.role !== "coach" && (weeklyCheckins.length > 0 || checkinWindowOpen) && (
               <div>
                 <div className="flex items-center gap-3 mb-3">
                   <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.24em] text-purple-400">
@@ -1000,8 +1000,8 @@ export default function JournalPage() {
               </div>
             )}
 
-            {/* ── Modal (also triggered from AppShell, but can open here too) ── */}
-            {showCheckinModal && checkinTarget && (
+            {/* ── Modal (athletes only, also triggered from AppShell) ── */}
+            {profile?.role !== "coach" && showCheckinModal && checkinTarget && (
               <WeeklyCheckinModal
                 targetWeek={checkinTarget}
                 onDone={async () => {
