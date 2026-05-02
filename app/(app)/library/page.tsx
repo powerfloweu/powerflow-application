@@ -62,8 +62,8 @@ const TOOLS: Array<{
         ],
         fileKey: {
           en: "ProgRelax_EN_final.m4a",
-          de: "de/PR Grundlage ohne Musik.MP3",
-          // hu: "hu/...",
+          de: "PR Grundlage ohne Musik.MP3",
+          hu: "ProgRelax.mp3",
         },
       },
       {
@@ -79,8 +79,8 @@ const TOOLS: Array<{
         ],
         fileKey: {
           en: "AT_Base.m4a",
-          de: "de/AT Grundlage ohne Musik.MP3",
-          // hu: "hu/...",
+          de: "AT Grundlage ohne Musik.MP3",
+          hu: "AutogenTrain_Alap.mp3",
         },
       },
     ],
@@ -103,8 +103,8 @@ const TOOLS: Array<{
         ],
         fileKey: {
           en: "Visualization_Squat_EN_fin.m4a",
-          de: "de/SQ Visualisierung ohne Musik.MP3",
-          // hu: "hu/...",
+          de: "SQ Visualisierung ohne Musik.MP3",
+          hu: "Vizualizacio_Guggolas.mp3",
         },
         usesVizKeywords: true,
       },
@@ -120,8 +120,8 @@ const TOOLS: Array<{
         ],
         fileKey: {
           en: "Visualization_Bench_EN_fin.m4a",
-          de: "de/BP Visualisierung ohne Musik.MP3",
-          // hu: "hu/...",
+          de: "BP Visualisierung ohne Musik.MP3",
+          hu: "Vizualizacio_Fekvenyomas.mp3",
         },
         usesVizKeywords: true,
       },
@@ -137,8 +137,8 @@ const TOOLS: Array<{
         ],
         fileKey: {
           en: "Visualization_Deadlift_EN_fin.m4a",
-          de: "de/Kreuzheben Visualisierung ohne Musik.MP3",
-          // hu: "hu/...",
+          de: "Kreuzheben Visualisierung ohne Musik.MP3",
+          hu: "Vizualizacio_Felhuzas.mp3",
         },
         usesVizKeywords: true,
       },
@@ -160,8 +160,8 @@ const TOOLS: Array<{
         ],
         fileKey: {
           en: "SikerPillanata_EN_fin.m4a",
-          de: "de/Der Moment des Erfolgs ohne Musik.MP3",
-          // hu: "hu/...",
+          de: "Der Moment des Erfolgs ohne Musik.MP3",
+          hu: "SikerPillanata.mp3",
         },
       },
     ],
@@ -204,8 +204,8 @@ const TOOLS: Array<{
         ],
         fileKey: {
           en: "Barriers_EN_Final.m4a",
-          de: "de/Fokus ohne Musik.MP3",
-          // hu: "hu/...",
+          de: "Fokus ohne Musik.MP3",
+          hu: "EdezesNap_MentalTraining.mp3",
         },
         usesVizKeywords: true,
       },
@@ -222,8 +222,8 @@ const TOOLS: Array<{
         ],
         fileKey: {
           en: "Hibajavitas_EN_Final.m4a",
-          de: "de/Fehlerkorrektur ohne Musik.MP3",
-          // hu: "hu/...",
+          de: "Fehlerkorrektur ohne Musik.MP3",
+          hu: "Hibajavitas.mp3",
         },
       },
     ],
@@ -245,8 +245,8 @@ const TOOLS: Array<{
         ],
         fileKey: {
           en: "Verseny_MentalTraining_EN_fin.m4a",
-          de: "de/Wettkampftag ohne Musik.MP3",
-          // hu: "hu/...",
+          de: "Wettkampftag ohne Musik.MP3",
+          hu: "Verseny_MentalTraining.mp3",
         },
         usesVizKeywords: true,
       },
@@ -494,8 +494,12 @@ function AffirmationsInputs({
 // Supabase Storage → Buckets → tools → Edit bucket → Public on.
 // play() is called synchronously inside the tap handler (iOS requirement).
 
-const STORAGE_BASE =
-  "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/";
+// Each locale's recordings live in its own public Supabase bucket.
+const STORAGE_BASES: Record<Locale, string> = {
+  en: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/",
+  de: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/german/",
+  hu: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/hungarian/",
+};
 
 function AudioPlayer({ fileKey, color }: { fileKey: FileKeys | null; color: ToolColor }) {
   const { t, locale } = useT();
@@ -508,11 +512,11 @@ function AudioPlayer({ fileKey, color }: { fileKey: FileKeys | null; color: Tool
   const [duration, setDuration]       = React.useState(0);
   const c = COLOR_MAP[color];
 
-  // Resolve locale-specific key, fallback to "en"
+  // Resolve locale-specific key + matching bucket, fall back to "en"
+  const resolvedLocale: Locale = fileKey && fileKey[locale] ? locale : "en";
   const resolvedKey = fileKey ? (fileKey[locale] ?? fileKey["en"] ?? null) : null;
-  // Encode each path segment separately so folder slashes survive
   const url = resolvedKey
-    ? `${STORAGE_BASE}${resolvedKey.split("/").map(encodeURIComponent).join("/")}`
+    ? `${STORAGE_BASES[resolvedLocale]}${resolvedKey.split("/").map(encodeURIComponent).join("/")}`
     : null;
 
   // play() is called synchronously — no await in front of it (iOS requirement)
