@@ -117,7 +117,7 @@ const ui = {
     upsellTitle: "Oldd fel az \u00EDr\u00E1sos riportot",
     upsellBody: (email: string) =>
       `A fenti \u00E1bra egy pillanatk\u00E9p \u2014 a riport elmagyar\u00E1zza, mit jelent sz\u00E1modra mind a h\u00E9t megk\u00FCzd\u00E9si k\u00E9szs\u00E9g, hogyan hat egym\u00E1sra, \u00E9s hol hozna a legtöbbet a c\u00E9lzott munka. A Stripe fizetést ezzel az e-mail-lel t\u00F6ltj\u00FCk el\u0151: ${email}.`,
-    upsellCta: "Riport felold\u00E1sa \u00B7 \u20AC9",
+    upsellCta: "Riport felold\u00E1sa \u00B7 \u20AC19",
     upsellFine:
       "Biztons\u00E1gos fizet\u00E9s Stripe-on kereszt\u00FCl. A teljes narrat\u00EDv\u00E1val visszat\u00E9rhetsz ide.",
     unlockedTag: "Teljes riport feloldva",
