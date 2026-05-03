@@ -21,6 +21,7 @@ type EntryRow = {
   sentiment: Sentiment;
   context: Context;
   themes: string[];
+  voice_id: string | null;
   created_at: string;
 };
 
