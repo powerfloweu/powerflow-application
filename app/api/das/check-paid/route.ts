@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
-  const resultRef = url.searchParams.get("result_ref");
+  const resultRef = url.searchParams.get("ref");
 
   if (!resultRef || !resultRef.startsWith("pfdas_")) {
     return NextResponse.json({ paid: false, error: "Invalid result_ref" }, { status: 400 });

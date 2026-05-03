@@ -197,6 +197,12 @@ export default function DasTestPage() {
       }).catch(() => {
         /* silent */
       });
+      // Mark coach assignment completed (if one exists)
+      fetch("/api/athlete/assigned-tests", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ test_slug: "das" }),
+      }).catch(() => { /* silent */ });
       router.push("/tests/das/results");
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Submission failed");

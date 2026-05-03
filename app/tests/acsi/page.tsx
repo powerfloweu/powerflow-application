@@ -210,6 +210,12 @@ export default function AcsiTestPage() {
       }).catch(() => {
         /* silent */
       });
+      // Mark coach assignment completed (if one exists)
+      fetch("/api/athlete/assigned-tests", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ test_slug: "acsi" }),
+      }).catch(() => { /* silent */ });
       router.push("/tests/acsi/results");
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Submission failed");
