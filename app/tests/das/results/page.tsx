@@ -10,7 +10,7 @@ const RESULT_KEY = "powerflow.das.lastResult.v1";
 const UNLOCK_KEY = "powerflow.das.unlocked.v1";
 const RESULT_REF_KEY = "powerflow.das.resultRef.v1";
 
-const STRIPE_PAYMENT_LINK = "STRIPE_DAS_PLACEHOLDER";
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/9B68wO7eD3ucaIY3TndfG0v";
 
 type Lang = "en" | "hu" | "de";
 
