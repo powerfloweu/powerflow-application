@@ -1060,5 +1060,163 @@ export const hu: Dict = {
     errorLoad: "Az adatok nem tölthetők be. Kérlek, frissítsd az oldalt.",
     errorCoachOnly: "Ez a műszerfal csak edzőknek elérhető.",
     errorNetwork: "Hálózati hiba — kérlek, frissítsd az oldalt.",
+
+    // Page header (mobile)
+    pageHeading: "Sportoló áttekintő",
+    pageSubtitle: "Kövesd sportolóid mentális állapotát, önbeszéd-mintáit és teszteredményeit egy helyen.",
+    testsLink: "Tesztek",
+
+    // CoachHeader / sidebar identity
+    roleCoach: "Edző",
+    guideLink: "Útmutató",
+    signOut: "Kijelentkezés",
+    athleteProfileLink: "Sportoló profil",
+
+    // Sidebar / desktop compact
+    athleteInviteLabel: "Sportoló meghívó",
+    copyShort: "Másolás",
+    sidebarAthletes: "Sportolók",
+    sidebarAttention: "Figyelmet igényel",
+    sidebarAvgPositive: "Átl. +",
+
+    // Invite panel
+    inviteLabel: "A sportoló meghívó linked",
+    inviteHint: "Oszd meg ezt a linket a sportolóiddal. Google-lel jelentkeznek be, és a naplójuk automatikusan kapcsolódik az irányítópultodhoz.",
+
+    // Empty states
+    noAthletesTitle: "Még nincs kapcsolt sportoló",
+    noAthletesBody: "Oszd meg a meghívó linkedet a sportolókkal. Ha elfogadják és bejelentkeznek, a napló- és tesztadataik itt jelennek meg.",
+    noAthletesDesktop: "Még nincsenek sportolók",
+    noAthletesDesktopHint: "Oszd meg a meghívó linkedet a sportolókkal, hogy elkezdhessd.",
+    noSearchMatch: "Egyetlen sportoló sem egyezik a kereséseddel.",
+    selectAthleteHint: "Válassz sportolót",
+    selectAthleteBody: "Kattints bármelyik sportolóra a listán, hogy itt lásd a teljes irányítópultját.",
+
+    // Collapsed card meta
+    lastActiveMeta: "Utoljára aktív: {la} · {n} bejegyzés ezen a héten",
+    hoursAgo: "{h} órája",
+    entriesThisWeek: "{n} bejegyzés ezen a héten",
+    positiveLabel: "pozitív",
+
+    // Desktop right-panel header
+    lastActiveDetail: "Utoljára aktív: {la} · {n} bejegyzés ezen a héten · {pct}% pozitív",
+
+    // Attention banner
+    athletesNeedAttention: "{n} sportoló figyelmet igényel",
+    athletesNeedAttentionPlural: "{n} sportoló figyelmet igényel",
+    athletePositiveEntries: "{pct}% pozitív · {n} bejegyzés ezen a héten",
+    emailBtn: "E-mail",
+
+    // Sort
+    sortPositive: "Pozitív %",
+
+    // Analysis tab
+    windowLabel: "Időablak",
+    detectedThemes: "Észlelt témák ({n} nap)",
+    lastNDaysGlance: "Az elmúlt {n} nap egy pillantással",
+
+    // Activity tab
+    noActivityYet: "Még nincs aktivitás.",
+
+    // Pattern analysis
+    patternAnalysisTitle: "Mintaelemzés",
+    patternInsufficientData: "Nincs elég adat — legalább 5 bejegyzés szükséges a mintaelemzéshez.",
+    entryCount: "{n} bejegyzés",
+    psychProfile: "Pszichológiai profil",
+    profilePrimary: "Elsődleges",
+    profileSecondary: "Másodlagos",
+    mentionCount: "({n} megemlítés)",
+    sentimentTrajectory: "Hangulati trajektória",
+    conversationStarters: "Coaching-beszélgetés indítók",
+    trajectoryVolatile: "⚡ Ingadozó",
+    trajectoryImproving: "↗ Javuló",
+    trajectoryDeclining: "↘ Romló",
+    trajectoryStable: "→ Stabil",
+
+    // Notes tab auto-save
+    savedAtTime: "✓ Mentve · {time}",
+    autoSavesHint: "Automatikusan menti, amikor abbahagyod a gépelést",
+    timeSinceJustNow: "éppen most",
+    timeSinceMinAgo: "{n} perce",
+    timeSinceHAgo: "{n} órája",
+    timeSinceDayAgo: "{n} napja",
+
+    // Training day log card
+    trainingDayLogTitle: "Edzésnap napló",
+    moodRating: "Hangulat {n}/10",
+
+    // Coach note / entry feedback
+    coachNoteLabel: "Edzői megjegyzés",
+    coachNoteWithTime: "Edzői megjegyzés · {time}",
+    addCoachNote: "+ Edzői megjegyzés hozzáadása",
+    cancelBtn: "Mégse",
+
+    // Check-ins tab
+    noCheckinsYet: "Még nem érkezett check-in.",
+    monthlyBadge: "Havi",
+    monthlyDivider: "Havi",
+    ciBiggestWin: "Legnagyobb siker",
+    ciMainChallenge: "Fő kihívás",
+    ciFocusNextWeek: "Fókusz jövő héten",
+    ciProgress: "Haladás",
+    ciBiggestBreakthrough: "Legnagyobb áttörés",
+    ciKeyLesson: "Legfontosabb tanulság",
+    ciNextMonthIntention: "Szándék a következő hónapra",
+
+    // Profile tab section headings & misc
+    onboardingIncomplete: "Az onboarding még nem fejeződött be — nincs megjeleníthető profiladat.",
+    sectionMentalTools: "Mentális eszközök",
+    sectionPersonalSport: "Személyes és sport",
+    sectionLifts: "Emelések",
+    liftGoal: "→ cél: {n} kg",
+    sectionMentalGoals: "Mentális célok (következő 3 hónap)",
+    sectionSelfAssessment: "Önértékelés (sportoló saját értékelése, 1–10)",
+    sectionMindsetAssessment: "Mentalitás felmérés",
+    sectionGoalsContext: "Célok és kontextus",
+
+    // Mental tools editor
+    affirmationsLabel: "Affirmációk",
+    editBtn: "Szerkesztés",
+    affirmationPlaceholder: "{n}. affirmáció",
+    notSetShort: "Nincs beállítva",
+    sbdCueWords: "GHL kulcsszavak",
+    liftCuesLabel: "{lift} cue-k",
+    cuesSeparatorHint: "(vesszővel elválasztva)",
+    cueWordsPlaceholder: "pl. feszesen, mellkas fel",
+
+    // Test scores tab
+    dasHeading: "Diszfunkcionális Attitűd Skála (DAS) — legutóbbi",
+    acsiHeading: "Megküzdési készségek (ACSI) — legutóbbi",
+    csaiHeading: "Versenyfélelemkezelés (CSAI) — legutóbbi",
+    satHeading: "Önismeret (SAT) — legutóbbi",
+    tsSubmitted: "Beküldve",
+    tsPaid: "Fizetett",
+    tsFree: "Ingyenes",
+    noTestsYet: "Még nem töltött ki tesztet.",
+    assignedBadge: "✓ Hozzárendelve",
+    assignBtn: "+ Hozzárendelés",
+    assignHint: "A hozzárendelt tesztek a sportoló Főképernyőjén jelennek meg felszólításként.",
+
+    // Training log navigation
+    prevWeek: "← Előző",
+    nextWeek: "Következő →",
+
+    // Training log tab sections
+    weekSummaryHeading: "Heti összefoglaló",
+    trainingDaysLabel: "Edzésnapok",
+    avgMoodLabel: "Átl. hangulat",
+    dailyLogHeading: "Napi napló",
+    dayEntry: "{n}. nap · {day} {date}",
+    moodEntryRating: "Hangulat: {n}/10",
+    weeklyBriefHeading: "Heti összefoglaló",
+    moodTrendLabel: "Hangulati trend:",
+    moodTrendUp: "↑ Emelkedő",
+    moodTrendDown: "↓ Csökkenő",
+    moodTrendFlat: "→ Stabil",
+    trainingDaysThisWeek: "Edzésnapok: {n} ezen a héten",
+    preSessionThemes: "Edzés előtti témák:",
+    postSessionThemes: "Edzés utáni témák:",
+    recurringFocus: "Visszatérő fókusz:",
+    noTrainingEntries: "Ezen a héten nincsenek edzésnaplók.",
   },
 };

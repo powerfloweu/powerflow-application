@@ -1062,5 +1062,163 @@ export const de: Dict = {
     errorLoad: "Daten konnten nicht geladen werden. Bitte aktualisieren.",
     errorCoachOnly: "Dieses Dashboard ist nur für Coaches.",
     errorNetwork: "Netzwerkfehler — bitte aktualisieren.",
+
+    // Page header (mobile)
+    pageHeading: "Athletenübersicht",
+    pageSubtitle: "Behalte den mentalen Zustand, die Self-Talk-Muster und Testergebnisse deiner Athleten im Blick.",
+    testsLink: "Tests",
+
+    // CoachHeader / sidebar identity
+    roleCoach: "Coach",
+    guideLink: "Leitfaden",
+    signOut: "Abmelden",
+    athleteProfileLink: "Athletenprofil",
+
+    // Sidebar / desktop compact
+    athleteInviteLabel: "Athleten einladen",
+    copyShort: "Kopieren",
+    sidebarAthletes: "Athleten",
+    sidebarAttention: "Aufmerksamkeit",
+    sidebarAvgPositive: "Ø +",
+
+    // Invite panel
+    inviteLabel: "Dein Athleten-Einladelink",
+    inviteHint: "Teile diesen Link mit deinen Athleten. Sie melden sich mit Google an und ihr Tagebuch wird automatisch mit deinem Dashboard verknüpft.",
+
+    // Empty states
+    noAthletesTitle: "Noch keine Athleten verbunden",
+    noAthletesBody: "Teile deinen Einladelink oben mit Athleten. Sobald sie akzeptieren und sich anmelden, erscheinen ihre Tagebuch- und Testdaten hier.",
+    noAthletesDesktop: "Noch keine Athleten",
+    noAthletesDesktopHint: "Teile deinen Einladelink mit Athleten, um loszulegen.",
+    noSearchMatch: "Keine Athleten entsprechen deiner Suche.",
+    selectAthleteHint: "Athleten auswählen",
+    selectAthleteBody: "Klicke auf einen Athleten im Kader, um sein vollständiges Dashboard hier anzuzeigen.",
+
+    // Collapsed card meta
+    lastActiveMeta: "Zuletzt aktiv {la} · {n} Einträge diese Woche",
+    hoursAgo: "vor {h} Std.",
+    entriesThisWeek: "{n} Einträge diese Woche",
+    positiveLabel: "positiv",
+
+    // Desktop right-panel header
+    lastActiveDetail: "Zuletzt aktiv {la} · {n} Einträge diese Woche · {pct}% positiv",
+
+    // Attention banner
+    athletesNeedAttention: "{n} Athlet braucht Aufmerksamkeit",
+    athletesNeedAttentionPlural: "{n} Athleten brauchen Aufmerksamkeit",
+    athletePositiveEntries: "{pct}% positiv · {n} Einträge diese Woche",
+    emailBtn: "E-Mail",
+
+    // Sort
+    sortPositive: "Positiv %",
+
+    // Analysis tab
+    windowLabel: "Zeitraum",
+    detectedThemes: "Erkannte Themen ({n}T)",
+    lastNDaysGlance: "Die letzten {n} Tage auf einen Blick",
+
+    // Activity tab
+    noActivityYet: "Noch keine Aktivität.",
+
+    // Pattern analysis
+    patternAnalysisTitle: "Musteranalyse",
+    patternInsufficientData: "Zu wenig Daten — mindestens 5 Einträge werden für die Musteranalyse benötigt.",
+    entryCount: "{n} Einträge",
+    psychProfile: "Psychologisches Profil",
+    profilePrimary: "Primär",
+    profileSecondary: "Sekundär",
+    mentionCount: "({n} Erwähnungen)",
+    sentimentTrajectory: "Stimmungsverlauf",
+    conversationStarters: "Gesprächseinstiege für das Coaching",
+    trajectoryVolatile: "⚡ Volatil",
+    trajectoryImproving: "↗ Verbessernd",
+    trajectoryDeclining: "↘ Sinkend",
+    trajectoryStable: "→ Stabil",
+
+    // Notes tab auto-save
+    savedAtTime: "✓ Gespeichert · {time}",
+    autoSavesHint: "Wird automatisch gespeichert, sobald du aufhörst zu tippen",
+    timeSinceJustNow: "gerade eben",
+    timeSinceMinAgo: "vor {n} Min.",
+    timeSinceHAgo: "vor {n} Std.",
+    timeSinceDayAgo: "vor {n} T.",
+
+    // Training day log card
+    trainingDayLogTitle: "Trainingstagprotokoll",
+    moodRating: "Stimmung {n}/10",
+
+    // Coach note / entry feedback
+    coachNoteLabel: "Coach-Notiz",
+    coachNoteWithTime: "Coach-Notiz · {time}",
+    addCoachNote: "+ Coach-Notiz hinzufügen",
+    cancelBtn: "Abbrechen",
+
+    // Check-ins tab
+    noCheckinsYet: "Noch keine Check-ins abgegeben.",
+    monthlyBadge: "Monatlich",
+    monthlyDivider: "Monatlich",
+    ciBiggestWin: "Größter Erfolg",
+    ciMainChallenge: "Hauptherausforderung",
+    ciFocusNextWeek: "Fokus nächste Woche",
+    ciProgress: "Fortschritt",
+    ciBiggestBreakthrough: "Größter Durchbruch",
+    ciKeyLesson: "Wichtigste Erkenntnis",
+    ciNextMonthIntention: "Intention für nächsten Monat",
+
+    // Profile tab section headings & misc
+    onboardingIncomplete: "Onboarding noch nicht abgeschlossen — keine Profildaten vorhanden.",
+    sectionMentalTools: "Mentale Tools",
+    sectionPersonalSport: "Persönliches & Sport",
+    sectionLifts: "Hebungen",
+    liftGoal: "→ Ziel: {n} kg",
+    sectionMentalGoals: "Mentale Ziele (nächste 3 Monate)",
+    sectionSelfAssessment: "Selbsteinschätzung (eigene Bewertung des Athleten, 1–10)",
+    sectionMindsetAssessment: "Mindset-Einschätzung",
+    sectionGoalsContext: "Ziele & Kontext",
+
+    // Mental tools editor
+    affirmationsLabel: "Affirmationen",
+    editBtn: "Bearbeiten",
+    affirmationPlaceholder: "Affirmation {n}",
+    notSetShort: "Nicht gesetzt",
+    sbdCueWords: "KBS-Cue-Wörter",
+    liftCuesLabel: "{lift}-Cues",
+    cuesSeparatorHint: "(kommagetrennt)",
+    cueWordsPlaceholder: "z. B. gespannt, Brust hoch",
+
+    // Test scores tab
+    dasHeading: "Dysfunktionale Einstellungsskala (DAS) — aktuell",
+    acsiHeading: "Coping-Fähigkeiten (ACSI) — aktuell",
+    csaiHeading: "Wettkampfangst (CSAI) — aktuell",
+    satHeading: "Selbstwahrnehmung (SAT) — aktuell",
+    tsSubmitted: "Eingereicht",
+    tsPaid: "Bezahlt",
+    tsFree: "Kostenlos",
+    noTestsYet: "Noch keine Tests abgeschlossen.",
+    assignedBadge: "✓ Zugewiesen",
+    assignBtn: "+ Zuweisen",
+    assignHint: "Zugewiesene Tests erscheinen als Hinweis auf dem Home-Bildschirm des Athleten.",
+
+    // Training log navigation
+    prevWeek: "← Zurück",
+    nextWeek: "Weiter →",
+
+    // Training log tab sections
+    weekSummaryHeading: "Wochenzusammenfassung",
+    trainingDaysLabel: "Trainingstage",
+    avgMoodLabel: "Ø Stimmung",
+    dailyLogHeading: "Tagesprotokoll",
+    dayEntry: "Tag {n} · {day} {date}",
+    moodEntryRating: "Stimmung: {n}/10",
+    weeklyBriefHeading: "Wochenbriefing",
+    moodTrendLabel: "Stimmungstrend:",
+    moodTrendUp: "↑ Steigend",
+    moodTrendDown: "↓ Sinkend",
+    moodTrendFlat: "→ Stabil",
+    trainingDaysThisWeek: "Trainingstage: {n} diese Woche",
+    preSessionThemes: "Themen vor der Einheit:",
+    postSessionThemes: "Themen nach der Einheit:",
+    recurringFocus: "Wiederkehrender Fokus:",
+    noTrainingEntries: "Keine Trainingseinträge diese Woche.",
   },
 };

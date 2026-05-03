@@ -4,11 +4,37 @@ import React from "react";
 import { useT, LOCALES, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from "@/lib/i18n";
 
 /**
- * Compact language picker for the Settings page.
- * Writes to both localStorage (immediate UI) and /api/me (persisted across devices).
+ * Language picker — two variants:
+ *   <LanguageSwitcher />          → full settings card (You page)
+ *   <LanguageSwitcher compact />  → inline flag buttons for headers
  */
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({ compact }: { compact?: boolean }) {
   const { locale, setLocale, t } = useT();
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-1">
+        {LOCALES.map((loc) => {
+          const active = loc === locale;
+          return (
+            <button
+              key={loc}
+              type="button"
+              onClick={() => setLocale(loc as Locale)}
+              title={LOCALE_LABELS[loc]}
+              className={`flex items-center justify-center w-7 h-7 rounded-lg border transition text-base leading-none ${
+                active
+                  ? "border-purple-500/50 bg-purple-500/15 text-purple-200"
+                  : "border-white/5 bg-transparent text-zinc-400 hover:border-white/20 hover:text-white"
+              }`}
+            >
+              {LOCALE_FLAGS[loc]}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-white/5 bg-surface-card mb-4 px-5 py-4">

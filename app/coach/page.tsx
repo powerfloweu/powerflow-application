@@ -413,10 +413,10 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
       {/* Affirmations */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <p className="font-saira text-[10px] text-zinc-400">Affirmations</p>
+          <p className="font-saira text-[10px] text-zinc-400">{t("coach.affirmationsLabel")}</p>
           {!editingAff && (
             <button onClick={startEditAff} className="font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
-              Edit
+              {t("coach.editBtn")}
             </button>
           )}
         </div>
@@ -427,7 +427,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
                 key={i}
                 value={affDrafts[i]}
                 onChange={(e) => { const d = [...affDrafts] as [string,string,string]; d[i] = e.target.value; setAffDrafts(d); }}
-                placeholder={`Affirmation ${i + 1}`}
+                placeholder={t("coach.affirmationPlaceholder").replace("{n}", String(i + 1))}
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-purple-400/50"
               />
             ))}
@@ -436,7 +436,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
                 {saving ? t("coach.savingNote") : t("coach.saveNote")}
               </button>
               <button onClick={() => setEditingAff(false)} className="font-saira text-[10px] text-zinc-300 hover:text-zinc-300 transition">
-                Cancel
+                {t("coach.cancelBtn")}
               </button>
             </div>
           </div>
@@ -450,17 +450,17 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
             ))}
           </ol>
         ) : (
-          <p className="font-saira text-sm text-zinc-400">Not set</p>
+          <p className="font-saira text-sm text-zinc-400">{t("coach.notSetShort")}</p>
         )}
       </div>
 
       {/* Viz keywords */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <p className="font-saira text-[10px] text-zinc-400">SBD cue words</p>
+          <p className="font-saira text-[10px] text-zinc-400">{t("coach.sbdCueWords")}</p>
           {!editingKw && (
             <button onClick={startEditKw} className="font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
-              Edit
+              {t("coach.editBtn")}
             </button>
           )}
         </div>
@@ -468,11 +468,11 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
           <div className="space-y-2">
             {(["squat", "bench", "deadlift"] as const).map((lift) => (
               <div key={lift}>
-                <label className="block font-saira text-[10px] text-zinc-400 mb-1 capitalize">{lift} cues <span className="text-zinc-500">(comma-separated)</span></label>
+                <label className="block font-saira text-[10px] text-zinc-400 mb-1 capitalize">{t("coach.liftCuesLabel").replace("{lift}", lift)} <span className="text-zinc-500">{t("coach.cuesSeparatorHint")}</span></label>
                 <input
                   value={kwDrafts[lift]}
                   onChange={(e) => setKwDrafts((p) => ({ ...p, [lift]: e.target.value }))}
-                  placeholder={`e.g. locked, chest up`}
+                  placeholder={t("coach.cueWordsPlaceholder")}
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-purple-400/50"
                 />
               </div>
@@ -482,7 +482,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
                 {saving ? t("coach.savingNote") : t("coach.saveNote")}
               </button>
               <button onClick={() => setEditingKw(false)} className="font-saira text-[10px] text-zinc-300 hover:text-zinc-300 transition">
-                Cancel
+                {t("coach.cancelBtn")}
               </button>
             </div>
           </div>
@@ -503,7 +503,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
                       ))}
                     </div>
                   ) : (
-                    <p className="font-saira text-xs text-zinc-500">Not set</p>
+                    <p className="font-saira text-xs text-zinc-500">{t("coach.notSetShort")}</p>
                   )}
                 </div>
               );
@@ -543,7 +543,7 @@ function CheckinsTab({
   if (!rows.length) {
     return (
       <p className="font-saira text-sm text-zinc-400 py-6 text-center">
-        No check-ins submitted yet.
+        {t("coach.noCheckinsYet")}
       </p>
     );
   }
@@ -583,7 +583,7 @@ function CheckinsTab({
               <div className="flex items-center gap-2 min-w-0">
                 {isMonthly && (
                   <span className="flex-shrink-0 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-saira text-[8px] font-bold uppercase tracking-[0.18em] text-amber-400">
-                    Monthly
+                    {t("coach.monthlyBadge")}
                   </span>
                 )}
                 <span className="font-saira text-[11px] font-semibold text-zinc-300 truncate">{label}</span>
@@ -617,19 +617,19 @@ function CheckinsTab({
                 {/* Weekly reflection fields */}
                 {ci.biggest_win && (
                   <div>
-                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Biggest win</p>
+                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">{t("coach.ciBiggestWin")}</p>
                     <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_win}</p>
                   </div>
                 )}
                 {ci.biggest_challenge && (
                   <div>
-                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Main challenge</p>
+                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">{t("coach.ciMainChallenge")}</p>
                     <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_challenge}</p>
                   </div>
                 )}
                 {ci.focus_next_week && (
                   <div>
-                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Focus next week</p>
+                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">{t("coach.ciFocusNextWeek")}</p>
                     <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.focus_next_week}</p>
                   </div>
                 )}
@@ -641,30 +641,30 @@ function CheckinsTab({
                     <>
                       <div className="flex items-center gap-2 pt-1">
                         <div className="flex-1 h-px bg-amber-500/20" />
-                        <span className="font-saira text-[8px] font-bold uppercase tracking-[0.2em] text-amber-400/60">Monthly</span>
+                        <span className="font-saira text-[8px] font-bold uppercase tracking-[0.2em] text-amber-400/60">{t("coach.monthlyDivider")}</span>
                         <div className="flex-1 h-px bg-amber-500/20" />
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-center">
                           <p className={`font-saira text-lg font-extrabold tabular-nums ${ratingColor(mc.overall_progress)}`}>{mc.overall_progress}</p>
-                          <p className="font-saira text-[9px] uppercase tracking-[0.12em] text-zinc-400 leading-tight">Progress</p>
+                          <p className="font-saira text-[9px] uppercase tracking-[0.12em] text-zinc-400 leading-tight">{t("coach.ciProgress")}</p>
                         </div>
                       </div>
                       {mc.biggest_breakthrough && (
                         <div>
-                          <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">Biggest breakthrough</p>
+                          <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">{t("coach.ciBiggestBreakthrough")}</p>
                           <p className="font-saira text-xs text-zinc-300 leading-relaxed">{mc.biggest_breakthrough}</p>
                         </div>
                       )}
                       {mc.key_lesson && (
                         <div>
-                          <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">Key lesson</p>
+                          <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">{t("coach.ciKeyLesson")}</p>
                           <p className="font-saira text-xs text-zinc-300 leading-relaxed">{mc.key_lesson}</p>
                         </div>
                       )}
                       {mc.next_month_intention && (
                         <div>
-                          <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">Intention for next month</p>
+                          <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">{t("coach.ciNextMonthIntention")}</p>
                           <p className="font-saira text-xs text-zinc-300 leading-relaxed">{mc.next_month_intention}</p>
                         </div>
                       )}
@@ -701,7 +701,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
   if (!hasBio && !hasLifts && !hasSelfRatings && !hasMindset && !hasGoalsSection) {
     return (
       <p className="font-saira text-sm text-zinc-400 py-6 text-center">
-        Onboarding not completed yet — no profile data to show.
+        {t("coach.onboardingIncomplete")}
       </p>
     );
   }
@@ -712,7 +712,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
       {/* Mental tools */}
       <div>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-400 mb-3">
-          Mental tools
+          {t("coach.sectionMentalTools")}
         </p>
         <MentalToolsEditor profile={profile} />
       </div>
@@ -721,7 +721,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
       {hasBio && (
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
-            Personal &amp; sport
+            {t("coach.sectionPersonalSport")}
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <ProfileField label={t("coach.pfGender")} value={profile.gender} />
@@ -744,7 +744,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
       {hasLifts && (
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
-            Lifts
+            {t("coach.sectionLifts")}
           </p>
           <div className="space-y-2">
             {(
@@ -765,7 +765,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
                   </span>
                   {goal && (
                     <span className="font-saira text-[10px] text-zinc-300">
-                      → goal: {goal} kg
+                      {t("coach.liftGoal").replace("{n}", String(goal))}
                     </span>
                   )}
                 </div>
@@ -778,7 +778,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
       {goals.length > 0 && (
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
-            Mental goals (next 3 months)
+            {t("coach.sectionMentalGoals")}
           </p>
           <div className="space-y-2">
             {goals.map((g, i) => (
@@ -797,7 +797,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
       {hasSelfRatings && (
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
-            Self-assessment (athlete&apos;s own rating, 1–10)
+            {t("coach.sectionSelfAssessment")}
           </p>
           <div className="space-y-3">
             <ScaleBar label={t("coach.pfConfidenceReg")}    value={profile.self_confidence_reg} />
@@ -813,7 +813,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
       {hasMindset && (
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
-            Mindset assessment
+            {t("coach.sectionMindsetAssessment")}
           </p>
           <div className="space-y-4">
             <ProfileField label={t("coach.pfMainBarrier")}         value={profile.main_barrier} />
@@ -828,7 +828,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
       {(profile.expectations || profile.previous_tools || profile.anything_else) && (
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
-            Goals &amp; context
+            {t("coach.sectionGoalsContext")}
           </p>
           <div className="space-y-4">
             <ProfileField label={t("coach.pfExpectations")}    value={profile.expectations} />
@@ -895,11 +895,11 @@ function PatternAnalysis({ client }: { client: Client }) {
             <span className="text-[10px] text-purple-300">✦</span>
           </div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-300">
-            Pattern Analysis
+            {t("coach.patternAnalysisTitle")}
           </p>
         </div>
         <p className="font-saira text-xs leading-relaxed text-zinc-300">
-          Insufficient data — at least 5 entries are needed for pattern analysis.
+          {t("coach.patternInsufficientData")}
         </p>
       </div>
     );
@@ -922,16 +922,16 @@ function PatternAnalysis({ client }: { client: Client }) {
     const allRates  = trajectory.map((t) => t.rate);
     const spread = Math.max(...allRates) - Math.min(...allRates);
     if (spread >= 30) {
-      trajectoryLabel = "⚡ Volatile";
+      trajectoryLabel = t("coach.trajectoryVolatile");
       trajectoryColor = "text-amber-300";
     } else if (last > first + 10) {
-      trajectoryLabel = "↗ Improving";
+      trajectoryLabel = t("coach.trajectoryImproving");
       trajectoryColor = "text-emerald-300";
     } else if (last < first - 10) {
-      trajectoryLabel = "↘ Declining";
+      trajectoryLabel = t("coach.trajectoryDeclining");
       trajectoryColor = "text-rose-300";
     } else {
-      trajectoryLabel = "→ Stable";
+      trajectoryLabel = t("coach.trajectoryStable");
       trajectoryColor = "text-zinc-300";
     }
     void mid; void variance;
@@ -957,31 +957,31 @@ function PatternAnalysis({ client }: { client: Client }) {
           <span className="text-[10px] text-purple-300">✦</span>
         </div>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-300">
-          Pattern Analysis
+          {t("coach.patternAnalysisTitle")}
         </p>
-        <span className="font-saira text-[9px] text-zinc-400 ml-auto">{entryCount} entries</span>
+        <span className="font-saira text-[9px] text-zinc-400 ml-auto">{t("coach.entryCount").replace("{n}", String(entryCount))}</span>
       </div>
 
       {/* Psychological profile */}
       {primaryTheme && (
         <div>
           <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-300 mb-2">
-            Psychological profile
+            {t("coach.psychProfile")}
           </p>
           <div className="space-y-1.5">
             <div className="flex items-start gap-2">
-              <span className="font-saira text-[10px] text-purple-400 font-semibold w-14 flex-shrink-0 pt-0.5">Primary</span>
+              <span className="font-saira text-[10px] text-purple-400 font-semibold w-14 flex-shrink-0 pt-0.5">{t("coach.profilePrimary")}</span>
               <div>
                 <span className="font-saira text-xs text-zinc-200 font-semibold">{primaryTheme.label}</span>
                 {THEME_DESC_KEYS[primaryTheme.label] && (
                   <span className="font-saira text-[10px] text-zinc-300 ml-2">— {t(THEME_DESC_KEYS[primaryTheme.label])}</span>
                 )}
-                <span className="font-saira text-[10px] text-zinc-400 ml-2">({primaryTheme.count} mentions)</span>
+                <span className="font-saira text-[10px] text-zinc-400 ml-2">{t("coach.mentionCount").replace("{n}", String(primaryTheme.count))}</span>
               </div>
             </div>
             {secondaryTheme && (
               <div className="flex items-start gap-2">
-                <span className="font-saira text-[10px] text-zinc-300 w-14 flex-shrink-0 pt-0.5">Secondary</span>
+                <span className="font-saira text-[10px] text-zinc-300 w-14 flex-shrink-0 pt-0.5">{t("coach.profileSecondary")}</span>
                 <div>
                   <span className="font-saira text-xs text-zinc-400">{secondaryTheme.label}</span>
                   {THEME_DESC_KEYS[secondaryTheme.label] && (
@@ -998,7 +998,7 @@ function PatternAnalysis({ client }: { client: Client }) {
       {hasTrajectory && trajectory.length === 3 && (
         <div>
           <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-300 mb-2">
-            Sentiment trajectory
+            {t("coach.sentimentTrajectory")}
           </p>
           <div className="flex items-end gap-3 mb-1.5">
             {trajectory.map((pt) => (
@@ -1023,7 +1023,7 @@ function PatternAnalysis({ client }: { client: Client }) {
       {/* Conversation starters */}
       <div>
         <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-300 mb-2">
-          Coaching conversation starters
+          {t("coach.conversationStarters")}
         </p>
         <ul className="space-y-1.5">
           {starterKeys.slice(0, 3).map((sk, i) => (
@@ -1040,15 +1040,17 @@ function PatternAnalysis({ client }: { client: Client }) {
 
 // ── Coach Notes tab ────────────────────────────────────────────────────────────
 
-function timeSince(iso: string): string {
+type TFn = (key: string) => string;
+
+function timeSince(iso: string, t: TFn): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const diffMin = Math.floor(diffMs / 60000);
   const diffH   = Math.floor(diffMs / 3600000);
   const diffD   = Math.floor(diffMs / 86400000);
-  if (diffMin < 1)  return "just now";
-  if (diffMin < 60) return `${diffMin} min ago`;
-  if (diffH   < 24) return `${diffH}h ago`;
-  return `${diffD}d ago`;
+  if (diffMin < 1)  return t("coach.timeSinceJustNow");
+  if (diffMin < 60) return t("coach.timeSinceMinAgo").replace("{n}", String(diffMin));
+  if (diffH   < 24) return t("coach.timeSinceHAgo").replace("{n}", String(diffH));
+  return t("coach.timeSinceDayAgo").replace("{n}", String(diffD));
 }
 
 function NotesTab({
@@ -1078,9 +1080,9 @@ function NotesTab({
         {saving ? (
           <span className="text-amber-400">{t("coach.savingNote")}</span>
         ) : savedAt ? (
-          <span className="text-emerald-400">✓ Saved · {timeSince(savedAt)}</span>
+          <span className="text-emerald-400">{t("coach.savedAtTime").replace("{time}", timeSince(savedAt, t))}</span>
         ) : (
-          <span>Auto-saves after you stop typing</span>
+          <span>{t("coach.autoSavesHint")}</span>
         )}
       </div>
     </div>
@@ -1109,11 +1111,11 @@ function CoachTrainingCard({ entry }: { entry: TrainingEntry }) {
       <div className="flex items-center gap-2 mb-3">
         <span className="text-sm">🏋️</span>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300">
-          Training day log
+          {t("coach.trainingDayLogTitle")}
         </p>
         <span className="font-saira text-[10px] text-zinc-400 ml-1">{dateStr}</span>
         {entry.mood_rating != null && (
-          <span className="ml-auto font-saira text-[10px] text-zinc-300">Mood {entry.mood_rating}/10</span>
+          <span className="ml-auto font-saira text-[10px] text-zinc-300">{t("coach.moodRating").replace("{n}", String(entry.mood_rating))}</span>
         )}
       </div>
       <div className="space-y-2.5">
@@ -1182,7 +1184,7 @@ function EntryFeedbackSection({
             ✎
           </button>
         </div>
-        <p className="font-saira text-[9px] text-zinc-400 mt-0.5">Coach note · {timeSince(localFeedback.created_at)}</p>
+        <p className="font-saira text-[9px] text-zinc-400 mt-0.5">{t("coach.coachNoteWithTime").replace("{time}", timeSince(localFeedback.created_at, t))}</p>
       </div>
     );
   }
@@ -1194,7 +1196,7 @@ function EntryFeedbackSection({
         onClick={() => setOpen(true)}
         className="mt-2 font-saira text-[10px] text-zinc-400 hover:text-purple-300 transition"
       >
-        + Add coach note
+        {t("coach.addCoachNote")}
       </button>
     );
   }
@@ -1226,7 +1228,7 @@ function EntryFeedbackSection({
           onClick={() => { setOpen(false); setDraft(existing?.content ?? ""); }}
           className="font-saira text-[10px] text-zinc-400 hover:text-zinc-400 transition"
         >
-          Cancel
+          {t("coach.cancelBtn")}
         </button>
       </div>
     </div>
@@ -1286,7 +1288,7 @@ function TrainingFeedbackSection({
             ✎
           </button>
         </div>
-        <p className="font-saira text-[9px] text-zinc-400 mt-0.5">Coach note</p>
+        <p className="font-saira text-[9px] text-zinc-400 mt-0.5">{t("coach.coachNoteLabel")}</p>
       </div>
     );
   }
@@ -1298,7 +1300,7 @@ function TrainingFeedbackSection({
         onClick={() => setOpen(true)}
         className="mt-2 font-saira text-[10px] text-zinc-400 hover:text-purple-300 transition"
       >
-        + Add coach note
+        {t("coach.addCoachNote")}
       </button>
     );
   }
@@ -1330,7 +1332,7 @@ function TrainingFeedbackSection({
           onClick={() => { setOpen(false); setDraft(existing ?? ""); }}
           className="font-saira text-[10px] text-zinc-400 hover:text-zinc-400 transition"
         >
-          Cancel
+          {t("coach.cancelBtn")}
         </button>
       </div>
     </div>
@@ -1463,7 +1465,7 @@ function ClientCard({
     if (la.key === "never") return t("coach.lastActiveNever");
     if (la.key === "justNow") return t("coach.lastActiveJustNow");
     if (la.key === "yesterday") return t("coach.lastActiveYesterday");
-    if (la.key === "hoursAgo") return `${la.h}h ago`;
+    if (la.key === "hoursAgo") return t("coach.hoursAgo").replace("{h}", String(la.h));
     if (la.key === "daysAgo") return t("coach.lastActiveDaysAgo").replace("{n}", String(la.d));
     return "";
   };
@@ -1544,7 +1546,7 @@ function ClientCard({
         <div className="flex-1 min-w-0">
           <p className="font-saira text-sm font-semibold text-zinc-100">{client.name}</p>
           <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
-            Last active {renderLastActive(client.lastActive)} · {client.entriesThisWeek} entries this week
+            {t("coach.lastActiveMeta").replace("{la}", renderLastActive(client.lastActive)).replace("{n}", String(client.entriesThisWeek))}
           </p>
         </div>
 
@@ -1559,7 +1561,7 @@ function ClientCard({
               client.positiveRate >= 60 ? "text-emerald-300" :
               client.positiveRate >= 40 ? "text-amber-300" : "text-rose-300"
             }`}>{client.positiveRate}%</p>
-            <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400">positive</p>
+            <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400">{t("coach.positiveLabel")}</p>
           </div>
 
           <span className={`font-saira text-lg font-bold ${TREND_COLOR[client.trend]}`}>
@@ -2442,7 +2444,7 @@ function CoachHeader({ profile }: { profile: CoachProfile }) {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <LanguageSwitcher />
+        <LanguageSwitcher compact />
         <Link
           href="/guide"
           className="font-saira text-[10px] text-zinc-300 hover:text-purple-300 transition"
@@ -2493,7 +2495,7 @@ function CompactAthleteRow({
     if (la.key === "never") return t("coach.lastActiveNever");
     if (la.key === "justNow") return t("coach.lastActiveJustNow");
     if (la.key === "yesterday") return t("coach.lastActiveYesterday");
-    if (la.key === "hoursAgo") return `${la.h}h ago`;
+    if (la.key === "hoursAgo") return t("coach.hoursAgo").replace("{h}", String(la.h));
     if (la.key === "daysAgo") return t("coach.lastActiveDaysAgo").replace("{n}", String(la.d));
     return "";
   };
@@ -2530,7 +2532,7 @@ function CompactAthleteRow({
           <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{client.name}</p>
           {client.isCoach && (
             <span className="flex-shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-saira text-[9px] uppercase tracking-wider text-emerald-400">
-              Coach
+              {t("coach.roleCoach")}
             </span>
           )}
         </div>
@@ -2871,7 +2873,7 @@ export default function CoachPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
-                <LanguageSwitcher />
+                <LanguageSwitcher compact />
                 <Link href="/today" className="font-saira text-xs text-emerald-600 hover:text-emerald-400 transition">Athlete profile</Link>
                 <Link href="/guide" className="font-saira text-xs text-zinc-400 hover:text-purple-300 transition">Guide</Link>
                 <a href="/auth/sign-out" className="font-saira text-xs text-zinc-500 hover:text-zinc-400 transition">Sign out</a>
@@ -3026,20 +3028,23 @@ export default function CoachPage() {
                     <h2 className="font-saira text-xl font-bold text-white leading-none">{selectedClient.name}</h2>
                     {selectedClient.isCoach && (
                       <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-saira text-[10px] uppercase tracking-wider text-emerald-400">
-                        Coach
+                        {t("coach.roleCoach")}
                       </span>
                     )}
                   </div>
                   <p className="font-saira text-sm text-zinc-300 mt-1">
-                    Last active {(() => {
-                      const la = selectedClient.lastActive;
-                      if (la.key === "never") return t("coach.lastActiveNever");
-                      if (la.key === "justNow") return t("coach.lastActiveJustNow");
-                      if (la.key === "yesterday") return t("coach.lastActiveYesterday");
-                      if (la.key === "hoursAgo") return `${la.h}h ago`;
-                      if (la.key === "daysAgo") return t("coach.lastActiveDaysAgo").replace("{n}", String(la.d));
-                      return "";
-                    })()} · {selectedClient.entriesThisWeek} entries this week · {selectedClient.positiveRate}% positive
+                    {t("coach.lastActiveDetail")
+                      .replace("{la}", (() => {
+                        const la = selectedClient.lastActive;
+                        if (la.key === "never") return t("coach.lastActiveNever");
+                        if (la.key === "justNow") return t("coach.lastActiveJustNow");
+                        if (la.key === "yesterday") return t("coach.lastActiveYesterday");
+                        if (la.key === "hoursAgo") return t("coach.hoursAgo").replace("{h}", String(la.h));
+                        if (la.key === "daysAgo") return t("coach.lastActiveDaysAgo").replace("{n}", String(la.d));
+                        return "";
+                      })())
+                      .replace("{n}", String(selectedClient.entriesThisWeek))
+                      .replace("{pct}", String(selectedClient.positiveRate))}
                   </p>
                 </div>
                 {selectedClient.flag === "attention" && (
