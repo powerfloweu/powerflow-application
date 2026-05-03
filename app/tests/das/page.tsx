@@ -107,6 +107,21 @@ export default function DasTestPage() {
   React.useEffect(() => {
     setHydrated(true);
     setStartedAt(new Date().toISOString());
+    // Auto-prefill from logged-in profile and skip intro
+    fetch("/api/me")
+      .then(r => r.ok ? r.json() : null)
+      .then(p => {
+        if (!p) return;
+        const name = (p.display_name ?? "").split(" ")[0].trim();
+        const mail = p.email ?? "";
+        if (name && mail) {
+          setFirstName(name);
+          setEmail(mail);
+          if (p.language === "de" || p.language === "hu") setLang(p.language as Lang);
+          setPage(1);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const totalItemPages = 5; // 35 items / 7 per page

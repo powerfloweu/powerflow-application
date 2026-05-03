@@ -137,6 +137,20 @@ export default function SelfAwarenessTestPage() {
       /* ignore */
     }
     setHydrated(true);
+    // Auto-prefill from logged-in profile and skip intro
+    fetch("/api/me")
+      .then(r => r.ok ? r.json() : null)
+      .then(p => {
+        if (!p) return;
+        const name = (p.display_name ?? "").split(" ")[0].trim();
+        const mail = p.email ?? "";
+        if (name && mail) {
+          const lang: Lang = (p.language === "de" || p.language === "hu") ? p.language : "en";
+          setState(s => ({ ...s, firstName: name, email: mail, lang }));
+          setPage(1);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Persist on change

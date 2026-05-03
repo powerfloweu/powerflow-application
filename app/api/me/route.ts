@@ -132,6 +132,7 @@ export async function GET() {
   // Normalise: mental_goals may come back as null from DB
   return NextResponse.json({
     ...row,
+    email: user.email ?? null,
     mental_goals: row.mental_goals ?? [],
     plan_tier: planTier,
     coach_tts_voice_id,
