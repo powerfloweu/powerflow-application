@@ -120,21 +120,35 @@ const NEGATIVE_SIGNALS = [
 // (fires in "don't trust my form"), "better" (fires in "could be better"),
 // "hit" (fires in "didn't hit"), "best" (fires in "not my best").
 const POSITIVE_SIGNALS = [
-  "great session", "great training", "great day",
-  "amazing session", "amazing training", "felt amazing",
-  "solid session", "solid training", "felt solid",
-  "feeling strong", "felt strong", "feeling confident", "felt confident",
-  "feeling great", "felt great", "feeling good today",
+  // Session quality — specific compound phrases
+  "great session", "great training", "great day", "great workout", "great lift", "great week",
+  "amazing session", "amazing training", "amazing workout", "felt amazing",
+  "solid session", "solid training", "solid workout", "solid lift", "solid week",
+  "strong session", "strong workout", "strong week", "strong performance",
+  // Feeling / state — present & past tense variants
+  "feeling strong", "felt strong", "feels strong", "feel strong",
+  "feeling confident", "felt confident", "feels confident",
+  "feeling great", "felt great", "feels great",
+  "feeling good today", "feeling good about", "felt good today",
+  "feeling energized", "felt energized", "feels energized", "full of energy",
+  "feeling motivated", "felt motivated",
+  "feeling powerful", "felt powerful",
+  "feeling ready", "felt ready", "feels ready",
+  // PRs and performance peaks
   "new pr", "hit a pr", "set a pr", "personal record", "personal best",
+  "lifetime pr", "all-time pr", "all time pr",
+  // Execution / flow
   "nailed it", "nailed the", "crushed it", "crushed the",
-  "locked in", "dialled in", "dialed in", "in the zone",
-  "motivated", "excited for", "pumped for", "pumped up",
-  "proud of", "feeling proud",
-  "progressing", "making progress", "good progress",
-  "can't wait for", "looking forward to",
-  "love training", "love this sport", "love the process",
+  "smashed it", "killed it", "killing it",
+  "locked in", "dialled in", "dialed in", "in the zone", "on fire",
   "everything clicked", "everything felt right",
-  "stoked", "fantastic",
+  // Motivation / emotion
+  "motivated", "excited for", "pumped for", "pumped up", "so pumped",
+  "stoked", "fantastic", "proud of", "feeling proud",
+  "love training", "love this sport", "love the process",
+  "can't wait for", "looking forward to",
+  // Progress
+  "progressing", "making progress", "good progress",
 ];
 
 export function detectSentiment(text: string): Sentiment {
