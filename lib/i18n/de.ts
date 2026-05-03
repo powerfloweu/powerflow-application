@@ -1110,6 +1110,7 @@ export const de: Dict = {
     emailBtn: "E-Mail",
 
     // Sort
+    sortLabel: "Sortierung",
     sortPositive: "Positiv %",
 
     // Analysis tab

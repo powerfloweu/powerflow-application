@@ -1108,6 +1108,7 @@ export const hu: Dict = {
     emailBtn: "E-mail",
 
     // Sort
+    sortLabel: "Rendezés",
     sortPositive: "Pozitív %",
 
     // Analysis tab

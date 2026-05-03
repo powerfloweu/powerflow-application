@@ -1142,6 +1142,7 @@ export const en = {
     emailBtn: "Email",
 
     // Sort
+    sortLabel: "Sort",
     sortPositive: "Positive %",
 
     // Analysis tab

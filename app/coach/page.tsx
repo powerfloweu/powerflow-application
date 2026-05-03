@@ -749,9 +749,9 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
           <div className="space-y-2">
             {(
               [
-                ["Squat",    profile.squat_current_kg,    profile.squat_goal_kg],
-                ["Bench",    profile.bench_current_kg,    profile.bench_goal_kg],
-                ["Deadlift", profile.deadlift_current_kg, profile.deadlift_goal_kg],
+                [t("you.squat"),    profile.squat_current_kg,    profile.squat_goal_kg],
+                [t("you.bench"),    profile.bench_current_kg,    profile.bench_goal_kg],
+                [t("you.deadlift"), profile.deadlift_current_kg, profile.deadlift_goal_kg],
               ] as [string, number | null, number | null][]
             )
               .filter(([, cur, goal]) => cur || goal)
@@ -1179,7 +1179,7 @@ function EntryFeedbackSection({
             type="button"
             onClick={() => { setDraft(localFeedback.content); setOpen(true); }}
             className="font-saira text-[9px] text-zinc-400 hover:text-purple-300 transition flex-shrink-0"
-            title="Edit note"
+            title={t("coach.editBtn")}
           >
             ✎
           </button>
@@ -1283,7 +1283,7 @@ function TrainingFeedbackSection({
             type="button"
             onClick={() => { setDraft(localNote); setOpen(true); }}
             className="font-saira text-[9px] text-zinc-400 hover:text-purple-300 transition flex-shrink-0"
-            title="Edit note"
+            title={t("coach.editBtn")}
           >
             ✎
           </button>
@@ -1615,7 +1615,7 @@ function ClientCard({
               <div className="space-y-5">
                 {/* Sentiment window selector */}
                 <div className="flex items-center gap-2">
-                  <span className="font-saira text-[10px] text-zinc-400 uppercase tracking-[0.18em]">Window</span>
+                  <span className="font-saira text-[10px] text-zinc-400 uppercase tracking-[0.18em]">{t("coach.windowLabel")}</span>
                   <div className="flex gap-1">
                     {([7, 30, 60] as const).map((w) => (
                       <button
@@ -1637,7 +1637,7 @@ function ClientCard({
                 {windowedThemes.length > 0 ? (
                   <div>
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
-                      Detected themes ({sentimentWindow}d)
+                      {t("coach.detectedThemes").replace("{n}", String(sentimentWindow))}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {windowedThemes.map((t) => (
@@ -1662,7 +1662,7 @@ function ClientCard({
                 {windowedTotalCount > 0 && (
                   <div className="rounded-2xl border border-white/5 bg-surface-input p-5">
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
-                      Last {sentimentWindow} days at a glance
+                      {t("coach.lastNDaysGlance").replace("{n}", String(sentimentWindow))}
                     </p>
                     <div className="grid grid-cols-3 gap-3">
                       <MiniStat label={t("coach.statEntries")} value={String(windowedTotalCount)} />
@@ -1689,7 +1689,7 @@ function ClientCard({
             {activeTab === "entries" && (
               <div className="space-y-3">
                 {activityFeed.length === 0 ? (
-                  <p className="font-saira text-sm text-zinc-400 py-4 text-center">No activity yet.</p>
+                  <p className="font-saira text-sm text-zinc-400 py-4 text-center">{t("coach.noActivityYet")}</p>
                 ) : (
                   activityFeed.map((item) =>
                     item.kind === "training" ? (
@@ -1725,7 +1725,7 @@ function ClientCard({
                 {client.testScores.das.length > 0 && (
                   <div>
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-300 mb-3">
-                      Dysfunctional Attitude Scale (DAS) — latest
+                      {t("coach.dasHeading")}
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {(() => {
@@ -1734,7 +1734,7 @@ function ClientCard({
                           <>
                             <ScoreCard label={t("coach.tsTotal")} value={`${r.total_score > 0 ? "+" : ""}${r.total_score}`} sub="of ±70" flag={r.depression_prone ? "rose" : r.total_score > 18 ? "amber" : "emerald"} />
                             <ScoreCard label={t("coach.tsDepressionProne")} value={r.depression_prone ? t("coach.tsYes") : t("coach.tsNo")} sub="" flag={r.depression_prone ? "rose" : "emerald"} />
-                            <ScoreCard label="Submitted" value={new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} sub={r.paid ? "Paid" : "Free"} flag="amber" />
+                            <ScoreCard label={t("coach.tsSubmitted")} value={new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} sub={r.paid ? t("coach.tsPaid") : t("coach.tsFree")} flag="amber" />
                           </>
                         );
                       })()}
@@ -1746,7 +1746,7 @@ function ClientCard({
                 {client.testScores.acsi.length > 0 && (
                   <div>
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-300 mb-3">
-                      Coping Skills (ACSI) — latest
+                      {t("coach.acsiHeading")}
                     </p>
                     {(() => {
                       const r = client.testScores.acsi[0];
@@ -1767,7 +1767,7 @@ function ClientCard({
                 {client.testScores.csai.length > 0 && (
                   <div>
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300 mb-3">
-                      Competitive Anxiety (CSAI) — latest
+                      {t("coach.csaiHeading")}
                     </p>
                     {(() => {
                       const r = client.testScores.csai[0];
@@ -1786,14 +1786,14 @@ function ClientCard({
                 {client.testScores.sat.length > 0 && (
                   <div>
                     <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-fuchsia-300 mb-3">
-                      Self-Awareness (SAT) — latest
+                      {t("coach.satHeading")}
                     </p>
                     {(() => {
                       const r = client.testScores.sat[0];
                       return (
                         <div className="grid grid-cols-2 gap-3">
                           <ScoreCard label={t("coach.tsTotal")} value={String(r.total_score)} sub="of 165" flag="emerald" />
-                          <ScoreCard label="Submitted" value={new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} sub={r.paid ? "Paid" : "Free"} flag="amber" />
+                          <ScoreCard label={t("coach.tsSubmitted")} value={new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} sub={r.paid ? t("coach.tsPaid") : t("coach.tsFree")} flag="amber" />
                         </div>
                       );
                     })()}
@@ -1805,7 +1805,7 @@ function ClientCard({
                  client.testScores.csai.length === 0 &&
                  client.testScores.sat.length === 0 && (
                   <p className="font-saira text-sm text-zinc-400 py-4 text-center">
-                    No tests completed yet.
+                    {t("coach.noTestsYet")}
                   </p>
                 )}
 
@@ -1840,16 +1840,16 @@ function ClientCard({
                           {isWorking ? (
                             <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin flex-shrink-0" />
                           ) : isAssigned ? (
-                            <span className="text-amber-300 flex-shrink-0">✓ Assigned</span>
+                            <span className="text-amber-300 flex-shrink-0">{t("coach.assignedBadge")}</span>
                           ) : (
-                            <span className="text-zinc-500 flex-shrink-0">+ Assign</span>
+                            <span className="text-zinc-500 flex-shrink-0">{t("coach.assignBtn")}</span>
                           )}
                         </button>
                       );
                     })}
                   </div>
                   <p className="font-saira text-[10px] text-zinc-500 mt-2">
-                    Assigned tests appear as a prompt on the athlete&apos;s Home screen.
+                    {t("coach.assignHint")}
                   </p>
                 </div>
               </div>
@@ -1870,7 +1870,7 @@ function ClientCard({
                         : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
                     }`}
                   >
-                    ← Prev
+                    {t("coach.prevWeek")}
                   </button>
                   <span className="font-saira text-[11px] font-semibold text-zinc-300">{weekLabel}</span>
                   <button
@@ -1883,7 +1883,7 @@ function ClientCard({
                         : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
                     }`}
                   >
-                    Next →
+                    {t("coach.nextWeek")}
                   </button>
                 </div>
                 <TrainingLogTab trainingThisWeek={currentWeekTraining} weekDays={offsetWeekDays} />
@@ -1927,11 +1927,11 @@ function ClientCard({
 function PromptsTab({ athleteId }: { athleteId: string }) {
   const { t } = useT();
   const DEFAULT_LABELS = [
-    "What were your primary thoughts BEFORE your top sets today?",
-    "What were your primary thoughts AFTER your top sets today?",
-    "What went really well today?",
-    "Is there anything you're frustrated with from today?",
-    "What would you like to work on in your next session?",
+    t("journal.qThoughtsBefore"),
+    t("journal.qThoughtsAfter"),
+    t("journal.qWentWell"),
+    t("journal.qFrustrations"),
+    t("journal.qNextSession"),
   ];
   const [fields, setFields]   = React.useState<string[]>(Array(5).fill(""));
   const [loaded, setLoaded]   = React.useState(false);
@@ -2137,16 +2137,16 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
       {/* Week summary */}
       <div>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-3">
-          Week Summary
+          {t("coach.weekSummaryHeading")}
         </p>
         <div className="rounded-2xl border border-white/5 bg-surface-input p-4 space-y-3">
           <div className="flex items-center justify-between text-xs font-saira">
-            <span className="text-zinc-400">Training days</span>
+            <span className="text-zinc-400">{t("coach.trainingDaysLabel")}</span>
             <span className="font-semibold text-white">{trainingDays}/7</span>
           </div>
           {avgMood !== null && (
             <div className="flex items-center justify-between text-xs font-saira">
-              <span className="text-zinc-400">Avg mood</span>
+              <span className="text-zinc-400">{t("coach.avgMoodLabel")}</span>
               <span className={`font-semibold ${
                 parseFloat(avgMood) >= 7 ? "text-emerald-300"
                 : parseFloat(avgMood) >= 5 ? "text-amber-300"
@@ -2162,7 +2162,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
       {trainingThisWeek.length > 0 && (
         <div>
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-3">
-            Daily Log
+            {t("coach.dailyLogHeading")}
           </p>
           <div className="space-y-3">
             {trainingThisWeek.map((e, idx) => {
@@ -2173,7 +2173,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
                 <div key={e.id} className="rounded-xl border border-white/5 bg-surface-input p-4">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="font-saira text-xs font-semibold text-zinc-300">
-                      Day {idx + 1} · {dayName} {dayNum}
+                      {t("coach.dayEntry").replace("{n}", String(idx + 1)).replace("{day}", dayName).replace("{date}", String(dayNum))}
                     </span>
                     <span className={`rounded-full border px-2 py-0.5 font-saira text-[10px] uppercase tracking-[0.12em] ${
                       e.is_training_day
@@ -2188,7 +2188,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
                         : e.mood_rating >= 5 ? "text-amber-400"
                         : "text-rose-400"
                       }`}>
-                        Mood: {e.mood_rating}/10
+                        {t("coach.moodEntryRating").replace("{n}", String(e.mood_rating))}
                       </span>
                     )}
                   </div>
@@ -2231,39 +2231,39 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
       {/* Weekly brief */}
       <div>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-3">
-          Weekly Brief
+          {t("coach.weeklyBriefHeading")}
         </p>
         <div className="rounded-2xl border border-white/5 bg-surface-input p-4 space-y-2">
           <BriefLine>
-            Mood trend: <span className={
+            {t("coach.moodTrendLabel")} <span className={
               moodTrend === "up" ? "text-emerald-300"
               : moodTrend === "down" ? "text-rose-300"
               : "text-zinc-400"
-            }>{moodTrend === "up" ? "↑ Up" : moodTrend === "down" ? "↓ Down" : "→ Flat"}</span>
+            }>{moodTrend === "up" ? t("coach.moodTrendUp") : moodTrend === "down" ? t("coach.moodTrendDown") : t("coach.moodTrendFlat")}</span>
           </BriefLine>
           <BriefLine>
-            Training days: <span className="text-zinc-200 font-semibold">{trainingDays} this week</span>
+            {t("coach.trainingDaysThisWeek").replace("{n}", String(trainingDays))}
           </BriefLine>
           {beforeTexts.length > 0 && (
             <BriefLine>
-              Pre-session themes:{" "}
+              {t("coach.preSessionThemes")}{" "}
               <span className="text-zinc-300">{extractTopics(beforeTexts).join(", ") || "—"}</span>
             </BriefLine>
           )}
           {afterTexts.length > 0 && (
             <BriefLine>
-              Post-session themes:{" "}
+              {t("coach.postSessionThemes")}{" "}
               <span className="text-zinc-300">{extractTopics(afterTexts).join(", ") || "—"}</span>
             </BriefLine>
           )}
           {nextTexts.length > 0 && (
             <BriefLine>
-              Recurring focus:{" "}
+              {t("coach.recurringFocus")}{" "}
               <span className="text-zinc-300">{extractTopics(nextTexts).join(", ") || "—"}</span>
             </BriefLine>
           )}
           {trainingThisWeek.length === 0 && (
-            <p className="font-saira text-xs text-zinc-400">No training entries logged this week.</p>
+            <p className="font-saira text-xs text-zinc-400">{t("coach.noTrainingEntries")}</p>
           )}
         </div>
       </div>
@@ -2343,13 +2343,18 @@ function SummaryTile({ value, label, color, dot }: { value: string; label: strin
 // ── Attention alerts banner ────────────────────────────────────────────────────
 
 function AttentionBanner({ attentionAthletes }: { attentionAthletes: Client[] }) {
+  const { t } = useT();
   if (!attentionAthletes.length) return null;
+  const n = attentionAthletes.length;
+  const bannerLabel = n > 1
+    ? t("coach.athletesNeedAttentionPlural").replace("{n}", String(n))
+    : t("coach.athletesNeedAttention").replace("{n}", String(n));
   return (
     <div className="mb-6 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-rose-400">&#9888;</span>
         <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-rose-300">
-          {attentionAthletes.length} athlete{attentionAthletes.length > 1 ? "s" : ""} need attention
+          {bannerLabel}
         </p>
       </div>
       <div className="flex flex-col gap-2">
@@ -2360,13 +2365,13 @@ function AttentionBanner({ attentionAthletes }: { attentionAthletes: Client[] })
                 {a.displayName[0]}
               </span>
               <span className="font-saira text-xs text-zinc-300">{a.displayName}</span>
-              <span className="font-saira text-[10px] text-rose-400">{a.positiveRate}% positive · {a.entries7d} entries this week</span>
+              <span className="font-saira text-[10px] text-rose-400">{t("coach.athletePositiveEntries").replace("{pct}", String(a.positiveRate)).replace("{n}", String(a.entries7d))}</span>
             </div>
             <a
               href={`mailto:?subject=Checking in — ${a.displayName}&body=Hi ${a.displayName.split(" ")[0]},%0A%0AI noticed you've had a tough week. Wanted to check in — how are you doing?%0A%0ABest`}
               className="font-saira text-[10px] uppercase tracking-[0.14em] text-rose-400 border border-rose-500/20 rounded-lg px-3 py-1 hover:bg-rose-500/10 transition"
             >
-              Email
+              {t("coach.emailBtn")}
             </a>
           </div>
         ))}
@@ -2397,7 +2402,7 @@ function InvitePanel({ coachCode }: { coachCode: string }) {
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-0">
           <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-300 mb-1">
-            Your athlete invite link
+            {t("coach.inviteLabel")}
           </p>
           <p className="font-saira text-xs text-zinc-400 font-mono truncate">{url}</p>
         </div>
@@ -2414,7 +2419,7 @@ function InvitePanel({ coachCode }: { coachCode: string }) {
         </button>
       </div>
       <p className="mt-2 font-saira text-[10px] text-zinc-400">
-        Share this link with your athletes. They sign in with Google and their journal is linked to your dashboard automatically.
+        {t("coach.inviteHint")}
       </p>
     </div>
   );
@@ -2423,6 +2428,7 @@ function InvitePanel({ coachCode }: { coachCode: string }) {
 // ── Coach header ───────────────────────────────────────────────────────────────
 
 function CoachHeader({ profile }: { profile: CoachProfile }) {
+  const { t } = useT();
   return (
     <div className="mb-6 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
@@ -2440,7 +2446,7 @@ function CoachHeader({ profile }: { profile: CoachProfile }) {
         )}
         <div>
           <p className="font-saira text-xs font-semibold text-zinc-200">{profile.display_name}</p>
-          <p className="font-saira text-[10px] text-zinc-400">Coach</p>
+          <p className="font-saira text-[10px] text-zinc-400">{t("coach.roleCoach")}</p>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -2449,13 +2455,13 @@ function CoachHeader({ profile }: { profile: CoachProfile }) {
           href="/guide"
           className="font-saira text-[10px] text-zinc-300 hover:text-purple-300 transition"
         >
-          Guide
+          {t("coach.guideLink")}
         </Link>
         <a
           href="/auth/sign-out"
           className="font-saira text-[10px] text-zinc-500 hover:text-zinc-400 transition underline underline-offset-2"
         >
-          Sign out
+          {t("coach.signOut")}
         </a>
       </div>
     </div>
@@ -2733,15 +2739,15 @@ export default function CoachPage() {
                 PowerFlow · Coach
               </p>
               <h1 className="mt-2 font-saira text-3xl font-extrabold uppercase tracking-[0.12em]">
-                Athlete Overview
+                {t("coach.pageHeading")}
               </h1>
               <p className="mt-3 font-saira text-sm text-zinc-400 max-w-xl">
-                Monitor your athletes&apos; mental state, self-talk patterns, and test results in one place.
+                {t("coach.pageSubtitle")}
               </p>
             </div>
             <div className="flex gap-3 self-start mt-1">
               <Link href="/tests" className="rounded-full border border-white/10 px-4 py-2 font-saira text-[11px] text-zinc-400 hover:border-purple-400/50 hover:text-zinc-200 transition">
-                Tests
+                {t("coach.testsLink")}
               </Link>
             </div>
           </div>
@@ -2769,9 +2775,9 @@ export default function CoachPage() {
           {!error && clients.length === 0 && (
             <div className="rounded-3xl border border-white/5 bg-surface-alt p-14 text-center mb-8">
               <p className="font-saira text-3xl mb-4">&#128101;</p>
-              <p className="font-saira text-sm font-semibold text-zinc-300 mb-2">No athletes connected yet</p>
+              <p className="font-saira text-sm font-semibold text-zinc-300 mb-2">{t("coach.noAthletesTitle")}</p>
               <p className="font-saira text-xs text-zinc-400 max-w-xs mx-auto mb-6">
-                Share your invite link above with athletes. Once they accept and log in, their journal and test data will appear here.
+                {t("coach.noAthletesBody")}
               </p>
               {profile?.coach_code && (
                 <p className="font-saira text-xs text-purple-400 font-mono">/join/{profile.coach_code}</p>
@@ -2790,10 +2796,10 @@ export default function CoachPage() {
                 className="rounded-xl border border-zinc-700/70 bg-surface-section px-4 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30 w-52"
               />
               <div className="flex gap-1.5 ml-auto">
-                <span className="font-saira text-[10px] text-zinc-400 self-center mr-1 uppercase tracking-[0.18em]">Sort</span>
+                <span className="font-saira text-[10px] text-zinc-400 self-center mr-1 uppercase tracking-[0.18em]">{t("coach.sortLabel")}</span>
                 {([
                   { key: "flag",     label: t("coach.sortPriority") },
-                  { key: "positive", label: "Positive %" },
+                  { key: "positive", label: t("coach.sortPositive") },
                   { key: "entries",  label: t("coach.sortActivity") },
                   { key: "name",     label: t("coach.sortName") },
                 ] as { key: SortKey; label: string }[]).map((s) => (
@@ -2833,7 +2839,7 @@ export default function CoachPage() {
               />
             ))}
             {clients.length > 0 && filtered.length === 0 && (
-              <p className="font-saira text-sm text-zinc-400 text-center py-10">No athletes match your search.</p>
+              <p className="font-saira text-sm text-zinc-400 text-center py-10">{t("coach.noSearchMatch")}</p>
             )}
           </div>
 
@@ -2869,14 +2875,14 @@ export default function CoachPage() {
                 )}
                 <div className="min-w-0">
                   <p className="font-saira text-sm font-semibold text-zinc-200 truncate">{profile.display_name}</p>
-                  <p className="font-saira text-xs text-zinc-400">Coach</p>
+                  <p className="font-saira text-xs text-zinc-400">{t("coach.roleCoach")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 <LanguageSwitcher compact />
-                <Link href="/today" className="font-saira text-xs text-emerald-600 hover:text-emerald-400 transition">Athlete profile</Link>
-                <Link href="/guide" className="font-saira text-xs text-zinc-400 hover:text-purple-300 transition">Guide</Link>
-                <a href="/auth/sign-out" className="font-saira text-xs text-zinc-500 hover:text-zinc-400 transition">Sign out</a>
+                <Link href="/today" className="font-saira text-xs text-emerald-600 hover:text-emerald-400 transition">{t("coach.athleteProfileLink")}</Link>
+                <Link href="/guide" className="font-saira text-xs text-zinc-400 hover:text-purple-300 transition">{t("coach.guideLink")}</Link>
+                <a href="/auth/sign-out" className="font-saira text-xs text-zinc-500 hover:text-zinc-400 transition">{t("coach.signOut")}</a>
               </div>
             </div>
           )}
@@ -2884,7 +2890,7 @@ export default function CoachPage() {
           {/* Invite link (compact) */}
           {profile?.coach_code && (
             <div className="flex-shrink-0 px-4 py-3 border-b border-white/5">
-              <p className="font-saira text-xs uppercase tracking-[0.16em] text-zinc-400 mb-1.5">Athlete invite</p>
+              <p className="font-saira text-xs uppercase tracking-[0.16em] text-zinc-400 mb-1.5">{t("coach.athleteInviteLabel")}</p>
               <div className="flex items-center gap-2">
                 <code className="font-saira text-xs text-purple-400 font-mono truncate flex-1 leading-none">
                   /join/{profile.coach_code}
@@ -2897,7 +2903,7 @@ export default function CoachPage() {
                   }}
                   className="flex-shrink-0 font-saira text-xs text-zinc-300 border border-zinc-700 rounded-lg px-2.5 py-1 hover:border-purple-500/40 hover:text-purple-300 transition"
                 >
-                  Copy
+                  {t("coach.copyShort")}
                 </button>
               </div>
             </div>
@@ -2909,21 +2915,21 @@ export default function CoachPage() {
               <div className="flex items-center gap-5">
                 <div className="text-center">
                   <p className="font-saira text-2xl font-extrabold text-zinc-100">{clients.length}</p>
-                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-300 mt-0.5">Athletes</p>
+                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-300 mt-0.5">{t("coach.sidebarAthletes")}</p>
                 </div>
                 <div className="w-px h-8 bg-white/10" />
                 <div className="text-center">
                   <p className="font-saira text-2xl font-extrabold text-rose-300">
                     {clients.filter((c) => c.flag === "attention").length}
                   </p>
-                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-300 mt-0.5">Attention</p>
+                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-300 mt-0.5">{t("coach.sidebarAttention")}</p>
                 </div>
                 <div className="w-px h-8 bg-white/10" />
                 <div className="text-center">
                   <p className="font-saira text-2xl font-extrabold text-purple-300">
                     {Math.round(clients.reduce((s, c) => s + c.positiveRate, 0) / clients.length)}%
                   </p>
-                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-300 mt-0.5">Avg +</p>
+                  <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-300 mt-0.5">{t("coach.sidebarAvgPositive")}</p>
                 </div>
               </div>
             </div>
@@ -2947,7 +2953,7 @@ export default function CoachPage() {
                 className="w-full rounded-xl border border-zinc-700/70 bg-surface-section px-3 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30"
               />
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-saira text-xs text-zinc-400 mr-0.5 uppercase tracking-[0.1em]">Sort</span>
+                <span className="font-saira text-xs text-zinc-400 mr-0.5 uppercase tracking-[0.1em]">{t("coach.sortLabel")}</span>
                 {([
                   { key: "flag",     label: t("coach.sortPriority") },
                   { key: "positive", label: "+" },
@@ -2976,13 +2982,13 @@ export default function CoachPage() {
             {clients.length === 0 ? (
               <div className="px-5 py-10 text-center">
                 <p className="font-saira text-2xl mb-3">&#128101;</p>
-                <p className="font-saira text-sm text-zinc-300 mb-1">No athletes yet</p>
+                <p className="font-saira text-sm text-zinc-300 mb-1">{t("coach.noAthletesDesktop")}</p>
                 <p className="font-saira text-xs text-zinc-500 leading-relaxed">
-                  Share your invite link with athletes to get started.
+                  {t("coach.noAthletesDesktopHint")}
                 </p>
               </div>
             ) : filtered.length === 0 ? (
-              <p className="font-saira text-sm text-zinc-400 text-center py-10">No athletes match your search.</p>
+              <p className="font-saira text-sm text-zinc-400 text-center py-10">{t("coach.noSearchMatch")}</p>
             ) : (
               filtered.map((client) => (
                 <CompactAthleteRow
@@ -3052,7 +3058,7 @@ export default function CoachPage() {
                     href={`mailto:?subject=Checking in — ${selectedClient.displayName}&body=Hi ${selectedClient.displayName.split(" ")[0]},%0A%0AI noticed you've had a tough week. Wanted to check in — how are you doing?%0A%0ABest`}
                     className="flex-shrink-0 font-saira text-sm uppercase tracking-[0.12em] text-rose-400 border border-rose-500/20 rounded-xl px-4 py-2 hover:bg-rose-500/10 transition"
                   >
-                    ⚠ Email
+                    ⚠ {t("coach.emailBtn")}
                   </a>
                 )}
               </div>
@@ -3076,9 +3082,9 @@ export default function CoachPage() {
             <div className="flex h-full items-center justify-center">
               <div className="text-center px-8 max-w-sm">
                 <p className="text-5xl mb-6">👈</p>
-                <p className="font-saira text-base font-semibold text-zinc-400">Select an athlete</p>
+                <p className="font-saira text-base font-semibold text-zinc-400">{t("coach.selectAthleteHint")}</p>
                 <p className="font-saira text-sm text-zinc-400 mt-2 leading-relaxed">
-                  Click any athlete in the roster to view their full dashboard here.
+                  {t("coach.selectAthleteBody")}
                 </p>
               </div>
             </div>
