@@ -10,6 +10,17 @@ import { useT } from "@/lib/i18n";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function timeSince(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffH   = Math.floor(diffMs / 3600000);
+  const diffD   = Math.floor(diffMs / 86400000);
+  if (diffMin < 1)  return "just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffH   < 24) return `${diffH}h ago`;
+  return `${diffD}d ago`;
+}
+
 function SliderDisplay({ label, value }: { label: string; value: number }) {
   const lv = levelLabel(value);
   const filled = Math.round((value / 100) * 12);
@@ -46,16 +57,28 @@ export default function VoiceDetailPage() {
   const [loading, setLoading] = React.useState(true);
   const [notFound, setNotFound] = React.useState(false);
   const [showEditToast, setShowEditToast] = React.useState(false);
+  const [recentThoughts, setRecentThoughts] = React.useState<{ id: string; content: string; created_at: string }[]>([]);
 
   React.useEffect(() => {
     if (!id) return;
     (async () => {
-      const res = await fetch(`/api/voices/${id}`);
-      if (res.status === 404) {
+      const [voiceRes, entriesRes] = await Promise.all([
+        fetch(`/api/voices/${id}`),
+        fetch("/api/journal/entries"),
+      ]);
+      if (voiceRes.status === 404) {
         setNotFound(true);
-      } else if (res.ok) {
-        const data = await res.json();
+      } else if (voiceRes.ok) {
+        const data = await voiceRes.json();
         setVoice(data);
+      }
+      if (entriesRes.ok) {
+        const all = await entriesRes.json();
+        setRecentThoughts(
+          Array.isArray(all)
+            ? all.filter((e: { voice_id: string | null }) => e.voice_id === id).slice(0, 10)
+            : [],
+        );
       }
       setLoading(false);
     })();
@@ -226,6 +249,23 @@ export default function VoiceDetailPage() {
                 &ldquo;{voice.helps_note}&rdquo;
               </blockquote>
             )}
+          </div>
+        )}
+
+        {/* Recent thoughts */}
+        {recentThoughts.length > 0 && (
+          <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-4">
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-300 mb-3">
+              {t("voices.recentThoughts")}
+            </p>
+            <div className="space-y-3">
+              {recentThoughts.map((entry) => (
+                <div key={entry.id} className="rounded-xl border border-purple-500/10 bg-purple-500/[0.04] px-3 py-2.5">
+                  <p className="font-saira text-sm text-zinc-200 leading-relaxed">{entry.content}</p>
+                  <p className="font-saira text-[10px] text-zinc-500 mt-1">{timeSince(entry.created_at)}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

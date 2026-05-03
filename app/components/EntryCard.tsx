@@ -1,7 +1,10 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { SENT_CONFIG, detectSentiment, type JournalEntry } from "@/lib/journal";
+import type { Voice } from "@/lib/voices";
+import VoiceGlyph from "@/app/components/VoiceGlyph";
 
 /** Clock time for same-day entries; relative label for older ones */
 function smartTime(iso: string): string {
@@ -19,9 +22,11 @@ interface Props {
   entry: JournalEntry;
   /** Omit to render in read-only mode (coach view) */
   onDelete?: (id: string) => Promise<void> | void;
+  /** Voice linked to this entry — shows glyph + name when provided */
+  voice?: Pick<Voice, "id" | "name" | "shape" | "color" | "size"> | null;
 }
 
-export default function EntryCard({ entry, onDelete }: Props) {
+export default function EntryCard({ entry, onDelete, voice }: Props) {
   const [confirm, setConfirm] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
 
@@ -40,6 +45,18 @@ export default function EntryCard({ entry, onDelete }: Props) {
       </p>
 
       <div className="mt-3 flex items-center gap-2 flex-wrap">
+        {/* Voice tag */}
+        {voice && (
+          <Link
+            href={`/voices/${voice.id}`}
+            className="flex items-center gap-1 rounded-full border border-purple-500/20 bg-purple-500/10 pl-1 pr-2 py-0.5 hover:border-purple-500/40 transition"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <VoiceGlyph shape={voice.shape} color={voice.color} size={voice.size} className="w-4 h-4" />
+            <span className="font-saira text-[10px] text-purple-300">{voice.name}</span>
+          </Link>
+        )}
+
         {/* Time */}
         <span className="ml-auto font-saira text-[10px] text-zinc-400">
           {smartTime(entry.created_at)}

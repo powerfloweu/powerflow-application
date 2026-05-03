@@ -189,6 +189,10 @@ export const en = {
     coachBannerBody: "You've built a solid journaling streak. Share your data with your coach — ask them to send you an invite link.",
 
     voiceModeBanner: "✦ Voice work mode  ·  View your cast",
+    whoSaidThat: "Who said that?",
+    whoSaidThatHint: "Tag this thought to a voice in your cast.",
+    justMe: "Just me",
+    linkVoiceSkip: "Skip",
     backToTests: "← Back to tests",
     coachDashboard: "Coach dashboard →",
 

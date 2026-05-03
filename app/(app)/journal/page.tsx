@@ -4,6 +4,8 @@ import React from "react";
 import Link from "next/link";
 import EntryCard from "@/app/components/EntryCard";
 import TagChip from "@/app/components/TagChip";
+import VoiceGlyph from "@/app/components/VoiceGlyph";
+import type { Voice } from "@/lib/voices";
 import {
   type Sentiment,
   type JournalEntry,
@@ -328,12 +330,24 @@ function TrainingJournalForm({
 
 // ── Quick entry form ───────────────────────────────────────────────────────────
 
-function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
+type VoiceSummary = Pick<Voice, "id" | "name" | "shape" | "color" | "size">;
+
+interface QuickEntryProps {
+  onAdd: (e: JournalEntry) => void;
+  voices?: VoiceSummary[];
+  isBetaMode?: boolean;
+}
+
+function QuickEntry({ onAdd, voices = [], isBetaMode = false }: QuickEntryProps) {
   const { t } = useT();
-  const [text, setText]             = React.useState("");
-  const [submitting, setSubmitting] = React.useState(false);
-  const [submitted, setSubmitted]   = React.useState(false);
-  const [error, setError]           = React.useState<string | null>(null);
+  const [text, setText]                   = React.useState("");
+  const [submitting, setSubmitting]       = React.useState(false);
+  const [submitted, setSubmitted]         = React.useState(false);
+  const [error, setError]                 = React.useState<string | null>(null);
+  const [pendingEntry, setPendingEntry]   = React.useState<JournalEntry | null>(null);
+  const [linking, setLinking]             = React.useState(false);
+
+  const showSheet = isBetaMode && voices.length > 0 && pendingEntry !== null;
 
   const canSubmit = text.trim().length >= 3 && !submitting;
 
@@ -352,10 +366,18 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
       });
       if (!res.ok) throw new Error("Save failed");
       const saved = await res.json() as { id: string };
-      onAdd({ id: saved.id, content: trimmed, sentiment, context: "general", themes, created_at: new Date().toISOString() });
+      const entry: JournalEntry = {
+        id: saved.id, content: trimmed, sentiment, context: "general", themes,
+        voice_id: null, created_at: new Date().toISOString(),
+      };
       setText("");
-      setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 1800);
+      if (isBetaMode && voices.length > 0) {
+        setPendingEntry(entry);
+      } else {
+        onAdd(entry);
+        setSubmitted(true);
+        setTimeout(() => setSubmitted(false), 1800);
+      }
     } catch {
       setError(t("journal.saveFailed"));
     } finally {
@@ -367,29 +389,80 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
   };
 
-  return (
-    <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 via-fuchsia-500/5 to-transparent p-5 sm:p-6 shadow-[0_16px_40px_rgba(126,34,206,0.15)]">
-      <textarea
-        value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKey}
-        placeholder={t("journal.writePlaceholder")}
-        rows={3}
-        className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-base sm:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
-      />
+  const handleVoiceLink = async (voiceId: string | null) => {
+    if (!pendingEntry || linking) return;
+    setLinking(true);
+    try {
+      if (voiceId) {
+        await fetch("/api/journal/entries", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: pendingEntry.id, voice_id: voiceId }),
+        });
+      }
+      onAdd({ ...pendingEntry, voice_id: voiceId });
+    } finally {
+      setPendingEntry(null);
+      setLinking(false);
+    }
+  };
 
-      <div className="mt-4 flex items-center">
-        <button type="button" onClick={handleSubmit} disabled={!canSubmit}
-          className={`ml-auto rounded-full px-5 py-2.5 sm:py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
-            submitted ? "bg-emerald-500 text-white"
-            : canSubmit ? "bg-purple-500 text-white hover:bg-purple-400"
-            : "bg-purple-500/20 text-purple-500/50 cursor-not-allowed"
-          }`}>
-          {submitted ? t("journal.logged") : submitting ? t("common.saving") : t("journal.logThought")}
-        </button>
+  return (
+    <>
+      <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 via-fuchsia-500/5 to-transparent p-5 sm:p-6 shadow-[0_16px_40px_rgba(126,34,206,0.15)]">
+        <textarea
+          value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKey}
+          placeholder={t("journal.writePlaceholder")}
+          rows={3}
+          className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-base sm:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
+        />
+
+        <div className="mt-4 flex items-center">
+          <button type="button" onClick={handleSubmit} disabled={!canSubmit}
+            className={`ml-auto rounded-full px-5 py-2.5 sm:py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
+              submitted ? "bg-emerald-500 text-white"
+              : canSubmit ? "bg-purple-500 text-white hover:bg-purple-400"
+              : "bg-purple-500/20 text-purple-500/50 cursor-not-allowed"
+            }`}>
+            {submitted ? t("journal.logged") : submitting ? t("common.saving") : t("journal.logThought")}
+          </button>
+        </div>
+
+        {error && <p className="mt-2 font-saira text-[11px] text-red-400">{error}</p>}
+        <p className="mt-2 font-saira text-[10px] text-zinc-500 hidden sm:block">{t("journal.quickSubmit")}</p>
       </div>
 
-      {error && <p className="mt-2 font-saira text-[11px] text-red-400">{error}</p>}
-      <p className="mt-2 font-saira text-[10px] text-zinc-500 hidden sm:block">{t("journal.quickSubmit")}</p>
-    </div>
+      {/* Who said that? bottom sheet (Beta mode) */}
+      {showSheet && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => handleVoiceLink(null)} />
+          <div className="relative z-10 w-full max-w-sm mx-4 mb-4 sm:mb-0 rounded-3xl border border-purple-500/20 bg-zinc-900 p-6 shadow-2xl">
+            <p className="font-saira text-sm font-semibold text-white mb-1">{t("journal.whoSaidThat")}</p>
+            <p className="font-saira text-[11px] text-zinc-400 mb-4">{t("journal.whoSaidThatHint")}</p>
+            <div className="space-y-2">
+              {voices.map((v) => (
+                <button
+                  key={v.id}
+                  disabled={linking}
+                  onClick={() => handleVoiceLink(v.id)}
+                  className="w-full flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-left hover:border-purple-500/30 hover:bg-purple-500/[0.06] transition disabled:opacity-50"
+                >
+                  <VoiceGlyph shape={v.shape} color={v.color} size={v.size} className="w-8 h-8 flex-shrink-0" />
+                  <span className="font-saira text-sm text-zinc-200">{v.name}</span>
+                </button>
+              ))}
+              <button
+                disabled={linking}
+                onClick={() => handleVoiceLink(null)}
+                className="w-full rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 font-saira text-sm text-zinc-500 hover:text-zinc-400 hover:border-white/10 transition disabled:opacity-50"
+              >
+                {t("journal.justMe")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -655,6 +728,7 @@ export default function JournalPage() {
   const [entries, setEntries]             = React.useState<JournalEntry[]>([]);
   const [allTraining, setAllTraining]     = React.useState<TrainingEntry[]>([]);
   const [profile, setProfile]             = React.useState<UserProfile | null>(null);
+  const [voices, setVoices]               = React.useState<VoiceSummary[]>([]);
   const [todayTraining, setTodayTraining] = React.useState<TrainingEntry | null | undefined>(undefined);
   const [ready, setReady]                 = React.useState(false);
   const [coachPromptDismissed, setCoachPromptDismissed] = React.useState(false);
@@ -734,7 +808,11 @@ export default function JournalPage() {
         fetch("/api/journal/entry-feedback"),
         fetch("/api/weekly-checkin"),
       ]);
-      if (profileRes.ok) setProfile(await profileRes.json());
+      let parsedProfile: UserProfile | null = null;
+      if (profileRes.ok) {
+        parsedProfile = await profileRes.json();
+        setProfile(parsedProfile);
+      }
       if (entriesRes.ok) setEntries(await entriesRes.json());
       if (trainingRes.ok) {
         const all = (await trainingRes.json()) as TrainingEntry[];
@@ -754,6 +832,13 @@ export default function JournalPage() {
         setCheckinWindowOpen(data.windowOpen ?? false);
         setCheckinSubmitted(data.currentSubmitted ?? false);
         setCheckinTarget(data.targetWeek ?? null);
+      }
+      if (parsedProfile?.self_talk_mode === "beta_voice_work") {
+        const voicesRes = await fetch("/api/voices");
+        if (voicesRes.ok) {
+          const data = await voicesRes.json();
+          setVoices(Array.isArray(data) ? data : []);
+        }
       }
       setReady(true);
     })();
@@ -781,6 +866,10 @@ export default function JournalPage() {
 
   const grouped = React.useMemo(() => groupByDay(feedItems), [feedItems]);
   const showCoachPrompt = !coachPromptDismissed && shouldPromptCoach(entries, profile);
+  const voiceMap = React.useMemo(
+    () => new Map(voices.map((v) => [v.id, v])),
+    [voices],
+  );
 
   if (!ready) {
     return (
@@ -875,7 +964,11 @@ export default function JournalPage() {
                   }}
                 />
               ) : (
-                <QuickEntry onAdd={handleAdd} />
+                <QuickEntry
+                  onAdd={handleAdd}
+                  voices={voices}
+                  isBetaMode={profile?.self_talk_mode === "beta_voice_work"}
+                />
               )
             ) : (
               // Past date
@@ -1041,7 +1134,11 @@ export default function JournalPage() {
                           <TrainingDayCard key={item.entry.id} entry={item.entry} />
                         ) : (
                           <div key={item.entry.id}>
-                            <EntryCard entry={item.entry} onDelete={handleDelete} />
+                            <EntryCard
+                              entry={item.entry}
+                              onDelete={handleDelete}
+                              voice={item.entry.voice_id ? voiceMap.get(item.entry.voice_id) : undefined}
+                            />
                             {coachFeedback[item.entry.id] && (
                               <div className="mt-1.5 ml-2 pl-3 border-l-2 border-purple-500/20">
                                 <p className="font-saira text-xs text-zinc-400 italic leading-relaxed">

@@ -188,6 +188,10 @@ export const hu: Dict = {
     coachBannerBody: "Szilárd naplózási sorozatot alakítottál ki. Oszd meg az adataidat az edződdel — kérd, hogy küldjön neked egy meghívó linket.",
 
     voiceModeBanner: "✦ Hangmunka mód  ·  Nézd meg a castod",
+    whoSaidThat: "Ki mondta ezt?",
+    whoSaidThatHint: "Kapcsold ezt a gondolatot egy hanghoz a castodban.",
+    justMe: "Csak én",
+    linkVoiceSkip: "Kihagyás",
     backToTests: "← Vissza a tesztekhez",
     coachDashboard: "Edző irányítópult →",
 

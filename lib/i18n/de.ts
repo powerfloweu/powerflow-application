@@ -190,6 +190,10 @@ export const de: Dict = {
     coachBannerBody: "Du hast einen soliden Journaling-Streak aufgebaut. Teile deine Daten mit deinem Coach — bitte ihn, dir einen Einladungslink zu schicken.",
 
     voiceModeBanner: "✦ Voice-Work-Modus  ·  Cast ansehen",
+    whoSaidThat: "Wer hat das gesagt?",
+    whoSaidThatHint: "Ordne diesen Gedanken einer Stimme in deinem Cast zu.",
+    justMe: "Nur ich",
+    linkVoiceSkip: "Überspringen",
     backToTests: "← Zurück zu den Tests",
     coachDashboard: "Coach-Dashboard →",
 
