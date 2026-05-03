@@ -323,6 +323,37 @@ export const hu: Dict = {
     affirmationPlaceholder1: "pl. Erős vagyok és felkészültem erre",
     affirmationPlaceholder2: "pl. Bízom a technikámban nyomás alatt",
     affirmationPlaceholder3: "pl. Azt kontrollálom, amit tudok kontrollálni",
+
+    // Viz tool mode picker + CTA
+    vizModeAudio: "🎧 Irányított audio",
+    vizModeLive: "🎙 Élő session",
+    vizModeUpload: "📁 Hangüzenet",
+    vizBuildCta: "Tökéletes {lift} vizualizáció",
+  },
+
+  // Viz live session (VizLiveSession component)
+  vizSession: {
+    liveHeader: "Élő session · {count} kérdés",
+    introBody: "Válaszolj minden kérdésre saját szavaiddal — hangosan vagy gépelve. A válaszaid lesznek a személyes vizualizációd alapkövei: pontosan úgy, ahogy te hajtod végre az emeléseket, a saját szavaiddal.",
+    introVoiceSupported: "A hangod valós időben rögzítésre kerül.",
+    introVoiceUnsupported: "A böngésződ nem támogatja a hangrögzítést, de begépelheted a válaszokat.",
+    startBtn: "Session indítása",
+    completeHeader: "Session vége",
+    completeBody: "{answered} / {total} kérdés megválaszolva. A mentális előkészítés rögzítve.",
+    skipped: "Átugorva",
+    saveBtn: "Mentés a mai naplóba",
+    savedConfirm: "Mentve a naplóba ✓",
+    saveError: "Mentés sikertelen — kérlek próbáld újra.",
+    runAgain: "Újra",
+    next: "Tovább →",
+    finish: "Befejezés",
+    exitConfirm: "Kilépés? Az előrehaladás elvész.",
+    exitBtn: "Kilépés",
+    recording: "Felvétel",
+    placeholderListening: "Hallgatom…",
+    placeholderVoice: "Mondd vagy írd a választ…",
+    placeholderText: "Írd be a választ…",
+    skipHint: "Nincs mit mondani? Nyomj a Tovább →",
   },
 
   you: {

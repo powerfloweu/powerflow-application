@@ -330,6 +330,37 @@ export const en = {
     affirmationPlaceholder1: "e.g. I am strong and prepared for this",
     affirmationPlaceholder2: "e.g. I trust my technique under pressure",
     affirmationPlaceholder3: "e.g. I control what I can control",
+
+    // Viz tool mode picker + CTA
+    vizModeAudio: "🎧 Guided audio",
+    vizModeLive: "🎙 Live session",
+    vizModeUpload: "📁 Voice note",
+    vizBuildCta: "Build your perfect {lift}",
+  },
+
+  // Viz live session (VizLiveSession component)
+  vizSession: {
+    liveHeader: "Live Session · {count} prompts",
+    introBody: "Answer each question in your own words — speak or type. Your answers become the building blocks of your personal visualization: exactly how you perform each lift, in your own language.",
+    introVoiceSupported: "Your voice is captured in real time.",
+    introVoiceUnsupported: "Your browser doesn't support voice input, but you can type your responses.",
+    startBtn: "Start session",
+    completeHeader: "Session complete",
+    completeBody: "{answered} of {total} prompts answered. That mental rehearsal is now locked in.",
+    skipped: "Skipped",
+    saveBtn: "Save to today's journal",
+    savedConfirm: "Saved to your journal ✓",
+    saveError: "Couldn't save — please try again.",
+    runAgain: "Run again",
+    next: "Next →",
+    finish: "Finish",
+    exitConfirm: "Exit? Progress will be lost.",
+    exitBtn: "Exit",
+    recording: "Recording",
+    placeholderListening: "Listening…",
+    placeholderVoice: "Speak or type your answer…",
+    placeholderText: "Type your answer…",
+    skipHint: "Nothing to say? Tap Next → to move on",
   },
 
   // You / Settings page

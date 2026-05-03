@@ -325,6 +325,37 @@ export const de: Dict = {
     affirmationPlaceholder1: "z.B. Ich bin stark und gut vorbereitet",
     affirmationPlaceholder2: "z.B. Ich vertraue meiner Technik unter Druck",
     affirmationPlaceholder3: "z.B. Ich kontrolliere, was ich kontrollieren kann",
+
+    // Viz tool mode picker + CTA
+    vizModeAudio: "🎧 Geführtes Audio",
+    vizModeLive: "🎙 Live-Session",
+    vizModeUpload: "📁 Sprachnotiz",
+    vizBuildCta: "Perfekte {lift}-Visualisierung erstellen",
+  },
+
+  // Viz live session (VizLiveSession component)
+  vizSession: {
+    liveHeader: "Live-Session · {count} Fragen",
+    introBody: "Beantworte jede Frage mit deinen eigenen Worten — spreche oder tippe. Deine Antworten werden die Bausteine deiner persönlichen Visualisierung: genau so, wie du jeden Lift ausführst, in deiner eigenen Sprache.",
+    introVoiceSupported: "Deine Stimme wird in Echtzeit erfasst.",
+    introVoiceUnsupported: "Dein Browser unterstützt keine Spracheingabe, aber du kannst deine Antworten eintippen.",
+    startBtn: "Session starten",
+    completeHeader: "Session abgeschlossen",
+    completeBody: "{answered} von {total} Fragen beantwortet. Diese mentale Probe ist jetzt verankert.",
+    skipped: "Übersprungen",
+    saveBtn: "Im heutigen Tagebuch speichern",
+    savedConfirm: "Im Tagebuch gespeichert ✓",
+    saveError: "Speichern fehlgeschlagen — bitte versuche es erneut.",
+    runAgain: "Nochmal",
+    next: "Weiter →",
+    finish: "Fertigstellen",
+    exitConfirm: "Beenden? Dein Fortschritt geht verloren.",
+    exitBtn: "Beenden",
+    recording: "Aufnahme",
+    placeholderListening: "Hören…",
+    placeholderVoice: "Sprechen oder tippen…",
+    placeholderText: "Antwort eingeben…",
+    skipHint: "Nichts zu sagen? Tippe auf Weiter →",
   },
 
   you: {

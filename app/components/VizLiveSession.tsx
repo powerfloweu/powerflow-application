@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useT } from "@/lib/i18n";
 
 // ── Prompts ───────────────────────────────────────────────────────────────────
 
@@ -310,6 +311,7 @@ interface Props {
 type Phase = "intro" | "session" | "done";
 
 export default function VizLiveSession({ toolId, onClose }: Props) {
+  const { t } = useT();
   const prompts = VIZ_PROMPTS[toolId] ?? [];
 
   const [phase,        setPhase]        = React.useState<Phase>("intro");
@@ -321,6 +323,7 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
   const [confirmExit,  setConfirmExit]  = React.useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
+  // liftLabel is used only in the journal entry text (written to DB — keep EN)
   const liftLabel =
     toolId === "viz-squat" ? "Squat" :
     toolId === "viz-bench" ? "Bench" : "Deadlift";
@@ -345,7 +348,7 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
       if (!res.ok) throw new Error("Failed");
       setSaved(true);
     } catch {
-      setSaveError("Couldn't save — please try again.");
+      setSaveError(t("vizSession.saveError"));
     } finally {
       setSaving(false);
     }
@@ -406,14 +409,12 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
       <div className="rounded-xl border border-purple-500/20 bg-purple-500/[0.06] p-5 space-y-4">
         <div>
           <p className="font-saira text-[10px] font-bold uppercase tracking-[0.24em] text-purple-400 mb-1.5">
-            Live Session · {prompts.length} prompts
+            {t("vizSession.liveHeader", { count: prompts.length })}
           </p>
           <p className="font-saira text-sm text-zinc-300 leading-relaxed">
-            Answer each question in your own words — speak or type. Your answers
-            become the building blocks of your personal visualization: exactly how
-            {" "}<em>you</em> perform each lift, in your own language.
-            {supported && " Your voice is captured in real time."}
-            {!supported && " Your browser doesn't support voice input, but you can type your responses."}
+            {t("vizSession.introBody")}
+            {" "}
+            {supported ? t("vizSession.introVoiceSupported") : t("vizSession.introVoiceUnsupported")}
           </p>
         </div>
         <div className="flex gap-3">
@@ -422,14 +423,14 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
             onClick={() => setPhase("session")}
             className="flex-1 rounded-xl bg-purple-600 hover:bg-purple-500 px-4 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
           >
-            Start session
+            {t("vizSession.startBtn")}
           </button>
           <button
             type="button"
             onClick={onClose}
             className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-400 hover:text-zinc-300 hover:border-white/20 transition"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       </div>
@@ -445,10 +446,10 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
         {/* Header */}
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-5 py-4">
           <p className="font-saira text-[10px] font-bold uppercase tracking-[0.24em] text-emerald-400 mb-1">
-            Session complete
+            {t("vizSession.completeHeader")}
           </p>
           <p className="font-saira text-sm text-zinc-300">
-            {answered} of {prompts.length} prompts answered. That mental rehearsal is now locked in.
+            {t("vizSession.completeBody", { answered, total: prompts.length })}
           </p>
         </div>
 
@@ -465,7 +466,7 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
                   "{responses[i].trim()}"
                 </p>
               ) : (
-                <p className="font-saira text-[10px] text-zinc-600 italic">Skipped</p>
+                <p className="font-saira text-[10px] text-zinc-600 italic">{t("vizSession.skipped")}</p>
               )}
             </div>
           ))}
@@ -480,12 +481,12 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
             className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-2.5 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition flex items-center justify-center gap-2"
           >
             {saving ? (
-              <><span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Saving…</>
-            ) : "Save to today's journal"}
+              <><span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" /> {t("common.saving")}</>
+            ) : t("vizSession.saveBtn")}
           </button>
         ) : (
           <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-2.5 text-center">
-            <p className="font-saira text-[11px] text-emerald-400 font-semibold">Saved to your journal ✓</p>
+            <p className="font-saira text-[11px] text-emerald-400 font-semibold">{t("vizSession.savedConfirm")}</p>
           </div>
         )}
         {saveError && <p className="font-saira text-[10px] text-rose-400 text-center -mt-1">{saveError}</p>}
@@ -497,14 +498,14 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
             onClick={restart}
             className="flex-1 rounded-xl border border-purple-500/30 bg-purple-500/[0.08] px-4 py-2.5 font-saira text-[11px] font-semibold uppercase tracking-[0.18em] text-purple-300 hover:bg-purple-500/[0.14] transition"
           >
-            Run again
+            {t("vizSession.runAgain")}
           </button>
           <button
             type="button"
             onClick={onClose}
             className="flex-1 rounded-xl border border-white/10 px-4 py-2.5 font-saira text-[11px] text-zinc-400 hover:text-zinc-300 hover:border-white/20 transition"
           >
-            Close
+            {t("common.close")}
           </button>
         </div>
       </div>
@@ -556,10 +557,10 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
           }}
           placeholder={
             listening
-              ? "Listening…"
+              ? t("vizSession.placeholderListening")
               : supported
-              ? "Speak or type your answer…"
-              : "Type your answer…"
+              ? t("vizSession.placeholderVoice")
+              : t("vizSession.placeholderText")
           }
           rows={3}
           className="w-full rounded-xl border border-white/10 bg-surface-section px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-purple-400/40 resize-none overflow-hidden [color-scheme:dark] transition"
@@ -568,7 +569,7 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
         {listening && (
           <span className="absolute bottom-3 right-3 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-            <span className="font-saira text-[10px] text-rose-400">Recording</span>
+            <span className="font-saira text-[10px] text-rose-400">{t("vizSession.recording")}</span>
           </span>
         )}
       </div>
@@ -622,7 +623,7 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
           onClick={goNext}
           className="flex-1 h-10 rounded-xl bg-purple-600 hover:bg-purple-500 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
         >
-          {step < prompts.length - 1 ? "Next →" : "Finish"}
+          {step < prompts.length - 1 ? t("vizSession.next") : t("vizSession.finish")}
         </button>
 
         {/* Close */}
@@ -641,21 +642,21 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
       {/* Exit confirm banner */}
       {confirmExit && (
         <div className="flex items-center justify-between gap-2 rounded-xl border border-rose-500/30 bg-rose-500/[0.06] px-4 py-2.5">
-          <p className="font-saira text-[11px] text-zinc-300">Exit? Progress will be lost.</p>
+          <p className="font-saira text-[11px] text-zinc-300">{t("vizSession.exitConfirm")}</p>
           <div className="flex gap-3 flex-shrink-0">
             <button
               type="button"
               onClick={() => { stop(); onClose(); }}
               className="font-saira text-[11px] font-semibold text-rose-400 hover:text-rose-300 transition"
             >
-              Exit
+              {t("vizSession.exitBtn")}
             </button>
             <button
               type="button"
               onClick={() => setConfirmExit(false)}
               className="font-saira text-[11px] text-zinc-400 hover:text-zinc-300 transition"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </div>
@@ -663,7 +664,7 @@ export default function VizLiveSession({ toolId, onClose }: Props) {
 
       {/* Skip hint */}
       <p className="font-saira text-[10px] text-zinc-400 text-center">
-        Nothing to say? Tap Next → to move on
+        {t("vizSession.skipHint")}
       </p>
     </div>
   );

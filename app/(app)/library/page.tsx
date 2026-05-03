@@ -937,14 +937,14 @@ function ToolsPageInner() {
                                       onClick={() => setMode("audio")}
                                       className="w-full rounded-xl bg-purple-600 hover:bg-purple-500 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
                                     >
-                                      Build your perfect {liftName}
+                                      {t("library.vizBuildCta", { lift: liftName })}
                                     </button>
                                   ) : (
                                     <>
                                       {/* Mode tab strip */}
                                       <div className="flex gap-1.5 mb-4">
                                         {(["audio", "live", "upload"] as const).map((m) => {
-                                          const labels = { audio: "🎧 Guided audio", live: "🎙 Live session", upload: "📁 Voice note" };
+                                          const labels = { audio: t("library.vizModeAudio"), live: t("library.vizModeLive"), upload: t("library.vizModeUpload") };
                                           return (
                                             <button
                                               key={m}
