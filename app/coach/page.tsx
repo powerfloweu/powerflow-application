@@ -9,6 +9,7 @@ import type { TrainingEntry } from "@/lib/training";
 import { weekDays as currentWeekDaysLocal } from "@/lib/date";
 import { weekLabel, type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weeklyCheckin";
 import { useT } from "@/lib/i18n";
+import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -2441,6 +2442,7 @@ function CoachHeader({ profile }: { profile: CoachProfile }) {
         </div>
       </div>
       <div className="flex items-center gap-4">
+        <LanguageSwitcher />
         <Link
           href="/guide"
           className="font-saira text-[10px] text-zinc-300 hover:text-purple-300 transition"
@@ -2869,6 +2871,7 @@ export default function CoachPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
+                <LanguageSwitcher />
                 <Link href="/today" className="font-saira text-xs text-emerald-600 hover:text-emerald-400 transition">Athlete profile</Link>
                 <Link href="/guide" className="font-saira text-xs text-zinc-400 hover:text-purple-300 transition">Guide</Link>
                 <a href="/auth/sign-out" className="font-saira text-xs text-zinc-500 hover:text-zinc-400 transition">Sign out</a>
