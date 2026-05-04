@@ -3,7 +3,7 @@
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import PhaseBadge from "@/app/components/PhaseBadge";
-import VidyardPlayer from "@/app/components/VidyardPlayer";
+import MuxVideoPlayer from "@/app/components/MuxVideoPlayer";
 import BottomSheet from "@/app/components/BottomSheet";
 import {
   getModule,
@@ -230,7 +230,7 @@ export default function ModuleDetailPage() {
         {/* ── Watch ─────────────────────────────────────────────────────────── */}
         <section className="mb-6">
           <SectionLabel icon="▶" label={t("course.sectionWatch")} />
-          <VidyardPlayer uuid={mod.vidyardUuid ?? ""} title={mod.title} onPlay={markVideoDone} />
+          <MuxVideoPlayer playbackId={mod.muxPlaybackId} title={mod.title} onPlay={markVideoDone} />
         </section>
 
         {/* ── Overview + key points ─────────────────────────────────────────── */}

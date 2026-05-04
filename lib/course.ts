@@ -108,7 +108,15 @@ export type CourseModule = {
    * considered complete. Undefined for insight modules.
    */
   practiceTarget?: number;
-  /** Optional Vidyard video UUID */
+  /**
+   * Mux public playback ID — preferred video source.
+   * Obtain from the Mux dashboard: Asset → Playback IDs (public).
+   */
+  muxPlaybackId?: string;
+  /**
+   * @deprecated Replaced by muxPlaybackId. Kept for reference only.
+   * Vidyard video UUID — no longer used in the player.
+   */
   vidyardUuid?: string;
   /** Optional audio URL */
   audioUrl?: string;
