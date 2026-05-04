@@ -578,6 +578,13 @@ export const de: Dict = {
     noCoachDesc: "Du trainierst solo, oder dein Coach ist noch nicht auf PowerFlow",
   },
 
+  notifBanner: {
+    title: "Tägliche Erinnerungen aktivieren",
+    body: "Erhalte um 19 Uhr eine Erinnerung, wenn du dein Check-in noch nicht eingetragen hast.",
+    enable: "Aktivieren",
+    later: "Jetzt nicht",
+  },
+
   notifications: {
     title: "Was ist neu",
     devlogTitle: "Letztes Update",

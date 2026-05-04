@@ -599,6 +599,14 @@ export const en = {
     noCoachDesc: "Training solo, or your coach isn't on PowerFlow yet",
   },
 
+  // Push notification permission banner
+  notifBanner: {
+    title: "Enable daily reminders",
+    body: "Get a nudge at 7 pm if you haven't logged your check-in.",
+    enable: "Enable",
+    later: "Not now",
+  },
+
   // Notifications modal
   notifications: {
     title: "What's new",

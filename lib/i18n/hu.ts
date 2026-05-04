@@ -576,6 +576,13 @@ export const hu: Dict = {
     noCoachDesc: "Egyedül edzel, vagy az edződ még nincs a PowerFlow-n",
   },
 
+  notifBanner: {
+    title: "Napi emlékeztetők bekapcsolása",
+    body: "Ha még nem töltötted ki a check-int, 19 órakor értesítünk.",
+    enable: "Bekapcsolás",
+    later: "Most nem",
+  },
+
   notifications: {
     title: "Mi újság",
     devlogTitle: "Legújabb frissítés",

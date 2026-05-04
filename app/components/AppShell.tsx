@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import TabBar from "./TabBar";
 import CheckinReminderScheduler from "./CheckinReminderScheduler";
+import NotificationPermissionBanner from "./NotificationPermissionBanner";
 import NotificationModal, { type NotificationState } from "./NotificationModal";
 import WeeklyCheckinModal from "./WeeklyCheckinModal";
 import MonthlyCheckinModal from "./MonthlyCheckinModal";
@@ -362,6 +363,9 @@ export default function AppShell({ children }: Props) {
 
       {/* ── Daily check-in reminder (athletes only) ──────────────── */}
       {role !== "coach" && <CheckinReminderScheduler />}
+
+      {/* ── Push notification permission banner (athletes only) ───── */}
+      {role !== "coach" && <NotificationPermissionBanner />}
 
       {/* ── In-app broadcast + devlog modal ────────────────────────── */}
       {notifications && (
