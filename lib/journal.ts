@@ -149,6 +149,15 @@ const POSITIVE_SIGNALS = [
   "can't wait for", "looking forward to",
   // Progress
   "progressing", "making progress", "good progress",
+  // Training-log language (shorter, casual phrases athletes write in daily logs)
+  "i'm strong", "im strong",                    // "God I'm strong", "God Im strong its insane"
+  "amazing performance",                          // "amazing performance" (vs already-covered "amazing session")
+  "unreal motivation",                            // "unreal motivation haha"
+  "too good to be true",                          // "almost too good to be true"
+  "can't wait to train", "wanna train",           // high-motivation phrases
+  "best session", "best training", "best workout", "best lift", // superlative session quality
+  "went really well", "went so well",             // training log recap phrases
+  "exceeded", "exceeded expectations",            // performance surpassing expectations
 ];
 
 export function detectSentiment(text: string): Sentiment {
