@@ -607,32 +607,28 @@ export default function YouPage() {
         })()}
       </Section>
 
-      {/* ── Ego States ──────────────────────────────────────── */}
-      <Link
-        href="/ego-states"
-        className="flex items-center justify-between w-full mb-4 rounded-2xl border border-white/5 bg-surface-card px-5 py-4 font-saira hover:border-purple-500/20 transition group"
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-purple-400"
-          />
-          <div>
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 group-hover:text-purple-300 transition">
-              {t("egoStates.youSection")}
-            </p>
-            <p className="font-saira text-xs text-zinc-500 mt-0.5">
-              {egoStateCount === null
-                ? t("egoStates.youSectionDesc")
-                : egoStateCount === 0
-                ? t("egoStates.noStates")
-                : egoStateCount === 1
-                ? t("egoStates.stateCount").replace("{n}", "1")
-                : t("egoStates.stateCountPlural").replace("{n}", String(egoStateCount))}
-            </p>
+      {/* ── Ego States — only shown once at least one state is saved ── */}
+      {egoStateCount !== null && egoStateCount > 0 && (
+        <Link
+          href="/ego-states"
+          className="flex items-center justify-between w-full mb-4 rounded-2xl border border-white/5 bg-surface-card px-5 py-4 font-saira hover:border-purple-500/20 transition group"
+        >
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-purple-400" />
+            <div>
+              <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 group-hover:text-purple-300 transition">
+                {t("egoStates.youSection")}
+              </p>
+              <p className="font-saira text-xs text-zinc-500 mt-0.5">
+                {egoStateCount === 1
+                  ? t("egoStates.stateCount").replace("{n}", "1")
+                  : t("egoStates.stateCountPlural").replace("{n}", String(egoStateCount))}
+              </p>
+            </div>
           </div>
-        </div>
-        <span className="text-zinc-400 group-hover:text-purple-400 transition">→</span>
-      </Link>
+          <span className="text-zinc-400 group-hover:text-purple-400 transition">→</span>
+        </Link>
+      )}
 
       {/* ── Guide link ───────────────────────────────────────── */}
       <Link
