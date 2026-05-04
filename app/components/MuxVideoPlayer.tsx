@@ -4,7 +4,7 @@ import React from "react";
 import MuxPlayer from "@mux/mux-player-react";
 
 interface Props {
-  /** Mux playback ID — the public ID from the Mux dashboard */
+  /** Mux public playback ID — the public ID from the Mux dashboard */
   playbackId?: string;
   title?: string;
   /** Called the first time the user starts playback — use to mark video step done */
@@ -16,7 +16,22 @@ interface Props {
   aspect?: "landscape" | "portrait";
 }
 
-export default function MuxVideoPlayer({
+/**
+ * Mux video player.
+ *
+ * Key design decisions:
+ *
+ * 1. React.memo — prevents the underlying <mux-player> web component from
+ *    receiving new props on parent re-renders (e.g. when onPlay fires and
+ *    updates progress state). Without this, the player resets/pauses
+ *    immediately after the user presses play.
+ *
+ * 2. Stable handlePlay via ref pattern — onPlay prop is stored in a ref so
+ *    handlePlay can be a zero-dep useCallback (stable reference across renders).
+ *    This means even if the parent passes a new function instance on re-render,
+ *    the Mux component never sees a prop change.
+ */
+const MuxVideoPlayer = React.memo(function MuxVideoPlayer({
   playbackId,
   title,
   onPlay,
@@ -24,14 +39,19 @@ export default function MuxVideoPlayer({
 }: Props) {
   const firedRef = React.useRef(false);
 
-  const isPlaceholder = !playbackId || playbackId.startsWith("YOUR_MUX");
+  // Always keep the latest onPlay in a ref — allows handlePlay to be stable
+  const onPlayRef = React.useRef(onPlay);
+  onPlayRef.current = onPlay;
 
-  const handlePlay = () => {
-    if (!firedRef.current && onPlay) {
+  // Stable callback: zero deps, reads onPlay from ref so no re-subscription needed
+  const handlePlay = React.useCallback(() => {
+    if (!firedRef.current) {
       firedRef.current = true;
-      onPlay();
+      onPlayRef.current?.();
     }
-  };
+  }, []);
+
+  const isPlaceholder = !playbackId || playbackId.startsWith("YOUR_MUX");
 
   const aspectClass =
     aspect === "portrait"
@@ -69,4 +89,6 @@ export default function MuxVideoPlayer({
       />
     </div>
   );
-}
+});
+
+export default MuxVideoPlayer;
