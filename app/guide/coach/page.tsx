@@ -584,9 +584,43 @@ export default function CoachGuidePage() {
             />
           </Page>
 
-          {/* ── 07 Quick reference ──────────────────────────────── */}
+          {/* ── 07 Check-ins tab ────────────────────────────────── */}
           <Page>
-            <SectionHeading num="07" title="Quick reference" subtitle="Dashboard signals at a glance" />
+            <SectionHeading num="07" title="Check-ins tab" subtitle="Weekly & monthly athlete self-ratings" />
+            <Steps items={[
+              { label: "Access check-ins", desc: "Expand any athlete card and tap the Check-ins tab. You'll see their weekly and monthly submissions, most recent first." },
+              { label: "What each entry shows", desc: "Five self-ratings (1–10): overall mood, training quality, energy levels, sleep quality, and readiness for next week or month. These give you a structured numerical picture alongside the journal narrative." },
+              { label: "Written reflections", desc: "Below the ratings: the athlete's biggest win or positive moment, main challenge, and their stated focus for the following week or month. Read these before check-in calls — they often surface what the athlete is most focused on." },
+              { label: "Monthly check-ins", desc: "Monthly submissions include three additional questions: biggest breakthrough, key lesson learned about themselves, and their intention for the next month. These are the closest thing to a structured session summary the athlete produces independently." },
+            ]} />
+            <Note>Check-in data cannot be edited by the coach — they are submitted by the athlete as-is. Cross-reference with journal entries from the same week for the fullest picture.</Note>
+          </Page>
+
+          {/* ── 08 Assigning tests ──────────────────────────────── */}
+          <Page>
+            <SectionHeading num="08" title="Assigning psychological tests" subtitle="SAT · ACSI · CSAI-2 · DAS" />
+            <Steps items={[
+              { label: "Assign a test", desc: "Expand an athlete card → Profile tab → scroll to Assign a test. Select SAT, ACSI, CSAI-2, or DAS and tap Assign. The test appears as a prompt in the athlete's Tools tab immediately." },
+              { label: "Athlete completes it", desc: "The athlete sees the assigned test highlighted in their Tools tab. Once they complete and unlock the results, the assignment is cleared automatically." },
+              { label: "View results", desc: "Completed results appear in your Test Scores tab for that athlete. You can cross-reference scores with journal sentiment — low ACSI concentration alongside negative entries near competition is a strong early warning pattern." },
+              { label: "When to assign", desc: "Use test assignment to get a structured psychological baseline at the start of coaching. Re-assign when journal patterns suggest a specific area (anxiety, confidence, depression risk) needs formal measurement." },
+            ]} />
+          </Page>
+
+          {/* ── 09 Ego States (coach view) ──────────────────────── */}
+          <Page>
+            <SectionHeading num="09" title="Ego States — coach view" subtitle="Athlete's psychological personas · Profile tab" />
+            <Steps items={[
+              { label: "Where to find them", desc: "Expand an athlete card → Profile tab → scroll to the bottom. If the athlete has mapped ego states through Coach AI, each saved state appears with its name, domain, and activation ritual." },
+              { label: "How athletes map them", desc: "Athletes ask Coach AI to run an ego state mapping session. The AI walks through eight questions (name, colour, posture, body feeling, inner voice, origin, domain, shadow side, activation ritual) and the athlete saves the resulting state card." },
+              { label: "Using them in sessions", desc: "Refer to the athlete's states by name in your check-in calls: 'Which state were you in during that heavy squat session?' Use the shadow side field to identify when a state is bleeding into the wrong context. Use the activation ritual to guide pre-competition preparation." },
+              { label: "State conflicts", desc: "The most common performance issue is the wrong state for the moment — Analyst-mode during execution, Warrior-mode during recovery. When you spot this pattern in journal language ('I kept second-guessing', 'couldn't switch off'), it's an ego state conflict worth naming directly." },
+            ]} />
+          </Page>
+
+          {/* ── 10 Quick reference ──────────────────────────────── */}
+          <Page>
+            <SectionHeading num="10" title="Quick reference" subtitle="Dashboard signals at a glance" />
 
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, marginBottom: 32 }}>
               <thead>
@@ -605,6 +639,8 @@ export default function CoachGuidePage() {
                   ["Mood drop (e.g. 8 → 4/10)", "Sudden mood decline in training log", "Check journal entries from the same days for context"],
                   ["Low ACSI Confidence <50%", "Self-confidence deficit in competition context", "Focus next session on confidence-building exercises"],
                   ["High CSAI-2 Cognitive Anxiety", "Athlete is worrying about performance outcomes", "Introduce thought-stopping or re-framing techniques"],
+                  ["Check-in ratings drop", "Athlete's 5 self-ratings decline week-on-week", "Read written reflections from same week — often explains the drop"],
+                  ["Test assigned (pending)", "Athlete has an assigned test not yet completed", "Follow up — completion gives you a structured baseline for the area you flagged"],
                 ].map(([signal, meaning, action], i) => (
                   <tr key={i} style={{ background: i % 2 === 0 ? "#ecfeff" : "#fff" }}>
                     <td style={{ padding: "8px 12px", fontWeight: 700, color: "#0e7490" }}>{signal}</td>

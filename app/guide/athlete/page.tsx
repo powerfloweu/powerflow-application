@@ -850,6 +850,66 @@ export default function AthleteGuidePage() {
             />
           </Page>
 
+          {/* ── 08 Coach AI ─────────────────────────────────────── */}
+          <Page>
+            <SectionHeading num="08" title="Coach AI" subtitle="Sports psychology AI · Built on your coach's methodology" />
+            <Steps items={[
+              { label: "Open Coach AI", desc: "Tap the chat bubble icon in the bottom navigation. The first time you open it with no conversation history, personalised prompt chips appear based on your recent journal entries, upcoming meet date, and what you've already mapped." },
+              { label: "What you can ask it", desc: "Analyse recent journal entries · Prepare mentally for competition · Debrief a tough session · Map your ego states · Generate a visualization or relaxation script · Guide you through switching psychological states · Work through self-doubt or anxiety" },
+              { label: "Scripts in your coach's voice", desc: "Any script the AI generates — visualization, grounding, pre-competition routine — can be played back in your coach's voice. Tap ▶ Play on the script card. Save scripts to your library with the save button to listen again any time." },
+              { label: "Smart prompts", desc: "If you open Coach AI without typing anything, personalised prompt chips appear. These update based on your recent entries, upcoming meet, and ego states. Tap one to start the session immediately." },
+            ]} />
+            <Note>Coach AI works best when your journal is active. The more you write, the more context the AI has — and the more relevant its observations and suggestions become.</Note>
+          </Page>
+
+          {/* ── 09 Ego States ────────────────────────────────────── */}
+          <Page>
+            <SectionHeading num="09" title="Ego States" subtitle="Psychological personas · Deliberate state design" />
+            <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 10, color: "#52525b", lineHeight: 1.6, marginBottom: 12 }}>
+                  An ego state is a psychological persona you deliberately step into for a specific context. Each state has eight components:
+                </p>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, marginBottom: 16 }}>
+                  <tbody>
+                    {[
+                      ["Name", "What you call this part of you — e.g. The Machine, The Builder"],
+                      ["Colour", "A visual anchor for rapid recognition"],
+                      ["Posture", "How your body holds itself when fully in this state"],
+                      ["Body feeling", "Where you feel this state in your body, and what it feels like"],
+                      ["Inner voice", "The tone, speed, and style of how this state speaks internally"],
+                      ["Origin", "When was this state born? What situation created it?"],
+                      ["Domain", "What contexts call for this state?"],
+                      ["Shadow side", "What does it look like when this state shows up at the wrong moment?"],
+                      ["Activation ritual", "Three concrete steps to switch into this state intentionally"],
+                    ].map(([field, desc], i) => (
+                      <tr key={i} style={{ background: i % 2 === 0 ? "#f5f3ff" : "#fff" }}>
+                        <td style={{ padding: "6px 10px", fontWeight: 700, color: "#7c3aed", whiteSpace: "nowrap" }}>{field}</td>
+                        <td style={{ padding: "6px 10px", color: "#52525b" }}>{desc}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <Steps items={[
+                  { label: "Map via Coach AI", desc: "Ask Coach AI: 'Map my ego states with me.' It asks eight questions one at a time, then outputs a state card you save with one tap." },
+                  { label: "Review in You tab", desc: "Once saved, an Ego States section appears in your You tab. Tap it to view, edit, or add states." },
+                  { label: "Practise switching", desc: "The skill is recognising which state a moment calls for and entering it via your activation ritual — before the moment demands it. Thinking-mode during execution causes paralysis. Warrior-mode during recovery causes burnout." },
+                ]} />
+              </div>
+            </div>
+          </Page>
+
+          {/* ── 10 Check-ins ─────────────────────────────────────── */}
+          <Page>
+            <SectionHeading num="10" title="Weekly & monthly check-ins" subtitle="Structured reflection · Coach visibility" />
+            <Steps items={[
+              { label: "Weekly check-in", desc: "A prompt appears at the end of each week. Rate five areas: overall mood, training quality, energy levels, sleep quality, and readiness for next week (each 1–10). Then add your biggest win, main challenge, and one focus for the week ahead. Takes about 60 seconds." },
+              { label: "Monthly check-in", desc: "Appears at the end of each month with the same five ratings plus three deeper questions: biggest breakthrough this month, the most important thing you learned about yourself, and your main intention going into next month." },
+              { label: "Coach visibility", desc: "Your coach sees all check-in responses on their dashboard. These give them a structured picture of how each week and month felt — beyond the individual training log entries." },
+            ]} />
+            <Note>Check-ins are separate from your daily journal and training log. They are a weekly and monthly pulse — the bigger picture sitting above the day-to-day entries.</Note>
+          </Page>
+
           {/* ── Quick reference ──────────────────────────────────── */}
           <Page>
             <SectionHeading num="—" title="Quick reference" subtitle="What each tab does at a glance" />
@@ -866,8 +926,9 @@ export default function AthleteGuidePage() {
                   ["Today", "Daily check-in, phase countdown, lift goals, course card", "Every single day — start here"],
                   ["Journal", "Free-text entries, AI sentiment & theme tagging", "After sessions, competitions, or whenever something is on your mind"],
                   ["Tools", "Sport psychology assessments (SAT, ACSI, CSAI-2, DAS)", "At start of programme and periodically to track progress"],
+                  ["Coach AI", "Sports psychology AI, script generation, ego state mapping", "Before competition, after tough sessions, whenever you need to work something through"],
                   ["Course", "16-week structured mental programme", "Weekly — follow the current week's content"],
-                  ["You", "Profile editor, lifts, goals, coach, sign out", "Whenever your data changes"],
+                  ["You", "Profile editor, lifts, goals, coach, ego states, sign out", "Whenever your data changes or after mapping a new ego state"],
                 ].map(([tab, what, use], i) => (
                   <tr key={tab} style={{ background: i % 2 === 0 ? "#fafafa" : "#fff" }}>
                     <td style={{ padding: "8px 12px", fontWeight: 700, color: "#7c3aed" }}>{tab}</td>
