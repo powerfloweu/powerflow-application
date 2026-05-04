@@ -103,7 +103,12 @@ function EgoStateCard({
 
   const handleDelete = async () => {
     setDeleting(true);
-    await fetch(`/api/ego-states/${state.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/ego-states/${state.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      setDeleting(false);
+      setConfirmDelete(false);
+      return;
+    }
     onDelete(state.id);
   };
 
@@ -234,7 +239,7 @@ function EgoStateCard({
             ) : (
               <div className="flex items-center gap-3">
                 <p className="font-saira text-[11px] text-zinc-400 flex-1">
-                  Delete &quot;{state.name}&quot;?
+                  {t("egoStates.deleteConfirm").replace("{name}", state.name)}
                 </p>
                 <button
                   type="button"
@@ -283,7 +288,7 @@ function CoachPromptDialog({ onClose }: { onClose: () => void }) {
             href="/chat"
             className="flex-1 rounded-xl border border-purple-500 bg-purple-600 py-3 text-center font-saira text-sm font-semibold text-white hover:bg-purple-500 transition"
           >
-            Open Coach AI →
+            {t("egoStates.openCoachAI")}
           </Link>
           <button
             type="button"

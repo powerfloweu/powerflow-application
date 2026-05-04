@@ -49,6 +49,9 @@ export const en = {
     done: "Done",
     select: "Select",
     upgradeArrow: "Upgrade →",
+    openArrow: "Open →",
+    videoSoon: "Video coming soon",
+    videoSoonDesc: "This week's video will be added shortly.",
   },
 
   // Today / home page
@@ -258,6 +261,7 @@ export const en = {
     pillReflect: "Reflect",
     pillPractice: "{count}/{target} practice",
     backToCourseShort: "← Back to course",
+    reflectPlaceholder: "Write your response here…",
 
     pageLabelYourPlan: "YOUR PLAN",
     indexTitle: "Mental Training",
@@ -419,6 +423,8 @@ export const en = {
     deleteAccountWarn: "This permanently deletes your profile, journal and progress. Cannot be undone.",
     deleteConfirm: "Type DELETE to confirm",
     deleted: "Account deleted",
+    guideTitle: "User guide",
+    guideDesc: "How to use PowerFlow · includes printable PDF",
 
     // Stats
     bodyweight: "Bodyweight (kg)",
@@ -972,6 +978,11 @@ export const en = {
     noStates: "No states yet",
     youSection: "Ego States",
     youSectionDesc: "Psychological personas you step into intentionally",
+    saveBlock: "↓ Save ego state",
+    savedBlock: "✓ Saved to Ego States",
+    saveBlockError: "Could not save — try again.",
+    deleteConfirm: "Delete \"{name}\"?",
+    openCoachAI: "Open Coach AI →",
   },
 
   // Voice work pages (beta)

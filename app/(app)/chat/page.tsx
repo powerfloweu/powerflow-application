@@ -276,6 +276,7 @@ const EGO_STATE_FIELD_LABELS: Record<string, string> = {
 };
 
 function EgoStateBlock({ raw }: { raw: string }) {
+  const { t } = useT();
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -317,7 +318,7 @@ function EgoStateBlock({ raw }: { raw: string }) {
       if (!res.ok) throw new Error(await res.text());
       setSaved(true);
     } catch {
-      setError("Could not save — try again.");
+      setError(t("egoStates.saveBlockError"));
     } finally {
       setSaving(false);
     }
@@ -329,7 +330,7 @@ function EgoStateBlock({ raw }: { raw: string }) {
       <div className="flex items-center gap-3 px-4 py-3 border-b border-white/8">
         <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
         <p className="font-saira text-sm font-bold text-white flex-1">{name}</p>
-        <p className="font-saira text-[9px] uppercase tracking-[0.22em] text-purple-400">Ego State</p>
+        <p className="font-saira text-[9px] uppercase tracking-[0.22em] text-purple-400">{t("egoStates.title")}</p>
       </div>
       {/* Fields */}
       <div className="px-4 py-3 space-y-2">
@@ -356,7 +357,7 @@ function EgoStateBlock({ raw }: { raw: string }) {
               : "bg-purple-600 hover:bg-purple-500 text-white"
           } disabled:opacity-60`}
         >
-          {saved ? "✓ Saved to Ego States" : saving ? "Saving…" : "↓ Save ego state"}
+          {saved ? t("egoStates.savedBlock") : saving ? t("common.saving") : t("egoStates.saveBlock")}
         </button>
         {error && <p className="font-saira text-xs text-rose-400">{error}</p>}
       </div>

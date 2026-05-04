@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
 
 type ProfileRow = { id: string; coach_code: string };
 
 export async function POST(request: NextRequest) {
-  const { code, userId } = await request.json();
-  if (!code || !userId) {
-    return NextResponse.json({ error: "Missing code or userId" }, { status: 400 });
+  // Resolve the caller's identity server-side — never trust the body's userId.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = user.id;
+
+  const body = await request.json();
+  const { code } = body;
+  if (!code) {
+    return NextResponse.json({ error: "Missing code" }, { status: 400 });
   }
 
   // Find coach by code

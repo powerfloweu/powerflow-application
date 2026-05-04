@@ -1013,7 +1013,8 @@ export function stepsComplete(
   /** Fully done: content + practice (for insight = same as contentDone) */
   all: boolean;
 } {
-  const video    = !!row?.video_done_at;
+  // A module with no muxPlaybackId has no video — treat the step as automatically done.
+  const video    = !!row?.video_done_at || (!!mod && !mod.muxPlaybackId);
   const exercise = !!row?.exercise_done_at;
   const quiz     = !!row?.quiz_done_at;
   const contentDone = video && exercise && quiz;

@@ -48,12 +48,11 @@ export function scheduleCheckinNotification(reminderHour = 19): () => void {
     // Don't re-notify if already done
     if (isCheckinDone()) return;
 
-    // Request permission (no-op if already granted/denied)
-    let permission = Notification.permission;
-    if (permission === "default") {
-      permission = await Notification.requestPermission();
-    }
-    if (permission !== "granted") return;
+    // Only schedule if permission is already granted.
+    // The NotificationPermissionBanner handles requesting permission via a
+    // user gesture — calling requestPermission() here (on mount, without a
+    // gesture) is suppressed by modern browsers and races the banner.
+    if (Notification.permission !== "granted") return;
 
     // Calculate ms until reminderHour:00 today
     const now = new Date();

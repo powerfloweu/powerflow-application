@@ -639,10 +639,10 @@ export default function YouPage() {
           <span className="text-lg">📖</span>
           <div>
             <p className="font-saira text-sm font-semibold text-zinc-300 group-hover:text-purple-300 transition">
-              User guide
+              {t("you.guideTitle")}
             </p>
             <p className="font-saira text-[10px] text-zinc-400">
-              How to use PowerFlow · includes printable PDF
+              {t("you.guideDesc")}
             </p>
           </div>
         </div>

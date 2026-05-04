@@ -52,6 +52,9 @@ export const de: Dict = {
     done: "Fertig",
     select: "Auswählen",
     upgradeArrow: "Upgrade →",
+    openArrow: "Öffnen →",
+    videoSoon: "Video kommt bald",
+    videoSoonDesc: "Das Video dieser Woche wird in Kürze hinzugefügt.",
   },
 
   today: {
@@ -257,6 +260,7 @@ export const de: Dict = {
     pillReflect: "Reflexion",
     pillPractice: "{count}/{target} Übungen",
     backToCourseShort: "← Zurück zum Kurs",
+    reflectPlaceholder: "Schreib deine Antwort hier…",
 
     pageLabelYourPlan: "DEIN PLAN",
     indexTitle: "Mentales Training",
@@ -412,6 +416,8 @@ export const de: Dict = {
     deleteAccountWarn: "Dies löscht dein Profil, Journal und Fortschritt dauerhaft. Kann nicht rückgängig gemacht werden.",
     deleteConfirm: "Tippe DELETE zur Bestätigung",
     deleted: "Konto gelöscht",
+    guideTitle: "Benutzerhandbuch",
+    guideDesc: "So nutzt du PowerFlow · inkl. druckbarer PDF",
 
     bodyweight: "Körpergewicht (kg)",
     weightCategory: "Gewichtsklasse",
@@ -939,6 +945,11 @@ export const de: Dict = {
     noStates: "Noch keine",
     youSection: "Ego-Zustände",
     youSectionDesc: "Psychologische Personas, die du bewusst aktivierst",
+    saveBlock: "↓ Ego-Zustand speichern",
+    savedBlock: "✓ In Ego-Zuständen gespeichert",
+    saveBlockError: "Speichern fehlgeschlagen — bitte erneut versuchen.",
+    deleteConfirm: "\"{name}\" löschen?",
+    openCoachAI: "Coach AI öffnen →",
   },
 
   voices: {

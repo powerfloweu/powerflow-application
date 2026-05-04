@@ -341,7 +341,7 @@ export default function ModuleDetailPage() {
                     )}
                   </div>
                   <span className="font-saira text-xs text-zinc-400 group-hover:text-purple-400 transition flex-shrink-0 mt-0.5">
-                    Open →
+                    {t("common.openArrow")}
                   </span>
                 </a>
               ))}
@@ -359,12 +359,12 @@ export default function ModuleDetailPage() {
               <textarea
                 value={exerciseText}
                 onChange={(e) => handleExerciseChange(e.target.value)}
-                placeholder="Write your response here…"
+                placeholder={t("course.reflectPlaceholder")}
                 rows={4}
                 className="w-full rounded-xl border border-white/10 bg-surface-panel px-3 py-2 font-saira text-base sm:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none [color-scheme:dark]"
               />
               {exerciseSaving && (
-                <p className="font-saira text-[10px] text-zinc-400 mt-1">Saving…</p>
+                <p className="font-saira text-[10px] text-zinc-400 mt-1">{t("common.saving")}</p>
               )}
             </div>
           </section>

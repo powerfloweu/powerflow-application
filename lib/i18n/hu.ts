@@ -50,6 +50,9 @@ export const hu: Dict = {
     done: "Kész",
     select: "Kiválasztás",
     upgradeArrow: "Frissítés →",
+    openArrow: "Megnyitás →",
+    videoSoon: "Videó hamarosan",
+    videoSoonDesc: "Ez a heti videó rövidesen elérhető lesz.",
   },
 
   today: {
@@ -255,6 +258,7 @@ export const hu: Dict = {
     pillReflect: "Reflexió",
     pillPractice: "{count}/{target} gyakorlat",
     backToCourseShort: "← Vissza a tanfolyamhoz",
+    reflectPlaceholder: "Írd ide a válaszodat…",
 
     pageLabelYourPlan: "A TERVED",
     indexTitle: "Mentális edzés",
@@ -410,6 +414,8 @@ export const hu: Dict = {
     deleteAccountWarn: "Ez véglegesen törli a profilodat, naplódat és haladásodat. Nem vonható vissza.",
     deleteConfirm: "Írd be a DELETE szót a megerősítéshez",
     deleted: "Fiók törölve",
+    guideTitle: "Felhasználói útmutató",
+    guideDesc: "Hogyan használd a PowerFlow-t · nyomtatható PDF-fel",
 
     bodyweight: "Testsúly (kg)",
     weightCategory: "Súlycsoport",
@@ -937,6 +943,11 @@ export const hu: Dict = {
     noStates: "Még nincs",
     youSection: "Ego-állapotok",
     youSectionDesc: "Tudatosan aktivált pszichológiai személyiségek",
+    saveBlock: "↓ Ego-állapot mentése",
+    savedBlock: "✓ Mentve az Ego-állapotokhoz",
+    saveBlockError: "Mentés sikertelen — próbáld újra.",
+    deleteConfirm: "Törlöd: \"{name}\"?",
+    openCoachAI: "Coach AI megnyitása →",
   },
 
   voices: {

@@ -686,6 +686,22 @@ function ToolsPageInner() {
     if (stored) setFavoriteRelaxId(stored);
   }, []);
 
+  // Scroll to and expand a tool when the URL contains a hash anchor.
+  // Native browser scroll fires before React renders on SPA navigation,
+  // so we do it ourselves after the first paint.
+  React.useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (!hash) return;
+    setOpenId(hash);
+    // Wait one frame for the open state to render before scrolling.
+    const id = setTimeout(() => {
+      const el = document.getElementById(hash);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+    return () => clearTimeout(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   React.useEffect(() => {
     fetch("/api/me")
       .then((r) => r.json())

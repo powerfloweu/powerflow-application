@@ -2,6 +2,7 @@
 
 import React from "react";
 import MuxPlayer from "@mux/mux-player-react";
+import { useT } from "@/lib/i18n";
 
 interface Props {
   /** Mux public playback ID — the public ID from the Mux dashboard */
@@ -37,6 +38,7 @@ const MuxVideoPlayer = React.memo(function MuxVideoPlayer({
   onPlay,
   aspect = "landscape",
 }: Props) {
+  const { t } = useT();
   const firedRef = React.useRef(false);
 
   // Always keep the latest onPlay in a ref — allows handlePlay to be stable
@@ -67,9 +69,9 @@ const MuxVideoPlayer = React.memo(function MuxVideoPlayer({
           <div className="w-12 h-12 mx-auto mb-3 rounded-full border border-purple-500/30 bg-purple-500/10 flex items-center justify-center text-xl">
             ▶
           </div>
-          <p className="font-saira text-xs text-zinc-400 mb-1">Video coming soon</p>
+          <p className="font-saira text-xs text-zinc-400 mb-1">{t("common.videoSoon")}</p>
           <p className="font-saira text-[10px] text-zinc-400">
-            {title ?? "This week's video will be added shortly."}
+            {title ?? t("common.videoSoonDesc")}
           </p>
         </div>
       </div>
