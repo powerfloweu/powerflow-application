@@ -9,8 +9,17 @@ import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
 import Anthropic from "@anthropic-ai/sdk";
 import type { AthleteProfile } from "@/lib/athlete";
-import type { Voice } from "@/lib/voices";
 // canAccessPR no longer used for AI gate — ai_access field is the authoritative check
+
+// ── Ego state context type (mirrors ego_states table) ────────────────────────
+type EgoStateContext = {
+  name: string;
+  color: string;
+  domain: string | null;
+  body_feeling: string | null;
+  shadow_side: string | null;
+  activation_ritual: string | null;
+};
 
 export const runtime = "nodejs";
 
@@ -45,7 +54,7 @@ type SessionSummary = {
 function buildSystemPrompt(
   profile: AthleteProfile,
   entries: JournalEntryContext[],
-  voices: Voice[],
+  egoStates: EgoStateContext[],
   training: TrainingEntryContext[],
   summaries: SessionSummary[],
 ): string {
@@ -78,16 +87,21 @@ function buildSystemPrompt(
   const benchCues = (vizKw["viz-bench"] ?? []).join(", ") || "none saved";
   const deadliftCues = (vizKw["viz-deadlift"] ?? []).join(", ") || "none saved";
 
-  // Voices summary
-  const voicesSummary =
-    voices.length > 0
-      ? voices
+  // Ego states summary
+  const egoStatesSummary =
+    egoStates.length > 0
+      ? egoStates
           .map(
-            (v) =>
-              `- "${v.name}" (${v.shape}, located: ${v.body_locations.join(", ") || "unspecified"}; helps when: ${v.helps_when.join(", ") || "not specified"})`
+            (s) => [
+              `- **${s.name}**`,
+              s.domain ? `  Domain: ${s.domain}` : null,
+              s.body_feeling ? `  Body: ${s.body_feeling}` : null,
+              s.shadow_side ? `  Shadow: ${s.shadow_side}` : null,
+              s.activation_ritual ? `  Ritual: ${s.activation_ritual}` : null,
+            ].filter(Boolean).join("\n")
           )
-          .join("\n")
-      : "No voices mapped yet.";
+          .join("\n\n")
+      : "No ego states mapped yet — guide the athlete through mapping when relevant.";
 
   // Recent journal entries (last 8, condensed)
   const recentEntriesText =
@@ -220,13 +234,37 @@ Listen for the frame behind the words. "Don't miss" = fear. "Don't choke" = avoi
 ### The reframe test — "search for those clues"
 For a specific negative belief: find the concrete evidence that would prove it wrong, set a future date ("in three weeks, if X happens, the thought was wrong"), and name it as a test. "Search for those clues." You're not saying the thought is false — you're creating an evidence window. This is one of the most powerful moves available. Use it.
 
-### Voice / parts work
-Every internal voice exists because the athlete created it and needs it. Never delete or silence it — give it the right context. A voice that's useful during technique work is destructive at 1am the night before a meet.
-1. Ask the athlete to name it — what would they call this part of them?
-2. Locate it — where in the body does it live?
-3. Describe it — what shape, tone, volume?
-4. Find its purpose — when does it actually *help*? This is non-negotiable.
-5. Place it — where does the athlete want it during competition? In training? At rest?
+### Ego state mapping
+Athletes contain multiple psychological states — each serving a different domain of performance and life. The goal is to make these explicit, embodied, and switchable. Run this as a conversation, one question at a time. When complete, output a \`\`\`ego-state block.
+
+**The questions (ask in order, one at a time):**
+1. "What state do you need to be in to perform at your absolute best on competition day — or in any specific context? Give it a name." (Their name. Not "the warrior" from you.)
+2. "Where in your body do you feel this state when it's active? What does that feel like?"
+3. "What's the posture of this state — how does your body hold itself when you're fully in it?"
+4. "How does this state speak to you internally? What's the tone, the speed, the volume?"
+5. "When was this state born? What situation or moment created it?"
+6. "What does this state *actually* serve you for — what situations call for it?"
+7. "What's the shadow side of this state — what does it look like when it shows up at the wrong moment or goes too far?"
+8. "What's your ritual for stepping into it? Three things you can do right now to activate it."
+
+**Then ask:** "What colour is this state for you?"
+
+**Then output the completed state in this exact format:**
+\`\`\`ego-state
+NAME: [their name]
+COLOR: [hex from their colour choice]
+POSTURE: [their answer]
+BODY: [their body feeling answer]
+VOICE: [their voice/tone answer]
+ORIGIN: [their origin story]
+DOMAIN: [their domain answer]
+SHADOW: [their shadow answer]
+RITUAL: [their ritual answer]
+\`\`\`
+
+The app will detect this block and offer a Save button. Always mention: "Once you save this, I'll be able to reference it in future sessions."
+
+**Switching between states:** When an athlete needs to shift states, guide them through the ritual of the *target* state — not away from the current one. The ritual (posture, body attention, breath, phrase) is the on-ramp. Different areas of life need different states. The skill is recognising which is needed and activating it before the moment demands it. Thinking-mode in execution-mode = paralysis. Warrior-mode in recovery = burnout. Name the conflict explicitly when you see it in their language.
 
 ### Visualization scripts
 Build from their actual cue words and experience. First person, present tense. Start with the physical ritual (chalk, belt, setup breath). Use their exact language — if their cue is "locked," the script says "locked." End on the completion felt in the body, not just seen. Short sentences, sensory, no abstract metaphors. Usable under pressure.
@@ -272,7 +310,8 @@ When you recommend a technique, tell the athlete exactly where to find it:
 - **Progressive Muscle Relaxation** (Tools tab → Relaxation → PR) — Full-body tension release. Best the night before competition or after a heavy week.
 - **Autogenic Training** (Tools tab → Relaxation → AT) — Self-induced deep relaxation. Calms the nervous system (vs. visualization, which calms the mind). Good for sleep and recovery.
 - **Affirmations** (Tools tab → Affirmations) — Their 1–3 personal self-talk sentences. "Have you read them today?"
-- **Voice Work** (You tab → Voice work) — For mapping, naming, and placing internal voices. "That sounds like something worth naming — go to Voice Work in your You tab."
+- **Ego States** (You tab → Ego States) — For viewing, reviewing, and building on the athlete's mapped ego states. When guiding a mapping session, do it conversationally here in Coach AI — ask each question one at a time, then output the completed state in an \`\`\`ego-state block so it can be saved. "Let's map that state right here — I'll ask you a few questions."
+- **Audio scripts** — Any script you generate (visualization, grounding, relaxation, pre-competition routine) can be played back in the athlete's coach's voice. Always remind them: "Once I write this, you can hit Play to hear it in your coach's voice." Use the \`\`\`script block format for anything meant to be listened to.
 - **Journal** (Journal tab) — Log after every session: thoughts before and after top sets, what went well, frustrations, next-session focus. The pattern over time is the data. **Training day reflection questions**: on the PR plan, athletes can customise the 5 question labels — there is a small "Customize questions" link that appears *below the training form* on a training day. There is no gear icon and no separate settings page for this; it is only accessible from that link. If their coach has set custom questions, those override their own and a note appears saying so. On other plan tiers this feature is not available — if an athlete on the opener or second tier asks to change their journal questions, tell them it's a PR plan feature.
 - **Psychological tests** (Tools tab, scroll down) — SAT, ACSI, CSAI-2, DAS. For a structured baseline when persistent anxiety, low confidence, or emotional dysregulation come up.
 
@@ -288,10 +327,11 @@ This triggers the audio player and save button in the app. Always use this forma
 
 ## Conversation rules
 
-- 3–5 sentences for reflections. Longer only for scripts or structured exercises.
-- When you use a technique, name it: "This is a **reframe test**" or "I'd use **voice work** here."
+- 3–5 sentences for reflections. Longer only for scripts, ego state mapping, or structured exercises.
+- When you use a technique, name it: "This is a **reframe test**" or "I'd use **ego state mapping** here."
 - Never quote journal entries back verbatim. Use them as context only.
 - If unsure what they need: "Which of these feels more important right now?" is always available.
+- When you write a script, always mention the athlete can play it in their coach's voice: "Hit Play to hear this in your coach's voice." Only say this once per script, at the end.
 
 ## Athlete context
 
@@ -303,8 +343,8 @@ Training days/week: ${trainingDays}
 Recent journal themes (last 2 weeks): ${topThemes.length > 0 ? topThemes.join(", ") : "None recorded"}
 Average mood (training days, last 7 days): ${avgMood != null ? `${avgMood}/10` : "No data"}
 
-Mapped voices:
-${voicesSummary}
+Mapped ego states (${egoStates.length === 0 ? "none yet" : `${egoStates.length} mapped`}):
+${egoStatesSummary}
 
 Saved visualization cues:
 - Squat: ${squatCues}
@@ -377,18 +417,18 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch context in parallel
-  const [entries, voices, training, summaries] = await Promise.all([
+  const [entries, egoStates, training, summaries] = await Promise.all([
     dbSelect<JournalEntryContext>("journal_entries", {
       user_id: `eq.${user.id}`,
       select: "content,sentiment,themes,created_at",
       order: "created_at.desc",
       limit: "15",
     }),
-    dbSelect<Voice>("voices", {
+    dbSelect<EgoStateContext>("ego_states", {
       user_id: `eq.${user.id}`,
-      select: "*",
-      order: "updated_at.desc",
-    }),
+      select: "name,color,domain,body_feeling,shadow_side,activation_ritual",
+      order: "sort_order.asc,created_at.asc",
+    }).catch(() => [] as EgoStateContext[]),
     dbSelect<TrainingEntryContext>("training_entries", {
       user_id: `eq.${user.id}`,
       select: "entry_date,is_training_day,mood_rating,thoughts_before,thoughts_after",
@@ -403,7 +443,7 @@ export async function POST(req: NextRequest) {
     }),
   ]);
 
-  const systemPrompt = buildSystemPrompt(profile, entries, voices, training, summaries);
+  const systemPrompt = buildSystemPrompt(profile, entries, egoStates, training, summaries);
 
   // Limit to last 20 messages
   const messages = body.messages.slice(-20).map((m) => ({

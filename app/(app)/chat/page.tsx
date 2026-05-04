@@ -267,9 +267,106 @@ function ScriptBlock({
   );
 }
 
+// ── EgoStateBlock ─────────────────────────────────────────────────────────────
+
+const EGO_STATE_FIELD_LABELS: Record<string, string> = {
+  NAME: "Name", COLOR: "Colour", POSTURE: "Posture", BODY: "Body feeling",
+  VOICE: "Inner voice", ORIGIN: "Origin", DOMAIN: "Domain",
+  SHADOW: "Shadow side", RITUAL: "Activation ritual",
+};
+
+function EgoStateBlock({ raw }: { raw: string }) {
+  const [saving, setSaving] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+  const [error, setError] = React.useState("");
+
+  // Parse KEY: value lines
+  const fields: Record<string, string> = {};
+  for (const line of raw.split("\n")) {
+    const colon = line.indexOf(":");
+    if (colon > 0) {
+      const key = line.slice(0, colon).trim().toUpperCase();
+      const val = line.slice(colon + 1).trim();
+      if (key && val) fields[key] = val;
+    }
+  }
+
+  const name = fields["NAME"] || "Ego State";
+  const color = fields["COLOR"] || "#7C3AED";
+
+  const save = async () => {
+    if (saving || saved) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/ego-states", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fields["NAME"] || "Unnamed State",
+          color: fields["COLOR"] || "#7C3AED",
+          posture: fields["POSTURE"] || null,
+          body_feeling: fields["BODY"] || null,
+          voice_tone: fields["VOICE"] || null,
+          origin_story: fields["ORIGIN"] || null,
+          domain: fields["DOMAIN"] || null,
+          shadow_side: fields["SHADOW"] || null,
+          activation_ritual: fields["RITUAL"] || null,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setSaved(true);
+    } catch {
+      setError("Could not save — try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="my-3 rounded-2xl border border-white/10 bg-surface-card overflow-hidden">
+      {/* Colour bar + name */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/8">
+        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+        <p className="font-saira text-sm font-bold text-white flex-1">{name}</p>
+        <p className="font-saira text-[9px] uppercase tracking-[0.22em] text-purple-400">Ego State</p>
+      </div>
+      {/* Fields */}
+      <div className="px-4 py-3 space-y-2">
+        {(["POSTURE","BODY","VOICE","ORIGIN","DOMAIN","SHADOW","RITUAL"] as const).map((key) =>
+          fields[key] ? (
+            <div key={key}>
+              <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-500 mb-0.5">
+                {EGO_STATE_FIELD_LABELS[key]}
+              </p>
+              <p className="font-saira text-xs text-zinc-300 leading-relaxed">{fields[key]}</p>
+            </div>
+          ) : null
+        )}
+      </div>
+      {/* Save button */}
+      <div className="px-4 pb-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving || saved}
+          className={`rounded-xl px-4 py-2 font-saira text-xs font-semibold transition ${
+            saved
+              ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+              : "bg-purple-600 hover:bg-purple-500 text-white"
+          } disabled:opacity-60`}
+        >
+          {saved ? "✓ Saved to Ego States" : saving ? "Saving…" : "↓ Save ego state"}
+        </button>
+        {error && <p className="font-saira text-xs text-rose-400">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
 // ── Markdown-lite renderer ────────────────────────────────────────────────────
 // Renders **bold**, newlines → <br>, ```script blocks → ScriptBlock,
-// and other fenced code blocks → <pre>.
+// ```ego-state blocks → EgoStateBlock, and other fenced code blocks → <pre>.
 
 function renderContent(
   text: string,
@@ -313,6 +410,10 @@ function renderContent(
             onSeekBy={scriptProps.onSeekBy}
           />
         );
+      }
+
+      if (lang === "ego-state") {
+        return <EgoStateBlock key={i} raw={body.trim()} />;
       }
 
       return (
@@ -367,14 +468,22 @@ function TypingIndicator() {
 
 // ── Welcome card ──────────────────────────────────────────────────────────────
 
-function WelcomeCard({ onChip }: { onChip: (text: string) => void }) {
+function WelcomeCard({
+  onChip,
+  prompts,
+}: {
+  onChip: (text: string) => void;
+  prompts: string[] | null;
+}) {
   const { t } = useT();
-  const quickStarts = [
+  const fallbackChips = [
     t("chat.q1"),
     t("chat.q2"),
     t("chat.q3"),
     t("chat.q4"),
   ];
+  const chips = prompts ?? fallbackChips;
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] px-4 py-8">
       <div className="w-full max-w-sm">
@@ -387,19 +496,29 @@ function WelcomeCard({ onChip }: { onChip: (text: string) => void }) {
           </p>
         </div>
         <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-400 mb-3 text-center">
-          {t("chat.quickStartsLabel")}
+          {prompts === null ? t("chat.loadingPrompts") : t("chat.quickStartsLabel")}
         </p>
         <div className="flex flex-col gap-2">
-          {quickStarts.map((qs) => (
-            <button
-              key={qs}
-              type="button"
-              onClick={() => onChip(qs)}
-              className="w-full text-left rounded-xl border border-white/8 bg-surface-card hover:border-purple-500/30 hover:bg-purple-500/5 px-4 py-3 font-saira text-sm text-zinc-400 hover:text-zinc-200 transition"
-            >
-              {qs}
-            </button>
-          ))}
+          {prompts === null ? (
+            // Skeleton loading chips
+            Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="w-full animate-pulse bg-white/5 rounded-xl h-12"
+              />
+            ))
+          ) : (
+            chips.map((qs) => (
+              <button
+                key={qs}
+                type="button"
+                onClick={() => onChip(qs)}
+                className="w-full text-left rounded-xl border border-white/8 bg-surface-card hover:border-purple-500/30 hover:bg-purple-500/5 px-4 py-3 font-saira text-sm text-zinc-400 hover:text-zinc-200 transition"
+              >
+                {qs}
+              </button>
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -419,6 +538,7 @@ export default function ChatPage() {
   const [loadingHistory, setLoadingHistory] = React.useState(true);
   const [showClearConfirm, setShowClearConfirm] = React.useState(false);
   const [clearing, setClearing] = React.useState(false);
+  const [suggestedPrompts, setSuggestedPrompts] = React.useState<string[] | null>(null);
 
   // Message ratings: dbId → "good" | "bad"
   const [ratings, setRatings] = React.useState<Record<string, "good" | "bad">>({});
@@ -538,8 +658,11 @@ export default function ChatPage() {
     Promise.all([
       fetch("/api/me").then((r) => r.json()),
       fetch("/api/chat/messages?limit=50").then((r) => r.json()),
+      fetch("/api/chat/suggested-prompts")
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
     ])
-      .then(([profile, history]) => {
+      .then(([profile, history, suggested]) => {
         // ai_access is the authoritative gate — admin must enable it per user.
         // plan_tier alone is not sufficient.
         if (!profile?.ai_access) {
@@ -566,6 +689,22 @@ export default function ChatPage() {
           if (lastDate && lastDate < today) {
             fetch("/api/chat/summarize", { method: "POST" }).catch(() => {});
           }
+        }
+        // Populate suggested prompts — fall back to static list if fetch failed
+        if (
+          suggested?.prompts &&
+          Array.isArray(suggested.prompts) &&
+          suggested.prompts.length > 0
+        ) {
+          setSuggestedPrompts(suggested.prompts as string[]);
+        } else {
+          setSuggestedPrompts([
+            "Map my ego states with me",
+            "What patterns do you see in my recent entries?",
+            "Help me debrief today's training session",
+            "Generate a visualization script in my coach's voice",
+            "I'm in my head — help me switch states",
+          ]);
         }
       })
       .catch(() => router.replace("/upgrade"))
@@ -1012,7 +1151,7 @@ export default function ChatPage() {
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2">
 
         {!hasMessages ? (
-          <WelcomeCard onChip={handleChip} />
+          <WelcomeCard onChip={handleChip} prompts={suggestedPrompts} />
         ) : (
           <div className="max-w-lg mx-auto">
             {messages.map((msg) => (
