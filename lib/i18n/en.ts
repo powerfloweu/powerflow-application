@@ -726,6 +726,26 @@ export const en = {
       t2: "To change or disconnect your coach, expand the [[Coach]] section and tap [[Change coach]].",
       t3: "The guide link (this page) and sign-out are at the bottom.",
     },
+    s07: {
+      title: "Coach AI",
+      t1: "[[Coach AI]] is your personal sports psychology AI, built on your coach's methodology. Tap the [[chat bubble]] icon in the bottom navigation to open it.",
+      t2: "You can ask it to: analyse your recent journal entries, help you prepare mentally for competition, debrief a tough session, map your ego states, generate a visualization or relaxation script in your coach's voice, guide you through switching psychological states, or work through self-doubt and anxiety.",
+      t3: "When you open Coach AI with no message typed, [[smart prompt chips]] appear — personalised based on your recent entries, upcoming meet date, and what you've already mapped. Tap one to start instantly.",
+      t4: "Any script the AI generates can be played back in your coach's voice — tap [[▶ Play]] on the script card. Save it to your [[Scripts]] library with the save button to listen again any time.",
+    },
+    s08: {
+      title: "Ego States",
+      t1: "An ego state is a psychological persona you deliberately step into for a specific context — the competitor on meet day, the technician during heavy training, the recoverer on rest days. Each has a name, colour, posture, body feeling, inner voice, origin story, and activation ritual.",
+      t2: "Map your ego states through [[Coach AI]] — ask it to [[Map my ego states with me]]. It walks you through eight questions one at a time, then outputs a state card you can save with one tap.",
+      t3: "Once you've saved at least one state, an [[Ego States]] section appears in your [[You]] tab where you can review, edit, and build on your states.",
+      t4: "The skill is recognising which state a moment calls for — and switching into it intentionally using your activation ritual before the moment demands it. Different situations need different states. Thinking-mode during execution causes paralysis; warrior-mode during recovery causes burnout.",
+    },
+    s09: {
+      title: "Weekly & monthly check-ins",
+      t1: "A [[weekly check-in]] prompt appears at the end of each week. It takes about 60 seconds: rate five areas (mood, training quality, energy, sleep, readiness for next week), then add your biggest win, main challenge, and one focus for the week ahead.",
+      t2: "A [[monthly check-in]] deepens the weekly format with three extra reflection questions: biggest breakthrough this month, key lesson learned about yourself, and your main intention going into next month.",
+      t3: "Your coach sees all check-in responses on their dashboard — giving them a structured picture of how each week and month felt, beyond the individual training log entries.",
+    },
   },
 
   // Guide — coach section content
@@ -747,7 +767,7 @@ export const en = {
       t2: "[[🟢 On-track]] = 55%+ positive. [[🟡 Monitor]] = 30–55%. [[🔴 Attention]] = below 30% — reach out.",
       t3: "A [[rose banner]] appears at the top of the dashboard listing all athletes currently flagged as Attention, with a quick email link for each.",
       t4: "Use the search bar and sort options (Priority, Positive %, Activity, Name) to navigate a larger roster.",
-      t5: "Tap any athlete card to expand it — six tabs are available: Analysis, Recent Entries, Test Scores, Training Log, Profile, and Notes.",
+      t5: "Tap any athlete card to expand it — seven tabs are available: Analysis, Recent Entries, Test Scores, Training Log, [[Check-ins]], Profile, and Notes.",
     },
     s04: {
       title: "Analysis tab",
@@ -779,6 +799,7 @@ export const en = {
       title: "Profile tab",
       t1: "Full onboarding profile: physical stats, lifts (current and goal), self-rating scales, mindset assessment answers, mental goals, and coaching expectations.",
       t2: "The [[Mental tools]] section at the top shows the athlete's saved affirmations and their personal cue words for each lift (squat, bench, deadlift).",
+      t3: "If the athlete has mapped [[Ego States]], they appear at the bottom of the Profile tab — name, domain, and activation ritual for each state. Use these when guiding state-switching in their sessions.",
     },
     s09: {
       title: "Notes tab",
@@ -789,6 +810,17 @@ export const en = {
       title: "Your profile & code",
       t1: "The [[You]] tab shows your name, role badge, and sign-out. Your join link and coach code are always visible at the top of the main dashboard.",
       t2: "Athletes can disconnect from you themselves via their [[You]] tab. You can also manage athlete-coach links from the admin dashboard if needed.",
+    },
+    s11: {
+      title: "Check-ins tab",
+      t1: "Expand any athlete card and tap [[Check-ins]] to view their weekly and monthly self-ratings. Each entry shows five rated areas (mood, training quality, energy, sleep, readiness) plus written reflections.",
+      t2: "Read the athlete's biggest win, main challenge, and their stated focus for the following week or month. These are submitted by the athlete and cannot be edited — they are a direct window into the athlete's own experience.",
+    },
+    s12: {
+      title: "Assigning psychological tests",
+      t1: "To assign a test, expand an athlete card, go to the [[Profile]] tab, and scroll to the [[Assign a test]] section. Pick SAT, ACSI, CSAI-2, or DAS and tap [[Assign]].",
+      t2: "Assigned tests appear as a prompt in the athlete's [[Tools]] tab. Once completed, results show in your [[Test Scores]] tab and the assignment is cleared automatically.",
+      t3: "Use test assignment to get a structured baseline at the start of coaching, or when journal patterns suggest a specific area needs measurement.",
     },
   },
 

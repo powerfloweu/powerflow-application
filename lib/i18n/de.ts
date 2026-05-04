@@ -699,6 +699,26 @@ export const de: Dict = {
       t2: "Um deinen Coach zu wechseln oder die Verbindung zu trennen, klappe den [[Coach]]-Bereich auf und tippe auf [[Coach wechseln]].",
       t3: "Der Guide-Link (diese Seite) und die Abmelde-Option befinden sich ganz unten.",
     },
+    s07: {
+      title: "Coach AI",
+      t1: "[[Coach AI]] ist dein persönlicher Sport-Psychologie-KI, aufgebaut auf der Methodik deines Coaches. Tippe auf das [[Chat-Symbol]] in der unteren Navigation, um es zu öffnen.",
+      t2: "Du kannst es bitten: aktuelle Tagebucheinträge zu analysieren, dich mental auf einen Wettkampf vorzubereiten, eine schwierige Einheit nachzubesprechen, deine Ego-Zustände zu kartieren, ein Visualisierungs- oder Entspannungsskript in der Stimme deines Coaches zu generieren, dich durch den Zustandswechsel zu führen oder Selbstzweifel und Angst zu bearbeiten.",
+      t3: "Wenn du Coach AI ohne Nachricht öffnest, erscheinen [[Smart Prompts]] — personalisiert nach deinen letzten Einträgen, deinem Wettkampfdatum und was du bereits kartiert hast. Tippe einen an, um sofort zu starten.",
+      t4: "Jedes Skript, das die KI generiert, kann in der Stimme deines Coaches abgespielt werden — tippe [[▶ Abspielen]] auf der Skript-Karte. Speichere es in deiner [[Skript-Bibliothek]] mit der Speichern-Schaltfläche.",
+    },
+    s08: {
+      title: "Ego-Zustände",
+      t1: "Ein Ego-Zustand ist eine psychologische Persona, die du bewusst für einen bestimmten Kontext aktivierst — der Wettkämpfer am Wettkampftag, der Techniker beim schweren Training, der Erholende an Ruhetagen. Jeder hat einen Namen, eine Farbe, eine Haltung, ein Körpergefühl, eine innere Stimme, eine Entstehungsgeschichte und ein Aktivierungsritual.",
+      t2: "Kartiere deine Ego-Zustände durch [[Coach AI]] — bitte es um [[Mappe meine Ego-Zustände mit mir]]. Es führt dich durch acht Fragen Schritt für Schritt und gibt dann eine Karte aus, die du mit einem Tippen speichern kannst.",
+      t3: "Sobald du mindestens einen Zustand gespeichert hast, erscheint ein [[Ego-Zustände]]-Bereich in deinem [[Du]]-Tab, wo du deine Zustände überprüfen, bearbeiten und ausbauen kannst.",
+      t4: "Die Fähigkeit liegt darin, zu erkennen, welchen Zustand ein Moment erfordert — und ihn mithilfe deines Aktivierungsrituals bewusst zu aktivieren, bevor der Moment es verlangt. Verschiedene Situationen brauchen verschiedene Zustände.",
+    },
+    s09: {
+      title: "Wöchentliche & monatliche Check-ins",
+      t1: "Am Ende jeder Woche erscheint ein [[wöchentlicher Check-in]]-Prompt. Er dauert etwa 60 Sekunden: Bewerte fünf Bereiche (Stimmung, Trainingsqualität, Energie, Schlaf, Bereitschaft für die nächste Woche) und füge deinen größten Erfolg, die Hauptherausforderung und einen Fokus für die nächste Woche hinzu.",
+      t2: "Ein [[monatlicher Check-in]] vertieft das wöchentliche Format mit drei zusätzlichen Reflexionsfragen: größter Durchbruch des Monats, wichtigste Erkenntnis über dich selbst und deine Hauptabsicht für den nächsten Monat.",
+      t3: "Dein Coach sieht alle Check-in-Antworten in seinem Dashboard — und erhält so ein strukturiertes Bild davon, wie sich jede Woche und jeder Monat angefühlt hat.",
+    },
   },
 
   guideCoach: {
@@ -719,7 +739,7 @@ export const de: Dict = {
       t2: "[[🟢 Auf Kurs]] = 55%+ positiv. [[🟡 Beobachten]] = 30–55%. [[🔴 Aufmerksamkeit]] = unter 30% — melde dich.",
       t3: "Ein [[rosafarbenes Banner]] erscheint oben im Dashboard und listet alle Athleten auf, die aktuell als Aufmerksamkeit markiert sind, mit einem schnellen E-Mail-Link für jeden.",
       t4: "Nutze die Suchleiste und Sortieroptionen (Priorität, Positiv %, Aktivität, Name), um einen größeren Kader zu navigieren.",
-      t5: "Tippe auf eine Athleten-Karte, um sie aufzuklappen — sechs Tabs stehen zur Verfügung: Analyse, Aktuelle Einträge, Testergebnisse, Trainingsprotokoll, Profil und Notizen.",
+      t5: "Tippe auf eine Athleten-Karte, um sie aufzuklappen — sieben Tabs stehen zur Verfügung: Analyse, Aktuelle Einträge, Testergebnisse, Trainingsprotokoll, [[Check-ins]], Profil und Notizen.",
     },
     s04: {
       title: "Analyse-Tab",
@@ -751,6 +771,7 @@ export const de: Dict = {
       title: "Profil-Tab",
       t1: "Vollständiges Onboarding-Profil: körperliche Daten, Lifts (aktuell und Ziel), Selbstbewertungsskalen, Mindset-Assessment-Antworten, mentale Ziele und Coaching-Erwartungen.",
       t2: "Der Bereich [[Mentale Werkzeuge]] oben zeigt die gespeicherten Affirmationen des Athleten und seine persönlichen Stichwörter für jeden Lift (Squat, Bench, Deadlift).",
+      t3: "Wenn der Athlet [[Ego-Zustände]] kartiert hat, erscheinen sie am Ende des Profil-Tabs — Name, Bereich und Aktivierungsritual für jeden Zustand.",
     },
     s09: {
       title: "Notizen-Tab",
@@ -761,6 +782,17 @@ export const de: Dict = {
       title: "Dein Profil & Code",
       t1: "Der [[Du]]-Tab zeigt deinen Namen, dein Rollen-Abzeichen und die Abmelde-Option. Dein Einladungslink und Coach-Code sind immer oben im Haupt-Dashboard sichtbar.",
       t2: "Athleten können sich selbst über ihren [[Du]]-Tab von dir trennen. Du kannst Athlet-Coach-Verknüpfungen bei Bedarf auch über das Admin-Dashboard verwalten.",
+    },
+    s11: {
+      title: "Check-ins-Tab",
+      t1: "Erweitere eine Athleten-Karte und tippe auf [[Check-ins]], um die wöchentlichen und monatlichen Selbstbewertungen zu sehen. Jeder Eintrag zeigt fünf bewertete Bereiche (Stimmung, Trainingsqualität, Energie, Schlaf, Bereitschaft) sowie schriftliche Reflexionen.",
+      t2: "Lies den größten Erfolg des Athleten, die Hauptherausforderung und seinen angegebenen Fokus für die folgende Woche oder den folgenden Monat. Diese werden vom Athleten eingereicht und sind ein direktes Fenster in seine eigene Erfahrung.",
+    },
+    s12: {
+      title: "Psychologische Tests zuweisen",
+      t1: "Um einen Test zuzuweisen, erweitere eine Athleten-Karte, gehe zum [[Profil]]-Tab und scrolle zum Abschnitt [[Einen Test zuweisen]]. Wähle SAT, ACSI, CSAI-2 oder DAS und tippe auf [[Zuweisen]].",
+      t2: "Zugewiesene Tests erscheinen als Aufforderung im [[Tools]]-Tab des Athleten. Nach Abschluss erscheinen die Ergebnisse in deinem [[Testergebnisse]]-Tab und die Zuweisung wird automatisch gelöscht.",
+      t3: "Nutze die Testzuweisung, um zu Beginn des Coachings einen strukturierten Ausgangspunkt zu erhalten, oder wenn Tagebuchmuster darauf hindeuten, dass ein bestimmter Bereich gemessen werden sollte.",
     },
   },
 

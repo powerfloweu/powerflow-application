@@ -697,6 +697,26 @@ export const hu: Dict = {
       t2: "Az edződ megváltoztatásához vagy leválasztásához bővítsd ki az [[Edző]] részt, és koppints az [[Edző cseréje]] gombra.",
       t3: "Az útmutató hivatkozása (ez az oldal) és a kijelentkezés alul található.",
     },
+    s07: {
+      title: "Coach AI",
+      t1: "A [[Coach AI]] a személyes sport-pszichológiai MI-ed, amely az edződ módszertanára épül. A megnyitásához érintsd meg a [[chat ikont]] az alsó navigációban.",
+      t2: "Megkérheted, hogy: elemezze a legutóbbi naplóbejegyzéseidet, segítsen felkészülni mentálisan a versenyre, értékelje ki az edzést, feltérképezze az ego-állapotaidat, generáljon vizualizációs vagy relaxációs szkriptet az edződ hangjával, vezessen végig az állapotváltáson, vagy dolgozza fel az önbizalomhiányt és a szorongást.",
+      t3: "Ha üzenet nélkül nyitod meg a Coach AI-t, [[intelligens javaslatok]] jelennek meg — személyre szabva a legutóbbi bejegyzéseid, a verseny időpontja és az eddig feltérképezett dolgok alapján. Érintj meg egyet az azonnali kezdéshez.",
+      t4: "Minden szkriptet, amelyet a MI generál, le lehet játszani az edződ hangjával — érintsd meg a [[▶ Lejátszás]] gombot a szkriptkártyán. Mentsd el a [[Szkriptek]] könyvtárba a mentés gombbal, hogy bármikor újra meghallgathasd.",
+    },
+    s08: {
+      title: "Ego-állapotok",
+      t1: "Az ego-állapot egy pszichológiai személyiség, amelyet tudatosan aktiválsz egy adott helyzethez — a versenyző a versenynapon, a technikus a nehéz edzésen, a regenerálódó a pihenőnapokon. Mindegyiknek van neve, színe, testtartása, testi érzése, belső hangja, eredettörténete és aktiválási rituáléja.",
+      t2: "Térképezd fel az ego-állapotaidat a [[Coach AI]]-on keresztül — kérd meg, hogy [[Térképezzük fel az ego állapotaimat veled]]. Nyolc kérdésen vezet át egyenként, majd kiad egy kártyát, amelyet egy érintéssel elmenthetsz.",
+      t3: "Miután legalább egy állapotot elmentettél, egy [[Ego-állapotok]] rész jelenik meg a [[Te]] fülön, ahol átnézheted, szerkesztheted és bővítheted az állapotaidat.",
+      t4: "A készség abban rejlik, hogy felismerd, melyik állapotot kívánja meg egy pillanat — és tudatosan aktiváld az aktiválási rituáléddal, mielőtt a pillanat megkövetelné. Különböző helyzetek különböző állapotokat igényelnek.",
+    },
+    s09: {
+      title: "Heti és havi check-inek",
+      t1: "Minden hét végén megjelenik egy [[heti check-in]] felszólítás. Körülbelül 60 másodpercet vesz igénybe: értékelj öt területet (hangulat, edzésminőség, energia, alvás, felkészültség a következő hétre), majd adj hozzá egy legnagyobb sikert, fő kihívást és egy következő heti fókuszt.",
+      t2: "A [[havi check-in]] három extra reflexiós kérdéssel mélyíti a heti formátumot: legnagyobb áttörés ebben a hónapban, legfontosabb tanulság magadról, és fő szándékod a következő hónapra.",
+      t3: "Az edződ a műszerfalon látja az összes check-in választ — így strukturált képet kap arról, hogyan érezted magad minden héten és hónapban az egyes edzésnaplókon túl.",
+    },
   },
 
   guideCoach: {
@@ -717,7 +737,7 @@ export const hu: Dict = {
       t2: "[[🟢 Megfelelő]] = 55%+ pozitív. [[🟡 Figyelés]] = 30–55%. [[🔴 Figyelem]] = 30% alatt — vedd fel a kapcsolatot.",
       t3: "Egy [[rózsa banner]] jelenik meg az irányítópult tetején, amely felsorolja az összes jelenleg Figyelem jelzéssel megjelölt sportolót, mindegyikhez egy gyors e-mail hivatkozással.",
       t4: "Használd a keresőt és a rendezési lehetőségeket (Prioritás, Pozitív %, Aktivitás, Név) a nagyobb csapat áttekintéséhez.",
-      t5: "Koppints bármelyik sportoló kártyára a kibontáshoz — hat fül érhető el: Elemzés, Legutóbbi bejegyzések, Tesztpontszámok, Edzésnapló, Profil és Megjegyzések.",
+      t5: "Érintsd meg bármelyik sportolókártyát a kibővítéséhez — hét fül érhető el: Elemzés, Legutóbbi bejegyzések, Teszteredmények, Edzésnapló, [[Check-inek]], Profil és Megjegyzések.",
     },
     s04: {
       title: "Elemzés fül",
@@ -749,6 +769,7 @@ export const hu: Dict = {
       title: "Profil fül",
       t1: "Teljes onboarding profil: fizikai adatok, emelt súlyok (jelenlegi és célok), önértékelési skálák, szemléletmód felmérés válaszok, mentális célok és coaching elvárások.",
       t2: "A felül lévő [[Mentális eszközök]] rész mutatja a sportoló mentett megerősítéseit és az egyes emeléseknél (Squat, Bench, Deadlift) használt személyes jelszavait.",
+      t3: "Ha a sportoló feltérképezte az [[Ego-állapotait]], azok a Profil fül alján jelennek meg — minden állapot neve, területe és aktiválási rituáléja. Használd ezeket, amikor az állapotváltást irányítod a munkájuk során.",
     },
     s09: {
       title: "Megjegyzések fül",
@@ -759,6 +780,17 @@ export const hu: Dict = {
       title: "A profilod és kódod",
       t1: "A [[Te]] fül mutatja a nevedet, szerepköri jelvényedet és a kijelentkezési lehetőséget. A csatlakozási linked és az edző kódod mindig látható a főirányítópult tetején.",
       t2: "A sportolók le tudnak csatlakozni tőled a saját [[Te]] fülükről. Szükség esetén az admin irányítópultról is kezelheted a sportoló-edző kapcsolatokat.",
+    },
+    s11: {
+      title: "Check-in fül",
+      t1: "Bővíts ki egy sportolókártyát, és érintsd meg a [[Check-inek]] gombot a heti és havi önértékelések megtekintéséhez. Minden bejegyzés öt értékelt területet mutat (hangulat, edzésminőség, energia, alvás, felkészültség) valamint írásos reflexiókat.",
+      t2: "Olvasd el a sportoló legnagyobb sikerét, fő kihívását és a következő hétre vagy hónapra vonatkozó fókuszát. Ezeket a sportoló küldi be — közvetlen betekintés a saját tapasztalatába.",
+    },
+    s12: {
+      title: "Pszichológiai tesztek kiosztása",
+      t1: "Egy teszt kiosztásához bővíts ki egy sportolókártyát, menj a [[Profil]] fülre, és görgess le a [[Teszt kiosztása]] részhez. Válassz SAT, ACSI, CSAI-2 vagy DAS tesztet, majd érintsd meg a [[Kiosztás]] gombot.",
+      t2: "A kiosztott tesztek felszólításként jelennek meg a sportoló [[Eszközök]] fülén. Befejezéskor az eredmények megjelennek a [[Teszteredmények]] fülön, és a kiosztás automatikusan törlődik.",
+      t3: "Használd a tesztkiosztást strukturált kiindulópont meghatározásához a coaching elején, vagy ha a naplóbejegyzésekben olyan mintákat látsz, amelyek egy adott terület mérését javasolják.",
     },
   },
 
