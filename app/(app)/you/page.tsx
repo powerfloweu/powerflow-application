@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { computePhase } from "@/lib/phase";
 import { WEIGHT_CATEGORIES } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
-import type { SelfTalkMode } from "@/lib/voices";
 import { DevLogViewer } from "@/app/components/NotificationModal";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n";
@@ -70,9 +69,8 @@ export default function YouPage() {
   const [trainingDays, setTrainingDays]   = React.useState<number | null>(null);
   const [coachId, setCoachId]             = React.useState<string | null>(null);
 
-  // ── Practice mode (voice work) ─────────────────────────────
-  const [selfTalkMode, setSelfTalkMode]     = React.useState<SelfTalkMode>("classic");
-  const [savingMode, setSavingMode]         = React.useState(false);
+  // ── Ego states count ────────────────────────────────────────
+  const [egoStateCount, setEgoStateCount]   = React.useState<number | null>(null);
 
   // ── Coach picker state ─────────────────────────────────────
   const [coaches, setCoaches]               = React.useState<CoachOption[]>([]);
@@ -102,7 +100,6 @@ export default function YouPage() {
         setMentalGoals([mg[0] ?? "", mg[1] ?? "", mg[2] ?? ""]);
         setTrainingDays(p.training_days_per_week ?? null);
         setCoachId(p.coach_id ?? null);
-        setSelfTalkMode(p.self_talk_mode ?? "classic");
         // If user already has a coach, fetch the coach list now so we can
         // display the coach's name in the static view (without making them
         // open the picker).
@@ -120,6 +117,14 @@ export default function YouPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    // Fetch ego states count (best effort)
+    fetch("/api/ego-states")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setEgoStateCount(data.length);
+      })
+      .catch(() => {});
   }, []);
 
   // ── Save helper ────────────────────────────────────────────
@@ -602,77 +607,32 @@ export default function YouPage() {
         })()}
       </Section>
 
-      {/* ── Practice mode ───────────────────────────────────── */}
-      {!profile?.ai_access && (
-        <div className="rounded-2xl border border-white/5 bg-surface-card mb-4 px-5 py-4 flex items-center justify-between gap-4 opacity-60">
+      {/* ── Ego States ──────────────────────────────────────── */}
+      <Link
+        href="/ego-states"
+        className="flex items-center justify-between w-full mb-4 rounded-2xl border border-white/5 bg-surface-card px-5 py-4 font-saira hover:border-purple-500/20 transition group"
+      >
+        <div className="flex items-center gap-3">
+          <span
+            className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-purple-400"
+          />
           <div>
-            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
-              {t("you.sectionPracticeMode")}
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 group-hover:text-purple-300 transition">
+              {t("egoStates.youSection")}
             </p>
-            <p className="font-saira text-xs text-zinc-500 mt-1">
-              Enabled by your coach or admin
+            <p className="font-saira text-xs text-zinc-500 mt-0.5">
+              {egoStateCount === null
+                ? t("egoStates.youSectionDesc")
+                : egoStateCount === 0
+                ? t("egoStates.noStates")
+                : egoStateCount === 1
+                ? t("egoStates.stateCount").replace("{n}", "1")
+                : t("egoStates.stateCountPlural").replace("{n}", String(egoStateCount))}
             </p>
           </div>
-          <span className="text-zinc-600 text-lg">🔒</span>
         </div>
-      )}
-      {profile?.ai_access && (
-        <Section
-          label={t("you.sectionPracticeMode")}
-          summary={selfTalkMode === "beta_voice_work" ? t("you.voiceWorkLabel") : t("you.classicLabel")}
-        >
-          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-300 mb-1">
-            Self-Talk Log
-          </p>
-          <p className="font-saira text-xs text-zinc-300 leading-relaxed mb-4">
-            Classic mode uses the standard journal for your thoughts.
-            Voice work maps the recurring voices in your head &mdash; naming
-            them, locating them, and giving each one a purpose.
-          </p>
-
-          {/* Segmented control */}
-          <div className="flex gap-2 mb-4">
-            {(["classic", "beta_voice_work"] as SelfTalkMode[]).map((mode) => {
-              const isActive = selfTalkMode === mode;
-              const label = mode === "classic" ? t("you.classicLabel") : t("you.voiceWorkLabel");
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  disabled={savingMode}
-                  onClick={async () => {
-                    if (isActive) return;
-                    setSavingMode(true);
-                    setSelfTalkMode(mode);
-                    setProfile((p) => p ? { ...p, self_talk_mode: mode } : p);
-                    await fetch("/api/me", {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ self_talk_mode: mode }),
-                    }).catch(() => {});
-                    setSavingMode(false);
-                  }}
-                  className={`flex-1 rounded-xl border py-2 font-saira text-xs font-semibold transition ${
-                    isActive
-                      ? "border-purple-500 bg-purple-600 text-white"
-                      : "border-white/10 bg-surface-panel text-zinc-400 hover:border-purple-500/40 hover:text-white"
-                  } disabled:opacity-60`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Open log link */}
-          <Link
-            href={selfTalkMode === "beta_voice_work" ? "/voices" : "/journal"}
-            className="font-saira text-[11px] text-purple-400 hover:text-purple-300 underline underline-offset-2 transition"
-          >
-            Open log →
-          </Link>
-        </Section>
-      )}
+        <span className="text-zinc-400 group-hover:text-purple-400 transition">→</span>
+      </Link>
 
       {/* ── Guide link ───────────────────────────────────────── */}
       <Link
