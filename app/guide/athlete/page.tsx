@@ -686,7 +686,7 @@ export default function AthleteGuidePage() {
               Everything you need to get the most out of the PowerFlow app — from signing in to logging your first training session and connecting with your coach.
             </p>
             <a
-              href="https://powerflow-application.vercel.app/auth/sign-in"
+              href="https://app.power-flow.eu/auth/sign-in"
               style={{
                 display: "inline-block",
                 margin: "24px 0 16px",
@@ -700,9 +700,9 @@ export default function AthleteGuidePage() {
                 textDecoration: "none",
               }}
             >
-              Sign in → powerflow-application.vercel.app
+              Sign in → app.power-flow.eu
             </a>
-            <p className="cover-meta">Version 1.0 · April 2026 · powerflow.eu</p>
+            <p className="cover-meta">Version 1.0 · April 2026 · app.power-flow.eu</p>
           </div>
 
           {/* ── 00 Install ──────────────────────────────────────── */}

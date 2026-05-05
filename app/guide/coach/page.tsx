@@ -440,7 +440,7 @@ export default function CoachGuidePage() {
               How to sign in as a coach, invite your athletes, and use the PowerFlow dashboard to track journal sentiment, training load, and assessment results.
             </p>
             <a
-              href="https://powerflow-application.vercel.app/auth/sign-in"
+              href="https://app.power-flow.eu/auth/sign-in"
               style={{
                 display: "inline-block",
                 margin: "24px 0 16px",
@@ -454,9 +454,9 @@ export default function CoachGuidePage() {
                 textDecoration: "none",
               }}
             >
-              Sign in → powerflow-application.vercel.app
+              Sign in → app.power-flow.eu
             </a>
-            <p className="cover-meta">Version 1.0 · April 2026 · powerflow.eu</p>
+            <p className="cover-meta">Version 1.0 · April 2026 · app.power-flow.eu</p>
           </div>
 
           {/* ── 01 Sign in ──────────────────────────────────────── */}
