@@ -688,6 +688,45 @@ export default function AthleteGuidePage() {
             <p className="cover-meta">Version 1.0 · April 2026 · powerflow.eu</p>
           </div>
 
+          {/* ── 00 Install ──────────────────────────────────────── */}
+          <Page>
+            <SectionHeading num="00" title="Install the app" subtitle="Add to Home Screen · No App Store needed" />
+            <p style={{ fontSize: 10, color: "#52525b", marginBottom: 16, lineHeight: 1.7, maxWidth: 480 }}>
+              PowerFlow is a web app — nothing to download. Add it to your phone&apos;s home screen once and it opens
+              full-screen like a native app, with push notifications and audio working correctly.
+              Always open from the home screen icon, not from the browser.
+            </p>
+            <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+              {/* iOS */}
+              <div style={{ flex: "1 1 200px", background: "#f4f4f5", borderRadius: 12, padding: "14px 16px" }}>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7c3aed", marginBottom: 8 }}>
+                  iPhone / iPad (Safari)
+                </p>
+                <ol style={{ fontSize: 10, color: "#3f3f46", lineHeight: 1.8, paddingLeft: 16, margin: 0 }}>
+                  <li>Open the PowerFlow URL in <strong>Safari</strong></li>
+                  <li>Tap the <strong>Share ↑</strong> button at the bottom</li>
+                  <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+                  <li>Tap <strong>Add</strong> in the top-right corner</li>
+                </ol>
+              </div>
+              {/* Android */}
+              <div style={{ flex: "1 1 200px", background: "#f4f4f5", borderRadius: 12, padding: "14px 16px" }}>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7c3aed", marginBottom: 8 }}>
+                  Android (Chrome)
+                </p>
+                <ol style={{ fontSize: 10, color: "#3f3f46", lineHeight: 1.8, paddingLeft: 16, margin: 0 }}>
+                  <li>Open the PowerFlow URL in <strong>Chrome</strong></li>
+                  <li>Tap the <strong>⋮ menu</strong> in the top-right corner</li>
+                  <li>Tap <strong>Add to Home Screen</strong> or <strong>Install app</strong></li>
+                  <li>Tap <strong>Add</strong> or <strong>Install</strong></li>
+                </ol>
+              </div>
+            </div>
+            <Note>
+              <strong>Tip:</strong> On iOS, only <strong>Safari</strong> supports Add to Home Screen — it will not work from Chrome or Firefox on iPhone.
+            </Note>
+          </Page>
+
           {/* ── 01 Sign in ──────────────────────────────────────── */}
           <Page>
             <SectionHeading num="01" title="Signing in" subtitle="Google OAuth · Role selection" />

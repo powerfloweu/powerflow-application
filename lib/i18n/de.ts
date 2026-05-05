@@ -667,6 +667,13 @@ export const de: Dict = {
   },
 
   guideAthlete: {
+    s00: {
+      title: "App installieren",
+      t1: "PowerFlow ist eine [[Web-App]] — kein App Store nötig. Füge sie einmal zum Home-Bildschirm hinzu und sie öffnet sich wie eine native App, komplett mit Benachrichtigungen und Audio.",
+      t2: "[[iPhone / iPad (Safari):]] App öffnen → [[Teilen ↑]]-Symbol unten tippen → nach unten scrollen → [[Zum Home-Bildschirm]] tippen → [[Hinzufügen]] tippen.",
+      t3: "[[Android (Chrome):]] App öffnen → [[⋮-Menü]] oben rechts tippen → [[Zum Startbildschirm hinzufügen]] oder [[App installieren]] tippen → [[Hinzufügen]] / [[Installieren]] tippen.",
+      t4: "Nach der Installation PowerFlow immer über das Home-Bildschirm-Symbol öffnen — nicht über den Browser — damit Benachrichtigungen und Kamera korrekt funktionieren.",
+    },
     s01: {
       title: "Anmelden",
       t1: "Öffne die App und tippe auf [[Mit Google anmelden]]. Wähle [[Athlet]] aus, bevor du dich anmeldest — das legt deine Rolle dauerhaft fest.",

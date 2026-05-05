@@ -695,6 +695,13 @@ export const en = {
 
   // Guide — athlete section content (tips use [[...]] for highlighted UI labels)
   guideAthlete: {
+    s00: {
+      title: "Install the app",
+      t1: "PowerFlow is a [[web app]] — no App Store needed. Add it to your home screen once and it opens full-screen like a native app, with notifications and audio working properly.",
+      t2: "[[iPhone / iPad (Safari):]] open the app → tap the [[Share ↑]] button at the bottom of the screen → scroll down → tap [[Add to Home Screen]] → tap [[Add]].",
+      t3: "[[Android (Chrome):]] open the app → tap the [[⋮ menu]] in the top-right corner → tap [[Add to Home Screen]] or [[Install app]] → tap [[Add]] or [[Install]].",
+      t4: "After installing, always open PowerFlow from your home screen icon — not the browser — so notifications and the camera work correctly.",
+    },
     s01: {
       title: "Sign in",
       t1: "Open the app and tap [[Sign in with Google]]. Make sure you select [[Athlete]] before signing in — this sets your role permanently.",

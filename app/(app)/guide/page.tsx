@@ -63,6 +63,13 @@ function AthleteGuide() {
   const a = "guideAthlete";
   return (
     <>
+      <GuideSection num="00" title={t(`${a}.s00.title`)}>
+        <Tip text={t(`${a}.s00.t1`)} />
+        <Tip text={t(`${a}.s00.t2`)} />
+        <Tip text={t(`${a}.s00.t3`)} />
+        <Tip text={t(`${a}.s00.t4`)} />
+      </GuideSection>
+
       <GuideSection num="01" title={t(`${a}.s01.title`)}>
         <Tip text={t(`${a}.s01.t1`)} />
         <Tip text={t(`${a}.s01.t2`)} />

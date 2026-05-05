@@ -665,6 +665,13 @@ export const hu: Dict = {
   },
 
   guideAthlete: {
+    s00: {
+      title: "Az alkalmazás telepítése",
+      t1: "A PowerFlow egy [[webalkalmazás]] — nem kell App Store. Add hozzá egyszer a kezdőképernyőhöz, és natív appként nyílik meg, értesítésekkel és hanggal együtt.",
+      t2: "[[iPhone / iPad (Safari):]] nyisd meg az appot → koppints az alul lévő [[Megosztás ↑]] gombra → görgess le → koppints a [[Főképernyőhöz adás]] opcióra → koppints a [[Hozzáadás]] gombra.",
+      t3: "[[Android (Chrome):]] nyisd meg az appot → koppints a jobb felső [[⋮ menüre]] → koppints a [[Hozzáadás a kezdőképernyőhöz]] vagy [[Alkalmazás telepítése]] opcióra → koppints a [[Hozzáadás]] / [[Telepítés]] gombra.",
+      t4: "Telepítés után mindig a kezdőképernyő ikonján keresztül nyisd meg a PowerFlow-t — ne böngészőből — hogy az értesítések és a kamera megfelelően működjenek.",
+    },
     s01: {
       title: "Bejelentkezés",
       t1: "Nyisd meg az appot, és koppints a [[Bejelentkezés Google-lal]] gombra. Győződj meg róla, hogy a [[Sportoló]] lehetőséget választod bejelentkezés előtt — ez véglegesen beállítja a szerepkörödet.",
