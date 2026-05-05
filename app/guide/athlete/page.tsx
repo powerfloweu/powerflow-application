@@ -685,6 +685,23 @@ export default function AthleteGuidePage() {
             <p className="cover-sub">
               Everything you need to get the most out of the PowerFlow app — from signing in to logging your first training session and connecting with your coach.
             </p>
+            <a
+              href="https://powerflow-application.vercel.app/auth/sign-in"
+              style={{
+                display: "inline-block",
+                margin: "24px 0 16px",
+                padding: "12px 28px",
+                background: "#7c3aed",
+                color: "#fff",
+                borderRadius: 999,
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                textDecoration: "none",
+              }}
+            >
+              Sign in → powerflow-application.vercel.app
+            </a>
             <p className="cover-meta">Version 1.0 · April 2026 · powerflow.eu</p>
           </div>
 
