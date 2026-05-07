@@ -1,9 +1,5 @@
 import React from "react";
-
-export const metadata = {
-  title: "PowerFlow · Coach Guide",
-  description: "How to use the PowerFlow coach dashboard",
-};
+import { coachContent, GuideLocale } from "./content";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -32,7 +28,7 @@ function TwoCol({ left, right }: { left: React.ReactNode; right: React.ReactNode
   );
 }
 
-function Steps({ items }: { items: { label: string; desc: string }[] }) {
+function Steps({ items }: { items: ReadonlyArray<{ label: string; desc: string }> }) {
   return (
     <ol className="step-list">
       {items.map((item, i) => (
@@ -67,9 +63,9 @@ function Phone({ children, caption }: { children: React.ReactNode; caption?: str
 
 // ── Screen mockups ────────────────────────────────────────────────────────────
 
-function ScreenCoachSignIn() {
+function ScreenCoachSignIn({ caption }: { caption: string }) {
   return (
-    <Phone caption="Sign-in — coach role">
+    <Phone caption={caption}>
       <div className="s-center" style={{ padding: "24px 16px" }}>
         <div className="s-logo">PF</div>
         <div className="s-tagline">POWERFLOW</div>
@@ -85,9 +81,9 @@ function ScreenCoachSignIn() {
   );
 }
 
-function ScreenDashboard() {
+function ScreenDashboard({ caption }: { caption: string }) {
   return (
-    <Phone caption="Coach dashboard">
+    <Phone caption={caption}>
       <div style={{ padding: "0 10px" }}>
         <div className="s-eyebrow" style={{ paddingTop: 2 }}>POWERFLOW · COACH</div>
         <div className="s-h1" style={{ marginBottom: 2 }}>Dashboard</div>
@@ -140,9 +136,9 @@ function ScreenDashboard() {
   );
 }
 
-function ScreenEntriesTab() {
+function ScreenEntriesTab({ caption }: { caption: string }) {
   return (
-    <Phone caption="Athlete — Recent entries tab">
+    <Phone caption={caption}>
       <div style={{ padding: "0 10px" }}>
         <div className="s-ath-name" style={{ paddingTop: 4, marginBottom: 6 }}>Niina Jarvenkari</div>
         <div className="s-tabs">
@@ -170,9 +166,9 @@ function ScreenEntriesTab() {
   );
 }
 
-function ScreenTrainingTab() {
+function ScreenTrainingTab({ caption }: { caption: string }) {
   return (
-    <Phone caption="Athlete — Training log tab">
+    <Phone caption={caption}>
       <div style={{ padding: "0 10px" }}>
         <div className="s-ath-name" style={{ paddingTop: 4, marginBottom: 6 }}>Niina Jarvenkari</div>
         <div className="s-tabs">
@@ -208,9 +204,9 @@ function ScreenTrainingTab() {
   );
 }
 
-function ScreenTestsTab() {
+function ScreenTestsTab({ caption }: { caption: string }) {
   return (
-    <Phone caption="Athlete — Test results tab">
+    <Phone caption={caption}>
       <div style={{ padding: "0 10px" }}>
         <div className="s-ath-name" style={{ paddingTop: 4, marginBottom: 6 }}>Niina Jarvenkari</div>
         <div className="s-tabs">
@@ -239,9 +235,9 @@ function ScreenTestsTab() {
   );
 }
 
-function ScreenDailyLog() {
+function ScreenDailyLog({ caption }: { caption: string }) {
   return (
-    <Phone caption="Daily log entry detail">
+    <Phone caption={caption}>
       <div style={{ padding: "0 10px" }}>
         <div className="s-ath-name" style={{ paddingTop: 4, marginBottom: 6 }}>Niina Jarvenkari</div>
         <div className="s-tabs">
@@ -267,13 +263,22 @@ function ScreenDailyLog() {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function CoachGuidePage() {
+export default async function CoachGuidePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}) {
+  const { lang } = await searchParams;
+  const locale: GuideLocale =
+    lang === "de" ? "de" : lang === "hu" ? "hu" : "en";
+  const c = coachContent[locale] as typeof coachContent.en;
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>PowerFlow · Coach Guide</title>
+        <title>PowerFlow · {c.cover.title.join(" ")}</title>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Saira:wght@400;600;700;800&display=swap');
 
@@ -391,7 +396,6 @@ export default function CoachGuidePage() {
 
           /*
            * Back-to-app button — only visible on screen, hidden in print.
-           * Sits at the top so users never get stranded on this page in a PWA.
            */
           .back-bar {
             position: sticky;
@@ -426,19 +430,17 @@ export default function CoachGuidePage() {
       <body>
         {/* Sticky back-to-app bar — hidden in print, visible on screen */}
         <div className="back-bar">
-          <a href="/guide">← Back to app</a>
+          <a href="/guide">{c.back}</a>
         </div>
         <div className="doc">
 
           {/* ── Cover ─────────────────────────────────────────── */}
           <div className="cover">
             <div className="cover-logo">PF</div>
-            <div className="cover-eyebrow">PowerFlow · User Guide</div>
-            <h1 className="cover-title">Coach<br />Guide</h1>
+            <div className="cover-eyebrow">{c.cover.eyebrow}</div>
+            <h1 className="cover-title">{c.cover.title[0]}<br />{c.cover.title[1]}</h1>
             <div className="cover-divider" />
-            <p className="cover-sub">
-              How to sign in as a coach, invite your athletes, and use the PowerFlow dashboard to track journal sentiment, training load, and assessment results.
-            </p>
+            <p className="cover-sub">{c.cover.sub}</p>
             <a
               href="https://app.power-flow.eu/auth/sign-in"
               style={{
@@ -454,124 +456,91 @@ export default function CoachGuidePage() {
                 textDecoration: "none",
               }}
             >
-              Sign in → app.power-flow.eu
+              {c.cover.signIn}
             </a>
-            <p className="cover-meta">Version 1.0 · April 2026 · app.power-flow.eu</p>
+            <p className="cover-meta">{c.cover.meta}</p>
           </div>
 
           {/* ── 01 Sign in ──────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="01" title="Signing in as a coach" subtitle="Google OAuth · Coach role" />
+            <SectionHeading num="01" title={c.s01.title} subtitle={c.s01.subtitle} />
             <TwoCol
               left={
                 <>
-                  <Steps items={[
-                    { label: "Open the app", desc: "Navigate to the PowerFlow URL. You will see the sign-in screen." },
-                    { label: "Select Coach role", desc: "Below the Google button, tap Coach. This sets your role permanently — coaches and athletes use separate accounts." },
-                    { label: "Sign in with Google", desc: "Complete the standard Google OAuth flow. You land directly on the Coach Dashboard — there is no setup wizard for coaches." },
-                    { label: "Your coach code is generated", desc: "A unique 8-character code is created automatically on first sign-in. You will see it at the top of the dashboard immediately." },
-                  ]} />
+                  <Steps items={c.s01.steps} />
                   <Note>
-                    <strong>Important:</strong> The Coach role is set permanently at first sign-in. If you need a separate athlete account, sign up with a different Google account.
+                    <strong>{c.s01.note.bold}</strong>{c.s01.note.text}
                   </Note>
                 </>
               }
-              right={<ScreenCoachSignIn />}
+              right={<ScreenCoachSignIn caption={c.screens.coachSignIn} />}
             />
           </Page>
 
           {/* ── 02 Invite athletes ──────────────────────────────── */}
           <Page>
-            <SectionHeading num="02" title="Inviting your athletes" subtitle="Coach code · Join link" />
+            <SectionHeading num="02" title={c.s02.title} subtitle={c.s02.subtitle} />
             <TwoCol
               left={
                 <>
                   <p style={{ fontSize: 10, color: "#52525b", marginBottom: 12, lineHeight: 1.6 }}>
-                    Athletes connect to you using your unique coach code. There are two ways to share it:
+                    {c.s02.intro}
                   </p>
-                  <Steps items={[
-                    { label: "Share your Coach Code directly", desc: "Your 8-character code is shown at the top of the dashboard (e.g. 3S1X4W23). Athletes enter it during onboarding (Step 6) or from the Coach section in their You tab." },
-                    { label: "Share your Join Link", desc: "The dashboard also shows a direct join link. Athletes who click it before signing in are automatically linked to you after they complete the Google sign-in — no code entry needed." },
-                    { label: "Athlete appears on your dashboard", desc: "Once linked, the athlete appears in your coach dashboard within seconds. No refresh needed." },
-                    { label: "Verify the link", desc: "The athlete card shows the athlete's name and their data starts populating as soon as they log entries. If they do not appear, ask them to check the Coach section in their You tab." },
-                  ]} />
-                  <Note>
-                    Coach codes never expire. You can share the same code with all your athletes. If an athlete accidentally linked to the wrong coach, they can change their coach from the <strong>You</strong> tab.
-                  </Note>
+                  <Steps items={c.s02.steps} />
+                  <Note>{c.s02.note.text}</Note>
                 </>
               }
-              right={<ScreenDashboard />}
+              right={<ScreenDashboard caption={c.screens.dashboard} />}
             />
           </Page>
 
           {/* ── 03 Dashboard overview ───────────────────────────── */}
           <Page>
-            <SectionHeading num="03" title="Dashboard overview" subtitle="Traffic-light system · Athlete cards" />
+            <SectionHeading num="03" title={c.s03.title} subtitle={c.s03.subtitle} />
             <TwoCol
               left={
                 <>
                   <p style={{ fontSize: 10, color: "#52525b", marginBottom: 12, lineHeight: 1.6 }}>
-                    Each athlete appears as a card showing their 7-day snapshot. The header gives you the three numbers you need to triage at a glance.
+                    {c.s03.intro}
                   </p>
-                  <Steps items={[
-                    { label: "Journal entry count", desc: "How many journal entries the athlete has written in the last 7 days. Zero entries is itself a signal — the athlete may be disengaged." },
-                    { label: "Positive sentiment rate", desc: "Percentage of entries in the last 7 days tagged as positive by AI. This is the core engagement metric." },
-                    { label: "Traffic-light flag", desc: "🟢 On-track: 55%+ positive. 🟡 Monitor: 30–55% positive — worth a check-in. 🔴 Attention: below 30% — this athlete needs direct contact." },
-                    { label: "Tap to expand", desc: "Tap any athlete card to open their full profile with three tabs: Recent Entries, Training Log, and Test Results." },
-                  ]} />
+                  <Steps items={c.s03.steps} />
                   <Note>
-                    <strong>The 🔴 Attention flag is the most important signal.</strong> Check these athletes first in every session review. A drop from 🟢 to 🔴 in one week often correlates with an upcoming competition or a bad training block.
+                    <strong>{c.s03.note.bold}</strong>{c.s03.note.text}
                   </Note>
                 </>
               }
-              right={<ScreenDashboard />}
+              right={<ScreenDashboard caption={c.screens.dashboard} />}
             />
           </Page>
 
           {/* ── 04 Entries tab ──────────────────────────────────── */}
           <Page>
-            <SectionHeading num="04" title="Recent entries tab" subtitle="Journal sentiment · AI theme detection" />
+            <SectionHeading num="04" title={c.s04.title} subtitle={c.s04.subtitle} />
             <TwoCol
               left={
                 <>
-                  <Steps items={[
-                    { label: "Open an athlete card", desc: "Tap the athlete card on the dashboard. The default tab is Recent Entries." },
-                    { label: "Read sentiment at a glance", desc: "Each entry has a colour dot: 🟢 positive, ⚪ neutral, 🔴 negative. The context tag (Pre-comp, Post-comp, General, etc.) is shown next to the date." },
-                    { label: "Read the full entry", desc: "Tap any entry card to read the full text. The AI-detected themes appear as chips below the text (confidence, anxiety, focus, pressure, recovery, etc.)." },
-                    { label: "Spot patterns", desc: "Look for clusters of negative entries around specific contexts. Repeated 'competition anxiety' or 'confidence' themes across multiple entries signal a clear coaching focus area." },
-                    { label: "Scroll back in time", desc: "The tab shows the last 50 entries, newest first. Scroll to see older entries and track trends over multiple weeks." },
-                  ]} />
-                  <Note>
-                    Sentiment is tagged automatically by AI, but it is not infallible. A negative entry does not always mean the athlete is struggling — read the actual text. Use sentiment as a filter to prioritise which entries to read, not as the final verdict.
-                  </Note>
+                  <Steps items={c.s04.steps} />
+                  <Note>{c.s04.note.text}</Note>
                 </>
               }
-              right={<ScreenEntriesTab />}
+              right={<ScreenEntriesTab caption={c.screens.entriesTab} />}
             />
           </Page>
 
           {/* ── 05 Training log tab ─────────────────────────────── */}
           <Page>
-            <SectionHeading num="05" title="Training log tab" subtitle="Mood sparkline · Daily log entries" />
+            <SectionHeading num="05" title={c.s05.title} subtitle={c.s05.subtitle} />
             <TwoCol
               left={
                 <>
-                  <Steps items={[
-                    { label: "Open Training Log tab", desc: "Inside an athlete card, tap the Training tab. You see the current Mon–Sun training week." },
-                    { label: "Read the sparkline", desc: "Each day shows a bar filled to the athlete's mood rating (1–10). 🏋️ = training day, 💤 = rest day, — = no check-in logged." },
-                    { label: "Week summary", desc: "The header shows total training days logged and the weekly average mood. A low average across training days is more concerning than a single bad day." },
-                    { label: "Read daily log entries", desc: "Below the sparkline, the two most recent days are expanded with their full answers: thoughts before the session, how it went, what went well, frustrations, and next-session focus." },
-                    { label: "Missing check-ins", desc: "Days with no entry (—) mean the athlete did not log. If multiple consecutive days are missing, it may indicate avoidance or disengagement — worth a message." },
-                  ]} />
-                  <Note>
-                    Cross-reference the training log with journal entries. A mood of 8/10 on a training day paired with a negative journal entry from the same day often means the athlete is performing well physically but struggling mentally — a nuanced coaching moment.
-                  </Note>
+                  <Steps items={c.s05.steps} />
+                  <Note>{c.s05.note.text}</Note>
                 </>
               }
               right={
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <ScreenTrainingTab />
-                  <ScreenDailyLog />
+                  <ScreenTrainingTab caption={c.screens.trainingTab} />
+                  <ScreenDailyLog caption={c.screens.dailyLog} />
                 </div>
               }
             />
@@ -579,86 +548,54 @@ export default function CoachGuidePage() {
 
           {/* ── 06 Test results tab ─────────────────────────────── */}
           <Page>
-            <SectionHeading num="06" title="Test results tab" subtitle="SAT · ACSI · CSAI-2 · DAS" />
+            <SectionHeading num="06" title={c.s06.title} subtitle={c.s06.subtitle} />
             <TwoCol
               left={
                 <>
                   <p style={{ fontSize: 10, color: "#52525b", marginBottom: 12, lineHeight: 1.6 }}>
-                    Once an athlete completes and unlocks a test, the scored results appear here automatically. No action needed from you.
+                    {c.s06.intro}
                   </p>
-                  <Steps items={[
-                    { label: "SAT — Sport Anxiety Test", desc: "Total score out of 100. Lower is better. Cross-reference spikes with upcoming competition dates." },
-                    { label: "ACSI — Coping Skills Inventory", desc: "Four sub-scores: coping with adversity, concentration, confidence, and goal-setting. Each expressed as a percentage. Look for the lowest score — that is often the first coaching focus." },
-                    { label: "CSAI-2 — Competitive State Anxiety", desc: "Three scores: cognitive anxiety (worry), somatic anxiety (body symptoms), and self-confidence. High cognitive + low confidence = classic pre-competition anxiety pattern." },
-                    { label: "DAS — Depression, Anxiety, Stress", desc: "Screens for depression-prone thinking, anxiety, and stress. A high DAS alongside many negative journal entries warrants a direct conversation and possible referral." },
-                  ]} />
-                  <Note>
-                    Tests require a one-time athlete payment to unlock results. If results are not showing, the athlete may not have completed the unlock payment. You cannot see partial or unpaid results.
-                  </Note>
+                  <Steps items={c.s06.steps} />
+                  <Note>{c.s06.note.text}</Note>
                 </>
               }
-              right={<ScreenTestsTab />}
+              right={<ScreenTestsTab caption={c.screens.testsTab} />}
             />
           </Page>
 
           {/* ── 07 Check-ins tab ────────────────────────────────── */}
           <Page>
-            <SectionHeading num="07" title="Check-ins tab" subtitle="Weekly & monthly athlete self-ratings" />
-            <Steps items={[
-              { label: "Access check-ins", desc: "Expand any athlete card and tap the Check-ins tab. You'll see their weekly and monthly submissions, most recent first." },
-              { label: "What each entry shows", desc: "Five self-ratings (1–10): overall mood, training quality, energy levels, sleep quality, and readiness for next week or month. These give you a structured numerical picture alongside the journal narrative." },
-              { label: "Written reflections", desc: "Below the ratings: the athlete's biggest win or positive moment, main challenge, and their stated focus for the following week or month. Read these before check-in calls — they often surface what the athlete is most focused on." },
-              { label: "Monthly check-ins", desc: "Monthly submissions include three additional questions: biggest breakthrough, key lesson learned about themselves, and their intention for the next month. These are the closest thing to a structured session summary the athlete produces independently." },
-            ]} />
-            <Note>Check-in data cannot be edited by the coach — they are submitted by the athlete as-is. Cross-reference with journal entries from the same week for the fullest picture.</Note>
+            <SectionHeading num="07" title={c.s07.title} subtitle={c.s07.subtitle} />
+            <Steps items={c.s07.steps} />
+            <Note>{c.s07.note.text}</Note>
           </Page>
 
           {/* ── 08 Assigning tests ──────────────────────────────── */}
           <Page>
-            <SectionHeading num="08" title="Assigning psychological tests" subtitle="SAT · ACSI · CSAI-2 · DAS" />
-            <Steps items={[
-              { label: "Assign a test", desc: "Expand an athlete card → Profile tab → scroll to Assign a test. Select SAT, ACSI, CSAI-2, or DAS and tap Assign. The test appears as a prompt in the athlete's Tools tab immediately." },
-              { label: "Athlete completes it", desc: "The athlete sees the assigned test highlighted in their Tools tab. Once they complete and unlock the results, the assignment is cleared automatically." },
-              { label: "View results", desc: "Completed results appear in your Test Scores tab for that athlete. You can cross-reference scores with journal sentiment — low ACSI concentration alongside negative entries near competition is a strong early warning pattern." },
-              { label: "When to assign", desc: "Use test assignment to get a structured psychological baseline at the start of coaching. Re-assign when journal patterns suggest a specific area (anxiety, confidence, depression risk) needs formal measurement." },
-            ]} />
+            <SectionHeading num="08" title={c.s08.title} subtitle={c.s08.subtitle} />
+            <Steps items={c.s08.steps} />
           </Page>
 
           {/* ── 09 Ego States (coach view) ──────────────────────── */}
           <Page>
-            <SectionHeading num="09" title="Ego States — coach view" subtitle="Athlete's psychological personas · Profile tab" />
-            <Steps items={[
-              { label: "Where to find them", desc: "Expand an athlete card → Profile tab → scroll to the bottom. If the athlete has mapped ego states through Coach AI, each saved state appears with its name, domain, and activation ritual." },
-              { label: "How athletes map them", desc: "Athletes ask Coach AI to run an ego state mapping session. The AI walks through eight questions (name, colour, posture, body feeling, inner voice, origin, domain, shadow side, activation ritual) and the athlete saves the resulting state card." },
-              { label: "Using them in sessions", desc: "Refer to the athlete's states by name in your check-in calls: 'Which state were you in during that heavy squat session?' Use the shadow side field to identify when a state is bleeding into the wrong context. Use the activation ritual to guide pre-competition preparation." },
-              { label: "State conflicts", desc: "The most common performance issue is the wrong state for the moment — Analyst-mode during execution, Warrior-mode during recovery. When you spot this pattern in journal language ('I kept second-guessing', 'couldn't switch off'), it's an ego state conflict worth naming directly." },
-            ]} />
+            <SectionHeading num="09" title={c.s09.title} subtitle={c.s09.subtitle} />
+            <Steps items={c.s09.steps} />
           </Page>
 
           {/* ── 10 Quick reference ──────────────────────────────── */}
           <Page>
-            <SectionHeading num="10" title="Quick reference" subtitle="Dashboard signals at a glance" />
+            <SectionHeading num="10" title={c.s10.title} subtitle={c.s10.subtitle} />
 
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, marginBottom: 32 }}>
               <thead>
                 <tr style={{ background: "#0891b2", color: "#fff" }}>
-                  <th style={{ padding: "8px 12px", textAlign: "left" }}>Signal</th>
-                  <th style={{ padding: "8px 12px", textAlign: "left" }}>What it means</th>
-                  <th style={{ padding: "8px 12px", textAlign: "left" }}>Suggested action</th>
+                  <th style={{ padding: "8px 12px", textAlign: "left" }}>{c.s10.tableHeaders[0]}</th>
+                  <th style={{ padding: "8px 12px", textAlign: "left" }}>{c.s10.tableHeaders[1]}</th>
+                  <th style={{ padding: "8px 12px", textAlign: "left" }}>{c.s10.tableHeaders[2]}</th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  ["🟢 On-track (55%+ positive)", "Athlete is expressing positive mindset consistently", "Review entries, reinforce what's working"],
-                  ["🟡 Monitor (30–55% positive)", "Mixed sentiment — could be a rough week or a trend", "Read entries, check training log mood, send a message"],
-                  ["🔴 Attention (<30% positive)", "Predominantly negative entries — athlete is struggling", "Contact the athlete directly before next session"],
-                  ["0 entries this week", "No journal activity", "Remind athlete to log — engagement is the first step"],
-                  ["Mood drop (e.g. 8 → 4/10)", "Sudden mood decline in training log", "Check journal entries from the same days for context"],
-                  ["Low ACSI Confidence <50%", "Self-confidence deficit in competition context", "Focus next session on confidence-building exercises"],
-                  ["High CSAI-2 Cognitive Anxiety", "Athlete is worrying about performance outcomes", "Introduce thought-stopping or re-framing techniques"],
-                  ["Check-in ratings drop", "Athlete's 5 self-ratings decline week-on-week", "Read written reflections from same week — often explains the drop"],
-                  ["Test assigned (pending)", "Athlete has an assigned test not yet completed", "Follow up — completion gives you a structured baseline for the area you flagged"],
-                ].map(([signal, meaning, action], i) => (
+                {c.s10.tableRows.map(([signal, meaning, action], i) => (
                   <tr key={i} style={{ background: i % 2 === 0 ? "#ecfeff" : "#fff" }}>
                     <td style={{ padding: "8px 12px", fontWeight: 700, color: "#0e7490" }}>{signal}</td>
                     <td style={{ padding: "8px 12px", color: "#52525b" }}>{meaning}</td>
@@ -669,7 +606,7 @@ export default function CoachGuidePage() {
             </table>
 
             <Note>
-              <strong>Weekly review rhythm (suggested):</strong> Check all athlete flags once a week before your group or individual sessions. Read full entries for any 🔴 athletes first. Scan training log mood trends for all athletes. Note any test results that appeared since last review.
+              <strong>{c.s10.note.bold}</strong>{c.s10.note.text}
             </Note>
           </Page>
 

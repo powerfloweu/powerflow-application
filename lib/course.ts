@@ -1015,7 +1015,8 @@ export function stepsComplete(
 } {
   // A module with no muxPlaybackId has no video — treat the step as automatically done.
   const video    = !!row?.video_done_at || (!!mod && !mod.muxPlaybackId);
-  const exercise = !!row?.exercise_done_at;
+  // A module with no exercise field has no exercise step — treat as automatically done.
+  const exercise = !!row?.exercise_done_at || (!!mod && !mod.exercise);
   const quiz     = !!row?.quiz_done_at;
   const contentDone = video && exercise && quiz;
 

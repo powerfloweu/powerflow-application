@@ -226,6 +226,12 @@ export default function GuidePage() {
   const { t } = useT();
   const [role, setRole] = React.useState<"athlete" | "coach" | null>(null);
   const [name, setName] = React.useState("");
+  const [locale, setLocale] = React.useState("en");
+
+  React.useEffect(() => {
+    const stored = localStorage.getItem("powerflow.locale");
+    if (stored === "de" || stored === "hu") setLocale(stored);
+  }, []);
 
   React.useEffect(() => {
     fetch("/api/me")
@@ -241,7 +247,8 @@ export default function GuidePage() {
       .catch(() => {});
   }, [router]);
 
-  const pdfHref = role === "coach" ? "/guide/coach" : "/guide/athlete";
+  const base = role === "coach" ? "/guide/coach" : "/guide/athlete";
+  const pdfHref = locale !== "en" ? `${base}?lang=${locale}` : base;
   const isCoach = role === "coach";
 
   return (

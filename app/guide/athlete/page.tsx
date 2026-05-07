@@ -1,9 +1,5 @@
 import React from "react";
-
-export const metadata = {
-  title: "PowerFlow · Athlete Guide",
-  description: "How to use the PowerFlow app — athlete edition",
-};
+import { athleteContent, GuideLocale } from "./content";
 
 // ── Shared print layout helpers ───────────────────────────────────────────────
 
@@ -36,7 +32,7 @@ function TwoCol({ left, right }: { left: React.ReactNode; right: React.ReactNode
   );
 }
 
-function Steps({ items }: { items: { label: string; desc: string }[] }) {
+function Steps({ items }: { items: ReadonlyArray<{ label: string; desc: string }> }) {
   return (
     <ol className="step-list">
       {items.map((item, i) => (
@@ -73,9 +69,9 @@ function Phone({ children, caption }: { children: React.ReactNode; caption?: str
 
 // ── Individual screen mockups ─────────────────────────────────────────────────
 
-function ScreenSignIn() {
+function ScreenSignIn({ caption }: { caption: string }) {
   return (
-    <Phone caption="Sign-in screen">
+    <Phone caption={caption}>
       <div className="s-center" style={{ padding: "24px 16px" }}>
         <div className="s-logo">PF</div>
         <div className="s-tagline">POWERFLOW</div>
@@ -91,9 +87,9 @@ function ScreenSignIn() {
   );
 }
 
-function ScreenOnboardingStep1() {
+function ScreenOnboardingStep1({ caption }: { caption: string }) {
   return (
-    <Phone caption="Step 1 — About you">
+    <Phone caption={caption}>
       <div className="s-header">
         <span className="s-eyebrow">POWERFLOW · SETUP</span>
         <span className="s-skip">Skip setup</span>
@@ -116,9 +112,9 @@ function ScreenOnboardingStep1() {
   );
 }
 
-function ScreenOnboardingMindset() {
+function ScreenOnboardingMindset({ caption }: { caption: string }) {
   return (
-    <Phone caption="Step 4 — Mindset & self-rating">
+    <Phone caption={caption}>
       <div className="s-header">
         <span className="s-eyebrow">POWERFLOW · SETUP</span>
         <span className="s-skip">Skip setup</span>
@@ -151,9 +147,9 @@ function ScreenOnboardingMindset() {
   );
 }
 
-function ScreenToday() {
+function ScreenToday({ caption }: { caption: string }) {
   return (
-    <Phone caption="Today screen">
+    <Phone caption={caption}>
       <div style={{ padding: "12px 12px 0" }}>
         <div className="s-eyebrow">POWERFLOW · TODAY</div>
         <div className="s-h1" style={{ marginBottom: 2 }}>Good morning, Anna</div>
@@ -187,9 +183,9 @@ function ScreenToday() {
   );
 }
 
-function ScreenCheckIn() {
+function ScreenCheckIn({ caption }: { caption: string }) {
   return (
-    <Phone caption="Training day check-in">
+    <Phone caption={caption}>
       <div style={{ padding: "12px" }}>
         <div className="s-h2" style={{ marginBottom: 8 }}>Training Day</div>
         <div className="s-label">RATE YOUR MOOD</div>
@@ -210,9 +206,9 @@ function ScreenCheckIn() {
   );
 }
 
-function ScreenJournal() {
+function ScreenJournal({ caption }: { caption: string }) {
   return (
-    <Phone caption="Journal — write an entry">
+    <Phone caption={caption}>
       <div style={{ padding: "12px" }}>
         <div className="s-eyebrow">POWERFLOW · JOURNAL</div>
         <div className="s-h1" style={{ marginBottom: 8 }}>Journal</div>
@@ -248,9 +244,9 @@ function ScreenJournal() {
   );
 }
 
-function ScreenTools() {
+function ScreenTools({ caption }: { caption: string }) {
   return (
-    <Phone caption="Tools — assessments">
+    <Phone caption={caption}>
       <div style={{ padding: "12px" }}>
         <div className="s-eyebrow">POWERFLOW · TOOLS</div>
         <div className="s-h1" style={{ marginBottom: 10 }}>Tools</div>
@@ -275,9 +271,9 @@ function ScreenTools() {
   );
 }
 
-function ScreenYou() {
+function ScreenYou({ caption }: { caption: string }) {
   return (
-    <Phone caption="You — profile & settings">
+    <Phone caption={caption}>
       <div style={{ padding: "12px" }}>
         <div className="s-eyebrow">POWERFLOW · YOU</div>
         <div className="s-h1" style={{ marginBottom: 10 }}>Profile</div>
@@ -311,13 +307,22 @@ function ScreenYou() {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function AthleteGuidePage() {
+export default async function AthleteGuidePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}) {
+  const { lang } = await searchParams;
+  const locale: GuideLocale =
+    lang === "de" ? "de" : lang === "hu" ? "hu" : "en";
+  const c = athleteContent[locale] as typeof athleteContent.en;
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>PowerFlow · Athlete Guide</title>
+        <title>PowerFlow · {c.cover.title.join(" ")}</title>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Saira:wght@400;600;700;800&display=swap');
 
@@ -633,12 +638,6 @@ export default function AthleteGuidePage() {
           }
           .s-coach-row { display: flex; align-items: center; gap: 5px; margin-top: 4px; }
 
-          /*
-           * Back-to-app button — only visible on screen. Hidden in print so
-           * the PDF stays clean. Sits at the very top of the document so users
-           * can never get stuck on this page (especially in a PWA where
-           * target="_blank" sometimes opens in the same window).
-           */
           .back-bar {
             position: sticky;
             top: 0;
@@ -670,21 +669,18 @@ export default function AthleteGuidePage() {
         `}</style>
       </head>
       <body>
-        {/* Sticky back-to-app bar — hidden in print, visible on screen */}
         <div className="back-bar">
-          <a href="/guide">← Back to app</a>
+          <a href="/guide">{c.back}</a>
         </div>
         <div className="doc">
 
           {/* ── Cover ─────────────────────────────────────────── */}
           <div className="cover">
             <div className="cover-logo">PF</div>
-            <div className="cover-eyebrow">PowerFlow · User Guide</div>
-            <h1 className="cover-title">Athlete<br />Guide</h1>
+            <div className="cover-eyebrow">{c.cover.eyebrow}</div>
+            <h1 className="cover-title">{c.cover.title[0]}<br />{c.cover.title[1]}</h1>
             <div className="cover-divider" />
-            <p className="cover-sub">
-              Everything you need to get the most out of the PowerFlow app — from signing in to logging your first training session and connecting with your coach.
-            </p>
+            <p className="cover-sub">{c.cover.sub}</p>
             <a
               href="https://app.power-flow.eu/auth/sign-in"
               style={{
@@ -700,94 +696,76 @@ export default function AthleteGuidePage() {
                 textDecoration: "none",
               }}
             >
-              Sign in → app.power-flow.eu
+              {c.cover.signIn}
             </a>
-            <p className="cover-meta">Version 1.0 · April 2026 · app.power-flow.eu</p>
+            <p className="cover-meta">{c.cover.meta}</p>
           </div>
 
           {/* ── 00 Install ──────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="00" title="Install the app" subtitle="Add to Home Screen · No App Store needed" />
+            <SectionHeading num="00" title={c.s00.title} subtitle={c.s00.subtitle} />
             <p style={{ fontSize: 10, color: "#52525b", marginBottom: 16, lineHeight: 1.7, maxWidth: 480 }}>
-              PowerFlow is a web app — nothing to download. Add it to your phone&apos;s home screen once and it opens
-              full-screen like a native app, with push notifications and audio working correctly.
-              Always open from the home screen icon, not from the browser.
+              {c.s00.intro}
             </p>
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-              {/* iOS */}
               <div style={{ flex: "1 1 200px", background: "#f4f4f5", borderRadius: 12, padding: "14px 16px" }}>
                 <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7c3aed", marginBottom: 8 }}>
-                  iPhone / iPad (Safari)
+                  {c.s00.ios.title}
                 </p>
                 <ol style={{ fontSize: 10, color: "#3f3f46", lineHeight: 1.8, paddingLeft: 16, margin: 0 }}>
-                  <li>Open the PowerFlow URL in <strong>Safari</strong></li>
-                  <li>Tap the <strong>Share ↑</strong> button at the bottom</li>
-                  <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
-                  <li>Tap <strong>Add</strong> in the top-right corner</li>
+                  {c.s00.ios.steps.map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
                 </ol>
               </div>
-              {/* Android */}
               <div style={{ flex: "1 1 200px", background: "#f4f4f5", borderRadius: 12, padding: "14px 16px" }}>
                 <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7c3aed", marginBottom: 8 }}>
-                  Android (Chrome)
+                  {c.s00.android.title}
                 </p>
                 <ol style={{ fontSize: 10, color: "#3f3f46", lineHeight: 1.8, paddingLeft: 16, margin: 0 }}>
-                  <li>Open the PowerFlow URL in <strong>Chrome</strong></li>
-                  <li>Tap the <strong>⋮ menu</strong> in the top-right corner</li>
-                  <li>Tap <strong>Add to Home Screen</strong> or <strong>Install app</strong></li>
-                  <li>Tap <strong>Add</strong> or <strong>Install</strong></li>
+                  {c.s00.android.steps.map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
                 </ol>
               </div>
             </div>
             <Note>
-              <strong>Tip:</strong> On iOS, only <strong>Safari</strong> supports Add to Home Screen — it will not work from Chrome or Firefox on iPhone.
+              <strong>{c.s00.note.bold}</strong>{c.s00.note.text}
             </Note>
           </Page>
 
           {/* ── 01 Sign in ──────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="01" title="Signing in" subtitle="Google OAuth · Role selection" />
+            <SectionHeading num="01" title={c.s01.title} subtitle={c.s01.subtitle} />
             <TwoCol
               left={
                 <>
-                  <Steps items={[
-                    { label: "Open the app", desc: "Navigate to the PowerFlow URL. You will see the sign-in screen with a Google button." },
-                    { label: "Make sure Athlete is selected", desc: "Below the Google button you will see two role options: Athlete and Coach. The role is set permanently — choose Athlete." },
-                    { label: "Tap Sign in with Google", desc: "Complete the standard Google OAuth flow. You will be redirected to the setup wizard on first sign-in." },
-                    { label: "Used an invite link?", desc: "If your coach gave you a join link, open it before signing in. It automatically links your account to your coach." },
-                  ]} />
+                  <Steps items={c.s01.steps} />
                   <Note>
-                    <strong>Important:</strong> Your role (Athlete / Coach) is assigned at first sign-in and cannot be changed. If you accidentally signed in as a coach, contact support.
+                    <strong>{c.s01.note.bold}</strong>{c.s01.note.text}
                   </Note>
                 </>
               }
-              right={<ScreenSignIn />}
+              right={<ScreenSignIn caption={c.screens.signIn} />}
             />
           </Page>
 
           {/* ── 02 Setup wizard ─────────────────────────────────── */}
           <Page>
-            <SectionHeading num="02" title="Setup wizard" subtitle="6 steps · Replaces the paper application form" />
+            <SectionHeading num="02" title={c.s02.title} subtitle={c.s02.subtitle} />
             <TwoCol
               left={
                 <>
                   <p style={{ fontSize: 10, color: "#52525b", marginBottom: 12, lineHeight: 1.6 }}>
-                    The wizard collects the same information as the PowerFlow application form and stores it securely in the app. All steps except Step 1 and Step 4&apos;s first question are optional — you can complete them later from the <strong>You</strong> tab.
+                    {c.s02.intro}
                   </p>
-                  <Steps items={[
-                    { label: "Step 1 — About you", desc: "Full name (required), Instagram handle, and gender (required for GL Points calculation)." },
-                    { label: "Step 2 — Powerlifting profile", desc: "Years competing, federation, bodyweight, weight class, next competition date, and training days per week." },
-                    { label: "Step 3 — Your lifts", desc: "Current bests and competition goals for squat, bench, and deadlift in kg. Powers the GL Points calculator on the Today screen." },
-                    { label: "Step 4 — Mindset & self-assessment", desc: "Four open questions about your mental barriers, confidence, overthinking patterns, and previous coaching history. Then rate yourself 1–10 on five mental skills. This goes straight to your coach." },
-                    { label: "Step 5 — Goals", desc: "Three mental goals for the next 3 months, your expectations from coaching, mental tools you have tried before, and anything else important." },
-                    { label: "Step 6 — Your coach", desc: "Pick your PowerFlow coach from the list. Tap No coach yet if you want to connect later." },
-                  ]} />
+                  <Steps items={c.s02.steps} />
                 </>
               }
               right={
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <ScreenOnboardingStep1 />
-                  <ScreenOnboardingMindset />
+                  <ScreenOnboardingStep1 caption={c.screens.onboardingStep1} />
+                  <ScreenOnboardingMindset caption={c.screens.onboardingMindset} />
                 </div>
               }
             />
@@ -795,27 +773,20 @@ export default function AthleteGuidePage() {
 
           {/* ── 03 Today ────────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="03" title="Today — daily check-in" subtitle="Log every session · Track your training week" />
+            <SectionHeading num="03" title={c.s03.title} subtitle={c.s03.subtitle} />
             <TwoCol
               left={
                 <>
-                  <Steps items={[
-                    { label: "Open Today tab", desc: "The Today tab is your home screen. At the top you will always see the check-in card if you have not logged yet today." },
-                    { label: "Choose Training Day or Rest Day", desc: "Tap the button that matches your day. A sheet slides up from the bottom." },
-                    { label: "Rate your mood (1–10)", desc: "Required. This powers the mood sparkline your coach sees in the training log." },
-                    { label: "Answer the training questions", desc: "On training days: thoughts before the session, how it went, what went well, any frustrations, and focus for next session. On rest days: just an optional note." },
-                    { label: "Tap Save", desc: "The check-in card turns green with a confirmation. Your coach can see this within seconds." },
-                    { label: "Edit any time", desc: "Tap Edit on the confirmation card to update your log for the same day." },
-                  ]} />
+                  <Steps items={c.s03.steps} />
                   <Note>
-                    <strong>Reminder badge:</strong> If you have not logged by end of day, a red dot appears on the Today tab in the bottom bar. Enable browser notifications (tap 🔔 Reminders on the check-in card) to get a nudge at 7 pm.
+                    <strong>{c.s03.note.bold}</strong>{c.s03.note.text}
                   </Note>
                 </>
               }
               right={
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <ScreenToday />
-                  <ScreenCheckIn />
+                  <ScreenToday caption={c.screens.today} />
+                  <ScreenCheckIn caption={c.screens.checkIn} />
                 </div>
               }
             />
@@ -823,122 +794,80 @@ export default function AthleteGuidePage() {
 
           {/* ── 04 Journal ──────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="04" title="Journal" subtitle="Capture your mindset · AI sentiment & theme detection" />
+            <SectionHeading num="04" title={c.s04.title} subtitle={c.s04.subtitle} />
             <TwoCol
               left={
                 <>
-                  <Steps items={[
-                    { label: "Open Journal tab", desc: "Tap Journal in the bottom navigation. The entry composer is at the top." },
-                    { label: "Select a context tag", desc: "Choose from: General, Pre-competition, Post-competition, During session, or Rest day. This helps your coach filter entries." },
-                    { label: "Write freely", desc: "There is no minimum length. Describe what you are feeling, thinking, or observing about your mental state." },
-                    { label: "Tap Save entry", desc: "The entry is processed automatically. Sentiment (positive / neutral / negative) and themes (confidence, anxiety, focus, pressure, recovery…) are tagged by AI." },
-                    { label: "Review past entries", desc: "Scroll down to see all your entries, newest first. Sentiment is shown as a colour dot: green = positive, red = negative, grey = neutral." },
-                  ]} />
-                  <Note>
-                    Journal entries feed directly into your coach&apos;s dashboard. Your weekly positive-sentiment rate and detected themes are the first things they see on your athlete card.
-                  </Note>
+                  <Steps items={c.s04.steps} />
+                  <Note>{c.s04.note.text}</Note>
                 </>
               }
-              right={<ScreenJournal />}
+              right={<ScreenJournal caption={c.screens.journal} />}
             />
           </Page>
 
           {/* ── 05 Tools ────────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="05" title="Tools — assessments" subtitle="Four validated sport psychology tests" />
+            <SectionHeading num="05" title={c.s05.title} subtitle={c.s05.subtitle} />
             <TwoCol
               left={
                 <>
                   <p style={{ fontSize: 10, color: "#52525b", marginBottom: 12, lineHeight: 1.6 }}>
-                    Complete these assessments periodically to track your psychological profile over time. Results appear on your coach&apos;s dashboard automatically.
+                    {c.s05.intro}
                   </p>
-                  <Steps items={[
-                    { label: "SAT — Sport Anxiety Test", desc: "Measures your overall sport anxiety profile. ~10 minutes." },
-                    { label: "ACSI — Athletic Coping Skills Inventory", desc: "Assesses four coping skill areas: coping with adversity, concentration, confidence, and goal-setting." },
-                    { label: "CSAI-2 — Competitive State Anxiety Inventory", desc: "Differentiates cognitive anxiety (worry) from somatic anxiety (body tension) and self-confidence." },
-                    { label: "DAS — Depression, Anxiety & Stress Scale", desc: "Screens for depression-prone thinking, general anxiety, and stress levels adapted for athletes." },
-                  ]} />
-                  <Note>
-                    Some tests require a one-time unlock payment to see your scored results. The test itself is always free to complete — payment is only needed to view the detailed breakdown and share it with your coach.
-                  </Note>
+                  <Steps items={c.s05.steps} />
+                  <Note>{c.s05.note.text}</Note>
                 </>
               }
-              right={<ScreenTools />}
+              right={<ScreenTools caption={c.screens.tools} />}
             />
           </Page>
 
           {/* ── 06 Course ───────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="06" title="Course" subtitle="16-week mental preparation programme" />
+            <SectionHeading num="06" title={c.s06.title} subtitle={c.s06.subtitle} />
             <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
               <div style={{ flex: 1 }}>
-                <Steps items={[
-                  { label: "Unlock the course", desc: "Course access is granted by your coach. Once unlocked, the Course tab activates and the current week appears as a card on your Today screen." },
-                  { label: "Follow your competition timeline", desc: "The programme is calculated backwards from your competition date. Week 1 starts 16 weeks out, tapering to Week 16 in the final week before the meet." },
-                  { label: "Complete each week's content", desc: "Each week has three parts: a video lesson, a practical exercise, and a short Q&A. Progress dots show what is done." },
-                  { label: "Current week card", desc: "The Today screen shows your current course week as a reminder card. Tap Continue to jump straight into it." },
-                ]} />
-                <Note>If you have not set a competition date, the course cannot calculate your current week. Add your meet date from the <strong>You</strong> tab first.</Note>
+                <Steps items={c.s06.steps} />
+                <Note>{c.s06.note.text}</Note>
               </div>
             </div>
           </Page>
 
           {/* ── 07 You ──────────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="07" title="You — profile & settings" subtitle="Update your data · Manage your coach connection" />
+            <SectionHeading num="07" title={c.s07.title} subtitle={c.s07.subtitle} />
             <TwoCol
               left={
                 <>
-                  <Steps items={[
-                    { label: "Open You tab", desc: "Tap You in the bottom navigation. All your profile data is editable here at any time." },
-                    { label: "Update your name", desc: "Tap the name field in the identity card at the top and save. This is the name your coach sees." },
-                    { label: "Update lifts and goals", desc: "Keep your current bests up to date so GL Points and the strength card on Today stay accurate." },
-                    { label: "Change competition date", desc: "Update your next competition date whenever plans change. This recalculates your training phase and course week." },
-                    { label: "Connect or change coach", desc: "In the Coach section, tap Choose a coach or Change coach to open the coach picker." },
-                    { label: "Sign out", desc: "The Sign out button is at the bottom of the You page." },
-                  ]} />
+                  <Steps items={c.s07.steps} />
                   <Note>
-                    <strong>GL Points</strong> (IPF Goodlift formula) calculate automatically from your total (squat + bench + deadlift current bests) and bodyweight. Set your gender, bodyweight, and lifts to see them.
+                    <strong>{c.s07.note.bold}</strong>{c.s07.note.text}
                   </Note>
                 </>
               }
-              right={<ScreenYou />}
+              right={<ScreenYou caption={c.screens.you} />}
             />
           </Page>
 
           {/* ── 08 Coach AI ─────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="08" title="Coach AI" subtitle="Sports psychology AI · Built on your coach's methodology" />
-            <Steps items={[
-              { label: "Open Coach AI", desc: "Tap the chat bubble icon in the bottom navigation. The first time you open it with no conversation history, personalised prompt chips appear based on your recent journal entries, upcoming meet date, and what you've already mapped." },
-              { label: "What you can ask it", desc: "Analyse recent journal entries · Prepare mentally for competition · Debrief a tough session · Map your ego states · Generate a visualization or relaxation script · Guide you through switching psychological states · Work through self-doubt or anxiety" },
-              { label: "Scripts in your coach's voice", desc: "Any script the AI generates — visualization, grounding, pre-competition routine — can be played back in your coach's voice. Tap ▶ Play on the script card. Save scripts to your library with the save button to listen again any time." },
-              { label: "Smart prompts", desc: "If you open Coach AI without typing anything, personalised prompt chips appear. These update based on your recent entries, upcoming meet, and ego states. Tap one to start the session immediately." },
-            ]} />
-            <Note>Coach AI works best when your journal is active. The more you write, the more context the AI has — and the more relevant its observations and suggestions become.</Note>
+            <SectionHeading num="08" title={c.s08.title} subtitle={c.s08.subtitle} />
+            <Steps items={c.s08.steps} />
+            <Note>{c.s08.note.text}</Note>
           </Page>
 
           {/* ── 09 Ego States ────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="09" title="Ego States" subtitle="Psychological personas · Deliberate state design" />
+            <SectionHeading num="09" title={c.s09.title} subtitle={c.s09.subtitle} />
             <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
               <div style={{ flex: 1 }}>
                 <p style={{ fontSize: 10, color: "#52525b", lineHeight: 1.6, marginBottom: 12 }}>
-                  An ego state is a psychological persona you deliberately step into for a specific context. Each state has eight components:
+                  {c.s09.intro}
                 </p>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, marginBottom: 16 }}>
                   <tbody>
-                    {[
-                      ["Name", "What you call this part of you — e.g. The Machine, The Builder"],
-                      ["Colour", "A visual anchor for rapid recognition"],
-                      ["Posture", "How your body holds itself when fully in this state"],
-                      ["Body feeling", "Where you feel this state in your body, and what it feels like"],
-                      ["Inner voice", "The tone, speed, and style of how this state speaks internally"],
-                      ["Origin", "When was this state born? What situation created it?"],
-                      ["Domain", "What contexts call for this state?"],
-                      ["Shadow side", "What does it look like when this state shows up at the wrong moment?"],
-                      ["Activation ritual", "Three concrete steps to switch into this state intentionally"],
-                    ].map(([field, desc], i) => (
+                    {c.s09.table.map(([field, desc], i) => (
                       <tr key={i} style={{ background: i % 2 === 0 ? "#f5f3ff" : "#fff" }}>
                         <td style={{ padding: "6px 10px", fontWeight: 700, color: "#7c3aed", whiteSpace: "nowrap" }}>{field}</td>
                         <td style={{ padding: "6px 10px", color: "#52525b" }}>{desc}</td>
@@ -946,47 +875,32 @@ export default function AthleteGuidePage() {
                     ))}
                   </tbody>
                 </table>
-                <Steps items={[
-                  { label: "Map via Coach AI", desc: "Ask Coach AI: 'Map my ego states with me.' It asks eight questions one at a time, then outputs a state card you save with one tap." },
-                  { label: "Review in You tab", desc: "Once saved, an Ego States section appears in your You tab. Tap it to view, edit, or add states." },
-                  { label: "Practise switching", desc: "The skill is recognising which state a moment calls for and entering it via your activation ritual — before the moment demands it. Thinking-mode during execution causes paralysis. Warrior-mode during recovery causes burnout." },
-                ]} />
+                <Steps items={c.s09.steps} />
               </div>
             </div>
           </Page>
 
           {/* ── 10 Check-ins ─────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="10" title="Weekly & monthly check-ins" subtitle="Structured reflection · Coach visibility" />
-            <Steps items={[
-              { label: "Weekly check-in", desc: "A prompt appears at the end of each week. Rate five areas: overall mood, training quality, energy levels, sleep quality, and readiness for next week (each 1–10). Then add your biggest win, main challenge, and one focus for the week ahead. Takes about 60 seconds." },
-              { label: "Monthly check-in", desc: "Appears at the end of each month with the same five ratings plus three deeper questions: biggest breakthrough this month, the most important thing you learned about yourself, and your main intention going into next month." },
-              { label: "Coach visibility", desc: "Your coach sees all check-in responses on their dashboard. These give them a structured picture of how each week and month felt — beyond the individual training log entries." },
-            ]} />
-            <Note>Check-ins are separate from your daily journal and training log. They are a weekly and monthly pulse — the bigger picture sitting above the day-to-day entries.</Note>
+            <SectionHeading num="10" title={c.s10.title} subtitle={c.s10.subtitle} />
+            <Steps items={c.s10.steps} />
+            <Note>{c.s10.note.text}</Note>
           </Page>
 
           {/* ── Quick reference ──────────────────────────────────── */}
           <Page>
-            <SectionHeading num="—" title="Quick reference" subtitle="What each tab does at a glance" />
+            <SectionHeading num="—" title={c.ref.title} subtitle={c.ref.subtitle} />
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
               <thead>
                 <tr style={{ background: "#7c3aed", color: "#fff" }}>
-                  <th style={{ padding: "8px 12px", textAlign: "left", borderRadius: "6px 0 0 0" }}>Tab</th>
-                  <th style={{ padding: "8px 12px", textAlign: "left" }}>What it does</th>
-                  <th style={{ padding: "8px 12px", textAlign: "left", borderRadius: "0 6px 0 0" }}>Use it for</th>
+                  <th style={{ padding: "8px 12px", textAlign: "left", borderRadius: "6px 0 0 0" }}>{c.ref.headers[0]}</th>
+                  <th style={{ padding: "8px 12px", textAlign: "left" }}>{c.ref.headers[1]}</th>
+                  <th style={{ padding: "8px 12px", textAlign: "left", borderRadius: "0 6px 0 0" }}>{c.ref.headers[2]}</th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  ["Today", "Daily check-in, phase countdown, lift goals, course card", "Every single day — start here"],
-                  ["Journal", "Free-text entries, AI sentiment & theme tagging", "After sessions, competitions, or whenever something is on your mind"],
-                  ["Tools", "Sport psychology assessments (SAT, ACSI, CSAI-2, DAS)", "At start of programme and periodically to track progress"],
-                  ["Coach AI", "Sports psychology AI, script generation, ego state mapping", "Before competition, after tough sessions, whenever you need to work something through"],
-                  ["Course", "16-week structured mental programme", "Weekly — follow the current week's content"],
-                  ["You", "Profile editor, lifts, goals, coach, ego states, sign out", "Whenever your data changes or after mapping a new ego state"],
-                ].map(([tab, what, use], i) => (
-                  <tr key={tab} style={{ background: i % 2 === 0 ? "#fafafa" : "#fff" }}>
+                {c.ref.rows.map(([tab, what, use], i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? "#fafafa" : "#fff" }}>
                     <td style={{ padding: "8px 12px", fontWeight: 700, color: "#7c3aed" }}>{tab}</td>
                     <td style={{ padding: "8px 12px", color: "#52525b" }}>{what}</td>
                     <td style={{ padding: "8px 12px", color: "#111" }}>{use}</td>

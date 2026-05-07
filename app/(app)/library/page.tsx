@@ -207,7 +207,6 @@ const TOOLS: Array<{
           de: "Fokus ohne Musik.MP3",
           hu: "EdezesNap_MentalTraining.mp3",
         },
-        usesVizKeywords: true,
       },
       {
         id: "hibajavitas",
@@ -396,6 +395,61 @@ function VizKeywords({
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ── Comp-day keywords (read-only, pulled from the three lift tools) ───────────
+
+function CompDayKeywords({
+  vizKeywordsMap,
+}: {
+  vizKeywordsMap: Record<string, string[]>;
+}) {
+  const lifts: Array<{ id: string; label: string }> = [
+    { id: "viz-squat",    label: "Squat"    },
+    { id: "viz-bench",    label: "Bench"    },
+    { id: "viz-deadlift", label: "Deadlift" },
+  ];
+  const allEmpty = lifts.every((l) => !vizKeywordsMap[l.id]?.length);
+
+  return (
+    <div className="mb-5 rounded-xl border border-purple-500/15 bg-purple-500/5 p-4">
+      <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-purple-300 mb-3">
+        Your lift cues
+      </p>
+      {allEmpty ? (
+        <p className="font-saira text-xs text-zinc-500 leading-relaxed">
+          Add focus cues in the Squat, Bench, and Deadlift visualization tools to personalize this session.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {lifts.map(({ id, label }) => {
+            const kws = vizKeywordsMap[id] ?? [];
+            return (
+              <div key={id} className="flex items-start gap-2">
+                <span className="font-saira text-[10px] uppercase tracking-[0.12em] text-zinc-500 pt-0.5 w-16 flex-shrink-0">
+                  {label}
+                </span>
+                <div className="flex gap-1.5 flex-wrap">
+                  {kws.length > 0 ? (
+                    kws.map((kw, i) => (
+                      <span
+                        key={i}
+                        className="rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-0.5 font-saira text-xs text-purple-300"
+                      >
+                        {kw}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="font-saira text-xs text-zinc-600 italic">—</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -679,7 +733,8 @@ function ToolsPageInner() {
   const [aiAccess, setAiAccess]               = React.useState(false);
   const [planTier, setPlanTier]               = React.useState<PlanTier>("opener"); // conservative until loaded
   // "audio" | "live" | "upload" — selected mode per viz tool
-  const [vizModes, setVizModes] = React.useState<Record<string, "audio" | "live" | "upload">>({});
+  // Default comp-day-viz to "audio" so the player is visible without a click-through.
+  const [vizModes, setVizModes] = React.useState<Record<string, "audio" | "live" | "upload">>({ "comp-day-viz": "audio" });
 
   React.useEffect(() => {
     const stored = localStorage.getItem("relax-favorite");
@@ -940,11 +995,15 @@ function ToolsPageInner() {
 
                               return (
                                 <>
-                                  <VizKeywords
-                                    toolId={tool.id}
-                                    keywords={vizKeywordsMap[tool.id] ?? []}
-                                    onSave={(kws) => saveVizKeywords(tool.id, kws)}
-                                  />
+                                  {tool.id === "comp-day-viz" ? (
+                                    <CompDayKeywords vizKeywordsMap={vizKeywordsMap} />
+                                  ) : (
+                                    <VizKeywords
+                                      toolId={tool.id}
+                                      keywords={vizKeywordsMap[tool.id] ?? []}
+                                      onSave={(kws) => saveVizKeywords(tool.id, kws)}
+                                    />
+                                  )}
 
                                   {!mode ? (
                                     /* CTA — not yet chosen a mode */
