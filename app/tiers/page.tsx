@@ -56,16 +56,8 @@ export default function TiersPage() {
           .logo-circle {
             width: 48px;
             height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: -0.02em;
             flex-shrink: 0;
+            object-fit: contain;
           }
           .logo-name {
             font-size: 18px;
@@ -361,7 +353,7 @@ export default function TiersPage() {
           {/* Header */}
           <div className="header">
             <div className="logo-row">
-              <div className="logo-circle">PF</div>
+              <img src="/fm_powerflow_logo_verziok_01_negative.png" alt="PowerFlow" className="logo-circle" />
               <div>
                 <div className="logo-name">PowerFlow</div>
                 <div className="logo-tagline">Mental Training for Powerlifters</div>

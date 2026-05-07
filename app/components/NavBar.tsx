@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 const APP_ROUTES = [
   "/today", "/journal", "/library", "/course", "/you", "/coach",
   "/auth", "/join", "/admin", "/voices",
-  "/onboarding", "/guide", "/chat", "/scripts",
+  "/onboarding", "/guide", "/chat", "/scripts", "/tiers",
 ];
 
 export default function NavBar() {
