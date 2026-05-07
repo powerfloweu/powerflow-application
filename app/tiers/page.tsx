@@ -493,7 +493,7 @@ export default function TiersPage() {
             </div>
             <div className="footer-contact">
               <p className="contact-label">Upgrade or enquire</p>
-              <p className="contact-email">info@power-flow.eu</p>
+              <p className="contact-email">david@power-flow.eu</p>
               <p className="contact-hint">We'll set you up manually.</p>
             </div>
           </div>

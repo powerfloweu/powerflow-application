@@ -126,7 +126,7 @@ export default function UpgradePage() {
                 </div>
               ) : isHigher ? (
                 <a
-                  href="mailto:info@power-flow.eu?subject=Upgrade%20request"
+                  href="mailto:david@power-flow.eu?subject=Upgrade%20request"
                   className="block w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-saira text-[10px] uppercase tracking-[0.2em] text-center transition"
                 >
                   {t("upgrade.contactToUpgrade")}
