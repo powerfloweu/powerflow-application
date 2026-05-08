@@ -553,6 +553,8 @@ const STORAGE_BASES: Record<Locale, string> = {
   en: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/",
   de: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/german/",
   hu: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/hungarian/",
+  es: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/",
+  fr: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/",
 };
 
 function AudioPlayer({ fileKey, color }: { fileKey: FileKeys | null; color: ToolColor }) {
