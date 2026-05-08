@@ -4,20 +4,30 @@
  * Add new locales here. Each locale must provide a complete dictionary
  * matching `Dict` in dict.ts.
  */
-export type Locale = "en" | "de" | "hu";
+export type Locale = "en" | "de" | "hu" | "es" | "fr";
 
-export const LOCALES: Locale[] = ["en", "de", "hu"];
+export const LOCALES: Locale[] = ["en", "de", "hu", "es", "fr"];
+
+/** Locales that can be selected by end-users in the app */
+export const APP_LOCALES: Locale[] = ["en", "de", "hu", "es", "fr"];
+
+/** Locales available for translation (all non-English) */
+export const TRANSLATABLE_LOCALES: Locale[] = ["de", "hu", "es", "fr"];
 
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: "English",
   de: "Deutsch",
   hu: "Magyar",
+  es: "Español",
+  fr: "Français",
 };
 
 export const LOCALE_FLAGS: Record<Locale, string> = {
   en: "🇬🇧",
   de: "🇩🇪",
   hu: "🇭🇺",
+  es: "🇪🇸",
+  fr: "🇫🇷",
 };
 
 /** Default locale used when nothing else is specified. */
@@ -29,5 +39,7 @@ export function normaliseLocale(input: string | null | undefined): Locale {
   const lower = input.toLowerCase();
   if (lower.startsWith("de")) return "de";
   if (lower.startsWith("hu")) return "hu";
+  if (lower.startsWith("es")) return "es";
+  if (lower.startsWith("fr")) return "fr";
   return "en";
 }
