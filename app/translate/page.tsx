@@ -53,6 +53,20 @@ export default function TranslatePage() {
   const [loading, setLoading] = React.useState(false);
   const [filter, setFilter] = React.useState<"all" | "missing" | "done">("all");
   const [search, setSearch] = React.useState("");
+  const [collapsedSections, setCollapsedSections] = React.useState<Set<string>>(new Set());
+  const [jumpSection, setJumpSection] = React.useState<string>("");
+  const sectionRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+
+  function toggleSection(section: string) {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section); else next.add(section);
+      return next;
+    });
+  }
+
+  function collapseAll() { setCollapsedSections(new Set(grouped.keys())); }
+  function expandAll()   { setCollapsedSections(new Set()); }
 
   // ── Auth check ─────────────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -219,21 +233,42 @@ export default function TranslatePage() {
       </header>
 
       {/* ── Sub-header: stats + filters ── */}
-      <div className="sticky top-[57px] z-20 border-b border-white/5 bg-[#050608]/90 backdrop-blur-sm px-6 py-2 flex items-center gap-4 flex-wrap">
+      <div className="sticky top-[57px] z-20 border-b border-white/5 bg-[#050608]/90 backdrop-blur-sm px-6 py-2 flex items-center gap-3 flex-wrap">
         {/* Progress */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-32 h-1.5 rounded-full bg-white/10 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-purple-500 transition-all"
-              style={{ width: `${pct}%` }}
-            />
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-28 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div className="h-full rounded-full bg-purple-500 transition-all" style={{ width: `${pct}%` }} />
           </div>
-          <span className="font-saira text-xs text-zinc-400 flex-shrink-0">
-            {translated}/{total} translated ({pct}%)
-            {overridden > 0 && (
-              <span className="ml-1.5 text-purple-400/70">· {overridden} overridden</span>
-            )}
+          <span className="font-saira text-xs text-zinc-400 flex-shrink-0 whitespace-nowrap">
+            {translated}/{total} ({pct}%)
+            {overridden > 0 && <span className="ml-1.5 text-purple-400/70">· {overridden} overridden</span>}
           </span>
+        </div>
+
+        {/* Section jump */}
+        <select
+          value={jumpSection}
+          onChange={(e) => {
+            const sec = e.target.value;
+            setJumpSection(sec);
+            if (sec && sectionRefs.current[sec]) {
+              sectionRefs.current[sec]!.scrollIntoView({ behavior: "smooth", block: "start" });
+              // auto-expand if collapsed
+              setCollapsedSections((prev) => { const next = new Set(prev); next.delete(sec); return next; });
+            }
+          }}
+          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-saira text-xs text-zinc-300 focus:outline-none focus:border-purple-500/50 cursor-pointer"
+        >
+          <option value="">Jump to section…</option>
+          {Array.from(grouped.keys()).map((sec) => (
+            <option key={sec} value={sec}>{sectionLabel(sec)} ({grouped.get(sec)!.length})</option>
+          ))}
+        </select>
+
+        {/* Collapse/expand all */}
+        <div className="flex gap-1">
+          <button onClick={expandAll}  className="px-2 py-1 rounded font-saira text-[10px] uppercase tracking-wider text-zinc-500 hover:text-zinc-300 transition">Expand all</button>
+          <button onClick={collapseAll} className="px-2 py-1 rounded font-saira text-[10px] uppercase tracking-wider text-zinc-500 hover:text-zinc-300 transition">Collapse all</button>
         </div>
 
         {/* Filter */}
@@ -243,13 +278,10 @@ export default function TranslatePage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-2.5 py-1 rounded font-saira text-[10px] uppercase tracking-[0.14em] transition ${
-                filter === f
-                  ? "bg-white/10 text-white"
-                  : "text-zinc-500 hover:text-zinc-300"
+                filter === f ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
               {f === "missing" ? `Missing (${total - translated})` : f === "done" ? `Done (${translated})` : `All (${total})`}
-
             </button>
           ))}
         </div>
@@ -259,13 +291,13 @@ export default function TranslatePage() {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search keys or strings…"
-          className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 w-52"
+          placeholder="Search…"
+          className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 w-44"
         />
       </div>
 
       {/* ── Content ── */}
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <div className="w-6 h-6 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
@@ -273,106 +305,114 @@ export default function TranslatePage() {
         ) : grouped.size === 0 ? (
           <p className="text-center font-saira text-sm text-zinc-500 py-24">No strings match your filter.</p>
         ) : (
-          Array.from(grouped.entries()).map(([section, sectionRows]) => (
-            <div key={section} className="mb-12">
+          Array.from(grouped.entries()).map(([section, sectionRows]) => {
+            const isCollapsed = collapsedSections.has(section);
+            const missingCount = sectionRows.filter((r) => !r.compiled && !r.value).length;
+            return (
+              <div
+                key={section}
+                className="mb-6"
+                ref={(el) => { sectionRefs.current[section] = el; }}
+              >
+                {/* Section heading — clickable to collapse */}
+                <button
+                  onClick={() => toggleSection(section)}
+                  className="w-full flex items-center gap-3 mb-3 group text-left"
+                >
+                  {/* Chevron */}
+                  <span className={`text-zinc-500 text-xs transition-transform duration-150 ${isCollapsed ? "-rotate-90" : ""}`}>▼</span>
+                  <h2 className="font-saira text-sm font-bold uppercase tracking-[0.25em] text-purple-300 group-hover:text-purple-200 transition-colors">
+                    {sectionLabel(section)}
+                  </h2>
+                  <div className="flex-1 h-px bg-white/8" />
+                  {missingCount > 0 && (
+                    <span className="font-saira text-[10px] text-red-400/80 bg-red-500/10 px-2 py-0.5 rounded-full">{missingCount} missing</span>
+                  )}
+                  <span className="font-saira text-[10px] text-zinc-600">{sectionRows.length} strings</span>
+                </button>
 
-              {/* Section heading */}
-              <div className="flex items-center gap-3 mb-4">
-                <h2 className="font-saira text-xs font-bold uppercase tracking-[0.3em] text-purple-300">
-                  {sectionLabel(section)}
-                </h2>
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="font-saira text-[10px] text-zinc-600">{sectionRows.length}</span>
-              </div>
-
-              {/* Column headers */}
-              <div className="grid grid-cols-[200px_1fr_1fr] gap-4 mb-2 px-3">
-                <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500">Key</span>
-                <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500">🇬🇧 English</span>
-                <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                  {LOCALE_FLAGS[locale]} {LOCALE_LABELS[locale]}
-                </span>
-              </div>
-
-              <div className="rounded-xl border border-white/8 overflow-hidden divide-y divide-white/5">
-                {sectionRows.map((row) => {
-                  const state = saveState[row.key] ?? "idle";
-                  const isOverride = row.value !== null && row.value !== "";
-                  const hasCompiled = row.compiled !== null && row.compiled !== "";
-                  const dotColor = isOverride ? "bg-purple-400" : hasCompiled ? "bg-emerald-500/70" : "bg-red-500/60";
-                  const dotTitle = isOverride ? "Custom override saved" : hasCompiled ? "Using compiled translation" : "Missing — not yet translated";
-                  return (
-                    <div
-                      key={row.key}
-                      className={`grid grid-cols-[200px_1fr_1fr] gap-4 px-3 py-2.5 items-center transition-colors ${
-                        state === "error"   ? "bg-red-500/8 border-l-2 border-red-500/50" :
-                        state === "saved"   ? "bg-emerald-500/8" :
-                        isOverride         ? "bg-purple-500/5" :
-                        !hasCompiled       ? "bg-red-500/5" :
-                        "hover:bg-white/4"
-                      }`}
-                    >
-                      {/* Key */}
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          title={dotTitle}
-                          className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`}
-                        />
-                        <span className="font-mono text-[11px] text-zinc-400 truncate">
-                          {row.key.split(".").slice(1).join(".")}
-                        </span>
-                      </div>
-
-                      {/* EN source */}
-                      <p className="font-saira text-sm text-zinc-300 leading-snug select-none">
-                        {row.en}
-                      </p>
-
-                      {/* Editable translation */}
-                      <div className="relative">
-                        <textarea
-                          rows={Math.max(row.en.length, row.compiled?.length ?? 0) > 80 ? 2 : 1}
-                          value={localValues[row.key] ?? ""}
-                          onChange={(e) =>
-                            setLocalValues((p) => ({ ...p, [row.key]: e.target.value }))
-                          }
-                          onBlur={(e) => {
-                            const val = e.target.value.trim();
-                            if (val === (row.value ?? "")) return;
-                            if (!row.value && val === (row.compiled ?? "")) return;
-                            saveKey(row.key, val);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              (e.target as HTMLTextAreaElement).blur();
-                            }
-                          }}
-                          placeholder={!hasCompiled ? row.en : ""}
-                          className={`w-full resize-none rounded-lg border px-3 py-2 font-saira text-sm leading-snug focus:outline-none transition ${
-                            isOverride
-                              ? "border-purple-500/50 bg-purple-500/10 text-white focus:border-purple-400/80 focus:bg-purple-500/15"
-                              : hasCompiled
-                              ? "border-white/15 bg-white/6 text-zinc-100 focus:border-purple-500/50 focus:bg-white/10"
-                              : "border-red-500/20 bg-red-500/5 text-zinc-300 placeholder-zinc-600 focus:border-purple-500/40"
-                          }`}
-                        />
-                        {state === "saving" && (
-                          <span className="absolute right-2.5 top-2 text-[10px] text-zinc-500">saving…</span>
-                        )}
-                        {state === "saved" && (
-                          <span className="absolute right-2.5 top-2 text-[10px] text-emerald-400">✓ saved</span>
-                        )}
-                        {state === "error" && (
-                          <span className="absolute right-2.5 top-2 text-[10px] text-red-400">error!</span>
-                        )}
-                      </div>
+                {!isCollapsed && (
+                  <>
+                    {/* Column headers */}
+                    <div className="grid grid-cols-2 gap-4 mb-1 px-4">
+                      <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500">🇬🇧 English</span>
+                      <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+                        {LOCALE_FLAGS[locale]} {LOCALE_LABELS[locale]}
+                      </span>
                     </div>
-                  );
-                })}
+
+                    <div className="rounded-xl border border-white/8 overflow-hidden divide-y divide-white/5">
+                      {sectionRows.map((row) => {
+                        const state = saveState[row.key] ?? "idle";
+                        const isOverride = row.value !== null && row.value !== "";
+                        const hasCompiled = row.compiled !== null && row.compiled !== "";
+                        const dotColor = isOverride ? "bg-purple-400" : hasCompiled ? "bg-emerald-500/70" : "bg-red-500/60";
+                        const dotTitle = isOverride ? "Custom override saved" : hasCompiled ? "Using compiled translation" : "Missing — not yet translated";
+                        // Estimate rows needed: ~80 chars per line in the textarea column (~half of 7xl)
+                        const longestText = Math.max(row.en.length, (localValues[row.key] ?? row.compiled ?? "").length);
+                        const textareaRows = longestText > 160 ? 4 : longestText > 80 ? 2 : 1;
+                        return (
+                          <div
+                            key={row.key}
+                            className={`grid grid-cols-2 gap-4 px-4 py-3 items-start transition-colors ${
+                              state === "error"   ? "bg-red-500/8" :
+                              state === "saved"   ? "bg-emerald-500/8" :
+                              isOverride         ? "bg-purple-500/5" :
+                              !hasCompiled       ? "bg-red-500/5" :
+                              "hover:bg-white/3"
+                            }`}
+                          >
+                            {/* EN source + key label */}
+                            <div className="flex items-start gap-2.5 min-w-0">
+                              <span title={dotTitle} className={`mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
+                              <div className="min-w-0">
+                                <p className="font-saira text-sm text-white leading-snug">{row.en}</p>
+                                <p className="font-mono text-[10px] text-zinc-600 mt-0.5 truncate">{row.key.split(".").slice(1).join(".")}</p>
+                              </div>
+                            </div>
+
+                            {/* Editable translation */}
+                            <div className="relative">
+                              <textarea
+                                rows={textareaRows}
+                                value={localValues[row.key] ?? ""}
+                                onChange={(e) =>
+                                  setLocalValues((p) => ({ ...p, [row.key]: e.target.value }))
+                                }
+                                onBlur={(e) => {
+                                  const val = e.target.value.trim();
+                                  if (val === (row.value ?? "")) return;
+                                  if (!row.value && val === (row.compiled ?? "")) return;
+                                  saveKey(row.key, val);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    (e.target as HTMLTextAreaElement).blur();
+                                  }
+                                }}
+                                placeholder={!hasCompiled ? row.en : ""}
+                                className={`w-full resize-y rounded-lg border px-3 py-2.5 font-saira text-sm leading-relaxed focus:outline-none transition ${
+                                  isOverride
+                                    ? "border-purple-500/50 bg-purple-500/10 text-white focus:border-purple-400/80"
+                                    : hasCompiled
+                                    ? "border-white/12 bg-white/5 text-zinc-100 focus:border-purple-500/50 focus:bg-white/8"
+                                    : "border-red-500/20 bg-red-500/5 text-zinc-300 placeholder-zinc-600 focus:border-purple-500/40"
+                                }`}
+                              />
+                              {state === "saving" && <span className="absolute right-3 top-3 text-[10px] text-zinc-500">saving…</span>}
+                              {state === "saved"  && <span className="absolute right-3 top-3 text-[10px] text-emerald-400">✓ saved</span>}
+                              {state === "error"  && <span className="absolute right-3 top-3 text-[10px] text-red-400">error!</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
 
         {/* Legend */}
