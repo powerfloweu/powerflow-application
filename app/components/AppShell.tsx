@@ -41,8 +41,13 @@ export default function AppShell({ children }: Props) {
   const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
   const [planTier, setPlanTier] = React.useState<PlanTier>("pr");
   const [role, setRole] = React.useState<string | null>(null);
-  // For coach accounts: "athlete" hides the coach dashboard and shows only athlete tabs
-  const [viewMode, setViewMode] = React.useState<ViewMode>("coach");
+  // For coach accounts: "athlete" hides the coach dashboard and shows only athlete tabs.
+  // Lazy initializer reads localStorage synchronously so there is no flash on first render.
+  const [viewMode, setViewMode] = React.useState<ViewMode>(() => {
+    if (typeof window === "undefined") return "coach";
+    const stored = localStorage.getItem(VIEW_MODE_KEY);
+    return stored === "athlete" || stored === "coach" ? stored : "coach";
+  });
   // Weekly / monthly check-in popup
   const [weeklyCheckinTarget, setWeeklyCheckinTarget] = React.useState<{
     week: number; year: number; weekStart: string;
@@ -220,12 +225,11 @@ export default function AppShell({ children }: Props) {
               />
             </Link>
 
-            {/* Role badge — shows effective mode for dual-role users */}
-            <span className="font-saira text-[9px] font-bold uppercase tracking-[0.32em] text-purple-300/80 -mt-1 mb-1">
+            {/* Mode badge — reflects the active profile, not the DB role */}
+            <span className={`font-saira text-[9px] font-bold uppercase tracking-[0.32em] -mt-1 mb-1 ${
+              effectiveRole === "coach" ? "text-emerald-400/80" : "text-purple-300/80"
+            }`}>
               {effectiveRole === "coach" ? "Coach" : "Athlete"}
-              {role === "coach" && effectiveRole === "athlete" && (
-                <span className="ml-1 text-emerald-400/70"> · coach account</span>
-              )}
             </span>
           </div>
 
