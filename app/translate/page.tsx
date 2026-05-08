@@ -60,7 +60,13 @@ export default function TranslatePage() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     );
     supabase.auth.getUser().then(({ data }) => {
-      setSessionEmail(data.user?.email ?? null);
+      const email = data.user?.email ?? null;
+      if (!email) {
+        // Not signed in — redirect to sign-in and come back here after
+        window.location.href = "/auth/sign-in?next=" + encodeURIComponent("/translate");
+        return;
+      }
+      setSessionEmail(email);
     });
   }, []);
 
