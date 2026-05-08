@@ -64,7 +64,7 @@ async function fetchAuthEmails(): Promise<Map<string, string>> {
 const PROFILE_SELECT = [
   "id", "display_name", "avatar_url", "role",
   "coach_id", "coach_code", "meet_date",
-  "plan_tier", "course_access", "test_access", "ai_access", "onboarding_complete", "created_at",
+  "plan_tier", "course_access", "test_access", "ai_access", "translator_access", "onboarding_complete", "created_at",
   "gender", "bodyweight_kg", "weight_category",
   "squat_current_kg", "squat_goal_kg",
   "bench_current_kg", "bench_goal_kg",
@@ -172,7 +172,7 @@ export async function GET() {
 
 // ── PATCH ─────────────────────────────────────────────────────────────────────
 
-const ADMIN_PATCHABLE = ["plan_tier", "course_access", "test_access", "ai_access", "coach_id", "role", "coach_code"] as const;
+const ADMIN_PATCHABLE = ["plan_tier", "course_access", "test_access", "ai_access", "translator_access", "coach_id", "role", "coach_code"] as const;
 type AdminPatchableKey = (typeof ADMIN_PATCHABLE)[number];
 
 export async function PATCH(req: NextRequest) {

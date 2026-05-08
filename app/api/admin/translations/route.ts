@@ -38,13 +38,23 @@ function editorEmails(): string[] {
   return [...base, ...extra];
 }
 
-async function getSessionEmail(): Promise<string | null> {
+async function isAuthorizedEditor(): Promise<{ email: string | null; ok: boolean }> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    return user?.email ?? null;
+    const email = user?.email ?? null;
+    if (!email) return { email: null, ok: false };
+    // Always allow master admin + env-listed editors
+    if (editorEmails().includes(email)) return { email, ok: true };
+    // Also allow users with translator_access flag set in their profile
+    const { data } = await supabase
+      .from("profiles")
+      .select("translator_access")
+      .eq("id", user!.id)
+      .single();
+    return { email, ok: data?.translator_access === true };
   } catch {
-    return null;
+    return { email: null, ok: false };
   }
 }
 
@@ -64,8 +74,8 @@ function flatten(obj: unknown, prefix = ""): Record<string, string> {
 }
 
 export async function GET(request: NextRequest) {
-  const email = await getSessionEmail();
-  if (!email || !editorEmails().includes(email)) {
+  const { ok } = await isAuthorizedEditor();
+  if (!ok) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -101,8 +111,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const email = await getSessionEmail();
-  if (!email || !editorEmails().includes(email)) {
+  const { ok } = await isAuthorizedEditor();
+  if (!ok) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

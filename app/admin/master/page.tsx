@@ -32,6 +32,7 @@ type UserRow = {
   course_access: boolean;
   test_access: boolean;
   ai_access: boolean;
+  translator_access: boolean;
   onboarding_complete: boolean;
   meet_date: string | null;
   created_at: string | null;
@@ -811,6 +812,15 @@ function UsersTab({
                   ) : (
                     <span className="font-saira text-[10px] text-zinc-400">—</span>
                   )}
+                  {/* Translator toggle — available for any role */}
+                  <div className="flex items-center gap-1.5 border-l border-white/10 pl-2 ml-1">
+                    <Toggle
+                      on={user.translator_access}
+                      disabled={saving[user.id] ?? false}
+                      onToggle={() => onPatchUser(user.id, { translator_access: !user.translator_access })}
+                    />
+                    <span className="font-saira text-[9px] text-amber-400/80 w-12">Translate</span>
+                  </div>
                 </div>
 
                 {/* Activity */}
@@ -891,6 +901,15 @@ function UsersTab({
                     ))}
                   </div>
                 )}
+                {/* Translator toggle — any role */}
+                <div className="flex items-center gap-1.5 ml-2" onClick={(e) => e.stopPropagation()}>
+                  <Toggle
+                    on={user.translator_access}
+                    disabled={saving[user.id] ?? false}
+                    onToggle={() => onPatchUser(user.id, { translator_access: !user.translator_access })}
+                  />
+                  <span className="font-saira text-[10px] text-amber-400/80">Translate</span>
+                </div>
               </div>
 
               {/* Expanded profile */}
