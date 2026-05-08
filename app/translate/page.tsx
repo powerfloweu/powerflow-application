@@ -84,7 +84,9 @@ export default function TranslatePage() {
       const data: TranslationRow[] = await res.json();
       setRows(data);
       const init: Record<string, string> = {};
-      for (const { key, value } of data) init[key] = value ?? "";
+      // Pre-fill with DB override → compiled translation → empty
+      // This makes existing translations show as white text, not dim placeholder
+      for (const { key, value, compiled } of data) init[key] = value ?? compiled ?? "";
       setLocalValues(init);
     } finally {
       setLoading(false);
@@ -263,7 +265,7 @@ export default function TranslatePage() {
       </div>
 
       {/* ── Content ── */}
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-8">
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <div className="w-6 h-6 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
@@ -272,70 +274,73 @@ export default function TranslatePage() {
           <p className="text-center font-saira text-sm text-zinc-500 py-24">No strings match your filter.</p>
         ) : (
           Array.from(grouped.entries()).map(([section, sectionRows]) => (
-            <div key={section} className="mb-10">
+            <div key={section} className="mb-12">
+
               {/* Section heading */}
-              <h2 className="font-saira text-[10px] font-bold uppercase tracking-[0.3em] text-purple-400/80 mb-3 border-b border-white/5 pb-2">
-                {sectionLabel(section)}
-              </h2>
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="font-saira text-xs font-bold uppercase tracking-[0.3em] text-purple-300">
+                  {sectionLabel(section)}
+                </h2>
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="font-saira text-[10px] text-zinc-600">{sectionRows.length}</span>
+              </div>
 
               {/* Column headers */}
-              <div className="grid grid-cols-[220px_1fr_1fr] gap-3 mb-1 px-1">
-                <span className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-600">Key</span>
-                <span className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-600">🇬🇧 English (source)</span>
-                <span className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-600">
+              <div className="grid grid-cols-[200px_1fr_1fr] gap-4 mb-2 px-3">
+                <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500">Key</span>
+                <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500">🇬🇧 English</span>
+                <span className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500">
                   {LOCALE_FLAGS[locale]} {LOCALE_LABELS[locale]}
                 </span>
               </div>
 
-              <div className="space-y-1">
+              <div className="rounded-xl border border-white/8 overflow-hidden divide-y divide-white/5">
                 {sectionRows.map((row) => {
                   const state = saveState[row.key] ?? "idle";
                   const isOverride = row.value !== null && row.value !== "";
                   const hasCompiled = row.compiled !== null && row.compiled !== "";
-                  // dot: purple = DB override, zinc-500 = compiled dict, zinc-800 = nothing
-                  const dotColor = isOverride ? "bg-purple-400" : hasCompiled ? "bg-zinc-500" : "bg-zinc-800";
-                  const dotTitle = isOverride ? "DB override active" : hasCompiled ? "Using compiled translation" : "Not yet translated";
-                  // placeholder: show compiled locale value if available, else EN
-                  const placeholderText = row.compiled ?? row.en;
+                  const dotColor = isOverride ? "bg-purple-400" : hasCompiled ? "bg-emerald-500/70" : "bg-red-500/60";
+                  const dotTitle = isOverride ? "Custom override saved" : hasCompiled ? "Using compiled translation" : "Missing — not yet translated";
                   return (
                     <div
                       key={row.key}
-                      className={`grid grid-cols-[220px_1fr_1fr] gap-3 rounded-lg px-2 py-1.5 items-start transition ${
-                        state === "error"
-                          ? "bg-red-500/5 border border-red-500/20"
-                          : state === "saved"
-                          ? "bg-emerald-500/5"
-                          : "hover:bg-white/3"
+                      className={`grid grid-cols-[200px_1fr_1fr] gap-4 px-3 py-2.5 items-center transition-colors ${
+                        state === "error"   ? "bg-red-500/8 border-l-2 border-red-500/50" :
+                        state === "saved"   ? "bg-emerald-500/8" :
+                        isOverride         ? "bg-purple-500/5" :
+                        !hasCompiled       ? "bg-red-500/5" :
+                        "hover:bg-white/4"
                       }`}
                     >
                       {/* Key */}
-                      <div className="flex items-start gap-1.5 pt-1 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
                         <span
                           title={dotTitle}
-                          className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColor}`}
+                          className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`}
                         />
-                        <span className="font-mono text-[10px] text-zinc-500 truncate leading-5">
+                        <span className="font-mono text-[11px] text-zinc-400 truncate">
                           {row.key.split(".").slice(1).join(".")}
                         </span>
                       </div>
 
                       {/* EN source */}
-                      <p className="font-saira text-xs text-zinc-400 leading-relaxed pt-1 select-none">
+                      <p className="font-saira text-sm text-zinc-300 leading-snug select-none">
                         {row.en}
                       </p>
 
-                      {/* Editable translation — empty field means "use compiled/fallback" */}
+                      {/* Editable translation */}
                       <div className="relative">
                         <textarea
-                          rows={Math.max(row.en.length, row.compiled?.length ?? 0) > 60 ? 2 : 1}
+                          rows={Math.max(row.en.length, row.compiled?.length ?? 0) > 80 ? 2 : 1}
                           value={localValues[row.key] ?? ""}
                           onChange={(e) =>
                             setLocalValues((p) => ({ ...p, [row.key]: e.target.value }))
                           }
                           onBlur={(e) => {
                             const val = e.target.value.trim();
-                            const prev = row.value ?? "";
-                            if (val !== prev) saveKey(row.key, val);
+                            if (val === (row.value ?? "")) return;
+                            if (!row.value && val === (row.compiled ?? "")) return;
+                            saveKey(row.key, val);
                           }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
@@ -343,23 +348,23 @@ export default function TranslatePage() {
                               (e.target as HTMLTextAreaElement).blur();
                             }
                           }}
-                          placeholder={placeholderText}
-                          className={`w-full resize-none rounded-lg border px-2.5 py-1.5 font-saira text-xs text-white focus:outline-none transition ${
+                          placeholder={!hasCompiled ? row.en : ""}
+                          className={`w-full resize-none rounded-lg border px-3 py-2 font-saira text-sm leading-snug focus:outline-none transition ${
                             isOverride
-                              ? "border-purple-500/30 bg-purple-500/5 focus:border-purple-500/60 placeholder-purple-300/30"
+                              ? "border-purple-500/50 bg-purple-500/10 text-white focus:border-purple-400/80 focus:bg-purple-500/15"
                               : hasCompiled
-                              ? "border-white/8 bg-white/3 focus:border-purple-500/40 placeholder-zinc-500"
-                              : "border-white/5 bg-white/2 focus:border-purple-500/40 placeholder-zinc-700"
+                              ? "border-white/15 bg-white/6 text-zinc-100 focus:border-purple-500/50 focus:bg-white/10"
+                              : "border-red-500/20 bg-red-500/5 text-zinc-300 placeholder-zinc-600 focus:border-purple-500/40"
                           }`}
                         />
                         {state === "saving" && (
-                          <span className="absolute right-2 top-1.5 text-[9px] text-zinc-500">saving…</span>
+                          <span className="absolute right-2.5 top-2 text-[10px] text-zinc-500">saving…</span>
                         )}
                         {state === "saved" && (
-                          <span className="absolute right-2 top-1.5 text-[9px] text-emerald-400">✓</span>
+                          <span className="absolute right-2.5 top-2 text-[10px] text-emerald-400">✓ saved</span>
                         )}
                         {state === "error" && (
-                          <span className="absolute right-2 top-1.5 text-[9px] text-red-400">!</span>
+                          <span className="absolute right-2.5 top-2 text-[10px] text-red-400">error!</span>
                         )}
                       </div>
                     </div>
@@ -369,6 +374,23 @@ export default function TranslatePage() {
             </div>
           ))
         )}
+
+        {/* Legend */}
+        <div className="flex items-center gap-6 pt-6 pb-4 border-t border-white/5">
+          <span className="font-saira text-[10px] uppercase tracking-widest text-zinc-600">Legend</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-purple-400 flex-shrink-0" />
+            <span className="font-saira text-[11px] text-zinc-400">Custom override</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500/70 flex-shrink-0" />
+            <span className="font-saira text-[11px] text-zinc-400">Compiled translation</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/60 flex-shrink-0" />
+            <span className="font-saira text-[11px] text-zinc-400">Missing</span>
+          </div>
+        </div>
       </div>
     </div>
   );
