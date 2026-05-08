@@ -10,6 +10,7 @@ import { DevLogViewer } from "@/app/components/NotificationModal";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
+import { getViewMode, setViewMode, VIEW_MODE_EVENT, type ViewMode } from "@/lib/viewMode";
 
 function localeForDate(loc: string): string {
   if (loc === "de") return "de-DE";
@@ -71,6 +72,16 @@ export default function YouPage() {
 
   // ── Ego states count ────────────────────────────────────────
   const [egoStateCount, setEgoStateCount]   = React.useState<number | null>(null);
+
+  // ── View mode (coaches only) ───────────────────────────────
+  const [viewMode, setLocalViewMode] = React.useState<ViewMode>("coach");
+  React.useEffect(() => {
+    setLocalViewMode(getViewMode());
+    const onModeChange = (e: Event) =>
+      setLocalViewMode((e as CustomEvent<ViewMode>).detail);
+    window.addEventListener(VIEW_MODE_EVENT, onModeChange);
+    return () => window.removeEventListener(VIEW_MODE_EVENT, onModeChange);
+  }, []);
 
   // ── Coach picker state ─────────────────────────────────────
   const [coaches, setCoaches]               = React.useState<CoachOption[]>([]);
@@ -226,6 +237,44 @@ export default function YouPage() {
               disabled={!!savingSection || !displayName.trim()}
               onClick={() => save("name", { display_name: displayName.trim() })}
             />
+          </div>
+        </div>
+      )}
+
+      {/* ── Mode switcher (coaches only) ────────────────────── */}
+      {profile?.role === "coach" && (
+        <div className="rounded-2xl border border-white/5 bg-surface-card mb-6 px-5 py-4">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400 mb-1">
+            View Mode
+          </p>
+          <p className="font-saira text-[11px] text-zinc-500 mb-3">
+            {viewMode === "athlete"
+              ? "You're using the app as an athlete — coach dashboard is hidden."
+              : "You're in coach mode — all tabs including your dashboard are visible."}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => { setViewMode("athlete"); setLocalViewMode("athlete"); }}
+              className={`flex-1 rounded-xl border py-2.5 font-saira text-xs font-semibold uppercase tracking-[0.14em] transition ${
+                viewMode === "athlete"
+                  ? "border-purple-500 bg-purple-600 text-white"
+                  : "border-white/10 bg-surface-panel text-zinc-400 hover:border-purple-500/40 hover:text-white"
+              }`}
+            >
+              Athlete
+            </button>
+            <button
+              type="button"
+              onClick={() => { setViewMode("coach"); setLocalViewMode("coach"); }}
+              className={`flex-1 rounded-xl border py-2.5 font-saira text-xs font-semibold uppercase tracking-[0.14em] transition ${
+                viewMode === "coach"
+                  ? "border-emerald-500 bg-emerald-700/70 text-white"
+                  : "border-white/10 bg-surface-panel text-zinc-400 hover:border-emerald-500/40 hover:text-white"
+              }`}
+            >
+              Coach
+            </button>
           </div>
         </div>
       )}

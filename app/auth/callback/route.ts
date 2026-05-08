@@ -61,15 +61,28 @@ export async function GET(request: NextRequest) {
     await linkAthleteToCoach(user.id, joinCode);
   }
 
+  // ── Fetch the actual profile to inform routing decisions ───────────────────
+  const profileData = await fetchProfileData(user.id);
+
+  // ── Coach signed in via "Sign in as Athlete" button ────────────────────────
+  // Detect mismatch: pf_auth_role cookie = "athlete" but actual profile = "coach".
+  // In this case activate athlete view-mode client-side via a short-lived hint cookie.
+  if (role === "athlete" && profileData?.role === "coach") {
+    const response = NextResponse.redirect(`${origin}/today`);
+    response.cookies.set("pf_mode_hint", "athlete", { maxAge: 60, path: "/" });
+    response.cookies.set("pf_auth_role", "", { maxAge: 0, path: "/" });
+    response.cookies.set("pf_auth_next", "", { maxAge: 0, path: "/" });
+    response.cookies.set("pf_join_code", "", { maxAge: 0, path: "/" });
+    return response;
+  }
+
   // ── Coach-specific post-login logic ────────────────────────────────────────
   let redirectTo = next;
-  if (role === "coach") {
+  if (profileData?.role === "coach") {
     // Ensure coaches always have PR-tier access to athlete features
     await dbPatch("profiles", { id: user.id }, { plan_tier: "pr" });
 
-    // Read coach_status to decide where to send them
-    const coachProfile = await fetchCoachStatus(user.id);
-    if (coachProfile?.coach_status === "pending") {
+    if (profileData.coach_status === "pending") {
       redirectTo = "/coach/pending";
     }
   }
@@ -83,15 +96,15 @@ export async function GET(request: NextRequest) {
   return response;
 }
 
-// ── Coach status helper ───────────────────────────────────────────────────────
+// ── Profile data helper ───────────────────────────────────────────────────────
 
-async function fetchCoachStatus(userId: string): Promise<{ coach_status: string | null } | null> {
+async function fetchProfileData(userId: string): Promise<{ role: string | null; coach_status: string | null } | null> {
   const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
   if (!SUPABASE_URL || !SERVICE_KEY) return null;
 
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=coach_status`,
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role,coach_status`,
     { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
   );
   const rows = res.ok ? await res.json() : [];

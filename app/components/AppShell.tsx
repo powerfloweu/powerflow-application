@@ -14,6 +14,7 @@ import ThemeToggle from "./ThemeToggle";
 import { WeeklyCheckinContext } from "./WeeklyCheckinContext";
 import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
+import { VIEW_MODE_KEY, VIEW_MODE_EVENT, type ViewMode } from "@/lib/viewMode";
 
 interface Props {
   children: React.ReactNode;
@@ -40,6 +41,8 @@ export default function AppShell({ children }: Props) {
   const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
   const [planTier, setPlanTier] = React.useState<PlanTier>("pr");
   const [role, setRole] = React.useState<string | null>(null);
+  // For coach accounts: "athlete" hides the coach dashboard and shows only athlete tabs
+  const [viewMode, setViewMode] = React.useState<ViewMode>("coach");
   // Weekly / monthly check-in popup
   const [weeklyCheckinTarget, setWeeklyCheckinTarget] = React.useState<{
     week: number; year: number; weekStart: string;
@@ -63,6 +66,30 @@ export default function AppShell({ children }: Props) {
     }
     setSidebarReady(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── View-mode (coach ↔ athlete) for dual-role users ──────────────────────
+  React.useEffect(() => {
+    // Auth callback may set a short-lived cookie when a coach signs in via the
+    // "Sign in as Athlete" button — honour that by switching to athlete mode.
+    const hint = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith("pf_mode_hint="))
+      ?.split("=")[1];
+    if (hint === "athlete") {
+      localStorage.setItem(VIEW_MODE_KEY, "athlete");
+      document.cookie = "pf_mode_hint=; max-age=0; path=/";
+      setViewMode("athlete");
+    } else {
+      const stored = localStorage.getItem(VIEW_MODE_KEY);
+      if (stored === "athlete" || stored === "coach") setViewMode(stored);
+    }
+
+    // React to mode changes dispatched by the /you page (same tab, no reload)
+    const onModeChange = (e: Event) =>
+      setViewMode((e as CustomEvent<ViewMode>).detail);
+    window.addEventListener(VIEW_MODE_EVENT, onModeChange);
+    return () => window.removeEventListener(VIEW_MODE_EVENT, onModeChange);
   }, []);
 
   const toggleSidebar = () => {
@@ -126,6 +153,9 @@ export default function AppShell({ children }: Props) {
 
   const canCollapse = !!role; // all authenticated users can collapse to icon rail
 
+  // When a coach switches to athlete mode we show athlete-only UI
+  const effectiveRole = role === "coach" && viewMode === "athlete" ? "athlete" : role;
+
   const checkinCtxValue = React.useMemo(() => ({
     pendingCheckin: (weeklyCheckinTarget && checkinSkipped) ? weeklyCheckinTarget : null,
     isMonthly: checkinIsMonthly,
@@ -187,9 +217,12 @@ export default function AppShell({ children }: Props) {
               />
             </Link>
 
-            {/* Role badge */}
+            {/* Role badge — shows effective mode for dual-role users */}
             <span className="font-saira text-[9px] font-bold uppercase tracking-[0.32em] text-purple-300/80 -mt-1 mb-1">
-              {role === "coach" ? "Coach" : "Athlete"}
+              {effectiveRole === "coach" ? "Coach" : "Athlete"}
+              {role === "coach" && effectiveRole === "athlete" && (
+                <span className="ml-1 text-emerald-400/70"> · coach account</span>
+              )}
             </span>
           </div>
 
@@ -225,8 +258,8 @@ export default function AppShell({ children }: Props) {
               );
             })}
 
-            {/* Coach dashboard link — only for coach accounts */}
-            {role === "coach" && (
+            {/* Coach dashboard link — only when in coach mode */}
+            {role === "coach" && effectiveRole === "coach" && (
               <div className="mt-auto pt-3 border-t border-white/5">
                 <Link
                   href="/coach"
@@ -297,8 +330,8 @@ export default function AppShell({ children }: Props) {
               );
             })}
 
-            {/* Coach dashboard icon */}
-            {role === "coach" && (
+            {/* Coach dashboard icon — only in coach mode */}
+            {role === "coach" && effectiveRole === "coach" && (
               <div className="mt-auto pb-1 border-t border-white/5 pt-3 w-full flex justify-center">
                 <Link
                   href="/coach"
@@ -359,13 +392,13 @@ export default function AppShell({ children }: Props) {
       </main>
 
       {/* ── Mobile bottom tab bar ───────────────────────────────── */}
-      <TabBar planTier={planTier} role={role ?? undefined} />
+      <TabBar planTier={planTier} role={effectiveRole ?? undefined} />
 
       {/* ── Daily check-in reminder (athletes only) ──────────────── */}
-      {role !== "coach" && <CheckinReminderScheduler />}
+      {effectiveRole !== "coach" && <CheckinReminderScheduler />}
 
       {/* ── Push notification permission banner (athletes only) ───── */}
-      {role !== "coach" && <NotificationPermissionBanner />}
+      {effectiveRole !== "coach" && <NotificationPermissionBanner />}
 
       {/* ── In-app broadcast + devlog modal ────────────────────────── */}
       {notifications && (
@@ -376,7 +409,7 @@ export default function AppShell({ children }: Props) {
       )}
 
       {/* ── Weekly / monthly check-in popup (athletes only) ─────── */}
-      {role !== "coach" && weeklyCheckinTarget && !checkinSkipped && !notifications && (
+      {effectiveRole !== "coach" && weeklyCheckinTarget && !checkinSkipped && !notifications && (
         checkinIsMonthly ? (
           <MonthlyCheckinModal
             targetWeek={weeklyCheckinTarget}
