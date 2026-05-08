@@ -774,7 +774,16 @@ function UsersTab({
                       <select
                         value={user.plan_tier ?? "opener"}
                         disabled={saving[user.id] ?? false}
-                        onChange={(e) => onPatchUser(user.id, { plan_tier: e.target.value })}
+                        onChange={(e) => {
+                          const tier = e.target.value;
+                          const accessPatch =
+                            tier === "pr"
+                              ? { course_access: true,  test_access: true,  ai_access: true  }
+                              : tier === "second"
+                              ? { course_access: false, test_access: true,  ai_access: false }
+                              : { course_access: false, test_access: false, ai_access: false };
+                          onPatchUser(user.id, { plan_tier: tier, ...accessPatch });
+                        }}
                         className="rounded border border-white/10 bg-surface-section px-1.5 py-0.5 font-saira text-[9px] text-purple-300 uppercase tracking-wider disabled:opacity-40 cursor-pointer focus:outline-none focus:border-purple-500/50"
                       >
                         <option value="opener">Opener</option>
