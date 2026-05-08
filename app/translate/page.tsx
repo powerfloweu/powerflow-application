@@ -18,7 +18,8 @@ import { TRANSLATABLE_LOCALES, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from "
 type TranslationRow = {
   key: string;
   en: string;
-  value: string | null; // null = not yet translated (falls back to EN)
+  compiled: string | null; // value from compiled TS dictionary (null = not in dict yet)
+  value: string | null;    // DB override saved via this editor (null = no override)
 };
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -117,14 +118,19 @@ export default function TranslatePage() {
 
   // ── Stats ──────────────────────────────────────────────────────────────────
   const total = rows.length;
-  const translated = rows.filter((r) => r.value !== null && r.value !== "").length;
+  // "translated" = has a compiled dict entry OR a DB override
+  const translated = rows.filter((r) => (r.compiled !== null) || (r.value !== null && r.value !== "")).length;
+  // "overridden" = has a DB override specifically
+  const overridden = rows.filter((r) => r.value !== null && r.value !== "").length;
   const pct = total ? Math.round((translated / total) * 100) : 0;
 
   // ── Filter + search ────────────────────────────────────────────────────────
   const filteredRows = React.useMemo(() => {
     let r = rows;
-    if (filter === "missing") r = r.filter((x) => !x.value);
-    if (filter === "done")    r = r.filter((x) => !!x.value);
+    // "missing" = no compiled dict entry AND no DB override (truly untranslated)
+    if (filter === "missing") r = r.filter((x) => !x.compiled && !x.value);
+    // "done" = has either a compiled translation or a DB override
+    if (filter === "done")    r = r.filter((x) => !!x.compiled || !!x.value);
     if (search.trim()) {
       const q = search.toLowerCase();
       r = r.filter((x) =>
@@ -222,6 +228,9 @@ export default function TranslatePage() {
           </div>
           <span className="font-saira text-xs text-zinc-400 flex-shrink-0">
             {translated}/{total} translated ({pct}%)
+            {overridden > 0 && (
+              <span className="ml-1.5 text-purple-400/70">· {overridden} overridden</span>
+            )}
           </span>
         </div>
 
@@ -238,6 +247,7 @@ export default function TranslatePage() {
               }`}
             >
               {f === "missing" ? `Missing (${total - translated})` : f === "done" ? `Done (${translated})` : `All (${total})`}
+
             </button>
           ))}
         </div>
@@ -281,6 +291,12 @@ export default function TranslatePage() {
                 {sectionRows.map((row) => {
                   const state = saveState[row.key] ?? "idle";
                   const isOverride = row.value !== null && row.value !== "";
+                  const hasCompiled = row.compiled !== null && row.compiled !== "";
+                  // dot: purple = DB override, zinc-500 = compiled dict, zinc-800 = nothing
+                  const dotColor = isOverride ? "bg-purple-400" : hasCompiled ? "bg-zinc-500" : "bg-zinc-800";
+                  const dotTitle = isOverride ? "DB override active" : hasCompiled ? "Using compiled translation" : "Not yet translated";
+                  // placeholder: show compiled locale value if available, else EN
+                  const placeholderText = row.compiled ?? row.en;
                   return (
                     <div
                       key={row.key}
@@ -295,10 +311,8 @@ export default function TranslatePage() {
                       {/* Key */}
                       <div className="flex items-start gap-1.5 pt-1 min-w-0">
                         <span
-                          title={isOverride ? "Override active" : "Falling back to EN"}
-                          className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                            isOverride ? "bg-purple-400" : "bg-zinc-700"
-                          }`}
+                          title={dotTitle}
+                          className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColor}`}
                         />
                         <span className="font-mono text-[10px] text-zinc-500 truncate leading-5">
                           {row.key.split(".").slice(1).join(".")}
@@ -310,10 +324,10 @@ export default function TranslatePage() {
                         {row.en}
                       </p>
 
-                      {/* Editable translation */}
+                      {/* Editable translation — empty field means "use compiled/fallback" */}
                       <div className="relative">
                         <textarea
-                          rows={row.en.length > 60 ? 2 : 1}
+                          rows={Math.max(row.en.length, row.compiled?.length ?? 0) > 60 ? 2 : 1}
                           value={localValues[row.key] ?? ""}
                           onChange={(e) =>
                             setLocalValues((p) => ({ ...p, [row.key]: e.target.value }))
@@ -329,11 +343,13 @@ export default function TranslatePage() {
                               (e.target as HTMLTextAreaElement).blur();
                             }
                           }}
-                          placeholder={row.en}
-                          className={`w-full resize-none rounded-lg border px-2.5 py-1.5 font-saira text-xs text-white placeholder-zinc-700 focus:outline-none transition ${
+                          placeholder={placeholderText}
+                          className={`w-full resize-none rounded-lg border px-2.5 py-1.5 font-saira text-xs text-white focus:outline-none transition ${
                             isOverride
-                              ? "border-purple-500/30 bg-purple-500/5 focus:border-purple-500/60"
-                              : "border-white/8 bg-white/3 focus:border-purple-500/40"
+                              ? "border-purple-500/30 bg-purple-500/5 focus:border-purple-500/60 placeholder-purple-300/30"
+                              : hasCompiled
+                              ? "border-white/8 bg-white/3 focus:border-purple-500/40 placeholder-zinc-500"
+                              : "border-white/5 bg-white/2 focus:border-purple-500/40 placeholder-zinc-700"
                           }`}
                         />
                         {state === "saving" && (

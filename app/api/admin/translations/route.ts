@@ -2,8 +2,11 @@
  * Admin translations API — requires editor or master admin access.
  *
  * GET  /api/admin/translations?locale=de
- *   Returns all EN keys paired with the current DE override (if any).
- *   Shape: { key: string; en: string; value: string | null }[]
+ *   Returns all EN keys paired with the compiled locale value and any DB
+ *   override on top.
+ *   Shape: { key: string; en: string; compiled: string | null; value: string | null }[]
+ *   - compiled: value from the compiled TS dictionary (null = not yet in dict)
+ *   - value:    DB override saved via this editor (null = no override)
  *
  * PATCH /api/admin/translations
  *   Body: { locale, key, value }
@@ -13,6 +16,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { en } from "@/lib/i18n/en";
+import { de } from "@/lib/i18n/de";
+import { hu } from "@/lib/i18n/hu";
+import { es } from "@/lib/i18n/es";
+import { fr } from "@/lib/i18n/fr";
+
+const COMPILED_LOCALES: Record<string, unknown> = { de, hu, es, fr };
 
 const SUPABASE_URL =
   process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -78,12 +87,14 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Return all EN keys paired with the override value (null = not yet translated)
+  // Return all EN keys with the compiled locale value + any DB override on top
   const enFlat = flatten(en);
+  const compiledFlat = flatten(COMPILED_LOCALES[locale] ?? {});
   const result = Object.entries(enFlat).map(([key, enVal]) => ({
     key,
     en: enVal,
-    value: overrides[key] ?? null,
+    compiled: compiledFlat[key] ?? null,  // from compiled TS dict
+    value: overrides[key] ?? null,         // from DB (editor override)
   }));
 
   return NextResponse.json(result);
