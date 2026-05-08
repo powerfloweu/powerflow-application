@@ -15,12 +15,14 @@ const ATHLETE_TABS = [
   { href: "/you",     labelKey: "nav.you",     icon: YouIcon     },
 ] as const;
 
-// Coaches only get 4 tabs — Course & You are on desktop sidebar; Coach replaces them
+// Coaches get all athlete tabs + a Coach tab (PR tier always unlocked for coaches)
 const COACH_TABS = [
-  { href: "/today",   labelKey: "nav.home",    icon: TodayIcon,     isCoach: false },
-  { href: "/journal", labelKey: "nav.journal", icon: JournalIcon,   isCoach: false },
-  { href: "/library", labelKey: "nav.tools",   icon: LibraryIcon,   isCoach: false },
-  { href: "/coach",   labelKey: "nav.coach",   icon: CoachTabIcon,  isCoach: true  },
+  { href: "/today",   labelKey: "nav.home",    icon: TodayIcon,    isCoach: false },
+  { href: "/journal", labelKey: "nav.journal", icon: JournalIcon,  isCoach: false },
+  { href: "/course",  labelKey: "nav.course",  icon: CourseIcon,   isCoach: false },
+  { href: "/library", labelKey: "nav.tools",   icon: LibraryIcon,  isCoach: false },
+  { href: "/you",     labelKey: "nav.you",     icon: YouIcon,      isCoach: false },
+  { href: "/coach",   labelKey: "nav.coach",   icon: CoachTabIcon, isCoach: true  },
 ] as const;
 
 interface Props {

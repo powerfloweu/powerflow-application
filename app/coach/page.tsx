@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import EntryCard from "@/app/components/EntryCard";
 import TagChip from "@/app/components/TagChip";
 import { THEME_DEFS, detectSentiment, type Sentiment, type Context } from "@/lib/journal";
@@ -2564,6 +2565,7 @@ function CompactAthleteRow({
 
 export default function CoachPage() {
   const { t } = useT();
+  const router = useRouter();
   const [clients, setClients]   = React.useState<Client[]>([]);
   const [profile, setProfile]   = React.useState<CoachProfile | null>(null);
   const [loading, setLoading]   = React.useState(true);
@@ -2619,6 +2621,10 @@ export default function CoachPage() {
         }
 
         const prof: CoachProfile = await profileRes.json();
+        if ((prof as any).coach_status === "pending") {
+          router.replace("/coach/pending");
+          return;
+        }
         if (prof.role !== "coach") {
           setError(t("coach.errorCoachOnly"));
           return;

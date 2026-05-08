@@ -61,13 +61,41 @@ export async function GET(request: NextRequest) {
     await linkAthleteToCoach(user.id, joinCode);
   }
 
+  // ── Coach-specific post-login logic ────────────────────────────────────────
+  let redirectTo = next;
+  if (role === "coach") {
+    // Ensure coaches always have PR-tier access to athlete features
+    await dbPatch("profiles", { id: user.id }, { plan_tier: "pr" });
+
+    // Read coach_status to decide where to send them
+    const coachProfile = await fetchCoachStatus(user.id);
+    if (coachProfile?.coach_status === "pending") {
+      redirectTo = "/coach/pending";
+    }
+  }
+
   // Clear all one-time cookies
-  const response = NextResponse.redirect(`${origin}${next}`);
+  const response = NextResponse.redirect(`${origin}${redirectTo}`);
   response.cookies.set("pf_auth_role",  "", { maxAge: 0, path: "/" });
   response.cookies.set("pf_auth_next",  "", { maxAge: 0, path: "/" });
   response.cookies.set("pf_join_code",  "", { maxAge: 0, path: "/" });
 
   return response;
+}
+
+// ── Coach status helper ───────────────────────────────────────────────────────
+
+async function fetchCoachStatus(userId: string): Promise<{ coach_status: string | null } | null> {
+  const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  if (!SUPABASE_URL || !SERVICE_KEY) return null;
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=coach_status`,
+    { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
+  );
+  const rows = res.ok ? await res.json() : [];
+  return rows[0] ?? null;
 }
 
 // ── Link athlete to coach ─────────────────────────────────────────────────────
@@ -132,7 +160,15 @@ async function ensureProfile(
   const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
     method:  "POST",
     headers: { ...authHeaders, Prefer: "resolution=ignore-duplicates,return=representation" },
-    body:    JSON.stringify({ id: userId, role, display_name: meta.display_name, avatar_url: meta.avatar_url, coach_code }),
+    body:    JSON.stringify({
+      id: userId,
+      role,
+      display_name:  meta.display_name,
+      avatar_url:    meta.avatar_url,
+      coach_code,
+      plan_tier:     role === "coach" ? "pr" : "opener",
+      coach_status:  role === "coach" ? "pending" : null,
+    }),
   });
   if (!insertRes.ok) {
     const txt = await insertRes.text().catch(() => "");
