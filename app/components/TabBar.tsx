@@ -15,14 +15,10 @@ const ATHLETE_TABS = [
   { href: "/you",     labelKey: "nav.you",     icon: YouIcon     },
 ] as const;
 
-// Coaches get all athlete tabs + a Coach tab (PR tier always unlocked for coaches)
+// Coach mode: only the dashboard + profile (no athlete tabs)
 const COACH_TABS = [
-  { href: "/today",   labelKey: "nav.home",    icon: TodayIcon,    isCoach: false },
-  { href: "/journal", labelKey: "nav.journal", icon: JournalIcon,  isCoach: false },
-  { href: "/course",  labelKey: "nav.course",  icon: CourseIcon,   isCoach: false },
-  { href: "/library", labelKey: "nav.tools",   icon: LibraryIcon,  isCoach: false },
-  { href: "/you",     labelKey: "nav.you",     icon: YouIcon,      isCoach: false },
-  { href: "/coach",   labelKey: "nav.coach",   icon: CoachTabIcon, isCoach: true  },
+  { href: "/coach", labelKey: "nav.coach", icon: CoachTabIcon, isCoach: true  },
+  { href: "/you",   labelKey: "nav.you",   icon: YouIcon,      isCoach: true  },
 ] as const;
 
 interface Props {

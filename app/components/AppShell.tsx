@@ -198,7 +198,7 @@ export default function AppShell({ children }: Props) {
             )}
 
             {/* Logo — CSS classes switch dark/light variant without JS */}
-            <Link href="/today" className="block">
+            <Link href={effectiveRole === "coach" ? "/coach" : "/today"} className="block">
               <Image
                 src="/fm_powerflow_logo_verziok_01_negative.png"
                 alt="PowerFlow"
@@ -226,53 +226,52 @@ export default function AppShell({ children }: Props) {
             </span>
           </div>
 
-          {/* Nav links */}
+          {/* Nav links — athlete tabs in athlete mode, coach dashboard in coach mode */}
           <nav className="flex-1 py-4 px-3 space-y-0.5 flex flex-col">
-            {NAV_LINKS.map(({ href, labelKey, icon: Icon }) => {
-              const active = pathname === href || pathname.startsWith(href + "/");
-              const locked =
-                (href === "/library" && !canAccessTools(planTier)) ||
-                (href === "/course" && !canAccessPR(planTier));
-              const dest = locked ? "/upgrade" : href;
-              return (
-                <Link
-                  key={href}
-                  href={dest}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-[11px] uppercase tracking-[0.16em] transition ${
-                    active
-                      ? "bg-purple-500/15 text-purple-300 font-semibold"
-                      : locked
-                      ? "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
-                      : "text-zinc-300 hover:text-zinc-300 hover:bg-white/5"
-                  }`}
-                >
-                  <Icon active={active} />
-                  {t(labelKey)}
-                  {locked && (
-                    <svg viewBox="0 0 16 16" className="w-3 h-3 ml-auto text-zinc-400" fill="none" aria-label="Upgrade to unlock">
-                      <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-                      <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                    </svg>
-                  )}
-                </Link>
-              );
-            })}
-
-            {/* Coach dashboard link — only when in coach mode */}
-            {role === "coach" && effectiveRole === "coach" && (
-              <div className="mt-auto pt-3 border-t border-white/5">
-                <Link
-                  href="/coach"
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-[11px] uppercase tracking-[0.16em] transition ${
-                    pathname === "/coach" || pathname.startsWith("/coach/")
-                      ? "bg-emerald-500/15 text-emerald-300 font-semibold"
-                      : "text-emerald-700 hover:text-emerald-400 hover:bg-white/5"
-                  }`}
-                >
-                  <CoachSidebarIcon active={pathname === "/coach" || pathname.startsWith("/coach/")} />
-                  {t("nav.coach")}
-                </Link>
-              </div>
+            {effectiveRole === "coach" ? (
+              /* Coach mode: only the coach dashboard */
+              <Link
+                href="/coach"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-[11px] uppercase tracking-[0.16em] transition ${
+                  pathname === "/coach" || pathname.startsWith("/coach/")
+                    ? "bg-emerald-500/15 text-emerald-300 font-semibold"
+                    : "text-emerald-700 hover:text-emerald-400 hover:bg-white/5"
+                }`}
+              >
+                <CoachSidebarIcon active={pathname === "/coach" || pathname.startsWith("/coach/")} />
+                {t("nav.coach")}
+              </Link>
+            ) : (
+              /* Athlete mode: all 5 athlete tabs, no coach link */
+              NAV_LINKS.map(({ href, labelKey, icon: Icon }) => {
+                const active = pathname === href || pathname.startsWith(href + "/");
+                const locked =
+                  (href === "/library" && !canAccessTools(planTier)) ||
+                  (href === "/course" && !canAccessPR(planTier));
+                const dest = locked ? "/upgrade" : href;
+                return (
+                  <Link
+                    key={href}
+                    href={dest}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-[11px] uppercase tracking-[0.16em] transition ${
+                      active
+                        ? "bg-purple-500/15 text-purple-300 font-semibold"
+                        : locked
+                        ? "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                        : "text-zinc-300 hover:text-zinc-300 hover:bg-white/5"
+                    }`}
+                  >
+                    <Icon active={active} />
+                    {t(labelKey)}
+                    {locked && (
+                      <svg viewBox="0 0 16 16" className="w-3 h-3 ml-auto text-zinc-400" fill="none" aria-label="Upgrade to unlock">
+                        <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                        <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                      </svg>
+                    )}
+                  </Link>
+                );
+              })
             )}
           </nav>
 
@@ -306,45 +305,44 @@ export default function AppShell({ children }: Props) {
 
           {/* Icon-only nav links */}
           <nav className="flex-1 py-4 flex flex-col items-center gap-1">
-            {NAV_LINKS.map(({ href, icon: Icon, labelKey }) => {
-              const active = pathname === href || pathname.startsWith(href + "/");
-              const locked =
-                (href === "/library" && !canAccessTools(planTier)) ||
-                (href === "/course" && !canAccessPR(planTier));
-              const dest = locked ? "/upgrade" : href;
-              return (
-                <Link
-                  key={href}
-                  href={dest}
-                  title={t(labelKey)}
-                  className={`w-9 h-9 flex items-center justify-center rounded-xl transition ${
-                    active
-                      ? "bg-purple-500/15 text-purple-300"
-                      : locked
-                      ? "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
-                  }`}
-                >
-                  <Icon active={active} />
-                </Link>
-              );
-            })}
-
-            {/* Coach dashboard icon — only in coach mode */}
-            {role === "coach" && effectiveRole === "coach" && (
-              <div className="mt-auto pb-1 border-t border-white/5 pt-3 w-full flex justify-center">
-                <Link
-                  href="/coach"
-                  title={t("nav.coach")}
-                  className={`w-9 h-9 flex items-center justify-center rounded-xl transition ${
-                    pathname === "/coach" || pathname.startsWith("/coach/")
-                      ? "bg-emerald-500/15 text-emerald-300"
-                      : "text-emerald-700 hover:text-emerald-400 hover:bg-white/5"
-                  }`}
-                >
-                  <CoachSidebarIcon active={pathname === "/coach" || pathname.startsWith("/coach/")} />
-                </Link>
-              </div>
+            {effectiveRole === "coach" ? (
+              /* Coach mode: only the coach icon */
+              <Link
+                href="/coach"
+                title={t("nav.coach")}
+                className={`w-9 h-9 flex items-center justify-center rounded-xl transition ${
+                  pathname === "/coach" || pathname.startsWith("/coach/")
+                    ? "bg-emerald-500/15 text-emerald-300"
+                    : "text-emerald-700 hover:text-emerald-400 hover:bg-white/5"
+                }`}
+              >
+                <CoachSidebarIcon active={pathname === "/coach" || pathname.startsWith("/coach/")} />
+              </Link>
+            ) : (
+              /* Athlete mode: all 5 athlete icons */
+              NAV_LINKS.map(({ href, icon: Icon, labelKey }) => {
+                const active = pathname === href || pathname.startsWith(href + "/");
+                const locked =
+                  (href === "/library" && !canAccessTools(planTier)) ||
+                  (href === "/course" && !canAccessPR(planTier));
+                const dest = locked ? "/upgrade" : href;
+                return (
+                  <Link
+                    key={href}
+                    href={dest}
+                    title={t(labelKey)}
+                    className={`w-9 h-9 flex items-center justify-center rounded-xl transition ${
+                      active
+                        ? "bg-purple-500/15 text-purple-300"
+                        : locked
+                        ? "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                        : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                    }`}
+                  >
+                    <Icon active={active} />
+                  </Link>
+                );
+              })
             )}
           </nav>
 
@@ -361,7 +359,7 @@ export default function AppShell({ children }: Props) {
         className="md:hidden fixed inset-x-0 z-40 h-20 flex items-center justify-between px-5 border-b border-white/5 bg-surface-panel/90 backdrop-blur-md"
         style={{ top: "env(safe-area-inset-top)" }}
       >
-        <Link href="/today" className="block">
+        <Link href={effectiveRole === "coach" ? "/coach" : "/today"} className="block">
           <Image
             src="/fm_powerflow_logo_verziok_01_negative.png"
             alt="PowerFlow"
