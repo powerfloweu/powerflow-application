@@ -10,6 +10,7 @@ import { weekDays as currentWeekDaysLocal } from "@/lib/date";
 import { weekLabel, type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weeklyCheckin";
 import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
+import NotificationModal, { type NotificationState } from "@/app/components/NotificationModal";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -2209,7 +2210,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
                               {label}
                             </span>
                             <span className="font-saira text-xs text-zinc-300 leading-snug">
-                              {val.length > 80 ? val.slice(0, 80) + "…" : val}
+                              {val}
                             </span>
                           </div>
                         ) : null
@@ -2218,7 +2219,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
                   )}
                   {!e.is_training_day && e.next_session && (
                     <p className="font-saira text-xs text-zinc-400 mt-1 leading-snug">
-                      {e.next_session.length > 80 ? e.next_session.slice(0, 80) + "…" : e.next_session}
+                      {e.next_session}
                     </p>
                   )}
                 </div>
@@ -2592,14 +2593,25 @@ export default function CoachPage() {
   // Desktop two-panel: selected athlete
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
+  // What's New / broadcast modal
+  const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
+
   React.useEffect(() => {
     (async () => {
       try {
-        const [profileRes, athletesRes, notesRes] = await Promise.all([
+        const [profileRes, athletesRes, notesRes, notifRes] = await Promise.all([
           fetch("/api/me"),
           fetch("/api/coach/athletes"),
           fetch("/api/coach/notes"),
+          fetch("/api/notifications"),
         ]);
+
+        if (notifRes.ok) {
+          const notifData = await notifRes.json();
+          if (notifData?.broadcast || notifData?.devlogNew) {
+            setNotifications(notifData as NotificationState);
+          }
+        }
 
         if (!profileRes.ok || !athletesRes.ok) {
           setError(t("coach.errorLoad"));
@@ -2723,6 +2735,14 @@ export default function CoachPage() {
 
   return (
     <div className="relative bg-surface-base text-white">
+      {/* What's New / broadcast modal */}
+      {notifications && (
+        <NotificationModal
+          state={notifications}
+          onDone={() => setNotifications(null)}
+        />
+      )}
+
       {/* Background gradient */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.11),transparent_55%)]" />
