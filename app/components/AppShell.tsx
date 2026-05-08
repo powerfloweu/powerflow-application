@@ -69,9 +69,9 @@ export default function AppShell({ children }: Props) {
   }, []);
 
   // ── View-mode (coach ↔ athlete) for dual-role users ──────────────────────
+
+  // On mount: check one-time hint cookie from auth callback, set up event listener
   React.useEffect(() => {
-    // Auth callback may set a short-lived cookie when a coach signs in via the
-    // "Sign in as Athlete" button — honour that by switching to athlete mode.
     const hint = document.cookie
       .split("; ")
       .find((c) => c.startsWith("pf_mode_hint="))
@@ -80,17 +80,20 @@ export default function AppShell({ children }: Props) {
       localStorage.setItem(VIEW_MODE_KEY, "athlete");
       document.cookie = "pf_mode_hint=; max-age=0; path=/";
       setViewMode("athlete");
-    } else {
-      const stored = localStorage.getItem(VIEW_MODE_KEY);
-      if (stored === "athlete" || stored === "coach") setViewMode(stored);
     }
-
     // React to mode changes dispatched by the /you page (same tab, no reload)
     const onModeChange = (e: Event) =>
       setViewMode((e as CustomEvent<ViewMode>).detail);
     window.addEventListener(VIEW_MODE_EVENT, onModeChange);
     return () => window.removeEventListener(VIEW_MODE_EVENT, onModeChange);
   }, []);
+
+  // Re-read localStorage on every navigation — ensures mode is correct even if
+  // the event dispatch was missed (e.g. user switches mode then immediately navigates)
+  React.useEffect(() => {
+    const stored = localStorage.getItem(VIEW_MODE_KEY);
+    if (stored === "athlete" || stored === "coach") setViewMode(stored);
+  }, [pathname]);
 
   const toggleSidebar = () => {
     setSidebarOpen((v) => {
@@ -229,18 +232,31 @@ export default function AppShell({ children }: Props) {
           {/* Nav links — athlete tabs in athlete mode, coach dashboard in coach mode */}
           <nav className="flex-1 py-4 px-3 space-y-0.5 flex flex-col">
             {effectiveRole === "coach" ? (
-              /* Coach mode: only the coach dashboard */
-              <Link
-                href="/coach"
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-[11px] uppercase tracking-[0.16em] transition ${
-                  pathname === "/coach" || pathname.startsWith("/coach/")
-                    ? "bg-emerald-500/15 text-emerald-300 font-semibold"
-                    : "text-emerald-700 hover:text-emerald-400 hover:bg-white/5"
-                }`}
-              >
-                <CoachSidebarIcon active={pathname === "/coach" || pathname.startsWith("/coach/")} />
-                {t("nav.coach")}
-              </Link>
+              /* Coach mode: coach dashboard + profile (for mode switching) */
+              <>
+                <Link
+                  href="/coach"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-[11px] uppercase tracking-[0.16em] transition ${
+                    pathname === "/coach" || pathname.startsWith("/coach/")
+                      ? "bg-emerald-500/15 text-emerald-300 font-semibold"
+                      : "text-emerald-700 hover:text-emerald-400 hover:bg-white/5"
+                  }`}
+                >
+                  <CoachSidebarIcon active={pathname === "/coach" || pathname.startsWith("/coach/")} />
+                  {t("nav.coach")}
+                </Link>
+                <Link
+                  href="/you"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-saira text-[11px] uppercase tracking-[0.16em] transition ${
+                    pathname === "/you"
+                      ? "bg-purple-500/15 text-purple-300 font-semibold"
+                      : "text-zinc-300 hover:text-zinc-300 hover:bg-white/5"
+                  }`}
+                >
+                  <YouIcon active={pathname === "/you"} />
+                  {t("nav.you")}
+                </Link>
+              </>
             ) : (
               /* Athlete mode: all 5 athlete tabs, no coach link */
               NAV_LINKS.map(({ href, labelKey, icon: Icon }) => {
@@ -306,18 +322,31 @@ export default function AppShell({ children }: Props) {
           {/* Icon-only nav links */}
           <nav className="flex-1 py-4 flex flex-col items-center gap-1">
             {effectiveRole === "coach" ? (
-              /* Coach mode: only the coach icon */
-              <Link
-                href="/coach"
-                title={t("nav.coach")}
-                className={`w-9 h-9 flex items-center justify-center rounded-xl transition ${
-                  pathname === "/coach" || pathname.startsWith("/coach/")
-                    ? "bg-emerald-500/15 text-emerald-300"
-                    : "text-emerald-700 hover:text-emerald-400 hover:bg-white/5"
-                }`}
-              >
-                <CoachSidebarIcon active={pathname === "/coach" || pathname.startsWith("/coach/")} />
-              </Link>
+              /* Coach mode: coach icon + you icon */
+              <>
+                <Link
+                  href="/coach"
+                  title={t("nav.coach")}
+                  className={`w-9 h-9 flex items-center justify-center rounded-xl transition ${
+                    pathname === "/coach" || pathname.startsWith("/coach/")
+                      ? "bg-emerald-500/15 text-emerald-300"
+                      : "text-emerald-700 hover:text-emerald-400 hover:bg-white/5"
+                  }`}
+                >
+                  <CoachSidebarIcon active={pathname === "/coach" || pathname.startsWith("/coach/")} />
+                </Link>
+                <Link
+                  href="/you"
+                  title={t("nav.you")}
+                  className={`w-9 h-9 flex items-center justify-center rounded-xl transition ${
+                    pathname === "/you"
+                      ? "bg-purple-500/15 text-purple-300"
+                      : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                  }`}
+                >
+                  <YouIcon active={pathname === "/you"} />
+                </Link>
+              </>
             ) : (
               /* Athlete mode: all 5 athlete icons */
               NAV_LINKS.map(({ href, icon: Icon, labelKey }) => {
