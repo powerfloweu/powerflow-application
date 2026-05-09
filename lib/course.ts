@@ -794,6 +794,7 @@ export const COURSE_MODULES: CourseModule[] = [
     practiceTarget: 14,
     overview:
       "Every lifter loses focus sometimes. Champions have a pre-built routine for getting it back that doesn't require willpower in the moment.",
+    muxPlaybackId: "K6baomfCm1gXBrLwdKup7AurpP2kTkjjvsC9wSj00w6Y",
     muxPlaybackId_de: "7FaMa4U801FwSIjR5phoccOoHyrNwQqgqJV9KWzZcrFE", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "BJHkBRWhpUEyUweLfHsjuu",
@@ -838,9 +839,9 @@ export const COURSE_MODULES: CourseModule[] = [
     moduleType: "insight",
     overview:
       "The work is done. Meet day isn't where you build — it's where you express. This week is about protecting what you've built.",
+    muxPlaybackId: "K6baomfCm1gXBrLwdKup7AurpP2kTkjjvsC9wSj00w6Y",
     muxPlaybackId_de: "7FaMa4U801FwSIjR5phoccOoHyrNwQqgqJV9KWzZcrFE", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
-    // No video for final week — "the work is done"
     keyPoints: [
       "Your only job is to execute openers well. The rest follows.",
       "Protect your attention: phone down, eyes on your own lane.",
@@ -876,6 +877,11 @@ export const COURSE_MODULES: CourseModule[] = [
     ],
   },
 
+  // ── Week 16 — TODO: create this module ──────────────────────────────────
+  // EN:  li3zG461hiJ6DB02qjPu0200Ed1I9PmB00JGoXz02V3Z3mQo
+  // DE:  hx0200Hsp802sYZjzX8OT9XKPfGdZx4M56InYS01DHPF02W4
+  // (Add slug "w16-..." with weekNumber 16, then shift post-meet to weekNumber 17)
+
   // ── Bonus — Post-Meet Reflection (not part of the plan sequence) ────────
   {
     slug: "w16-post-meet",
@@ -888,7 +894,8 @@ export const COURSE_MODULES: CourseModule[] = [
     moduleType: "insight",
     overview:
       "The competition is over. This is where the real learning happens. Without deliberate reflection, meets become experiences. With it, they become data.",
-    muxPlaybackId_de: "hx0200Hsp802sYZjzX8OT9XKPfGdZx4M56InYS01DHPF02W4", // DE
+    muxPlaybackId: "bGFTDZRLAg5Pv7v01wwZmiMvqaen2tRDM2f5QuXUNJzw",
+    muxPlaybackId_de: "Otpg6a6IdHm6BvsknszlwIfsFUU3dB8mV1BX02008Fb3A", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     keyPoints: [
       "The gap between what you expected and what happened is the most valuable feedback you have.",
