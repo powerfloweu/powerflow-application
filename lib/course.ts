@@ -174,7 +174,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Before we can train the mind, we have to map it. This week is an honest audit of why you lift, what the sport gives you, and what it costs you.",
     muxPlaybackId: "UFbBTEgcpZ8gLW00b00S01XP01LEXeGKz2XrSGbePyPqmVU",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "lTqoZD01q7P7l7vvX3SlF01Kn73XuvzIIgH01t02Y01HQsQQ", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "uzfLhVxMTKLmwnuQ9haJFS",
     keyPoints: [
@@ -217,7 +217,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Athletes with accurate self-knowledge recover faster from bad sessions and capitalise on good ones. This week you build that map — through your own eyes and through the eyes of people who know your lifting.",
     muxPlaybackId: "SGNg2JM5AUnfYPY3dHRlgByq9zN9GYSNL72q4VEmTgs",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "FCThOxjrdxD22En02R02nh8rbv800R2jAvaw01YV00hhU500g", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "8s5ALpWJ388ZQJS7pQfSFV",
     keyPoints: [
@@ -279,7 +279,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Most lifters set outcome goals (a number on the bar). Champions set all three layers — outcome, performance, process — and know which one to focus on today.",
     muxPlaybackId: "6ZLWadiD6rrAu00W4FwtSfx9xhpW01bsl4nXc8mtn5fjw",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "02koCOd3VHPTOt2gMez29sb7qcBiMSzHJmCnMt8UxvfM", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "QHTXHxz61eEGGosXzHH7Pa",
     keyPoints: [
@@ -328,7 +328,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Whether you're coached or self-coached, the quality of your working relationship with whoever programs your training is the single biggest predictor of long-term progress.",
     muxPlaybackId: "bF6VDlMozLIBLQGxRG00CPQZvy95cxKBiET49cWHYauE",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "J00QheBC4q9JT1bt5BeI7kx63xeTAbFdPcdwcn4sFdWE", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "ewTR1eickVpzMtNQWoPpmk",
     keyPoints: [
@@ -391,7 +391,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Every lifter has an optimal arousal zone. Too low, you're flat. Too high, you're shaky. This week you learn to read and adjust it.",
     muxPlaybackId: "I84NwpMzDNVbJndHfxK014QkFrV6GlOoy8302DqN2b2Lc",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "jILvWcEAJRPrvPZLgJlTRvR01YhvzOcBF2b01ZUD1NpDA", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "9kAdtx7bQ52CCaheAJRUcY",
     keyPoints: [
@@ -444,7 +444,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "The fastest way into a state is through the body. Posture, breath, and face all send signals the brain obeys.",
     muxPlaybackId: "I84NwpMzDNVbJndHfxK014QkFrV6GlOoy8302DqN2b2Lc",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "jILvWcEAJRPrvPZLgJlTRvR01YhvzOcBF2b01ZUD1NpDA", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "FQEvTLER7oZdDRj6aXGFXF",
     keyPoints: [
@@ -487,7 +487,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Pressure exists on the platform. If you never train it, meet day is the first time you meet it — and that's too late.",
     muxPlaybackId: "I84NwpMzDNVbJndHfxK014QkFrV6GlOoy8302DqN2b2Lc",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "jILvWcEAJRPrvPZLgJlTRvR01YhvzOcBF2b01ZUD1NpDA", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "BeiAtWCyo4f2uDmcfV9DhC",
     keyPoints: [
@@ -525,7 +525,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Flow isn't magic — it's the intersection of skill and challenge when attention is fully engaged. You can set the conditions for it.",
     muxPlaybackId: "I84NwpMzDNVbJndHfxK014QkFrV6GlOoy8302DqN2b2Lc",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "jILvWcEAJRPrvPZLgJlTRvR01YhvzOcBF2b01ZUD1NpDA", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "oqYyALnSkD7mpWBD5ANuz6",
     keyPoints: [
@@ -566,7 +566,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Elite athletes visualise. Not because it's magic, but because the brain partially can't tell the difference between vivid rehearsal and real reps.",
     muxPlaybackId: "DFmalLyijNWfYcbD00PCxvtLcSBWlDf7zdAVjHidaeAw",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "rC01brolQZA1h4WH4zplkpvzVWmWdGqY6BrZEeX6ZJvM", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "2mizuQmGN1jcmvFsfm7jYo",
     keyPoints: [
@@ -619,7 +619,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Mental rehearsal is visualisation applied to a specific performance moment — a session, an attempt, a whole meet — with full sensory detail.",
     muxPlaybackId: "JIH7MwwmNM00o01kDqf01imivDciszY2jVUm5z4H8y5cgQ",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "oyYdjJNln9kPYElz009uHzUTiMab01LB9imwylZIpZ01zo", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "eosWqyDenTbc9C2SYZhHi7",
     keyPoints: [
@@ -665,7 +665,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Under load there's no time for a paragraph. One short cue, anchored to one correct feeling, is worth more than a whole technique lecture.",
     muxPlaybackId: "Wy8oNEM87Vl3GG5xuZym9a6MXi4eSzKSw6QSM7Vfn5s",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "02jA01gp1q015VyWWIecP1LLgPM01H2p17db01D00MYlcfF1I", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "TF5sVvNTRZddYKfmzBmWtQ",
     keyPoints: [
@@ -715,7 +715,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "You talk to yourself constantly. Most of it you don't notice. This week you audit it and rewrite the worst lines.",
     muxPlaybackId: "F6L2yLRwaKQzeKOmA4JOLLrUN4ryOnd700hcsSFJYa018",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "9Y5edt00ANAN3v02EAd1YrEKRYNnYtsiS2qE695xNiz01Q", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "YYMSKvZF1nfm1Dy3m1SQsW",
     keyPoints: [
@@ -757,7 +757,7 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Focus isn't effort — it's direction. Under stress, attention narrows. The question is: does it narrow onto the right thing, or the wrong one?",
     muxPlaybackId: "rGQoBFBDgwY46hQlfFRTd3GPGcGz6zyG2IkLns5Nk1U",
-    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_de: "sHu02SO01tDjk3uZDv1kTdy1200Fkajo97ApBcbLfozggw", // DE
     muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "YyHSt8pUVdW3fn4YUCHF5K",
     keyPoints: [
@@ -794,6 +794,8 @@ export const COURSE_MODULES: CourseModule[] = [
     practiceTarget: 14,
     overview:
       "Every lifter loses focus sometimes. Champions have a pre-built routine for getting it back that doesn't require willpower in the moment.",
+    muxPlaybackId_de: "7FaMa4U801FwSIjR5phoccOoHyrNwQqgqJV9KWzZcrFE", // DE
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "BJHkBRWhpUEyUweLfHsjuu",
     keyPoints: [
       "Missed lift ≠ ruined meet, unless you let it become that.",
@@ -836,6 +838,8 @@ export const COURSE_MODULES: CourseModule[] = [
     moduleType: "insight",
     overview:
       "The work is done. Meet day isn't where you build — it's where you express. This week is about protecting what you've built.",
+    muxPlaybackId_de: "7FaMa4U801FwSIjR5phoccOoHyrNwQqgqJV9KWzZcrFE", // DE
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     // No video for final week — "the work is done"
     keyPoints: [
       "Your only job is to execute openers well. The rest follows.",
@@ -884,6 +888,8 @@ export const COURSE_MODULES: CourseModule[] = [
     moduleType: "insight",
     overview:
       "The competition is over. This is where the real learning happens. Without deliberate reflection, meets become experiences. With it, they become data.",
+    muxPlaybackId_de: "hx0200Hsp802sYZjzX8OT9XKPfGdZx4M56InYS01DHPF02W4", // DE
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     keyPoints: [
       "The gap between what you expected and what happened is the most valuable feedback you have.",
       "Good performances and bad ones both deserve honest analysis.",
