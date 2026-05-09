@@ -109,10 +109,20 @@ export type CourseModule = {
    */
   practiceTarget?: number;
   /**
-   * Mux public playback ID — preferred video source.
+   * Mux public playback ID — English (default) video.
    * Obtain from the Mux dashboard: Asset → Playback IDs (public).
    */
   muxPlaybackId?: string;
+  /**
+   * German (DE) version of the video. Falls back to muxPlaybackId if absent.
+   * Add these as videos are uploaded to Mux.
+   */
+  muxPlaybackId_de?: string;
+  /**
+   * Hungarian (HU) version of the video. Falls back to muxPlaybackId if absent.
+   * Add these as videos are uploaded to Mux.
+   */
+  muxPlaybackId_hu?: string;
   /**
    * @deprecated Replaced by muxPlaybackId. Kept for reference only.
    * Vidyard video UUID — no longer used in the player.
@@ -135,6 +145,16 @@ export type CourseModule = {
 /** @deprecated Use CourseModule */
 export type CourseWeek = CourseModule;
 
+/**
+ * Returns the best available Mux playback ID for the given locale.
+ * Falls back to the English ID if no locale-specific version exists yet.
+ */
+export function getPlaybackId(mod: CourseModule, locale: string): string | undefined {
+  if (locale === "de" && mod.muxPlaybackId_de) return mod.muxPlaybackId_de;
+  if (locale === "hu" && mod.muxPlaybackId_hu) return mod.muxPlaybackId_hu;
+  return mod.muxPlaybackId;
+}
+
 // ── Data ─────────────────────────────────────────────────────────────────────
 //
 // Vidyard UUIDs below are placeholders drawn from the 14 share URLs
@@ -154,6 +174,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Before we can train the mind, we have to map it. This week is an honest audit of why you lift, what the sport gives you, and what it costs you.",
     muxPlaybackId: "UFbBTEgcpZ8gLW00b00S01XP01LEXeGKz2XrSGbePyPqmVU",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "uzfLhVxMTKLmwnuQ9haJFS",
     keyPoints: [
       "Your relationship with the sport shapes every session you step into.",
@@ -195,6 +217,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Athletes with accurate self-knowledge recover faster from bad sessions and capitalise on good ones. This week you build that map — through your own eyes and through the eyes of people who know your lifting.",
     muxPlaybackId: "SGNg2JM5AUnfYPY3dHRlgByq9zN9GYSNL72q4VEmTgs",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "8s5ALpWJ388ZQJS7pQfSFV",
     keyPoints: [
       "Your biggest mental strengths are usually invisible to you — others see them first.",
@@ -255,6 +279,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Most lifters set outcome goals (a number on the bar). Champions set all three layers — outcome, performance, process — and know which one to focus on today.",
     muxPlaybackId: "6ZLWadiD6rrAu00W4FwtSfx9xhpW01bsl4nXc8mtn5fjw",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "QHTXHxz61eEGGosXzHH7Pa",
     keyPoints: [
       "Outcome goals motivate the block; process goals survive the session.",
@@ -302,6 +328,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Whether you're coached or self-coached, the quality of your working relationship with whoever programs your training is the single biggest predictor of long-term progress.",
     muxPlaybackId: "bF6VDlMozLIBLQGxRG00CPQZvy95cxKBiET49cWHYauE",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "ewTR1eickVpzMtNQWoPpmk",
     keyPoints: [
       "Trust is built by small promises kept, not big ones made.",
@@ -363,6 +391,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Every lifter has an optimal arousal zone. Too low, you're flat. Too high, you're shaky. This week you learn to read and adjust it.",
     muxPlaybackId: "I84NwpMzDNVbJndHfxK014QkFrV6GlOoy8302DqN2b2Lc",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "9kAdtx7bQ52CCaheAJRUcY",
     keyPoints: [
       "Arousal is a dial, not a switch — you can turn it up or down.",
@@ -414,6 +444,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "The fastest way into a state is through the body. Posture, breath, and face all send signals the brain obeys.",
     muxPlaybackId: "I84NwpMzDNVbJndHfxK014QkFrV6GlOoy8302DqN2b2Lc",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "FQEvTLER7oZdDRj6aXGFXF",
     keyPoints: [
       "Shallow chest breathing tells your brain you're in danger.",
@@ -455,6 +487,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Pressure exists on the platform. If you never train it, meet day is the first time you meet it — and that's too late.",
     muxPlaybackId: "I84NwpMzDNVbJndHfxK014QkFrV6GlOoy8302DqN2b2Lc",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "BeiAtWCyo4f2uDmcfV9DhC",
     keyPoints: [
       "You can manufacture pressure: single-attempt PRs, commanded lifts, filmed openers.",
@@ -491,6 +525,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Flow isn't magic — it's the intersection of skill and challenge when attention is fully engaged. You can set the conditions for it.",
     muxPlaybackId: "I84NwpMzDNVbJndHfxK014QkFrV6GlOoy8302DqN2b2Lc",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "oqYyALnSkD7mpWBD5ANuz6",
     keyPoints: [
       "Flow requires clear goals and immediate feedback.",
@@ -530,6 +566,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Elite athletes visualise. Not because it's magic, but because the brain partially can't tell the difference between vivid rehearsal and real reps.",
     muxPlaybackId: "DFmalLyijNWfYcbD00PCxvtLcSBWlDf7zdAVjHidaeAw",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "2mizuQmGN1jcmvFsfm7jYo",
     keyPoints: [
       "First-person, not third-person — see it through your own eyes.",
@@ -581,6 +619,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Mental rehearsal is visualisation applied to a specific performance moment — a session, an attempt, a whole meet — with full sensory detail.",
     muxPlaybackId: "JIH7MwwmNM00o01kDqf01imivDciszY2jVUm5z4H8y5cgQ",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "eosWqyDenTbc9C2SYZhHi7",
     keyPoints: [
       "Rehearse the boring parts too — weigh-in, waiting, chalk up.",
@@ -625,6 +665,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Under load there's no time for a paragraph. One short cue, anchored to one correct feeling, is worth more than a whole technique lecture.",
     muxPlaybackId: "Wy8oNEM87Vl3GG5xuZym9a6MXi4eSzKSw6QSM7Vfn5s",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "TF5sVvNTRZddYKfmzBmWtQ",
     keyPoints: [
       "Cues should be action-oriented, not corrective. 'Drive' beats 'don't round'.",
@@ -673,6 +715,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "You talk to yourself constantly. Most of it you don't notice. This week you audit it and rewrite the worst lines.",
     muxPlaybackId: "F6L2yLRwaKQzeKOmA4JOLLrUN4ryOnd700hcsSFJYa018",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "YYMSKvZF1nfm1Dy3m1SQsW",
     keyPoints: [
       "Noticing is 80% of the work — you can't edit what you don't see.",
@@ -713,6 +757,8 @@ export const COURSE_MODULES: CourseModule[] = [
     overview:
       "Focus isn't effort — it's direction. Under stress, attention narrows. The question is: does it narrow onto the right thing, or the wrong one?",
     muxPlaybackId: "rGQoBFBDgwY46hQlfFRTd3GPGcGz6zyG2IkLns5Nk1U",
+    muxPlaybackId_de: "", // ← paste DE Mux ID here
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
     vidyardUuid: "YyHSt8pUVdW3fn4YUCHF5K",
     keyPoints: [
       "Narrow internal focus = cues. Narrow external = object. Both are useful.",

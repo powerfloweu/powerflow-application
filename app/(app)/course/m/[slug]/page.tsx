@@ -7,6 +7,7 @@ import MuxVideoPlayer from "@/app/components/MuxVideoPlayer";
 import BottomSheet from "@/app/components/BottomSheet";
 import {
   getModule,
+  getPlaybackId,
   stepsComplete,
   type CourseModule,
   type CourseQuestion,
@@ -19,7 +20,7 @@ import { useT } from "@/lib/i18n";
 
 export default function ModuleDetailPage() {
   const router = useRouter();
-  const { t } = useT();
+  const { t, locale } = useT();
   const { slug } = useParams<{ slug: string }>();
   const mod = getModule(slug);
 
@@ -230,7 +231,7 @@ export default function ModuleDetailPage() {
         {/* ── Watch ─────────────────────────────────────────────────────────── */}
         <section className="mb-6">
           <SectionLabel icon="▶" label={t("course.sectionWatch")} />
-          <MuxVideoPlayer playbackId={mod.muxPlaybackId} title={mod.title} onPlay={markVideoDone} />
+          <MuxVideoPlayer playbackId={getPlaybackId(mod, locale)} title={mod.title} onPlay={markVideoDone} />
         </section>
 
         {/* ── Overview + key points ─────────────────────────────────────────── */}
