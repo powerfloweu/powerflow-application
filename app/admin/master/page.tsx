@@ -1426,8 +1426,11 @@ function AiInsightsTab() {
   const [data, setData]       = React.useState<AiFeedbackData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError]     = React.useState<string | null>(null);
-  const [batching, setBatching]   = React.useState(false);
+  const [batching, setBatching]       = React.useState(false);
   const [batchResult, setBatchResult] = React.useState<{ processed: number; errors: number } | null>(null);
+  const [debugUserId, setDebugUserId] = React.useState("");
+  const [debugResult, setDebugResult] = React.useState<Record<string, unknown> | null>(null);
+  const [debugging, setDebugging]     = React.useState(false);
 
   function loadData() {
     setLoading(true);
@@ -1439,6 +1442,20 @@ function AiInsightsTab() {
   }
 
   React.useEffect(() => { loadData(); }, []);
+
+  async function runDebugPrompt() {
+    if (!debugUserId.trim()) return;
+    setDebugging(true);
+    setDebugResult(null);
+    try {
+      const r = await fetch(`/api/admin/debug-prompt?userId=${debugUserId.trim()}`);
+      setDebugResult(await r.json());
+    } catch (e) {
+      setDebugResult({ error: String(e) });
+    } finally {
+      setDebugging(false);
+    }
+  }
 
   async function runBatchSummarizer() {
     setBatching(true);
@@ -1622,6 +1639,34 @@ function AiInsightsTab() {
           </div>
         </div>
       )}
+
+      {/* ── Prompt debugger ── */}
+      <div className="rounded-2xl border border-white/6 bg-surface-panel/60 p-5 space-y-4">
+        <div>
+          <h3 className="font-saira text-xs font-bold uppercase tracking-[0.2em] text-purple-300">Prompt debugger</h3>
+          <p className="font-saira text-xs text-zinc-400 mt-0.5">Paste a user ID to see exactly what the AI will receive — feedback adaptation, global patterns, session memory.</p>
+        </div>
+        <div className="flex gap-3">
+          <input
+            value={debugUserId}
+            onChange={(e) => setDebugUserId(e.target.value)}
+            placeholder="user UUID"
+            className="flex-1 rounded-xl bg-white/5 border border-white/10 px-3 py-2 font-saira text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-400"
+          />
+          <button
+            onClick={runDebugPrompt}
+            disabled={debugging || !debugUserId.trim()}
+            className="rounded-xl bg-white/10 hover:bg-white/15 disabled:opacity-40 px-4 py-2 font-saira text-xs font-bold uppercase tracking-[0.12em] text-white transition"
+          >
+            {debugging ? "Loading…" : "Inspect"}
+          </button>
+        </div>
+        {debugResult && (
+          <pre className="rounded-xl bg-black/40 p-4 text-xs text-zinc-300 font-mono overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">
+            {JSON.stringify(debugResult, null, 2)}
+          </pre>
+        )}
+      </div>
     </div>
   );
 }
