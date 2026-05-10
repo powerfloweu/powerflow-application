@@ -51,12 +51,29 @@ type SessionSummary = {
   resonated: string | null;
 };
 
+type UserFeedbackAggregate = {
+  prefersShorter:    boolean;
+  prefersMoreDetail: boolean;
+  prefersDirect:     boolean;
+  prefersWarmer:     boolean;
+  avgHelpfulness:    number | null;
+  recentNote:        string | null;
+};
+
+type GlobalPattern = {
+  technique:     string;
+  resonanceRate: number; // 0–100
+  totalSessions: number;
+};
+
 function buildSystemPrompt(
   profile: AthleteProfile,
   entries: JournalEntryContext[],
   egoStates: EgoStateContext[],
   training: TrainingEntryContext[],
   summaries: SessionSummary[],
+  userFeedback: UserFeedbackAggregate | null,
+  globalPatterns: GlobalPattern[],
 ): string {
   // Collect all themes from recent entries
   const allThemes = entries.flatMap((e) => e.themes ?? []);
@@ -369,7 +386,20 @@ ${summaries
   })
   .join("\n\n")}
 
-Use this memory to avoid re-covering ground, build on what worked, and acknowledge progress the athlete may not be seeing themselves. Never read summaries back verbatim — use them as silent context.` : ""}`;
+Use this memory to avoid re-covering ground, build on what worked, and acknowledge progress the athlete may not be seeing themselves. Never read summaries back verbatim — use them as silent context.` : ""}
+${userFeedback ? `
+## Communication preferences for ${name}
+Derived from their feedback — honour these without mentioning them explicitly:
+${userFeedback.prefersShorter    ? "- **Length:** keep responses concise. This athlete consistently wants shorter answers — cut anything that isn't essential." : ""}
+${userFeedback.prefersMoreDetail ? "- **Length:** go deeper. This athlete wants more detail — don't cut explanations short." : ""}
+${userFeedback.prefersDirect     ? "- **Tone:** direct and efficient. Skip the warm-up softeners — get to the point." : ""}
+${userFeedback.prefersWarmer     ? "- **Tone:** lead with warmth and empathy before moving into any technique or reframe." : ""}
+${userFeedback.avgHelpfulness !== null && userFeedback.avgHelpfulness < 3.5 ? `- **Signal:** average helpfulness is ${userFeedback.avgHelpfulness}/5 — recent sessions aren't fully landing. Try a different entry point or technique than your default.` : ""}
+${userFeedback.recentNote        ? `- **Athlete's own words:** "${userFeedback.recentNote}"` : ""}` : ""}
+${globalPatterns.length > 0 ? `
+## What has worked across all athletes
+These techniques have the highest resonance rates across all coaching sessions. Prioritise them when the situation calls for it:
+${globalPatterns.slice(0, 6).map((p, i) => `${i + 1}. **${p.technique}** — resonated in ${p.resonanceRate}% of sessions where used (n=${p.totalSessions})`).join("\n")}` : ""}`;
 }
 
 // ── POST ──────────────────────────────────────────────────────────────────────
@@ -416,8 +446,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "AI access not enabled for this account" }, { status: 403 });
   }
 
-  // Fetch context in parallel
-  const [entries, egoStates, training, summaries] = await Promise.all([
+  // Fetch context in parallel (user-scoped + global patterns)
+  const [entries, egoStates, training, summaries, rawFeedback, allSummaries] = await Promise.all([
     dbSelect<JournalEntryContext>("journal_entries", {
       user_id: `eq.${user.id}`,
       select: "content,sentiment,themes,created_at",
@@ -441,9 +471,73 @@ export async function POST(req: NextRequest) {
       order: "session_date.desc",
       limit: "5",
     }),
+    // Per-user feedback (last 14 days of ratings)
+    dbSelect<{ length_rating: string | null; style_rating: string | null; helpfulness: number | null; note: string | null }>(
+      "coach_ai_feedback",
+      {
+        user_id: `eq.${user.id}`,
+        select: "length_rating,style_rating,helpfulness,note",
+        order: "rated_on.desc",
+        limit: "14",
+      },
+    ).catch(() => [] as { length_rating: string | null; style_rating: string | null; helpfulness: number | null; note: string | null }[]),
+    // Cross-athlete technique patterns (service role — all users, recent 500 sessions)
+    dbSelect<{ techniques_used: string[] | null; resonated: string | null }>(
+      "conversation_summaries",
+      {
+        select: "techniques_used,resonated",
+        order: "session_date.desc",
+        limit: "500",
+      },
+    ).catch(() => [] as { techniques_used: string[] | null; resonated: string | null }[]),
   ]);
 
-  const systemPrompt = buildSystemPrompt(profile, entries, egoStates, training, summaries);
+  // ── Derive per-user feedback preferences ─────────────────────────────────
+  let userFeedback: UserFeedbackAggregate | null = null;
+  if (rawFeedback.length > 0) {
+    let shorter = 0, moreDetail = 0, direct = 0, warmer = 0;
+    let helpSum = 0, helpCount = 0;
+    let recentNote: string | null = null;
+    for (const f of rawFeedback) {
+      if (f.length_rating === "shorter")     shorter++;
+      if (f.length_rating === "more_detail") moreDetail++;
+      if (f.style_rating  === "direct")      direct++;
+      if (f.style_rating  === "warmer")      warmer++;
+      if (f.helpfulness != null) { helpSum += f.helpfulness; helpCount++; }
+      if (!recentNote && f.note?.trim()) recentNote = f.note.trim();
+    }
+    const n = rawFeedback.length;
+    userFeedback = {
+      prefersShorter:    shorter    >= Math.ceil(n * 0.5),
+      prefersMoreDetail: moreDetail >= Math.ceil(n * 0.5),
+      prefersDirect:     direct     >= Math.ceil(n * 0.5),
+      prefersWarmer:     warmer     >= Math.ceil(n * 0.5),
+      avgHelpfulness:    helpCount > 0 ? Math.round((helpSum / helpCount) * 10) / 10 : null,
+      recentNote,
+    };
+  }
+
+  // ── Derive global technique patterns ─────────────────────────────────────
+  const techTotal:     Record<string, number> = {};
+  const techResonated: Record<string, number> = {};
+  for (const s of allSummaries) {
+    for (const t of (s.techniques_used ?? [])) {
+      if (!t) continue;
+      techTotal[t] = (techTotal[t] ?? 0) + 1;
+      if (s.resonated) techResonated[t] = (techResonated[t] ?? 0) + 1;
+    }
+  }
+  const globalPatterns: GlobalPattern[] = Object.entries(techTotal)
+    .filter(([, total]) => total >= 3) // only techniques used 3+ times
+    .map(([technique, totalSessions]) => ({
+      technique,
+      totalSessions,
+      resonanceRate: Math.round(((techResonated[technique] ?? 0) / totalSessions) * 100),
+    }))
+    .sort((a, b) => b.resonanceRate - a.resonanceRate || b.totalSessions - a.totalSessions)
+    .slice(0, 6);
+
+  const systemPrompt = buildSystemPrompt(profile, entries, egoStates, training, summaries, userFeedback, globalPatterns);
 
   // Limit to last 20 messages
   const messages = body.messages.slice(-20).map((m) => ({

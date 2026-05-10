@@ -1392,6 +1392,192 @@ function ResultsTab() {
   );
 }
 
+// ── AI Insights Tab ───────────────────────────────────────────────────────────
+
+type AiFeedbackData = {
+  feedback: {
+    total: number;
+    uniqueRaters: number;
+    lengthCounts: { shorter: number; perfect: number; more_detail: number };
+    styleCounts:  { direct: number; good: number; warmer: number };
+    avgHelpfulness: number | null;
+    notes: Array<{ note: string; rated_on: string }>;
+  };
+  techniques: Array<{
+    technique: string;
+    total: number;
+    resonated: number;
+    resonanceRate: number;
+  }>;
+  messages: {
+    thumbsUp: number;
+    thumbsDown: number;
+    total: number;
+    upRate: number | null;
+  };
+  sessions: {
+    total: number;
+    uniqueUsers: number;
+    avgMsgPerSession: number;
+  };
+};
+
+function AiInsightsTab() {
+  const [data, setData]       = React.useState<AiFeedbackData | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError]     = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    fetch("/api/admin/feedback")
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then((d: AiFeedbackData) => setData(d))
+      .catch((e) => setError(String(e)))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div className="flex justify-center py-20">
+      <div className="w-6 h-6 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+    </div>
+  );
+  if (error) return <p className="text-red-400 font-saira text-sm">{error}</p>;
+  if (!data)  return null;
+
+  const { feedback, techniques, messages, sessions } = data;
+  const totalLength = feedback.lengthCounts.shorter + feedback.lengthCounts.perfect + feedback.lengthCounts.more_detail;
+  const totalStyle  = feedback.styleCounts.direct + feedback.styleCounts.good + feedback.styleCounts.warmer;
+
+  function pct(n: number, total: number) {
+    return total > 0 ? Math.round((n / total) * 100) : 0;
+  }
+
+  return (
+    <div className="space-y-8">
+
+      {/* ── Stat cards ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Total sessions",    value: sessions.total,                         sub: `${sessions.uniqueUsers} athletes` },
+          { label: "Avg helpfulness",   value: feedback.avgHelpfulness != null ? `${feedback.avgHelpfulness}/5` : "—", sub: `${feedback.total} ratings` },
+          { label: "Thumbs up rate",    value: messages.upRate != null ? `${messages.upRate}%` : "—", sub: `${messages.thumbsUp}↑  ${messages.thumbsDown}↓` },
+          { label: "Avg msgs/session",  value: sessions.avgMsgPerSession,              sub: `${feedback.uniqueRaters} users gave feedback` },
+        ].map(({ label, value, sub }) => (
+          <div key={label} className="rounded-2xl border border-white/6 bg-surface-panel/60 p-5">
+            <p className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-1">{label}</p>
+            <p className="font-saira text-3xl font-extrabold text-white leading-none">{value}</p>
+            <p className="font-saira text-[11px] text-zinc-500 mt-1">{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {/* ── Length preference ── */}
+        <div className="rounded-2xl border border-white/6 bg-surface-panel/60 p-5 space-y-4">
+          <h3 className="font-saira text-xs font-bold uppercase tracking-[0.2em] text-purple-300">Response length</h3>
+          {[
+            { key: "shorter",     label: "Too long",       count: feedback.lengthCounts.shorter },
+            { key: "perfect",     label: "Perfect",        count: feedback.lengthCounts.perfect },
+            { key: "more_detail", label: "More detail",    count: feedback.lengthCounts.more_detail },
+          ].map(({ key, label, count }) => (
+            <div key={key} className="space-y-1">
+              <div className="flex justify-between font-saira text-xs text-zinc-300">
+                <span>{label}</span>
+                <span className="text-zinc-400">{count} ({pct(count, totalLength)}%)</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+                <div className="h-full rounded-full bg-purple-500" style={{ width: `${pct(count, totalLength)}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Style preference ── */}
+        <div className="rounded-2xl border border-white/6 bg-surface-panel/60 p-5 space-y-4">
+          <h3 className="font-saira text-xs font-bold uppercase tracking-[0.2em] text-purple-300">Tone preference</h3>
+          {[
+            { key: "direct", label: "More direct",   count: feedback.styleCounts.direct },
+            { key: "good",   label: "Good as is",    count: feedback.styleCounts.good },
+            { key: "warmer", label: "More warmth",   count: feedback.styleCounts.warmer },
+          ].map(({ key, label, count }) => (
+            <div key={key} className="space-y-1">
+              <div className="flex justify-between font-saira text-xs text-zinc-300">
+                <span>{label}</span>
+                <span className="text-zinc-400">{count} ({pct(count, totalStyle)}%)</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+                <div className="h-full rounded-full bg-indigo-400" style={{ width: `${pct(count, totalStyle)}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Technique effectiveness ── */}
+      <div className="rounded-2xl border border-white/6 bg-surface-panel/60 p-5">
+        <h3 className="font-saira text-xs font-bold uppercase tracking-[0.2em] text-purple-300 mb-4">
+          Technique resonance (across all athletes)
+        </h3>
+        {techniques.length === 0 ? (
+          <p className="font-saira text-xs text-zinc-500">No technique data yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-saira text-xs">
+              <thead>
+                <tr className="border-b border-white/5 text-zinc-400">
+                  <th className="py-2 pr-4 font-semibold uppercase tracking-[0.12em]">Technique</th>
+                  <th className="py-2 pr-4 font-semibold uppercase tracking-[0.12em]">Sessions</th>
+                  <th className="py-2 pr-4 font-semibold uppercase tracking-[0.12em]">Resonated</th>
+                  <th className="py-2 font-semibold uppercase tracking-[0.12em]">Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {techniques.map((t) => (
+                  <tr key={t.technique} className="border-b border-white/3 hover:bg-white/3">
+                    <td className="py-2.5 pr-4 text-white capitalize">{t.technique}</td>
+                    <td className="py-2.5 pr-4 text-zinc-400">{t.total}</td>
+                    <td className="py-2.5 pr-4 text-zinc-400">{t.resonated}</td>
+                    <td className="py-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-24 rounded-full bg-white/8 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${t.resonanceRate >= 70 ? "bg-green-500" : t.resonanceRate >= 40 ? "bg-yellow-500" : "bg-red-500/60"}`}
+                            style={{ width: `${t.resonanceRate}%` }}
+                          />
+                        </div>
+                        <span className={`font-bold ${t.resonanceRate >= 70 ? "text-green-400" : t.resonanceRate >= 40 ? "text-yellow-400" : "text-red-400"}`}>
+                          {t.resonanceRate}%
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ── Athlete notes ── */}
+      {feedback.notes.length > 0 && (
+        <div className="rounded-2xl border border-white/6 bg-surface-panel/60 p-5">
+          <h3 className="font-saira text-xs font-bold uppercase tracking-[0.2em] text-purple-300 mb-4">
+            Athlete notes ({feedback.notes.length})
+          </h3>
+          <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+            {feedback.notes.map((n, i) => (
+              <div key={i} className="rounded-xl bg-white/4 px-4 py-3">
+                <p className="font-saira text-xs text-zinc-400 mb-1">{n.rated_on}</p>
+                <p className="font-saira text-sm text-zinc-200">{n.note}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Conversations Tab ─────────────────────────────────────────────────────────
 
 type ConvStat = {
@@ -1838,7 +2024,7 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "devtools";
+type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "devtools";
 
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -1980,6 +2166,7 @@ export default function MasterAdminPage() {
     ["results",        "Test Results",    "✦"],
     ["broadcast",      "Broadcast",       "✉"],
     ["conversations",  "Conversations",   "💬"],
+    ["ai-insights",    "AI Insights",     "✦"],
     ["devtools",       "Dev Tools",       "⚙"],
   ];
 
@@ -2074,6 +2261,7 @@ export default function MasterAdminPage() {
               {activeTab === "results" && <ResultsTab />}
               {activeTab === "broadcast" && <BroadcastTab users={users} />}
               {activeTab === "conversations" && <ConversationsTab />}
+              {activeTab === "ai-insights" && <AiInsightsTab />}
               {activeTab === "devtools" && <DevToolsTab users={users} />}
             </>
           )}

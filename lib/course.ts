@@ -182,7 +182,20 @@ export const COURSE_MODULES: CourseModule[] = [
       "Naming what draws you to powerlifting clarifies what's worth protecting.",
       "The costs are real — acknowledging them is how you stay in the sport long-term.",
     ],
+    toolLinks: [
+      {
+        label: "Resource Activation",
+        href: "/library#resource-activation",
+        description: "Start here — use your moment of success as the anchor before answering the first question.",
+      },
+    ],
     questions: [
+      {
+        id: "success-moment",
+        prompt: "Go to the Resource Activation tool in your library and complete a session using your best moment of success as the anchor. When you're done, come back here and describe that moment.",
+        placeholder: "What happened? Where were you? What did it feel like?",
+        journalMirror: true,
+      },
       {
         id: "why-powerlifting",
         prompt: "Why did you start powerlifting, and what keeps you in it today?",
@@ -190,9 +203,13 @@ export const COURSE_MODULES: CourseModule[] = [
         journalMirror: true,
       },
       {
-        id: "what-it-gives",
-        prompt: "What does powerlifting give you that nothing else does?",
+        id: "what-it-means",
+        prompt: "What does powerlifting mean to you?",
         placeholder: "Identity, discipline, community, control…",
+      },
+      {
+        id: "how-evolved",
+        prompt: "In which qualities have you evolved the most since starting this sport?",
       },
       {
         id: "what-it-costs",
@@ -201,9 +218,9 @@ export const COURSE_MODULES: CourseModule[] = [
       },
     ],
     exercise: {
-      title: "Two-column audit",
+      title: "Resource Activation",
       body:
-        "Open a blank page. Left column: 'What the sport gives me.' Right column: 'What it costs me.' Spend 10 minutes. Come back tomorrow and add one more item to each side.",
+        "Before answering the first question above, open the Resource Activation tool in your library. Use your moment of success as the anchor. Complete the session, then return here to describe it.",
     },
   },
   {
@@ -289,29 +306,32 @@ export const COURSE_MODULES: CourseModule[] = [
     ],
     questions: [
       {
-        id: "outcome-goal",
-        prompt: "What's the one outcome goal you'd be proud of in the next 12 months?",
+        id: "smart-goals",
+        prompt: "Download and complete the SMART goal worksheet below. Work through each section — it covers your outcome, performance, and process goals in full.",
+        placeholder: "Use the worksheet. Come back here to note anything that surprised you or felt hard to answer.",
+      },
+      {
+        id: "next-comp-goal",
+        prompt: "What do you want to achieve in your next competition?",
+        placeholder: "Be specific — attempts, total, a personal milestone.",
         journalMirror: true,
       },
       {
-        id: "performance-goal",
-        prompt: "What performance goal supports it? (e.g. 'hit 9/9 attempts at my next meet')",
-      },
-      {
-        id: "process-goal",
-        prompt: "What is one process goal you can hit this week? Something in your control every single session.",
+        id: "five-year-goal",
+        prompt: "What is your goal in powerlifting in 5 years?",
+        journalMirror: true,
       },
     ],
     exercise: {
-      title: "Write. Post. Review.",
+      title: "SMART worksheet",
       body:
-        "Write all three goals on an index card. Stick it where you see it before you train. At the end of the week, come back and rate honestly how aligned your sessions were.",
+        "Download the SMART goal worksheet below. Fill it in fully — outcome, performance, and process goals. Post it somewhere you'll see it before you train.",
     },
     downloads: [
       {
         label: "Download SMART worksheet",
         url: "/downloads/smart.pdf",
-        description: "A printable version to fill out, post somewhere visible, and bring to coach check-ins.",
+        description: "Work through this before answering the questions above. It structures your goals across all three layers.",
       },
     ],
   },
@@ -576,34 +596,31 @@ export const COURSE_MODULES: CourseModule[] = [
     ],
     questions: [
       {
-        id: "vis-current",
-        prompt: "Do you currently visualise? If yes, when and how?",
-      },
-      {
-        id: "vis-detail",
-        prompt: "Close your eyes and visualise your opener squat. What details are vivid? What's blurry?",
+        id: "viz-keywords",
+        prompt: "Open the Squat, Bench, and Deadlift visualization tools in your library and complete a session for each. As you go, pay attention to which words and cues feel most accurate for your lifts — then set your keywords inside each tool so they stay with you.",
+        placeholder: "Squat keywords: …  Bench keywords: …  Deadlift keywords: …",
       },
     ],
     exercise: {
-      title: "Nightly walk-through",
+      title: "Use the guided visualizations",
       body:
-        "Every night this week, 2 minutes: visualise tomorrow's heaviest set from the walkout to rack. First person. Include the breath.",
+        "This week, run through the squat, bench, and deadlift visualization tools before your top sets. Keep refining your keywords in each tool as they become more precise — you'll see them every time you open a session.",
     },
     toolLinks: [
       {
         label: "Squat Visualization",
         href: "/library#viz-squat",
-        description: "Guided 6-minute first-person squat rehearsal — set your keywords to personalise it.",
+        description: "Start here — complete a session and set your squat keywords.",
       },
       {
         label: "Bench Visualization",
         href: "/library#viz-bench",
-        description: "Guided 6-minute first-person bench press rehearsal.",
+        description: "Complete a session and set your bench keywords.",
       },
       {
         label: "Deadlift Visualization",
         href: "/library#viz-deadlift",
-        description: "Guided 6-minute first-person deadlift rehearsal.",
+        description: "Complete a session and set your deadlift keywords.",
       },
     ],
   },
@@ -629,27 +646,27 @@ export const COURSE_MODULES: CourseModule[] = [
     ],
     questions: [
       {
-        id: "rehearsal-target",
-        prompt: "What specific moment do you want to rehearse this week?",
-      },
-      {
-        id: "contingency",
-        prompt: "What's one thing that might go wrong on meet day, and how will you respond?",
+        id: "rehearsal-feel",
+        prompt: "After running through the visualization tools this week, what parts of your meet-day scenario felt unclear or unfamiliar? Note them here and run those moments again.",
+        placeholder: "Warm-up timing, rack height, commands, between-attempt routine…",
+        journalMirror: true,
       },
     ],
     toolLinks: [
       {
         label: "Squat Visualization",
         href: "/library#viz-squat",
-        description: "Apply meet-day scenario rehearsal — walk through weigh-in, warm-ups, and each attempt in sequence.",
+        description: "Run your full squat sequence — opener through third attempt. Update keywords if they've sharpened.",
       },
       {
         label: "Bench Visualization",
         href: "/library#viz-bench",
+        description: "Run your full bench sequence. Update keywords.",
       },
       {
         label: "Deadlift Visualization",
         href: "/library#viz-deadlift",
+        description: "Run your full deadlift sequence. Update keywords.",
       },
     ],
   },
@@ -676,30 +693,32 @@ export const COURSE_MODULES: CourseModule[] = [
     questions: [
       {
         id: "cue-squat",
-        prompt: "What's your one cue for squat?",
+        prompt: "What's your one cue for squat? Update it as a keyword in the Squat Visualization tool so it's baked into every guided session.",
       },
       {
         id: "cue-bench",
-        prompt: "What's your one cue for bench?",
+        prompt: "What's your one cue for bench? Update it in the Bench Visualization tool.",
       },
       {
         id: "cue-deadlift",
-        prompt: "What's your one cue for deadlift?",
+        prompt: "What's your one cue for deadlift? Update it in the Deadlift Visualization tool.",
       },
     ],
     toolLinks: [
       {
         label: "Squat Visualization",
         href: "/library#viz-squat",
-        description: "Embed your new cues directly into guided visualization — repetition locks them in under load.",
+        description: "Update your squat keyword now so it appears in every guided session going forward.",
       },
       {
         label: "Bench Visualization",
         href: "/library#viz-bench",
+        description: "Update your bench keyword.",
       },
       {
         label: "Deadlift Visualization",
         href: "/library#viz-deadlift",
+        description: "Update your deadlift keyword.",
       },
     ],
   },
@@ -774,12 +793,26 @@ export const COURSE_MODULES: CourseModule[] = [
         id: "attention-anchor",
         prompt: "What's your anchor — one thing you can return attention to, reliably?",
       },
+      {
+        id: "pre-lift-selftalk",
+        prompt: "What do you say to yourself before initiating a lift? Go to the Affirmations tool and set it there so it's always accessible — then write it here too.",
+        placeholder: "Short, personal, present tense.",
+      },
+      {
+        id: "emotional-control",
+        prompt: "What do you do during a session or at a competition to avoid getting carried away by your emotions?",
+      },
     ],
     toolLinks: [
       {
         label: "Barrier",
         href: "/library#barrier",
         description: "Train selective attention with a guided audio that builds an internal boundary against distractions.",
+      },
+      {
+        label: "Self-Talk Affirmations",
+        href: "/library#affirmations",
+        description: "Set your pre-lift statement here so you can access it quickly before every attempt.",
       },
     ],
   },
