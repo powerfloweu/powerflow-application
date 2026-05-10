@@ -1426,14 +1426,35 @@ function AiInsightsTab() {
   const [data, setData]       = React.useState<AiFeedbackData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError]     = React.useState<string | null>(null);
+  const [batching, setBatching]   = React.useState(false);
+  const [batchResult, setBatchResult] = React.useState<{ processed: number; errors: number } | null>(null);
 
-  React.useEffect(() => {
+  function loadData() {
+    setLoading(true);
     fetch("/api/admin/feedback")
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((d: AiFeedbackData) => setData(d))
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  React.useEffect(() => { loadData(); }, []);
+
+  async function runBatchSummarizer() {
+    setBatching(true);
+    setBatchResult(null);
+    try {
+      const r = await fetch("/api/admin/summarize-batch", { method: "POST" });
+      const d = await r.json() as { processed: number; errors: number };
+      setBatchResult(d);
+      loadData(); // refresh stats after batch
+    } catch (e) {
+      setBatchResult({ processed: 0, errors: 1 });
+      console.error(e);
+    } finally {
+      setBatching(false);
+    }
+  }
 
   if (loading) return (
     <div className="flex justify-center py-20">
@@ -1453,6 +1474,33 @@ function AiInsightsTab() {
 
   return (
     <div className="space-y-8">
+
+      {/* ── Batch summarizer ── */}
+      <div className="flex items-center gap-4 rounded-2xl border border-white/6 bg-surface-panel/60 px-5 py-4">
+        <div className="flex-1">
+          <p className="font-saira text-sm font-semibold text-white">Batch summarize historical sessions</p>
+          <p className="font-saira text-xs text-zinc-400 mt-0.5">
+            Finds every session in chat_messages without a summary and processes them all. Skips sessions with fewer than 4 messages and today&apos;s open sessions.
+          </p>
+          {batchResult && (
+            <p className={`font-saira text-xs mt-1.5 font-semibold ${batchResult.errors > 0 ? "text-yellow-400" : "text-green-400"}`}>
+              Done — {batchResult.processed} summarized{batchResult.errors > 0 ? `, ${batchResult.errors} errors` : ""}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={runBatchSummarizer}
+          disabled={batching}
+          className="flex-shrink-0 rounded-xl bg-purple-500 hover:bg-purple-400 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 font-saira text-xs font-bold uppercase tracking-[0.12em] text-white transition"
+        >
+          {batching ? (
+            <span className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full border border-white/40 border-t-white animate-spin" />
+              Running…
+            </span>
+          ) : "Run now"}
+        </button>
+      </div>
 
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
