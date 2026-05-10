@@ -1422,7 +1422,7 @@ type AiFeedbackData = {
   };
 };
 
-function AiInsightsTab() {
+function AiInsightsTab({ users }: { users: UserRow[] }) {
   const [data, setData]       = React.useState<AiFeedbackData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError]     = React.useState<string | null>(null);
@@ -1647,12 +1647,18 @@ function AiInsightsTab() {
           <p className="font-saira text-xs text-zinc-400 mt-0.5">Paste a user ID to see exactly what the AI will receive — feedback adaptation, global patterns, session memory.</p>
         </div>
         <div className="flex gap-3">
-          <input
+          <select
             value={debugUserId}
             onChange={(e) => setDebugUserId(e.target.value)}
-            placeholder="user UUID"
-            className="flex-1 rounded-xl bg-white/5 border border-white/10 px-3 py-2 font-saira text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-400"
-          />
+            className="flex-1 rounded-xl bg-white/5 border border-white/10 px-3 py-2 font-saira text-xs text-white focus:outline-none focus:border-purple-400"
+          >
+            <option value="">— select athlete —</option>
+            {users.filter(u => u.ai_access).map(u => (
+              <option key={u.id} value={u.id}>
+                {u.display_name || u.email || u.id} {u.role === "coach" ? "(coach)" : ""}
+              </option>
+            ))}
+          </select>
           <button
             onClick={runDebugPrompt}
             disabled={debugging || !debugUserId.trim()}
@@ -2354,7 +2360,7 @@ export default function MasterAdminPage() {
               {activeTab === "results" && <ResultsTab />}
               {activeTab === "broadcast" && <BroadcastTab users={users} />}
               {activeTab === "conversations" && <ConversationsTab />}
-              {activeTab === "ai-insights" && <AiInsightsTab />}
+              {activeTab === "ai-insights" && <AiInsightsTab users={users} />}
               {activeTab === "devtools" && <DevToolsTab users={users} />}
             </>
           )}
