@@ -877,15 +877,66 @@ export const COURSE_MODULES: CourseModule[] = [
     ],
   },
 
-  // ── Week 16 — TODO: create this module ──────────────────────────────────
-  // EN:  li3zG461hiJ6DB02qjPu0200Ed1I9PmB00JGoXz02V3Z3mQo
-  // DE:  hx0200Hsp802sYZjzX8OT9XKPfGdZx4M56InYS01DHPF02W4
-  // (Add slug "w16-..." with weekNumber 16, then shift post-meet to weekNumber 17)
+  // ── Theme 8 — Competition Week ──────────────────────────────────────────
+  {
+    slug: "w16-competition-week",
+    weekNumber: 16,
+    theme: "Performance",
+    title: "The Final Push",
+    subtitle: "Competition week — execute what you've built",
+    suggestedPhase: "Meet week",
+    moduleType: "insight",
+    overview:
+      "This is it — the final week of the method and your last days before the platform. Great execution starts with detailed planning. Everything you've done for 15 weeks has led here. Trust it.",
+    muxPlaybackId: "li3zG461hiJ6DB02qjPu0200Ed1I9PmB00JGoXz02V3Z3mQo",
+    muxPlaybackId_de: "hx0200Hsp802sYZjzX8OT9XKPfGdZx4M56InYS01DHPF02W4", // DE
+    muxPlaybackId_hu: "", // ← paste HU Mux ID here
+    keyPoints: [
+      "Your pre-comp ritual starts this week — lock in your sleep, nutrition, and warm-up timing now, not on meet day.",
+      "Use the competition day visualization daily: it runs 12 minutes and takes you from arriving at the venue through every attempt.",
+      "Only do things you routinely do. This week is not the time to try anything new — food, equipment, or otherwise.",
+    ],
+    questions: [
+      {
+        id: "precomp-ritual",
+        prompt: "Walk through your competition day hour by hour — from the moment you wake up to your first attempt. What does the ideal version look like?",
+        placeholder: "Wake-up time, breakfast, warm-up timing, singlet, music…",
+        journalMirror: true,
+      },
+      {
+        id: "anchor-points",
+        prompt: "What anchor point will you fix your gaze on for squat, bench, and deadlift? Be specific — the lights, a mark on the wall, the bar itself.",
+        placeholder: "Squat: … Bench: … Deadlift: …",
+      },
+      {
+        id: "one-thing",
+        prompt: "What's the one mental cue you want to carry into every attempt this week?",
+        placeholder: "Short, personal, actionable.",
+      },
+    ],
+    exercise: {
+      title: "Full comp-day rehearsal",
+      body:
+        "At your last training session before the meet, run through your exact pre-attempt routine for each lift — same music, same self-talk cue, same anchor point. Treat it like the real thing so your nervous system recognizes it on the day.",
+    },
+    toolLinks: [
+      {
+        label: "Competition Day Mental Training",
+        href: "/library#comp-day-viz",
+        description: "12-minute guided walkthrough of your entire meet — from arriving at the venue to your final deadlift.",
+      },
+      {
+        label: "Barrier",
+        href: "/library#barrier",
+        description: "Lock in your focus and block out distractions before each attempt.",
+      },
+    ],
+  },
 
   // ── Bonus — Post-Meet Reflection (not part of the plan sequence) ────────
   {
     slug: "w16-post-meet",
-    weekNumber: 16,
+    weekNumber: 17,
     bonus: true,
     theme: "Performance",
     title: "Post-Meet Reflection",
