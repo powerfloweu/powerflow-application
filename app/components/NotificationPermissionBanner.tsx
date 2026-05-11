@@ -27,7 +27,17 @@ export default function NotificationPermissionBanner() {
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     if (!("Notification" in window)) return; // API not supported
-    if (Notification.permission !== "default") return; // already granted or denied
+
+    // If permission was previously granted, make sure the server has our
+    // PushSubscription. This is idempotent — the API does an upsert.
+    if (Notification.permission === "granted") {
+      import("@/lib/pushClient").then(({ subscribeToPush }) => {
+        void subscribeToPush();
+      });
+      return;
+    }
+
+    if (Notification.permission !== "default") return; // denied
     if (localStorage.getItem(DISMISSED_KEY) === "1") return; // user dismissed before
     setVisible(true);
   }, []);
@@ -47,6 +57,13 @@ export default function NotificationPermissionBanner() {
       //  permission was "default" at that point.)
       const { scheduleCheckinNotification } = await import("@/lib/checkinReminder");
       scheduleCheckinNotification(19);
+
+      // Also subscribe to server-sent push (works when the tab is closed).
+      const { subscribeToPush } = await import("@/lib/pushClient");
+      const result = await subscribeToPush();
+      if (!result.ok) {
+        console.warn("[push] subscribe failed:", result.error);
+      }
     }
   };
 

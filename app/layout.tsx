@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Saira } from "next/font/google";
 import "./globals.css";
 import NavBar from "./components/NavBar";
+import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 
@@ -56,6 +57,7 @@ export default function RootLayout({
         <ThemeProvider>
           <I18nProvider>
             <NavBar />
+            <ServiceWorkerRegister />
             {children}
           </I18nProvider>
         </ThemeProvider>
