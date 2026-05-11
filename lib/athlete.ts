@@ -37,6 +37,16 @@ export const WEIGHT_CATEGORIES = {
   female: ["47kg", "52kg", "57kg", "63kg", "69kg", "76kg",  "84kg",  "84kg+"],
 } as const;
 
+// ── Coach application questionnaire ──────────────────────────────────────────
+
+export type CoachApplication = {
+  athletes_count: string;
+  instagram: string;
+  sports: string;
+  background: string;
+  why_powerflow: string;
+};
+
 // ── Full profile type (all fields including v2 additions) ─────────────────────
 
 export type AthleteProfile = {
@@ -46,6 +56,8 @@ export type AthleteProfile = {
   role: "athlete" | "coach";
   coach_id: string | null;
   coach_code: string | null;
+  coach_status: "pending" | "approved" | "rejected" | null;
+  coach_application: CoachApplication | null;
   meet_date: string | null;
   /** Whether the 16-week course is unlocked for this athlete. Granted by coach/admin. */
   course_access: boolean;

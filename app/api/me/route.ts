@@ -9,7 +9,7 @@ import { dbSelect, dbPatch, dbInsert } from "@/lib/supabaseAdmin";
 import type { AthleteProfile } from "@/lib/athlete";
 
 const SELECT_COLS = [
-  "id", "display_name", "avatar_url", "role", "coach_id", "coach_code", "meet_date",
+  "id", "display_name", "avatar_url", "role", "coach_id", "coach_code", "coach_status", "coach_application", "meet_date",
   "course_access", "test_access", "onboarding_complete",
   "gender", "bodyweight_kg", "weight_category",
   "squat_current_kg", "squat_goal_kg",
@@ -97,6 +97,8 @@ export async function GET() {
       language: 'en',
       journal_prompt_labels: null,
       coach_journal_prompt_labels: null,
+      coach_status: null,
+      coach_application: null,
     } satisfies AthleteProfile);
   }
 
@@ -175,6 +177,8 @@ export async function PATCH(req: NextRequest) {
     "language",
     // v10 — custom journal prompts (gated to PR tier below)
     "journal_prompt_labels",
+    // v11 — coach application
+    "coach_application",
   ];
 
   const patch: Record<string, unknown> = {};

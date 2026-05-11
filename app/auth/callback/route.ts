@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
             <tr><td style="color:#888">Status</td><td>Pending approval</td></tr>
           </table>
           <p style="margin-top:20px">
-            <a href="https://www.power-flow.eu/admin/master" style="background:#7c3aed;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold;">
+            <a href="https://app.power-flow.eu/admin/master" style="background:#7c3aed;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold;">
               Go to Master Admin → Coaches
             </a>
           </p>
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
     // Ensure coaches always have PR-tier access to athlete features
     await dbPatch("profiles", { id: user.id }, { plan_tier: "pr" });
 
-    if (profileData.coach_status === "pending") {
+    if (profileData.coach_status === "pending" || profileData.coach_status === "rejected") {
       redirectTo = "/coach/pending";
     }
   }

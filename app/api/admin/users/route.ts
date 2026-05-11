@@ -63,7 +63,7 @@ async function fetchAuthEmails(): Promise<Map<string, string>> {
 
 const PROFILE_SELECT = [
   "id", "display_name", "avatar_url", "role",
-  "coach_id", "coach_code", "coach_status", "meet_date",
+  "coach_id", "coach_code", "coach_status", "coach_application", "meet_date",
   "plan_tier", "course_access", "test_access", "ai_access", "translator_access", "onboarding_complete", "created_at",
   "gender", "bodyweight_kg", "weight_category",
   "squat_current_kg", "squat_goal_kg",

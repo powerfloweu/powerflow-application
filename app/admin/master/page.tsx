@@ -29,7 +29,14 @@ type UserRow = {
   coach_id: string | null;
   coach_name: string | null;
   coach_code: string | null;
-  coach_status: "pending" | "approved" | null;
+  coach_status: "pending" | "approved" | "rejected" | null;
+  coach_application: {
+    athletes_count: string;
+    instagram: string;
+    sports: string;
+    background: string;
+    why_powerflow: string;
+  } | null;
   plan_tier: "opener" | "second" | "pr" | null;
   course_access: boolean;
   test_access: boolean;
@@ -977,9 +984,10 @@ function CoachLinksTab({
   saving: Record<string, boolean>;
 }) {
   const athletes       = users.filter((u) => u.role === "athlete");
-  const unlinked       = athletes.filter((a) => !a.coach_id);
-  const pendingCoaches = coaches.filter((c) => c.coach_status === "pending");
-  const approvedCoaches = coaches.filter((c) => c.coach_status !== "pending");
+  const unlinked        = athletes.filter((a) => !a.coach_id);
+  const pendingCoaches  = coaches.filter((c) => c.coach_status === "pending");
+  const approvedCoaches = coaches.filter((c) => c.coach_status === "approved" || c.coach_status == null);
+  const rejectedCoaches = coaches.filter((c) => c.coach_status === "rejected");
   const [pendingCoach, setPendingCoach] = React.useState<Record<string, string>>({});
 
   return (
@@ -996,43 +1004,75 @@ function CoachLinksTab({
               Pending coach approval
             </p>
           </div>
-          {pendingCoaches.map((coach) => (
-            <div
-              key={coach.id}
-              className="flex items-center justify-between px-5 py-4 border-b border-white/5 last:border-0"
-            >
-              <div className="flex items-center gap-3">
-                {coach.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={coach.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover opacity-90" />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center font-saira text-sm font-bold text-amber-300">
-                    {coach.display_name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <p className="font-saira text-sm font-semibold text-white">{coach.display_name}</p>
-                  <p className="font-saira text-[10px] text-zinc-400">
-                    {coach.email}
-                    {coach.created_at && (
-                      <span className="ml-2 text-zinc-500">
-                        signed up {new Date(coach.created_at).toLocaleDateString()}
-                      </span>
+          {pendingCoaches.map((coach) => {
+            const app = coach.coach_application;
+            return (
+              <div key={coach.id} className="border-b border-white/5 last:border-0">
+                {/* Header row */}
+                <div className="flex items-center justify-between px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    {coach.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={coach.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover opacity-90" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center font-saira text-sm font-bold text-amber-300">
+                        {coach.display_name.charAt(0).toUpperCase()}
+                      </div>
                     )}
-                  </p>
+                    <div>
+                      <p className="font-saira text-sm font-semibold text-white">{coach.display_name}</p>
+                      <p className="font-saira text-[10px] text-zinc-400">
+                        {coach.email}
+                        {coach.created_at && (
+                          <span className="ml-2 text-zinc-500">
+                            signed up {new Date(coach.created_at).toLocaleDateString()}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={saving[coach.id] ?? false}
+                      onClick={() => onPatchUser(coach.id, { coach_status: "rejected" })}
+                      className="rounded-lg border border-red-500/25 bg-red-500/8 px-3 py-1.5 font-saira text-xs font-bold text-red-400 hover:bg-red-500/18 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    >
+                      ✕ Reject
+                    </button>
+                    <button
+                      disabled={saving[coach.id] ?? false}
+                      onClick={() => onPatchUser(coach.id, { coach_status: "approved" })}
+                      className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-1.5 font-saira text-xs font-bold text-green-400 hover:bg-green-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                    >
+                      {saving[coach.id] ? "Saving…" : "✓ Approve"}
+                    </button>
+                  </div>
                 </div>
+
+                {/* Application answers */}
+                {app ? (
+                  <div className="mx-5 mb-4 rounded-xl border border-white/5 bg-black/20 divide-y divide-white/5">
+                    {[
+                      ["Athletes coached", app.athletes_count],
+                      ["Instagram",        app.instagram],
+                      ["Sports",           app.sports],
+                      ["Background",       app.background],
+                      ["Why PowerFlow",    app.why_powerflow],
+                    ].map(([label, value]) => value ? (
+                      <div key={label} className="flex gap-3 px-4 py-2.5">
+                        <span className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 w-28 flex-shrink-0 pt-0.5">{label}</span>
+                        <span className="font-saira text-xs text-zinc-300 leading-relaxed">{value}</span>
+                      </div>
+                    ) : null)}
+                  </div>
+                ) : (
+                  <p className="font-saira text-[10px] text-zinc-600 italic px-5 pb-4">
+                    No application submitted yet — coach hasn&apos;t filled in the questionnaire.
+                  </p>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  disabled={saving[coach.id] ?? false}
-                  onClick={() => onPatchUser(coach.id, { coach_status: "approved" })}
-                  className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-1.5 font-saira text-xs font-bold text-green-400 hover:bg-green-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                >
-                  {saving[coach.id] ? "Approving…" : "✓ Approve"}
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -1154,6 +1194,32 @@ function CoachLinksTab({
                   {saving[athlete.id] ? "Saving…" : "Link"}
                 </button>
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Rejected coaches ── */}
+      {rejectedCoaches.length > 0 && (
+        <div className="rounded-2xl border border-red-500/15 bg-red-500/5 overflow-hidden">
+          <div className="px-5 py-4 border-b border-red-500/10">
+            <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-red-400">
+              Rejected ({rejectedCoaches.length})
+            </p>
+          </div>
+          {rejectedCoaches.map((coach) => (
+            <div key={coach.id} className="flex items-center justify-between px-5 py-3 border-b border-white/5 last:border-0">
+              <div>
+                <p className="font-saira text-sm text-zinc-400">{coach.display_name}</p>
+                <p className="font-saira text-[10px] text-zinc-600">{coach.email}</p>
+              </div>
+              <button
+                disabled={saving[coach.id] ?? false}
+                onClick={() => onPatchUser(coach.id, { coach_status: "approved" })}
+                className="rounded-lg border border-green-500/20 bg-green-500/8 px-3 py-1 font-saira text-xs text-green-500 hover:text-green-400 hover:bg-green-500/15 disabled:opacity-40 transition"
+              >
+                Approve anyway
+              </button>
             </div>
           ))}
         </div>
@@ -2220,8 +2286,9 @@ export default function MasterAdminPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   // Derived
-  const coaches        = users.filter((u) => u.role === "coach");
-  const pendingCoaches = coaches.filter((c) => c.coach_status === "pending");
+  const coaches         = users.filter((u) => u.role === "coach");
+  const pendingCoaches  = coaches.filter((c) => c.coach_status === "pending");
+  const rejectedCoaches = coaches.filter((c) => c.coach_status === "rejected");
 
   // ── Auth check ──────────────────────────────────────────────────────────────
   React.useEffect(() => {
