@@ -1,7 +1,6 @@
 /**
- * GET /api/admin/roadmap
- * Parses CLAUDE.md (repo root) and returns the roadmap as structured JSON.
- * Admin-only.
+ * GET  /api/admin/roadmap — parse CLAUDE.md and return roadmap JSON (admin-only)
+ * PATCH /api/admin/roadmap — update a single item's status in CLAUDE.md (admin-only)
  */
 
 import { NextResponse } from "next/server";
@@ -79,24 +78,25 @@ function parseRoadmap(md: string): Roadmap {
   };
 }
 
-export async function GET() {
+async function requireAdmin() {
   const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
-  if (!adminEmail || !isConfigured) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+  if (!adminEmail || !isConfigured) return null;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   const sessionEmail = (user?.email ?? "").toLowerCase().trim();
-  if (!sessionEmail || sessionEmail !== adminEmail) {
+  return sessionEmail && sessionEmail === adminEmail ? sessionEmail : null;
+}
+
+const FLAG: Record<Status, string> = { todo: " ", in_progress: "~", done: "x" };
+const CLAUDE_PATH = path.join(process.cwd(), "CLAUDE.md");
+
+export async function GET() {
+  if (!await requireAdmin()) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const filePath = path.join(process.cwd(), "CLAUDE.md");
   try {
-    const md = await fs.readFile(filePath, "utf8");
+    const md = await fs.readFile(CLAUDE_PATH, "utf8");
     return NextResponse.json(parseRoadmap(md));
   } catch {
     return NextResponse.json({
@@ -105,4 +105,38 @@ export async function GET() {
       error: "CLAUDE.md not found",
     });
   }
+}
+
+export async function PATCH(req: Request) {
+  if (!await requireAdmin()) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const body = await req.json() as { text?: string; status?: Status };
+  const { text, status } = body;
+  if (!text || !status || !FLAG[status]) {
+    return NextResponse.json({ error: "invalid body" }, { status: 400 });
+  }
+
+  let md: string;
+  try {
+    md = await fs.readFile(CLAUDE_PATH, "utf8");
+  } catch {
+    return NextResponse.json({ error: "CLAUDE.md not found" }, { status: 404 });
+  }
+
+  // Replace the checkbox of the matching item line (first match wins).
+  const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const lineRe = new RegExp(
+    `^(\\s*-\\s+\\[)[  x~](\\]\\s+${escaped}\\s*)$`,
+    "im",
+  );
+  if (!lineRe.test(md)) {
+    return NextResponse.json({ error: "item not found in CLAUDE.md" }, { status: 404 });
+  }
+
+  const updated = md.replace(lineRe, `$1${FLAG[status]}$2`);
+  await fs.writeFile(CLAUDE_PATH, updated, "utf8");
+
+  return NextResponse.json(parseRoadmap(updated));
 }

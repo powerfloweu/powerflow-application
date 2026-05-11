@@ -2391,10 +2391,17 @@ type RoadmapData = {
   error?: string;
 };
 
+const NEXT_STATUS: Record<RoadmapStatus, RoadmapStatus> = {
+  todo: "in_progress",
+  in_progress: "done",
+  done: "todo",
+};
+
 function RoadmapTab() {
   const [data, setData] = React.useState<RoadmapData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [err, setErr] = React.useState<string | null>(null);
+  const [patching, setPatching] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     fetch("/api/admin/roadmap")
@@ -2406,6 +2413,25 @@ function RoadmapTab() {
       .catch((e) => setErr(String(e)))
       .finally(() => setLoading(false));
   }, []);
+
+  async function toggleItem(text: string, current: RoadmapStatus) {
+    const next = NEXT_STATUS[current];
+    setPatching(text);
+    try {
+      const res = await fetch("/api/admin/roadmap", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, status: next }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const updated = await res.json() as RoadmapData;
+      setData(updated);
+    } catch (e) {
+      alert(`Failed to update: ${e}`);
+    } finally {
+      setPatching(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -2486,27 +2512,34 @@ function RoadmapTab() {
                 </span>
               </div>
               <ul className="space-y-2">
-                {section.items.map((item, idx) => (
-                  <li
-                    key={`${section.name}-${idx}`}
-                    className="flex items-start gap-3 text-sm"
-                  >
-                    <span className={`mt-0.5 font-mono text-sm ${statusColor(item.status)}`}>
-                      {statusGlyph(item.status)}
-                    </span>
-                    <span
-                      className={
-                        item.status === "done"
-                          ? "text-zinc-500 line-through"
-                          : item.status === "in_progress"
-                            ? "text-amber-100"
-                            : "text-zinc-200"
-                      }
-                    >
-                      {item.text}
-                    </span>
-                  </li>
-                ))}
+                {section.items.map((item, idx) => {
+                  const isPending = patching === item.text;
+                  return (
+                    <li key={`${section.name}-${idx}`}>
+                      <button
+                        onClick={() => toggleItem(item.text, item.status)}
+                        disabled={isPending}
+                        title={`Click to mark as ${NEXT_STATUS[item.status].replace("_", " ")}`}
+                        className="flex items-start gap-3 text-sm w-full text-left group rounded-lg px-2 py-1 -mx-2 hover:bg-white/5 transition disabled:opacity-50"
+                      >
+                        <span className={`mt-0.5 font-mono text-sm shrink-0 ${statusColor(item.status)} group-hover:scale-110 transition-transform`}>
+                          {isPending ? "…" : statusGlyph(item.status)}
+                        </span>
+                        <span
+                          className={
+                            item.status === "done"
+                              ? "text-zinc-500 line-through"
+                              : item.status === "in_progress"
+                                ? "text-amber-100"
+                                : "text-zinc-200"
+                          }
+                        >
+                          {item.text}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
                 {section.items.length === 0 && (
                   <li className="font-saira text-xs text-zinc-500">No items.</li>
                 )}
