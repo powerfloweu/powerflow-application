@@ -40,6 +40,31 @@ heading structure without updating the parser.
 - [ ] Split `app/admin/master/page.tsx` (2600+ lines) into per-tab files under `app/admin/master/tabs/`
 - [ ] Add a basic test setup (no tests configured yet)
 
+### Security & hardening
+- [ ] Stop accepting `ADMIN_PASSWORD` via URL query param in `app/api/admin/all-results` and `app/api/admin/results` (leaks into logs)
+- [ ] Consolidate inconsistent admin auth in `/api/admin/*` into one shared `requireAdmin()` helper
+- [ ] Add per-user rate limiting on AI endpoints (`/api/chat`, `/api/tts`, `/api/coach/*`)
+
+### Code quality
+- [ ] Remove `PowerFlow course _ AI.zip` from repo root (move to external storage / `.gitignore`)
+- [ ] Audit `/scripts/` and `/handoff/` folders — archive or delete unused files
+- [ ] Strip ~19 stray `console.log` calls or gate them behind a logger
+- [ ] Audit ~59 `as any` / unchecked casts and tighten types
+
+### Dev experience
+- [ ] Add `"typecheck": "tsc --noEmit"` script to `package.json`
+- [ ] Add Husky + lint-staged for pre-commit lint/typecheck
+
+### Accessibility
+- [ ] Add `aria-label`s to icon-only buttons across `app/components/`
+
+### Push notifications (currently in-tab only — no real push)
+- [ ] Create `public/manifest.webmanifest` (referenced in `app/layout.tsx` but missing — 404 in prod)
+- [ ] Add a service worker (`public/sw.js`) and register it on app load
+- [ ] Generate VAPID keys and add `NEXT_PUBLIC_VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` env vars
+- [ ] Install `web-push`, add `push_subscriptions` table in Supabase, create `/api/push/subscribe` endpoint
+- [ ] Build a sender (e.g. `/api/push/send` or cron) that calls `webpush.sendNotification` for check-in reminders and broadcasts
+
 ## Session log
 
 Append a short note at the end of each working session: date, branch, what
