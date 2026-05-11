@@ -70,7 +70,7 @@ export async function POST() {
     .join("\n\n")
     .slice(0, 8000); // cap to stay within token limits
 
-  const prompt = `You are analysing a sports psychology AI coaching conversation. Extract a concise structured summary.
+  const prompt = `You are analysing a sports psychology AI coaching conversation for a competitive powerlifter. Extract a concise structured summary.
 
 CONVERSATION DATE: ${dateToSummarize}
 
@@ -79,8 +79,8 @@ ${transcript}
 Respond with JSON only — no other text:
 {
   "summary": "2-3 sentences: what the athlete brought to this session and any shift or insight that emerged",
-  "techniques_used": ["array of specific techniques used, e.g. reframing, body scan, voice work, visualization, scaling, thought analysis, protective veil, movie screening room, body of water, self-talk upgrade"],
-  "themes": ["recurring themes, e.g. pre-competition anxiety, self-doubt, missed lift, injury, confidence, alignment, focus"],
+  "techniques_used": ["Use these specific technique names where applicable: reframing, reframe test, scaling, thought analysis, visualization, mental rehearsal, self-talk upgrade, body scan, body of water, movie screening room, protective veil / barrier, ego state mapping, grounding induction, resource activation, somatic anchoring, validation, Socratic questioning, pattern interruption, perspective shift, normalizing, containment strategy, activation script creation. Use other names only if none of these fit."],
+  "themes": ["recurring themes, e.g. pre-competition anxiety, self-doubt, missed lift, injury, confidence, alignment, focus, coach relationship, goal setting, performance pressure"],
   "resonated": "1-2 sentences on what seemed to land or produce a shift — or null if unclear"
 }`;
 
