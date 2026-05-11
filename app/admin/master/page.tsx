@@ -1055,9 +1055,8 @@ function CoachLinksTab({
                     {[
                       ["Athletes coached", app.athletes_count],
                       ["Instagram",        app.instagram],
-                      ["Sports",           app.sports],
                       ["Background",       app.background],
-                      ["Why PowerFlow",    app.why_powerflow],
+                      ["Main goal",        app.why_powerflow],
                     ].map(([label, value]) => value ? (
                       <div key={label} className="flex gap-3 px-4 py-2.5">
                         <span className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500 w-28 flex-shrink-0 pt-0.5">{label}</span>

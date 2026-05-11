@@ -10,9 +10,8 @@ type Step = "loading" | "questionnaire" | "waiting" | "rejected";
 const QUESTIONS: { key: keyof CoachApplication; label: string; placeholder: string; type: "text" | "textarea" | "number" }[] = [
   { key: "athletes_count", label: "How many athletes do you currently coach?", placeholder: "e.g. 12", type: "number" },
   { key: "instagram",      label: "Your Instagram handle",                     placeholder: "@yourhandle", type: "text" },
-  { key: "sports",         label: "What sport(s) / disciplines do you work with?", placeholder: "e.g. Powerlifting, Weightlifting, Strongman", type: "text" },
   { key: "background",     label: "Briefly describe your coaching background", placeholder: "Certifications, years of experience, competitive background…", type: "textarea" },
-  { key: "why_powerflow",  label: "Why do you want to use PowerFlow?",         placeholder: "What drew you to the platform?", type: "textarea" },
+  { key: "why_powerflow",  label: "What is your main goal with using PowerFlow?", placeholder: "What would success look like for you and your athletes?", type: "textarea" },
 ];
 
 export default function CoachPendingPage() {
