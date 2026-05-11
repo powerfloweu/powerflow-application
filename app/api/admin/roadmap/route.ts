@@ -108,6 +108,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
+  try {
   if (!await requireAdmin()) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
@@ -145,4 +146,8 @@ export async function PATCH(req: Request) {
   }
 
   return NextResponse.json(parseRoadmap(updated));
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: `Unhandled: ${msg}` }, { status: 500 });
+  }
 }

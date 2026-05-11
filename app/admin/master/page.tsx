@@ -2423,7 +2423,10 @@ function RoadmapTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, status: next }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string; cwd?: string; path?: string };
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
       const updated = await res.json() as RoadmapData;
       setData(updated);
     } catch (e) {
