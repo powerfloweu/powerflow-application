@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
             <tr><td style="color:#888">Email</td><td>${userEmail}</td></tr>
           </table>
           <p style="margin-top:20px">
-            <a href="https://www.power-flow.eu/admin/master" style="background:#7c3aed;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold;">
+            <a href="https://app.power-flow.eu/admin/master" style="background:#7c3aed;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold;">
               Go to Master Admin → Users
             </a>
           </p>
