@@ -1579,49 +1579,76 @@ function AiInsightsTab({ users }: { users: UserRow[] }) {
       </div>
 
       {/* ── Technique effectiveness ── */}
-      <div className="rounded-2xl border border-white/6 bg-surface-panel/60 p-5">
-        <h3 className="font-saira text-xs font-bold uppercase tracking-[0.2em] text-purple-300 mb-4">
-          Technique resonance (across all athletes)
-        </h3>
-        {techniques.length === 0 ? (
-          <p className="font-saira text-xs text-zinc-500">No technique data yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left font-saira text-xs">
-              <thead>
-                <tr className="border-b border-white/5 text-zinc-400">
-                  <th className="py-2 pr-4 font-semibold uppercase tracking-[0.12em]">Technique</th>
-                  <th className="py-2 pr-4 font-semibold uppercase tracking-[0.12em]">Sessions</th>
-                  <th className="py-2 pr-4 font-semibold uppercase tracking-[0.12em]">Resonated</th>
-                  <th className="py-2 font-semibold uppercase tracking-[0.12em]">Rate</th>
-                </tr>
-              </thead>
-              <tbody>
-                {techniques.map((t) => (
-                  <tr key={t.technique} className="border-b border-white/3 hover:bg-white/3">
-                    <td className="py-2.5 pr-4 text-white capitalize">{t.technique}</td>
-                    <td className="py-2.5 pr-4 text-zinc-400">{t.total}</td>
-                    <td className="py-2.5 pr-4 text-zinc-400">{t.resonated}</td>
-                    <td className="py-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-24 rounded-full bg-white/8 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${t.resonanceRate >= 70 ? "bg-green-500" : t.resonanceRate >= 40 ? "bg-yellow-500" : "bg-red-500/60"}`}
-                            style={{ width: `${t.resonanceRate}%` }}
-                          />
-                        </div>
-                        <span className={`font-bold ${t.resonanceRate >= 70 ? "text-green-400" : t.resonanceRate >= 40 ? "text-yellow-400" : "text-red-400"}`}>
-                          {t.resonanceRate}%
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {(() => {
+        const established = techniques.filter((t) => t.total >= 3);
+        const emerging    = techniques.filter((t) => t.total < 3);
+        return (
+          <div className="rounded-2xl border border-white/6 bg-surface-panel/60 p-5 space-y-6">
+            <h3 className="font-saira text-xs font-bold uppercase tracking-[0.2em] text-purple-300">
+              Technique resonance (across all athletes)
+            </h3>
+
+            {/* Established — 3+ sessions */}
+            {established.length === 0 ? (
+              <p className="font-saira text-xs text-zinc-500">No techniques with 3+ sessions yet — run the batch summarizer first.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-saira text-xs">
+                  <thead>
+                    <tr className="border-b border-white/5 text-zinc-400">
+                      <th className="py-2 pr-4 font-semibold uppercase tracking-[0.12em]">Technique</th>
+                      <th className="py-2 pr-4 font-semibold uppercase tracking-[0.12em]">Sessions</th>
+                      <th className="py-2 pr-4 font-semibold uppercase tracking-[0.12em]">Resonated</th>
+                      <th className="py-2 font-semibold uppercase tracking-[0.12em]">Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {established.map((t) => (
+                      <tr key={t.technique} className="border-b border-white/3 hover:bg-white/3">
+                        <td className="py-2.5 pr-4 text-white capitalize">{t.technique}</td>
+                        <td className="py-2.5 pr-4 text-zinc-400">{t.total}</td>
+                        <td className="py-2.5 pr-4 text-zinc-400">{t.resonated}</td>
+                        <td className="py-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-24 rounded-full bg-white/8 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${t.resonanceRate >= 70 ? "bg-green-500" : t.resonanceRate >= 40 ? "bg-yellow-500" : "bg-red-500/60"}`}
+                                style={{ width: `${t.resonanceRate}%` }}
+                              />
+                            </div>
+                            <span className={`font-bold ${t.resonanceRate >= 70 ? "text-green-400" : t.resonanceRate >= 40 ? "text-yellow-400" : "text-red-400"}`}>
+                              {t.resonanceRate}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Emerging — fewer than 3 sessions */}
+            {emerging.length > 0 && (
+              <div className="border-t border-white/5 pt-4">
+                <p className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-3">
+                  Seen but not yet established (fewer than 3 sessions)
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {emerging.map((t) => (
+                    <span
+                      key={t.technique}
+                      className="rounded-lg bg-white/5 border border-white/8 px-2.5 py-1 font-saira text-[11px] text-zinc-400 capitalize"
+                    >
+                      {t.technique} <span className="text-zinc-600">×{t.total}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* ── Athlete notes ── */}
       {feedback.notes.length > 0 && (
