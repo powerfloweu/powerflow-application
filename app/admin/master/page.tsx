@@ -684,6 +684,7 @@ function UsersTab({
   const [search, setSearch] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState<"all" | "athlete" | "coach">("all");
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
+  const [pushTarget, setPushTarget] = React.useState<UserRow | null>(null);
 
   const filtered = users.filter((u) => {
     if (roleFilter !== "all" && u.role !== roleFilter) return false;
@@ -901,11 +902,28 @@ function UsersTab({
                   )}
                 </div>
 
-                {/* Actions: expand + delete */}
+                {/* Actions: push + expand + delete */}
                 <div
                   className="flex items-center justify-end gap-2"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  <button
+                    onClick={() => setPushTarget(user)}
+                    className="text-zinc-500 hover:text-purple-400 transition"
+                    title={`Send push to ${user.display_name}`}
+                    aria-label={`Send push notification to ${user.display_name}`}
+                  >
+                    <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" aria-hidden>
+                      <path
+                        d="M10 2a6 6 0 0 0-6 6v2.586l-1.707 1.707A1 1 0 0 0 3 14h14a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6z"
+                        stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
+                      />
+                      <path
+                        d="M8 14a2 2 0 0 0 4 0"
+                        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
                   {user.email !== sessionEmail && (
                     <button
                       onClick={() => handleDelete(user)}
@@ -1024,6 +1042,166 @@ function UsersTab({
       <p className="font-saira text-[10px] text-zinc-400 text-right">
         {filtered.length} of {users.length} users shown
       </p>
+
+      {pushTarget && (
+        <PushComposer
+          target={pushTarget}
+          onClose={() => setPushTarget(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Push Composer ─────────────────────────────────────────────────────────────
+
+function PushComposer({ target, onClose }: { target: UserRow; onClose: () => void }) {
+  const [title, setTitle] = React.useState("");
+  const [body, setBody] = React.useState("");
+  const [url, setUrl] = React.useState("");
+  const [sending, setSending] = React.useState(false);
+  const [result, setResult] = React.useState<{
+    sent: number;
+    failed: number;
+    expired: number;
+    total: number;
+  } | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  async function send() {
+    if (!title.trim() || !body.trim()) return;
+    setSending(true);
+    setError(null);
+    setResult(null);
+    try {
+      const res = await fetch("/api/push/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          body: body.trim(),
+          url: url.trim() || undefined,
+          userIds: [target.id],
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      setResult(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border border-purple-500/25 bg-surface-panel p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-baseline justify-between mb-5">
+          <div>
+            <p className="font-saira text-[10px] font-bold uppercase tracking-[0.3em] text-purple-400">
+              Send push to
+            </p>
+            <h3 className="font-saira text-lg font-extrabold uppercase text-white mt-0.5">
+              {target.display_name}
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="text-zinc-500 hover:text-zinc-200 transition text-xl leading-none"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-1 block">
+              Title
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={80}
+              placeholder="e.g. Great work today 💪"
+              className="w-full rounded-lg border border-white/10 bg-surface-base/60 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50"
+            />
+          </div>
+
+          <div>
+            <label className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-1 block">
+              Message
+            </label>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              maxLength={200}
+              rows={3}
+              placeholder="Don't forget to log your session today."
+              className="w-full rounded-lg border border-white/10 bg-surface-base/60 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50 resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-400 mb-1 block">
+              Open URL on click (optional)
+            </label>
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="/journal"
+              className="w-full rounded-lg border border-white/10 bg-surface-base/60 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-500/50"
+            />
+          </div>
+        </div>
+
+        {result && (
+          <div className={`mt-4 rounded-lg border px-3 py-2 font-saira text-xs ${
+            result.sent > 0
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-200"
+          }`}>
+            {result.sent > 0
+              ? `Sent to ${result.sent} device${result.sent === 1 ? "" : "s"}.`
+              : result.total === 0
+                ? "This user has no active subscriptions — they haven't enabled notifications yet."
+                : `Delivery failed (${result.failed} failed, ${result.expired} expired).`}
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 font-saira text-xs text-rose-200">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 font-saira text-xs uppercase tracking-[0.15em] transition"
+          >
+            Close
+          </button>
+          <button
+            onClick={send}
+            disabled={sending || !title.trim() || !body.trim()}
+            className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-saira text-xs font-semibold uppercase tracking-[0.15em] transition"
+          >
+            {sending ? "Sending…" : "Send"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
