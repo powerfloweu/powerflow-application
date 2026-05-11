@@ -56,52 +56,31 @@ export async function GET(request: NextRequest) {
     display_name: user.user_metadata?.full_name ?? user.email ?? "User",
     avatar_url:   user.user_metadata?.avatar_url ?? null,
   });
-  const isNewCoach   = newProfileRole === "coach";
-  const isNewAthlete = newProfileRole === "athlete";
+  const isNewCoach = newProfileRole === "coach";
 
-  // Notify admin on every new sign-up
+  // Notify admin when a new coach signs up (athlete notification fires after onboarding instead)
   const adminEmail = (process.env.ADMIN_EMAIL ?? "").trim();
-  if (adminEmail && (isNewCoach || isNewAthlete)) {
+  if (adminEmail && isNewCoach) {
     const userName  = user.user_metadata?.full_name ?? "Unknown";
     const userEmail = user.email ?? "no email";
-    if (isNewCoach) {
-      sendEmail({
-        to:      adminEmail,
-        subject: `🆕 New coach sign-up: ${userName}`,
-        html: `
-          <p>A new coach just signed up on PowerFlow and is waiting for approval.</p>
-          <table cellpadding="6" style="font-family:sans-serif;font-size:14px;border-collapse:collapse;">
-            <tr><td style="color:#888;padding-right:12px">Name</td><td><strong>${userName}</strong></td></tr>
-            <tr><td style="color:#888">Email</td><td>${userEmail}</td></tr>
-            <tr><td style="color:#888">Status</td><td>Pending approval</td></tr>
-          </table>
-          <p style="margin-top:20px">
-            <a href="https://app.power-flow.eu/admin/master" style="background:#7c3aed;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold;">
-              Go to Master Admin → Coaches
-            </a>
-          </p>
-        `,
-        text: `New coach sign-up: ${userName} (${userEmail}) — go to /admin/master to approve.`,
-      }).catch(() => {});
-    } else {
-      sendEmail({
-        to:      adminEmail,
-        subject: `🏋️ New athlete sign-up: ${userName}`,
-        html: `
-          <p>A new athlete just joined PowerFlow.</p>
-          <table cellpadding="6" style="font-family:sans-serif;font-size:14px;border-collapse:collapse;">
-            <tr><td style="color:#888;padding-right:12px">Name</td><td><strong>${userName}</strong></td></tr>
-            <tr><td style="color:#888">Email</td><td>${userEmail}</td></tr>
-          </table>
-          <p style="margin-top:20px">
-            <a href="https://app.power-flow.eu/admin/master" style="background:#7c3aed;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold;">
-              Go to Master Admin → Users
-            </a>
-          </p>
-        `,
-        text: `New athlete sign-up: ${userName} (${userEmail}).`,
-      }).catch(() => {});
-    }
+    sendEmail({
+      to:      adminEmail,
+      subject: `🆕 New coach sign-up: ${userName}`,
+      html: `
+        <p>A new coach just signed up on PowerFlow and is waiting for approval.</p>
+        <table cellpadding="6" style="font-family:sans-serif;font-size:14px;border-collapse:collapse;">
+          <tr><td style="color:#888;padding-right:12px">Name</td><td><strong>${userName}</strong></td></tr>
+          <tr><td style="color:#888">Email</td><td>${userEmail}</td></tr>
+          <tr><td style="color:#888">Status</td><td>Pending approval</td></tr>
+        </table>
+        <p style="margin-top:20px">
+          <a href="https://app.power-flow.eu/admin/master" style="background:#7c3aed;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold;">
+            Go to Master Admin → Coaches
+          </a>
+        </p>
+      `,
+      text: `New coach sign-up: ${userName} (${userEmail}) — go to /admin/master to approve.`,
+    }).catch(() => {});
   }
 
   // Link athlete to coach if a join code was present before the OAuth redirect
