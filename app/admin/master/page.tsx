@@ -2380,9 +2380,152 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
   );
 }
 
+// ── Roadmap Tab ───────────────────────────────────────────────────────────────
+
+type RoadmapStatus = "todo" | "in_progress" | "done";
+type RoadmapItem = { status: RoadmapStatus; text: string };
+type RoadmapSection = { name: string; items: RoadmapItem[] };
+type RoadmapData = {
+  sections: RoadmapSection[];
+  totals: { total: number; done: number; in_progress: number; todo: number };
+  error?: string;
+};
+
+function RoadmapTab() {
+  const [data, setData] = React.useState<RoadmapData | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [err, setErr] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    fetch("/api/admin/roadmap")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((d: RoadmapData) => setData(d))
+      .catch((e) => setErr(String(e)))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="w-6 h-6 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (err || !data) {
+    return (
+      <p className="font-saira text-sm text-red-400">
+        Failed to load roadmap: {err ?? "unknown error"}
+      </p>
+    );
+  }
+
+  if (data.error) {
+    return (
+      <p className="font-saira text-sm text-zinc-400">
+        {data.error}. Create a <code className="text-purple-300">CLAUDE.md</code> file at the repo root with a <code className="text-purple-300">## Roadmap</code> section.
+      </p>
+    );
+  }
+
+  const { total, done, in_progress, todo } = data.totals;
+  const donePct = total ? Math.round((done / total) * 100) : 0;
+  const wipPct = total ? Math.round((in_progress / total) * 100) : 0;
+
+  const statusGlyph = (s: RoadmapStatus) =>
+    s === "done" ? "✓" : s === "in_progress" ? "◐" : "○";
+  const statusColor = (s: RoadmapStatus) =>
+    s === "done"
+      ? "text-emerald-400"
+      : s === "in_progress"
+        ? "text-amber-300"
+        : "text-zinc-500";
+
+  return (
+    <div className="space-y-8">
+      {/* Summary */}
+      <div className="rounded-2xl border border-white/8 bg-surface-panel/60 p-6">
+        <div className="flex items-baseline justify-between mb-4">
+          <h3 className="font-saira text-sm font-bold uppercase tracking-[0.22em] text-zinc-200">
+            Overall progress
+          </h3>
+          <span className="font-saira text-xs text-zinc-400">
+            {done}/{total} done · {in_progress} in progress · {todo} todo
+          </span>
+        </div>
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/5 flex">
+          <div className="h-full bg-emerald-400/80" style={{ width: `${donePct}%` }} />
+          <div className="h-full bg-amber-300/70" style={{ width: `${wipPct}%` }} />
+        </div>
+        <p className="mt-3 font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-500">
+          {donePct}% complete
+        </p>
+      </div>
+
+      {/* Sections */}
+      <div className="grid gap-5 md:grid-cols-2">
+        {data.sections.map((section) => {
+          const total = section.items.length;
+          const doneCount = section.items.filter((i) => i.status === "done").length;
+          const wipCount = section.items.filter((i) => i.status === "in_progress").length;
+          return (
+            <div
+              key={section.name}
+              className="rounded-2xl border border-white/8 bg-surface-panel/60 p-5"
+            >
+              <div className="flex items-baseline justify-between mb-4">
+                <h4 className="font-saira text-xs font-bold uppercase tracking-[0.2em] text-purple-300">
+                  {section.name}
+                </h4>
+                <span className="font-saira text-[10px] text-zinc-400">
+                  {doneCount}/{total}
+                  {wipCount > 0 && <span className="text-amber-300"> · {wipCount} wip</span>}
+                </span>
+              </div>
+              <ul className="space-y-2">
+                {section.items.map((item, idx) => (
+                  <li
+                    key={`${section.name}-${idx}`}
+                    className="flex items-start gap-3 text-sm"
+                  >
+                    <span className={`mt-0.5 font-mono text-sm ${statusColor(item.status)}`}>
+                      {statusGlyph(item.status)}
+                    </span>
+                    <span
+                      className={
+                        item.status === "done"
+                          ? "text-zinc-500 line-through"
+                          : item.status === "in_progress"
+                            ? "text-amber-100"
+                            : "text-zinc-200"
+                      }
+                    >
+                      {item.text}
+                    </span>
+                  </li>
+                ))}
+                {section.items.length === 0 && (
+                  <li className="font-saira text-xs text-zinc-500">No items.</li>
+                )}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="font-saira text-[10px] uppercase tracking-[0.22em] text-zinc-500">
+        Source: <code className="text-zinc-400">CLAUDE.md</code> · edit checklist items to update this view.
+      </p>
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "devtools";
+type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "roadmap" | "devtools";
 
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -2527,6 +2670,7 @@ export default function MasterAdminPage() {
     ["broadcast",      "Broadcast",       "✉"],
     ["conversations",  "Conversations",   "💬"],
     ["ai-insights",    "AI Insights",     "✦"],
+    ["roadmap",        "Roadmap",         "▸"],
     ["devtools",       "Dev Tools",       "⚙"],
   ];
 
@@ -2623,6 +2767,7 @@ export default function MasterAdminPage() {
               {activeTab === "broadcast" && <BroadcastTab users={users} />}
               {activeTab === "conversations" && <ConversationsTab />}
               {activeTab === "ai-insights" && <AiInsightsTab users={users} />}
+              {activeTab === "roadmap" && <RoadmapTab />}
               {activeTab === "devtools" && <DevToolsTab users={users} />}
             </>
           )}
