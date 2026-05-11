@@ -17,7 +17,7 @@ heading structure without updating the parser.
 ## Roadmap
 
 ### Payments & Tiers
-- [x] Stripe payment for all three tiers (opener / second / pr) with upgrade options
+- [ ] Stripe payment for all three tiers (opener / second / pr) with upgrade options
 
 ### Coach AI
 - [ ] Clarice voice install
