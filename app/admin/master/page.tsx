@@ -23,11 +23,13 @@ type ActivityStatus = "active" | "monitor" | "dormant";
 type UserRow = {
   id: string;
   display_name: string;
+  avatar_url: string | null;
   email: string | null;
   role: "athlete" | "coach";
   coach_id: string | null;
   coach_name: string | null;
   coach_code: string | null;
+  coach_status: "pending" | "approved" | null;
   plan_tier: "opener" | "second" | "pr" | null;
   course_access: boolean;
   test_access: boolean;
@@ -965,26 +967,82 @@ function CoachLinksTab({
   users,
   coaches,
   onRelinkCoach,
+  onPatchUser,
   saving,
 }: {
   users: UserRow[];
   coaches: UserRow[];
   onRelinkCoach: (athleteId: string, coachId: string | null) => void;
+  onPatchUser: (userId: string, patch: Record<string, unknown>) => Promise<void>;
   saving: Record<string, boolean>;
 }) {
-  const athletes = users.filter((u) => u.role === "athlete");
-  const unlinked = athletes.filter((a) => !a.coach_id);
+  const athletes       = users.filter((u) => u.role === "athlete");
+  const unlinked       = athletes.filter((a) => !a.coach_id);
+  const pendingCoaches = coaches.filter((c) => c.coach_status === "pending");
+  const approvedCoaches = coaches.filter((c) => c.coach_status !== "pending");
   const [pendingCoach, setPendingCoach] = React.useState<Record<string, string>>({});
 
   return (
     <div className="space-y-5">
-      {coaches.length === 0 && (
+
+      {/* ── Pending approval queue ── */}
+      {pendingCoaches.length > 0 && (
+        <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-amber-500/15">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-black text-[10px] font-bold">
+              {pendingCoaches.length}
+            </span>
+            <p className="font-saira text-[10px] font-bold uppercase tracking-[0.25em] text-amber-400">
+              Pending coach approval
+            </p>
+          </div>
+          {pendingCoaches.map((coach) => (
+            <div
+              key={coach.id}
+              className="flex items-center justify-between px-5 py-4 border-b border-white/5 last:border-0"
+            >
+              <div className="flex items-center gap-3">
+                {coach.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={coach.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover opacity-90" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center font-saira text-sm font-bold text-amber-300">
+                    {coach.display_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p className="font-saira text-sm font-semibold text-white">{coach.display_name}</p>
+                  <p className="font-saira text-[10px] text-zinc-400">
+                    {coach.email}
+                    {coach.created_at && (
+                      <span className="ml-2 text-zinc-500">
+                        signed up {new Date(coach.created_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={saving[coach.id] ?? false}
+                  onClick={() => onPatchUser(coach.id, { coach_status: "approved" })}
+                  className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-1.5 font-saira text-xs font-bold text-green-400 hover:bg-green-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  {saving[coach.id] ? "Approving…" : "✓ Approve"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {approvedCoaches.length === 0 && pendingCoaches.length === 0 && (
         <div className="rounded-2xl border border-white/5 bg-surface-card p-6 text-center">
           <p className="font-saira text-sm text-zinc-300">No coaches in the system yet.</p>
         </div>
       )}
 
-      {coaches.map((coach) => {
+      {approvedCoaches.map((coach) => {
         const myAthletes = athletes.filter((a) => a.coach_id === coach.id);
         return (
           <div
@@ -2162,7 +2220,8 @@ export default function MasterAdminPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   // Derived
-  const coaches = users.filter((u) => u.role === "coach");
+  const coaches        = users.filter((u) => u.role === "coach");
+  const pendingCoaches = coaches.filter((c) => c.coach_status === "pending");
 
   // ── Auth check ──────────────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -2288,7 +2347,7 @@ export default function MasterAdminPage() {
   const NAV_TABS: [Tab, string, string][] = [
     ["overview",       "Overview",        "◎"],
     ["users",          `Users (${users.length})`, "◻"],
-    ["coaches",        "Coach Links",     "⇄"],
+    ["coaches",        pendingCoaches.length > 0 ? `Coaches (${pendingCoaches.length} pending)` : "Coaches", "⇄"],
     ["results",        "Test Results",    "✦"],
     ["broadcast",      "Broadcast",       "✉"],
     ["conversations",  "Conversations",   "💬"],
@@ -2381,6 +2440,7 @@ export default function MasterAdminPage() {
                   users={users}
                   coaches={coaches}
                   onRelinkCoach={handleRelinkCoach}
+                  onPatchUser={patchUser}
                   saving={saving}
                 />
               )}
