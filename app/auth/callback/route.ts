@@ -51,26 +51,28 @@ export async function GET(request: NextRequest) {
 
   const user = data.user;
 
-  // Upsert profile (no-op if already exists); returns true if a brand-new coach was created
-  const isNewCoach = await ensureProfile(user.id, role, {
+  // Upsert profile (no-op if already exists); returns the role if brand-new, null if existing
+  const newProfileRole = await ensureProfile(user.id, role, {
     display_name: user.user_metadata?.full_name ?? user.email ?? "User",
     avatar_url:   user.user_metadata?.avatar_url ?? null,
   });
+  const isNewCoach   = newProfileRole === "coach";
+  const isNewAthlete = newProfileRole === "athlete";
 
-  // Notify admin when a new coach signs up
-  if (isNewCoach) {
-    const adminEmail = (process.env.ADMIN_EMAIL ?? "").trim();
-    if (adminEmail) {
-      const coachName  = user.user_metadata?.full_name ?? "Unknown";
-      const coachEmail = user.email ?? "no email";
+  // Notify admin on every new sign-up
+  const adminEmail = (process.env.ADMIN_EMAIL ?? "").trim();
+  if (adminEmail && (isNewCoach || isNewAthlete)) {
+    const userName  = user.user_metadata?.full_name ?? "Unknown";
+    const userEmail = user.email ?? "no email";
+    if (isNewCoach) {
       sendEmail({
         to:      adminEmail,
-        subject: `🆕 New coach sign-up: ${coachName}`,
+        subject: `🆕 New coach sign-up: ${userName}`,
         html: `
           <p>A new coach just signed up on PowerFlow and is waiting for approval.</p>
           <table cellpadding="6" style="font-family:sans-serif;font-size:14px;border-collapse:collapse;">
-            <tr><td style="color:#888;padding-right:12px">Name</td><td><strong>${coachName}</strong></td></tr>
-            <tr><td style="color:#888">Email</td><td>${coachEmail}</td></tr>
+            <tr><td style="color:#888;padding-right:12px">Name</td><td><strong>${userName}</strong></td></tr>
+            <tr><td style="color:#888">Email</td><td>${userEmail}</td></tr>
             <tr><td style="color:#888">Status</td><td>Pending approval</td></tr>
           </table>
           <p style="margin-top:20px">
@@ -79,8 +81,26 @@ export async function GET(request: NextRequest) {
             </a>
           </p>
         `,
-        text: `New coach sign-up: ${coachName} (${coachEmail}) — go to /admin/master to approve.`,
-      }).catch(() => {}); // fire-and-forget
+        text: `New coach sign-up: ${userName} (${userEmail}) — go to /admin/master to approve.`,
+      }).catch(() => {});
+    } else {
+      sendEmail({
+        to:      adminEmail,
+        subject: `🏋️ New athlete sign-up: ${userName}`,
+        html: `
+          <p>A new athlete just joined PowerFlow.</p>
+          <table cellpadding="6" style="font-family:sans-serif;font-size:14px;border-collapse:collapse;">
+            <tr><td style="color:#888;padding-right:12px">Name</td><td><strong>${userName}</strong></td></tr>
+            <tr><td style="color:#888">Email</td><td>${userEmail}</td></tr>
+          </table>
+          <p style="margin-top:20px">
+            <a href="https://www.power-flow.eu/admin/master" style="background:#7c3aed;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold;">
+              Go to Master Admin → Users
+            </a>
+          </p>
+        `,
+        text: `New athlete sign-up: ${userName} (${userEmail}).`,
+      }).catch(() => {});
     }
   }
 
@@ -161,19 +181,19 @@ async function linkAthleteToCoach(userId: string, code: string) {
 
 /**
  * Creates a profile row if one doesn't already exist.
- * Returns true only when a brand-new COACH profile was just inserted
- * (used to trigger the admin notification email).
+ * Returns the role string when a brand-new profile was inserted, null if it already existed.
+ * Used to trigger admin notification emails.
  */
 async function ensureProfile(
   userId: string,
   role: "athlete" | "coach",
   meta: { display_name: string; avatar_url: string | null }
-): Promise<boolean> {
+): Promise<"athlete" | "coach" | null> {
   const SUPABASE_URL  = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
   if (!SUPABASE_URL || !SERVICE_KEY) {
     console.error("[ensureProfile] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars — profile NOT created");
-    return false;
+    return null;
   }
 
   const authHeaders: HeadersInit = {
@@ -191,7 +211,7 @@ async function ensureProfile(
     console.error(`[ensureProfile] check failed ${checkRes.status}`, txt);
   }
   const existing  = checkRes.ok ? await checkRes.json() : [];
-  if (existing.length > 0) return false; // Don't overwrite role
+  if (existing.length > 0) return null; // Don't overwrite role
 
   // Generate coach_code for coaches (random 8-char alphanumeric)
   const coach_code =
@@ -219,8 +239,8 @@ async function ensureProfile(
   if (!insertRes.ok) {
     const txt = await insertRes.text().catch(() => "");
     console.error(`[ensureProfile] insert failed ${insertRes.status} for user ${userId} role ${role}`, txt);
-    return false;
+    return null;
   }
 
-  return role === "coach";
+  return role;
 }
