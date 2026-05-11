@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
           "mental_goals","main_barrier",
           "self_confidence_reg","self_focus_fatigue","self_handling_pressure",
           "self_competition_anxiety","self_emotional_recovery",
-          "viz_keywords","affirmations","ai_access","plan_tier","role",
+          "viz_keywords","affirmations","ai_access","plan_tier","role","coach_notes",
         ].join(","),
       }),
       dbSelect<{ content: string; sentiment: string; themes: string[]; created_at: string }>(
@@ -135,9 +135,11 @@ export async function GET(req: NextRequest) {
       top_techniques: globalPatterns,
     },
     session_summaries: summaries,
+    coach_notes: profile.coach_notes?.trim() || null,
     will_inject: {
       feedback_section:  rawFeedback.length > 0,
       patterns_section:  globalPatterns.length > 0,
+      coach_notes:       !!profile.coach_notes?.trim(),
     },
   });
 }

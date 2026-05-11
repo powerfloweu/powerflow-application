@@ -1877,11 +1877,60 @@ function AiInsightsTab({ users }: { users: UserRow[] }) {
             {debugging ? "Loading…" : "Inspect"}
           </button>
         </div>
-        {debugResult && (
-          <pre className="rounded-xl bg-black/40 p-4 text-xs text-zinc-300 font-mono overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">
-            {JSON.stringify(debugResult, null, 2)}
-          </pre>
-        )}
+        {debugResult && (() => {
+          const r = debugResult as {
+            athlete: { name: string; ai_access: boolean; plan_tier: string };
+            context: { journal_entries: number; ego_states: number; training_entries: number; session_summaries: number };
+            will_inject: { feedback_section: boolean; patterns_section: boolean; coach_notes: boolean };
+            coach_notes: string | null;
+            feedback_aggregate: Record<string, unknown>;
+          };
+          const injectRow = (label: string, on: boolean) => (
+            <div key={label} className="flex items-center justify-between py-1.5 border-b border-white/4 last:border-0">
+              <span className="font-saira text-xs text-zinc-400">{label}</span>
+              <span className={`font-saira text-xs font-bold ${on ? "text-green-400" : "text-zinc-600"}`}>
+                {on ? "✓ injected" : "✗ not injected"}
+              </span>
+            </div>
+          );
+          return (
+            <div className="space-y-4 mt-2">
+              {/* Header */}
+              <div className="rounded-xl bg-black/30 px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="font-saira text-sm font-bold text-white">{r.athlete.name}</p>
+                  <p className="font-saira text-[10px] text-zinc-500">{r.athlete.plan_tier} · ai_access: {String(r.athlete.ai_access)}</p>
+                </div>
+                <div className="text-right font-saira text-[10px] text-zinc-500 space-y-0.5">
+                  <p>{r.context.journal_entries} journal entries</p>
+                  <p>{r.context.ego_states} ego states</p>
+                  <p>{r.context.training_entries} training entries</p>
+                  <p>{r.context.session_summaries} session summaries</p>
+                </div>
+              </div>
+
+              {/* Will inject */}
+              <div className="rounded-xl bg-black/30 px-4 py-2">
+                <p className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-purple-400 mb-1">Sections injected into system prompt</p>
+                {injectRow("Feedback / communication prefs", r.will_inject.feedback_section)}
+                {injectRow("Global technique patterns", r.will_inject.patterns_section)}
+                {injectRow("Coach briefing notes", r.will_inject.coach_notes)}
+              </div>
+
+              {/* Coach notes preview */}
+              {r.coach_notes ? (
+                <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3">
+                  <p className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-purple-400 mb-2">Coach notes (sent verbatim to AI)</p>
+                  <p className="font-saira text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">{r.coach_notes}</p>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-white/5 bg-white/3 px-4 py-3">
+                  <p className="font-saira text-xs text-zinc-600 italic">No coach notes written for this athlete yet.</p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
