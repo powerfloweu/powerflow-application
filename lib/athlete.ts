@@ -58,6 +58,8 @@ export type AthleteProfile = {
   coach_code: string | null;
   coach_status: "pending" | "approved" | "rejected" | null;
   coach_application: CoachApplication | null;
+  /** Free-text notes written by the coach/admin. Injected into the AI system prompt. */
+  coach_notes: string | null;
   meet_date: string | null;
   /** Whether the 16-week course is unlocked for this athlete. Granted by coach/admin. */
   course_access: boolean;

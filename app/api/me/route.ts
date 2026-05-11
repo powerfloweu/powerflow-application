@@ -99,6 +99,7 @@ export async function GET() {
       coach_journal_prompt_labels: null,
       coach_status: null,
       coach_application: null,
+      coach_notes: null,
     } satisfies AthleteProfile);
   }
 

@@ -399,7 +399,12 @@ ${userFeedback.recentNote        ? `- **Athlete's own words:** "${userFeedback.r
 ${globalPatterns.length > 0 ? `
 ## What has worked across all athletes
 These techniques have the highest resonance rates across all coaching sessions. Prioritise them when the situation calls for it:
-${globalPatterns.slice(0, 6).map((p, i) => `${i + 1}. **${p.technique}** — resonated in ${p.resonanceRate}% of sessions where used (n=${p.totalSessions})`).join("\n")}` : ""}`;
+${globalPatterns.slice(0, 6).map((p, i) => `${i + 1}. **${p.technique}** — resonated in ${p.resonanceRate}% of sessions where used (n=${p.totalSessions})`).join("\n")}` : ""}
+${profile.coach_notes?.trim() ? `
+## Coach briefing on this athlete
+The following notes were written by the human coach who works with ${name} in real life. Treat this as a private briefing — it reflects what's actually happening in their in-person sessions, patterns the coach has observed, and anything the coach wants you to keep in mind. This context takes priority over inferences you might otherwise make from journal entries or training logs alone.
+
+${profile.coach_notes.trim()}` : ""}`;
 }
 
 // ── POST ──────────────────────────────────────────────────────────────────────
@@ -435,7 +440,7 @@ export async function POST(req: NextRequest) {
       "mental_goals", "main_barrier",
       "self_confidence_reg", "self_focus_fatigue", "self_handling_pressure",
       "self_competition_anxiety", "self_emotional_recovery",
-      "viz_keywords", "affirmations", "ai_access", "plan_tier", "role",
+      "viz_keywords", "affirmations", "ai_access", "plan_tier", "role", "coach_notes",
     ].join(","),
   });
 

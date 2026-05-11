@@ -30,6 +30,7 @@ type UserRow = {
   coach_name: string | null;
   coach_code: string | null;
   coach_status: "pending" | "approved" | "rejected" | null;
+  coach_notes: string | null;
   coach_application: {
     athletes_count: string;
     instagram: string;
@@ -251,6 +252,59 @@ function LiftPair({
 }
 
 // ── Expanded profile viewer ────────────────────────────────────────────────────
+
+// ── Coach Notes Editor ────────────────────────────────────────────────────────
+
+function CoachNotesEditor({
+  user,
+  saving,
+  onSave,
+}: {
+  user: UserRow;
+  saving: boolean;
+  onSave: (notes: string) => void;
+}) {
+  const [notes, setNotes] = React.useState(user.coach_notes ?? "");
+  const [dirty, setDirty] = React.useState(false);
+
+  // Sync if the user row updates (e.g. after save)
+  React.useEffect(() => {
+    setNotes(user.coach_notes ?? "");
+    setDirty(false);
+  }, [user.coach_notes]);
+
+  return (
+    <div
+      className="border-t border-white/5 bg-purple-500/5 px-5 py-4"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <p className="font-saira text-[9px] font-bold uppercase tracking-[0.25em] text-purple-400">
+          Coach notes → injected into AI
+        </p>
+        {dirty && (
+          <button
+            disabled={saving}
+            onClick={() => { onSave(notes); setDirty(false); }}
+            className="rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-50 px-3 py-1 font-saira text-[10px] font-bold uppercase tracking-[0.14em] text-white transition"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+        )}
+        {!dirty && user.coach_notes && (
+          <span className="font-saira text-[10px] text-green-400">✓ Saved</span>
+        )}
+      </div>
+      <textarea
+        rows={4}
+        placeholder={`Notes about ${user.display_name} — e.g. recurring themes from your real sessions, what's been working, what to watch out for. The AI will see this every time they chat.`}
+        value={notes}
+        onChange={(e) => { setNotes(e.target.value); setDirty(true); }}
+        className="w-full rounded-xl border border-purple-500/20 bg-surface-base px-3 py-2.5 font-saira text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
+      />
+    </div>
+  );
+}
 
 function ExpandedProfile({ user }: { user: UserRow }) {
   const hasMindset =
@@ -953,6 +1007,12 @@ function UsersTab({
                       )}
                     </div>
                   )}
+                  {/* Coach notes — injected into AI system prompt */}
+                  <CoachNotesEditor
+                    user={user}
+                    saving={saving[user.id] ?? false}
+                    onSave={(notes) => onPatchUser(user.id, { coach_notes: notes })}
+                  />
                   <ExpandedProfile user={user} />
                 </div>
               )}
