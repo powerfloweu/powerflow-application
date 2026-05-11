@@ -136,7 +136,13 @@ export async function PATCH(req: Request) {
   }
 
   const updated = md.replace(lineRe, `$1${FLAG[status]}$2`);
-  await fs.writeFile(CLAUDE_PATH, updated, "utf8");
+
+  try {
+    await fs.writeFile(CLAUDE_PATH, updated, "utf8");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: `Write failed: ${msg}`, cwd: process.cwd(), path: CLAUDE_PATH }, { status: 500 });
+  }
 
   return NextResponse.json(parseRoadmap(updated));
 }
