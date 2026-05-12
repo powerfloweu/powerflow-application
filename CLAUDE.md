@@ -59,8 +59,8 @@ heading structure without updating the parser.
 - [ ] Add `aria-label`s to icon-only buttons across `app/components/`
 
 ### Push notifications (currently in-tab only — no real push)
-- [ ] Create `public/manifest.webmanifest` (referenced in `app/layout.tsx` but missing — 404 in prod)
-- [~] Add a service worker (`public/sw.js`) and register it on app load
+- [~] Create `public/manifest.webmanifest` (referenced in `app/layout.tsx` but missing — 404 in prod)
+- [ ] Add a service worker (`public/sw.js`) and register it on app load
 - [ ] Generate VAPID keys and add `NEXT_PUBLIC_VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` env vars
 - [ ] Install `web-push`, add `push_subscriptions` table in Supabase, create `/api/push/subscribe` endpoint
 - [ ] Build a sender (e.g. `/api/push/send` or cron) that calls `webpush.sendNotification` for check-in reminders and broadcasts
