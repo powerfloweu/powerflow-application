@@ -2,9 +2,11 @@
  * GET  /api/admin/roadmap — parse CLAUDE.md and return roadmap JSON (admin-only)
  * PATCH /api/admin/roadmap — update a single item's status in CLAUDE.md (admin-only)
  *
- * On read-only filesystems (serverless) the PATCH route commits the change
- * directly to GitHub via the API. Requires GITHUB_TOKEN env var (a personal
- * access token with repo write access). Falls back to fs.writeFile in local dev.
+ * Storage strategy:
+ *   - Dev  : read/write the local CLAUDE.md via fs (fast, no API calls)
+ *   - Prod : Vercel filesystem is a read-only build snapshot, so we read and
+ *            write through the GitHub Contents API to keep state consistent
+ *            across requests.  Requires GITHUB_TOKEN env var.
  */
 
 import { NextResponse } from "next/server";
@@ -92,46 +94,64 @@ const GH_OWNER = process.env.GITHUB_OWNER ?? "powerfloweu";
 const GH_REPO = process.env.GITHUB_REPO ?? "powerflow-application";
 const GH_BRANCH = process.env.GITHUB_BRANCH ?? "main";
 
-async function commitToGitHub(content: string, itemText: string, status: Status): Promise<void> {
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) throw new Error("GITHUB_TOKEN env var not set");
+type GhFileMeta = { sha: string; content: string };
 
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    Accept: "application/vnd.github+json",
-    "Content-Type": "application/json",
-  };
-
-  // Fetch current file SHA
-  const metaRes = await fetch(
+/** Fetch the current CLAUDE.md content + SHA from GitHub. */
+async function ghRead(token: string): Promise<GhFileMeta> {
+  const res = await fetch(
     `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`,
-    { headers },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+      },
+      // Never serve a stale cached copy — we need the latest SHA for the PUT.
+      cache: "no-store",
+    },
   );
-  if (!metaRes.ok) {
-    const err = await metaRes.text();
-    throw new Error(`GitHub GET failed: ${metaRes.status} ${err}`);
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`GitHub GET failed: ${res.status} ${err}`);
   }
-  const meta = await metaRes.json() as { sha: string };
+  return res.json() as Promise<GhFileMeta>;
+}
 
-  // Commit updated content
-  const putRes = await fetch(
+/** Decode GitHub's base64 file content (line-wrapped at 60 chars). */
+function ghDecode(content: string): string {
+  return Buffer.from(content.replace(/\n/g, ""), "base64").toString("utf8");
+}
+
+/** Commit updated content back to GitHub. */
+async function ghWrite(
+  token: string,
+  sha: string,
+  content: string,
+  commitMsg: string,
+): Promise<void> {
+  const res = await fetch(
     `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`,
     {
       method: "PUT",
-      headers,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        message: `roadmap: mark "${itemText.slice(0, 60)}" as ${status.replace("_", " ")}`,
+        message: commitMsg,
         content: Buffer.from(content).toString("base64"),
-        sha: meta.sha,
+        sha,
         branch: GH_BRANCH,
       }),
     },
   );
-  if (!putRes.ok) {
-    const err = await putRes.text();
-    throw new Error(`GitHub PUT failed: ${putRes.status} ${err}`);
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`GitHub PUT failed: ${res.status} ${err}`);
   }
 }
+
+// ── GET ───────────────────────────────────────────────────────────────────────
 
 export async function GET() {
   if (!await requireAdmin()) {
@@ -139,6 +159,17 @@ export async function GET() {
   }
 
   try {
+    const token = process.env.GITHUB_TOKEN;
+
+    if (token) {
+      // Production: read from GitHub so we always see the latest committed state,
+      // not the build-time snapshot baked into the Vercel deployment.
+      const meta = await ghRead(token);
+      const md = ghDecode(meta.content);
+      return NextResponse.json(parseRoadmap(md));
+    }
+
+    // Dev: read straight from the local file.
     const md = await fs.readFile(CLAUDE_PATH, "utf8");
     return NextResponse.json(parseRoadmap(md));
   } catch {
@@ -149,6 +180,8 @@ export async function GET() {
     });
   }
 }
+
+// ── PATCH ─────────────────────────────────────────────────────────────────────
 
 export async function PATCH(req: Request) {
   try {
@@ -162,30 +195,54 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "invalid body" }, { status: 400 });
     }
 
-    let md: string;
-    try {
-      md = await fs.readFile(CLAUDE_PATH, "utf8");
-    } catch {
-      return NextResponse.json({ error: "CLAUDE.md not found" }, { status: 404 });
-    }
-
     const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const lineRe = new RegExp(
       `^(\\s*-\\s+\\[)[  x~](\\]\\s+${escaped}\\s*)$`,
       "im",
     );
-    if (!lineRe.test(md)) {
+
+    function applyPatch(md: string): string | null {
+      if (!lineRe.test(md)) return null;
+      return md.replace(lineRe, `$1${FLAG[status!]}$2`);
+    }
+
+    // ── Dev path: local filesystem read + write ──────────────────────────────
+    const token = process.env.GITHUB_TOKEN;
+
+    if (!token) {
+      let md: string;
+      try {
+        md = await fs.readFile(CLAUDE_PATH, "utf8");
+      } catch {
+        return NextResponse.json({ error: "CLAUDE.md not found" }, { status: 404 });
+      }
+      const updated = applyPatch(md);
+      if (!updated) {
+        return NextResponse.json({ error: "item not found in CLAUDE.md" }, { status: 404 });
+      }
+      await fs.writeFile(CLAUDE_PATH, updated, "utf8");
+      return NextResponse.json(parseRoadmap(updated));
+    }
+
+    // ── Production path: read CURRENT state from GitHub, patch, commit ───────
+    //
+    // We must read from GitHub (not the local build snapshot) so that multiple
+    // sequential patches don't overwrite each other.  Each PATCH reads the
+    // latest SHA and content, applies its change, then commits — ensuring every
+    // click accumulates correctly.
+    const meta = await ghRead(token);
+    const currentMd = ghDecode(meta.content);
+    const updated = applyPatch(currentMd);
+    if (!updated) {
       return NextResponse.json({ error: "item not found in CLAUDE.md" }, { status: 404 });
     }
 
-    const updated = md.replace(lineRe, `$1${FLAG[status]}$2`);
-
-    // Try local write first (works in dev); fall back to GitHub API in production.
-    try {
-      await fs.writeFile(CLAUDE_PATH, updated, "utf8");
-    } catch {
-      await commitToGitHub(updated, text, status);
-    }
+    await ghWrite(
+      token,
+      meta.sha,
+      updated,
+      `roadmap: mark "${text.slice(0, 60)}" as ${status.replace("_", " ")}`,
+    );
 
     return NextResponse.json(parseRoadmap(updated));
   } catch (e) {
