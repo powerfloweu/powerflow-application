@@ -2774,6 +2774,219 @@ function RoadmapTab() {
   );
 }
 
+// ── TOTP gate ─────────────────────────────────────────────────────────────────
+
+function TotpGate({
+  configured,
+  onVerified,
+}: {
+  configured: boolean;
+  onVerified: () => void;
+}) {
+  const [digits, setDigits] = React.useState<string[]>(Array(6).fill(""));
+  const [error, setError] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
+  const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+
+  // Setup screen state
+  const [setupData, setSetupData] = React.useState<{
+    secret: string;
+    qrDataUrl: string;
+    configured: boolean;
+  } | null>(null);
+  const [loadingSetup, setLoadingSetup] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+
+  // If not configured, fetch the setup QR code
+  React.useEffect(() => {
+    if (configured) return;
+    setLoadingSetup(true);
+    fetch("/api/admin/totp/setup")
+      .then((r) => r.json())
+      .then((d) => setSetupData(d))
+      .catch(() => {})
+      .finally(() => setLoadingSetup(false));
+  }, [configured]);
+
+  async function submit(code: string) {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/totp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      if (res.ok) {
+        onVerified();
+      } else {
+        const d = await res.json().catch(() => ({})) as { error?: string };
+        setError(d.error ?? "Incorrect code");
+        setDigits(Array(6).fill(""));
+        inputRefs.current[0]?.focus();
+      }
+    } catch {
+      setError("Network error — try again");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function handleDigitChange(idx: number, val: string) {
+    // Support paste of full code into first box
+    if (val.length === 6 && /^\d{6}$/.test(val)) {
+      const next = val.split("");
+      setDigits(next);
+      inputRefs.current[5]?.focus();
+      void submit(val);
+      return;
+    }
+    const digit = val.replace(/\D/g, "").slice(-1);
+    const next = [...digits];
+    next[idx] = digit;
+    setDigits(next);
+    if (digit && idx < 5) inputRefs.current[idx + 1]?.focus();
+    if (next.every((d) => d !== "")) void submit(next.join(""));
+  }
+
+  function handleKeyDown(idx: number, e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Backspace" && !digits[idx] && idx > 0) {
+      inputRefs.current[idx - 1]?.focus();
+    }
+  }
+
+  function copySecret() {
+    if (!setupData) return;
+    navigator.clipboard.writeText(setupData.secret).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  // ── Setup screen (TOTP not yet configured) ────────────────────────────────
+  if (!configured) {
+    return (
+      <div className="min-h-screen bg-surface-base flex items-center justify-center px-6">
+        <div className="w-full max-w-sm">
+          <p className="font-saira text-[10px] font-bold uppercase tracking-[0.3em] text-amber-400 mb-1 text-center">
+            Setup Required
+          </p>
+          <h1 className="font-saira text-2xl font-extrabold uppercase text-white mb-2 text-center">
+            Enable 2FA
+          </h1>
+          <p className="font-saira text-xs text-zinc-400 text-center mb-6 leading-relaxed">
+            Scan the QR code with <span className="text-white">Google Authenticator</span>,
+            then copy the secret into your Vercel env vars as{" "}
+            <code className="text-purple-300 bg-purple-500/10 px-1 rounded">TOTP_SECRET</code>.
+            Also add a random string as{" "}
+            <code className="text-purple-300 bg-purple-500/10 px-1 rounded">TOTP_SESSION_SECRET</code>.
+            Redeploy to activate the gate.
+          </p>
+
+          {loadingSetup && (
+            <div className="flex justify-center py-10">
+              <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+            </div>
+          )}
+
+          {setupData && (
+            <div className="space-y-4">
+              {/* QR code */}
+              <div className="flex justify-center">
+                <img
+                  src={setupData.qrDataUrl}
+                  alt="TOTP QR code"
+                  className="rounded-xl"
+                  width={200}
+                  height={200}
+                />
+              </div>
+
+              {/* Secret */}
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-center gap-3">
+                <code className="font-mono text-xs text-purple-300 break-all flex-1 select-all">
+                  {setupData.secret}
+                </code>
+                <button
+                  onClick={copySecret}
+                  className="font-saira text-[10px] uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition flex-shrink-0"
+                >
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+              </div>
+
+              <p className="font-saira text-[10px] text-zinc-500 text-center leading-relaxed">
+                After adding the env vars and redeploying, return here to
+                enter your 6-digit code.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Verification screen ───────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-surface-base flex items-center justify-center px-6">
+      <div className="w-full max-w-xs text-center">
+        {/* Lock icon */}
+        <div className="mx-auto mb-5 w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center">
+          <svg viewBox="0 0 24 24" className="w-5 h-5 text-purple-400" fill="none">
+            <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
+
+        <p className="font-saira text-[10px] font-bold uppercase tracking-[0.3em] text-purple-400 mb-1">
+          Two-Factor Auth
+        </p>
+        <h1 className="font-saira text-2xl font-extrabold uppercase text-white mb-1">
+          Verify Identity
+        </h1>
+        <p className="font-saira text-xs text-zinc-400 mb-7">
+          Enter the 6-digit code from Google Authenticator
+        </p>
+
+        {/* 6-digit boxes */}
+        <div className="flex justify-center gap-2 mb-5">
+          {digits.map((d, i) => (
+            <input
+              key={i}
+              ref={(el) => { inputRefs.current[i] = el; }}
+              type="text"
+              inputMode="numeric"
+              maxLength={i === 0 ? 6 : 1}
+              value={d}
+              onChange={(e) => handleDigitChange(i, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(i, e)}
+              disabled={submitting}
+              className={`w-10 h-12 rounded-xl border text-center font-mono text-lg font-bold bg-white/5 text-white transition
+                focus:outline-none focus:ring-1 focus:ring-purple-400
+                disabled:opacity-50
+                ${error ? "border-red-500/60" : "border-white/10 focus:border-purple-500/60"}`}
+            />
+          ))}
+        </div>
+
+        {submitting && (
+          <div className="flex justify-center mb-4">
+            <div className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+          </div>
+        )}
+
+        {error && (
+          <p className="font-saira text-xs text-red-400 mb-4">{error}</p>
+        )}
+
+        <p className="font-saira text-[10px] text-zinc-600">
+          Session valid for 4 hours after verification
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "roadmap" | "devtools";
@@ -2781,6 +2994,9 @@ type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "convers
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
   const [sessionEmail, setSessionEmail] = React.useState<string | null>(null);
+  // null = still checking, false = gate shown, true = verified
+  const [totpVerified, setTotpVerified] = React.useState<boolean | null>(null);
+  const [totpConfigured, setTotpConfigured] = React.useState(false);
   const [users, setUsers] = React.useState<UserRow[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<Tab>("overview");
@@ -2803,9 +3019,23 @@ export default function MasterAdminPage() {
       .catch(() => setIsAdmin(false));
   }, []);
 
-  // ── Load users ──────────────────────────────────────────────────────────────
+  // ── TOTP status (runs after admin identity is confirmed) ────────────────────
   React.useEffect(() => {
     if (!isAdmin) return;
+    fetch("/api/admin/totp/status")
+      .then((r) => r.json())
+      .then((d: { configured: boolean; verified: boolean }) => {
+        setTotpConfigured(d.configured);
+        // If TOTP isn't configured yet, skip the gate so the admin can still
+        // reach the setup screen and add the env var.
+        setTotpVerified(d.configured ? d.verified : true);
+      })
+      .catch(() => setTotpVerified(true)); // fail-open only if the endpoint errors
+  }, [isAdmin]);
+
+  // ── Load users ──────────────────────────────────────────────────────────────
+  React.useEffect(() => {
+    if (!isAdmin || !totpVerified) return;
     setLoading(true);
     fetch("/api/admin/users")
       .then((r) => {
@@ -2874,11 +3104,21 @@ export default function MasterAdminPage() {
 
   // ── Render gates ─────────────────────────────────────────────────────────────
 
-  if (isAdmin === null) {
+  if (isAdmin === null || (isAdmin && totpVerified === null)) {
     return (
       <div className="min-h-screen bg-surface-base flex items-center justify-center">
         <div className="w-6 h-6 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
       </div>
+    );
+  }
+
+  // ── TOTP gate ───────────────────────────────────────────────────────────────
+  if (isAdmin && totpVerified === false) {
+    return (
+      <TotpGate
+        configured={totpConfigured}
+        onVerified={() => setTotpVerified(true)}
+      />
     );
   }
 
