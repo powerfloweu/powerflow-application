@@ -3045,7 +3045,7 @@ export default function MasterAdminPage() {
       .then((data: UserRow[]) => setUsers(data))
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
-  }, [isAdmin]);
+  }, [isAdmin, totpVerified]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
