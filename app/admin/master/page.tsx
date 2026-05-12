@@ -81,6 +81,8 @@ type UserRow = {
   checkin_count_7d: number;
   last_active: string | null;
   activity_status: ActivityStatus;
+  // push
+  push_subscribed: boolean;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -909,8 +911,8 @@ function UsersTab({
                 >
                   <button
                     onClick={() => setPushTarget(user)}
-                    className="text-zinc-500 hover:text-purple-400 transition"
-                    title={`Send push to ${user.display_name}`}
+                    className={`transition ${user.push_subscribed ? "text-emerald-400 hover:text-emerald-300" : "text-zinc-600 hover:text-zinc-400"}`}
+                    title={user.push_subscribed ? `Send push to ${user.display_name} (subscribed)` : `${user.display_name} hasn't enabled notifications`}
                     aria-label={`Send push notification to ${user.display_name}`}
                   >
                     <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" aria-hidden>

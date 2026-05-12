@@ -698,6 +698,9 @@ export default function YouPage() {
         <span className="text-zinc-400 group-hover:text-purple-400 transition">→</span>
       </Link>
 
+      {/* ── Notifications ─────────────────────────────────────── */}
+      <NotificationsRow />
+
       {/* ── Language ─────────────────────────────────────────── */}
       <LanguageSwitcher />
 
@@ -711,6 +714,98 @@ export default function YouPage() {
 
       {/* ── Sign out ─────────────────────────────────────────── */}
       <SignOutButton />
+    </div>
+  );
+}
+
+const NOTIF_DISMISSED_KEY = "pf-notif-dismissed";
+
+function NotificationsRow() {
+  const [permState, setPermState] = React.useState<"loading" | "granted" | "default" | "denied" | "unavailable">("loading");
+  const [requesting, setRequesting] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") { setPermState("unavailable"); return; }
+    if (!("Notification" in window)) { setPermState("unavailable"); return; }
+    setPermState(Notification.permission as "granted" | "default" | "denied");
+  }, []);
+
+  const enable = async () => {
+    setRequesting(true);
+    const perm = await Notification.requestPermission();
+    setPermState(perm);
+    if (perm === "granted") {
+      // Clear the snooze so the banner also re-shows properly next session
+      localStorage.removeItem(NOTIF_DISMISSED_KEY);
+      // Subscribe to push
+      const { subscribeToPush } = await import("@/lib/pushClient");
+      await subscribeToPush().catch(() => {});
+      // Schedule the reminder
+      const { scheduleCheckinNotification } = await import("@/lib/checkinReminder");
+      scheduleCheckinNotification(19);
+    }
+    setRequesting(false);
+  };
+
+  const reEnable = () => {
+    // Clear the snooze dismissal so the banner shows again on next page load
+    localStorage.removeItem(NOTIF_DISMISSED_KEY);
+    enable();
+  };
+
+  // Not supported or already granted without anything actionable to show — still show status
+  if (permState === "loading" || permState === "unavailable") return null;
+
+  return (
+    <div className="rounded-2xl border border-white/5 bg-surface-card mb-4 px-5 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Bell icon */}
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+            permState === "granted" ? "bg-emerald-500/15 text-emerald-400" : "bg-zinc-700/50 text-zinc-500"
+          }`}>
+            <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" aria-hidden>
+              <path
+                d="M10 2a6 6 0 0 0-6 6v2.586l-1.707 1.707A1 1 0 0 0 3 14h14a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6z"
+                stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
+              />
+              <path d="M8 14a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
+              Notifications
+            </p>
+            <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
+              {permState === "granted"
+                ? "Enabled — you'll get daily reminders"
+                : permState === "denied"
+                ? "Blocked in browser settings"
+                : "Off — enable for daily check-in reminders"}
+            </p>
+          </div>
+        </div>
+        {permState === "granted" ? (
+          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <svg viewBox="0 0 12 12" className="w-3 h-3 text-emerald-400" fill="none" aria-hidden>
+              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        ) : permState === "denied" ? (
+          <span className="flex-shrink-0 font-saira text-[9px] uppercase tracking-wider text-zinc-500 text-right leading-tight max-w-[80px]">
+            Allow in<br />browser
+          </span>
+        ) : (
+          <button
+            type="button"
+            disabled={requesting}
+            onClick={reEnable}
+            className="flex-shrink-0 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 px-3 py-1.5 font-saira text-xs font-semibold text-white transition"
+          >
+            {requesting ? "…" : "Enable"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

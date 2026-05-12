@@ -90,7 +90,7 @@ export async function GET() {
   const since7dDate = since7dISO.slice(0, 10); // YYYY-MM-DD for training_entries
 
   // Fetch everything in parallel
-  const [profiles, emailMap, recentJournals, recentCheckins] = await Promise.all([
+  const [profiles, emailMap, recentJournals, recentCheckins, pushSubs] = await Promise.all([
     dbSelect<Record<string, unknown>>("profiles", {
       select: PROFILE_SELECT,
       order: "created_at.asc",
@@ -106,7 +106,14 @@ export async function GET() {
       select: "user_id,entry_date",
       limit: "2000",
     }),
+    dbSelect<{ user_id: string }>("push_subscriptions", {
+      select: "user_id",
+      limit: "5000",
+    }).catch(() => [] as { user_id: string }[]),
   ]);
+
+  // Build set of user_ids with active push subscriptions
+  const pushedUserIds = new Set<string>(pushSubs.map((s) => s.user_id));
 
   // Build coach name map (id → display_name) for fast lookup
   const coachNameMap = new Map<string, string>();
@@ -156,6 +163,7 @@ export async function GET() {
     return {
       ...p,
       email: emailMap.get(id) ?? null,
+      push_subscribed: pushedUserIds.has(id),
       coach_name: p.coach_id
         ? (coachNameMap.get(p.coach_id as string) ?? null)
         : null,

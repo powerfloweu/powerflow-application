@@ -17,6 +17,7 @@ import React from "react";
 import { useT } from "@/lib/i18n";
 
 const DISMISSED_KEY = "pf-notif-dismissed";
+const SUPPRESS_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export default function NotificationPermissionBanner() {
   const { t } = useT();
@@ -38,12 +39,13 @@ export default function NotificationPermissionBanner() {
     }
 
     if (Notification.permission !== "default") return; // denied
-    if (localStorage.getItem(DISMISSED_KEY) === "1") return; // user dismissed before
+    const dismissed = localStorage.getItem(DISMISSED_KEY);
+    if (dismissed && Date.now() - Number(dismissed) < SUPPRESS_MS) return; // snoozed for 7 days
     setVisible(true);
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem(DISMISSED_KEY, "1");
+    localStorage.setItem(DISMISSED_KEY, String(Date.now())); // snooze for 7 days
     setVisible(false);
   };
 
