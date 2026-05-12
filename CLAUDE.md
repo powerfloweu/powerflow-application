@@ -43,7 +43,7 @@ heading structure without updating the parser.
 ### Security & hardening
 - [x] Stop accepting `ADMIN_PASSWORD` via URL query param in `app/api/admin/all-results` and `app/api/admin/results` (leaks into logs)
 - [x] Add TOTP 2FA gate to `/admin/master` (Google Authenticator, RFC 6238, 4 h HttpOnly session cookie)
-- [ ] Consolidate inconsistent admin auth in `/api/admin/*` into one shared `requireAdmin()` helper
+- [x] Consolidate inconsistent admin auth in `/api/admin/*` into one shared `requireAdmin()` helper
 - [ ] Add per-user rate limiting on AI endpoints (`/api/chat`, `/api/tts`, `/api/coach/*`)
 
 ### Code quality
@@ -74,7 +74,9 @@ changed, and what's next. Newest entries on top.
 ### 2026-05-12 — main (continued)
 - Security: `ADMIN_PASSWORD` moved from URL query param to `Authorization: Bearer` header in `all-results` and `results` routes.
 - Security: TOTP 2FA added to `/admin/master` — RFC 6238 implementation using Node built-in crypto, HttpOnly 4 h session cookie, Google Authenticator compatible. Env vars (`TOTP_SECRET`, `TOTP_SESSION_SECRET`) added via Vercel CLI and deployed.
-- Next: push notifications full implementation or Stripe tiers.
+- Push notifications: completed — Vercel cron at 17:00 UTC sends web-push to all subscribers via `web-push`; service worker handles delivery even when browser is closed.
+- Admin auth: consolidated 13 routes from 5 different local copies into one shared `lib/adminAuth.ts` `requireAdmin()` helper (−144 lines).
+- Next: Stripe tiers (needs product decisions on what's included per tier).
 
 ### 2026-05-12 — main
 - Push notification UX: 7-day snooze on banner (was permanent dismiss), push subscription status (bell colour) in admin Users tab, Notifications card in You tab.
