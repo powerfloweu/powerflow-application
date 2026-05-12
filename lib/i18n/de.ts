@@ -745,7 +745,8 @@ export const de: Dict = {
     s01: {
       title: "Als Coach anmelden",
       t1: "Öffne die App und tippe auf [[Als Coach anmelden]] (wähle die Coach-Rolle vor der Google-Anmeldung). Die Rolle wird einmalig festgelegt — Coaches und Athleten benötigen separate Konten.",
-      t2: "Nach der Anmeldung gelangst du automatisch zum [[Coach-Dashboard]].",
+      t2: "Die erste Anmeldung öffnet ein kurzes [[Bewerbungsformular]] — beantworte 4 Fragen (Anzahl Athleten, Instagram, Hintergrund, Hauptziel mit PowerFlow) und tippe Absenden.",
+      t3: "Du landest auf einem [[Warten auf Freigabe]]-Bildschirm. Sobald der Admin dein Konto freigibt, erhältst du automatisch vollen Zugang zum Coach-Dashboard — dein einzigartiger Coach-Code erscheint oben.",
     },
     s02: {
       title: "Athleten einladen",

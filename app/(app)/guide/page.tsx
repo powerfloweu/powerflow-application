@@ -148,6 +148,7 @@ function CoachGuide() {
       <GuideSection num="01" title={t(`${c}.s01.title`)}>
         <Tip text={t(`${c}.s01.t1`)} />
         <Tip text={t(`${c}.s01.t2`)} />
+        <Tip text={t(`${c}.s01.t3`)} />
       </GuideSection>
 
       <GuideSection num="02" title={t(`${c}.s02.title`)}>

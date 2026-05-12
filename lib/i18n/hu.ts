@@ -743,7 +743,8 @@ export const hu: Dict = {
     s01: {
       title: "Bejelentkezés edzőként",
       t1: "Nyisd meg az appot, és koppints a [[Bejelentkezés edzőként]] gombra (válaszd ki az edző szerepet a Google bejelentkezés előtt). A szerepkör egyszer kerül beállításra — az edzőknek és sportolóknak külön fiókra van szükségük.",
-      t2: "Bejelentkezés után automatikusan az [[Edző irányítópultra]] kerülsz.",
+      t2: "Az első bejelentkezés megnyit egy rövid [[jelentkezési lapot]] — válaszolj 4 kérdésre (atlétáid száma, Instagram, háttér, fő célod a PowerFlow-val) és koppints a Küldés gombra.",
+      t3: "A [[Jóváhagyásra vár]] képernyőre kerülsz. Amint az admin jóváhagyja a fiókodat, automatikusan teljes hozzáférést kapsz az Edző irányítópulthoz — az egyedi edző kódod megjelenik a tetején.",
     },
     s02: {
       title: "Sportolóid meghívása",

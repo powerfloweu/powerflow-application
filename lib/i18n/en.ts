@@ -774,7 +774,8 @@ export const en = {
     s01: {
       title: "Sign in as a coach",
       t1: "Open the app and tap [[Sign in as coach]] (select the coach role before Google sign-in). Role is set once — coaches and athletes need separate accounts.",
-      t2: "After sign-in you land on the [[Coach Dashboard]] automatically.",
+      t2: "First sign-in opens a short [[application form]] — answer 4 questions (number of athletes, Instagram, background, main goal with PowerFlow) and tap Submit.",
+      t3: "You land on a [[Pending approval]] screen. Once the admin approves your account you gain full access to the Coach Dashboard automatically — your unique coach code appears at the top.",
     },
     s02: {
       title: "Invite your athletes",
