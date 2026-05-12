@@ -5,8 +5,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const url = new URL(req.url);
-  const password = url.searchParams.get("password") ?? "";
+  // Read password from Authorization header (Bearer token) — never from URL
+  // params, which leak into server logs, browser history, and referrer headers.
+  const authHeader = req.headers.get("authorization") ?? "";
+  const password = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   const adminPassword = process.env.ADMIN_PASSWORD ?? "";
 
   if (!adminPassword || password !== adminPassword) {

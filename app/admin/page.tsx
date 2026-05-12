@@ -2129,7 +2129,9 @@ export default function AdminPage() {
   // ── Auth ───────────────────────────────────────────────────────────────────
 
   const fetchAllResults = React.useCallback(async (pw: string) => {
-    const res = await fetch(`/api/admin/all-results?password=${encodeURIComponent(pw)}`);
+    const res = await fetch("/api/admin/all-results", {
+      headers: { Authorization: `Bearer ${pw}` },
+    });
     if (res.status === 401) throw new Error("__unauthorized__");
     if (!res.ok) {
       const data = (await res.json()) as { error?: string };
