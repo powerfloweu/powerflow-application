@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient, isConfigured } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { dbSelect } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
@@ -75,18 +75,6 @@ export type DasRow = {
   depression_prone: boolean;
 };
 
-// ── Auth helper ────────────────────────────────────────────────────────────────
-
-async function verifyAdmin(): Promise<boolean> {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
-  if (!adminEmail || !isConfigured) return false;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return !!user && (user.email ?? "").toLowerCase() === adminEmail;
-}
-
 // ── Column selects ─────────────────────────────────────────────────────────────
 
 const COMMON = "id,result_ref,first_name,email,gender,lang,submitted_at,paid,user_id";
@@ -99,7 +87,7 @@ const DAS_SELECT = `${COMMON},total_score,depression_prone`;
 // ── GET ────────────────────────────────────────────────────────────────────────
 
 export async function GET() {
-  if (!(await verifyAdmin())) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

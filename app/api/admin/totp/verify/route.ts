@@ -10,7 +10,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient, isConfigured } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import {
   isTotpConfigured,
   verifyTotpCode,
@@ -21,18 +22,12 @@ import {
 
 export const runtime = "nodejs";
 
-async function requireAdminUser() {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
-  if (!adminEmail || !isConfigured) return null;
+export async function POST(req: Request) {
+  if (!(await requireAdmin())) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  if ((user.email ?? "").toLowerCase() !== adminEmail) return null;
-  return user;
-}
-
-export async function POST(req: Request) {
-  const user = await requireAdminUser();
   if (!user) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }

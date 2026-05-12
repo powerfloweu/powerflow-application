@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, isConfigured } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
@@ -18,17 +18,6 @@ const SUPABASE_URL =
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-/** Verify the incoming request session is the admin email. */
-async function verifyAdmin(): Promise<boolean> {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
-  if (!adminEmail || !isConfigured) return false;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return !!user && (user.email ?? "").toLowerCase() === adminEmail;
-}
 
 /** Fetch all auth users from Supabase's GoTrue admin endpoint. */
 async function fetchAuthEmails(): Promise<Map<string, string>> {
@@ -80,7 +69,7 @@ const PROFILE_SELECT = [
 // ── GET ───────────────────────────────────────────────────────────────────────
 
 export async function GET() {
-  if (!(await verifyAdmin())) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -184,7 +173,7 @@ const ADMIN_PATCHABLE = ["plan_tier", "course_access", "test_access", "ai_access
 type AdminPatchableKey = (typeof ADMIN_PATCHABLE)[number];
 
 export async function PATCH(req: NextRequest) {
-  if (!(await verifyAdmin())) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

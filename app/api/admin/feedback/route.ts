@@ -4,21 +4,13 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient, isConfigured } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { dbSelect } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 
-async function verifyAdmin(): Promise<boolean> {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
-  if (!adminEmail || !isConfigured) return false;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return !!user && (user.email ?? "").toLowerCase() === adminEmail;
-}
-
 export async function GET() {
-  if (!(await verifyAdmin())) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

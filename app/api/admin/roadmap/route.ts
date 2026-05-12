@@ -12,7 +12,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
-import { createClient, isConfigured } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/adminAuth";
 
 export const runtime = "nodejs";
 
@@ -76,15 +76,6 @@ function parseRoadmap(md: string): Roadmap {
     sections,
     totals: { total: done + inProgress + todo, done, in_progress: inProgress, todo },
   };
-}
-
-async function requireAdmin() {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
-  if (!adminEmail || !isConfigured) return null;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const sessionEmail = (user?.email ?? "").toLowerCase().trim();
-  return sessionEmail && sessionEmail === adminEmail ? sessionEmail : null;
 }
 
 const FLAG: Record<Status, string> = { todo: " ", in_progress: "~", done: "x" };

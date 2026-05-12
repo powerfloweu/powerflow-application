@@ -9,7 +9,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient, isConfigured } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { detectSentiment } from "@/lib/journal";
 
 export const runtime = "nodejs";
@@ -21,16 +21,8 @@ const SUPABASE_URL =
   process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 
-async function isAdmin(): Promise<boolean> {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
-  if (!adminEmail || !isConfigured) return false;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return !!user && (user.email ?? "").toLowerCase() === adminEmail;
-}
-
 export async function POST() {
-  if (!(await isAdmin())) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

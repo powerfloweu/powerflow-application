@@ -9,21 +9,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, isConfigured } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { isTotpConfigured, verifyTotpSession, TOTP_COOKIE } from "@/lib/adminTotp";
 
 export const runtime = "nodejs";
 
-async function isAdminSession(): Promise<boolean> {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
-  if (!adminEmail || !isConfigured) return false;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return !!user && (user.email ?? "").toLowerCase() === adminEmail;
-}
-
 export async function GET(req: NextRequest) {
-  if (!(await isAdminSession())) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

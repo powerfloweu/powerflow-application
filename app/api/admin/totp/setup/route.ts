@@ -14,27 +14,17 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient, isConfigured } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/adminAuth";
 import { generateTotpSecret, buildTotpUri } from "@/lib/adminTotp";
 import QRCode from "qrcode";
 
 export const runtime = "nodejs";
 
-async function getAdminEmail(): Promise<string | null> {
-  const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
-  if (!adminEmail || !isConfigured) return null;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  if ((user.email ?? "").toLowerCase() !== adminEmail) return null;
-  return user.email ?? adminEmail;
-}
-
 export async function GET() {
-  const email = await getAdminEmail();
-  if (!email) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  const email = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
 
   const configured = !!(process.env.TOTP_SECRET ?? "").trim();
   const secret = configured
