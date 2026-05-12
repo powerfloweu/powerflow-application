@@ -41,7 +41,8 @@ heading structure without updating the parser.
 - [ ] Add a basic test setup (no tests configured yet)
 
 ### Security & hardening
-- [ ] Stop accepting `ADMIN_PASSWORD` via URL query param in `app/api/admin/all-results` and `app/api/admin/results` (leaks into logs)
+- [x] Stop accepting `ADMIN_PASSWORD` via URL query param in `app/api/admin/all-results` and `app/api/admin/results` (leaks into logs)
+- [x] Add TOTP 2FA gate to `/admin/master` (Google Authenticator, RFC 6238, 4 h HttpOnly session cookie)
 - [ ] Consolidate inconsistent admin auth in `/api/admin/*` into one shared `requireAdmin()` helper
 - [ ] Add per-user rate limiting on AI endpoints (`/api/chat`, `/api/tts`, `/api/coach/*`)
 
@@ -70,12 +71,16 @@ heading structure without updating the parser.
 Append a short note at the end of each working session: date, branch, what
 changed, and what's next. Newest entries on top.
 
+### 2026-05-12 — main (continued)
+- Security: `ADMIN_PASSWORD` moved from URL query param to `Authorization: Bearer` header in `all-results` and `results` routes.
+- Security: TOTP 2FA added to `/admin/master` — RFC 6238 implementation using Node built-in crypto, HttpOnly 4 h session cookie, Google Authenticator compatible. Env vars (`TOTP_SECRET`, `TOTP_SESSION_SECRET`) added via Vercel CLI and deployed.
+- Next: push notifications full implementation or Stripe tiers.
+
 ### 2026-05-12 — main
 - Push notification UX: 7-day snooze on banner (was permanent dismiss), push subscription status (bell colour) in admin Users tab, Notifications card in You tab.
 - Guide refresh: both printable (`content.ts`) and interactive (i18n keys) coach guide updated with accurate approval flow; athlete guide gained "Enable notifications" step.
 - Roadmap tab fixes: optimistic updates, all-buttons-disabled-during-patch (prevents concurrent GitHub SHA conflicts), done-item hover cue.
 - Roadmap production bug fixed: GET and PATCH now read from GitHub API (`cache: no-store`) when `GITHUB_TOKEN` is set, so sequential clicks accumulate instead of overwriting each other (Vercel filesystem is a frozen build snapshot).
-- Next: push notifications full implementation (service worker, `/api/push/subscribe`, sender) or Stripe tiers.
 
 ### 2026-05-11 — claude/review-context-Wu0t5
 - Added `CLAUDE.md` and `/admin/master` Roadmap tab so progress is visible from the admin dashboard.
