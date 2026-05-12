@@ -2596,6 +2596,24 @@ function RoadmapTab() {
 
   async function toggleItem(text: string, current: RoadmapStatus) {
     const next = NEXT_STATUS[current];
+
+    // Optimistic update — instant feedback, no waiting for GitHub API
+    setData((prev) => {
+      if (!prev) return prev;
+      const sections = prev.sections.map((s) => ({
+        ...s,
+        items: s.items.map((i) => (i.text === text ? { ...i, status: next } : i)),
+      }));
+      const totals = { total: 0, done: 0, in_progress: 0, todo: 0 };
+      for (const s of sections) for (const i of s.items) {
+        totals.total++;
+        if (i.status === "done") totals.done++;
+        else if (i.status === "in_progress") totals.in_progress++;
+        else totals.todo++;
+      }
+      return { ...prev, sections, totals };
+    });
+
     setPatching(text);
     try {
       const res = await fetch("/api/admin/roadmap", {
@@ -2607,9 +2625,26 @@ function RoadmapTab() {
         const body = await res.json().catch(() => ({})) as { error?: string; cwd?: string; path?: string };
         throw new Error(body.error ?? `HTTP ${res.status}`);
       }
+      // Replace with authoritative server state
       const updated = await res.json() as RoadmapData;
       setData(updated);
     } catch (e) {
+      // Revert optimistic update on failure
+      setData((prev) => {
+        if (!prev) return prev;
+        const sections = prev.sections.map((s) => ({
+          ...s,
+          items: s.items.map((i) => (i.text === text ? { ...i, status: current } : i)),
+        }));
+        const totals = { total: 0, done: 0, in_progress: 0, todo: 0 };
+        for (const s of sections) for (const i of s.items) {
+          totals.total++;
+          if (i.status === "done") totals.done++;
+          else if (i.status === "in_progress") totals.in_progress++;
+          else totals.todo++;
+        }
+        return { ...prev, sections, totals };
+      });
       alert(`Failed to update: ${e}`);
     } finally {
       setPatching(null);
@@ -2701,9 +2736,9 @@ function RoadmapTab() {
                     <li key={`${section.name}-${idx}`}>
                       <button
                         onClick={() => toggleItem(item.text, item.status)}
-                        disabled={isPending}
+                        disabled={patching !== null}
                         title={`Click to mark as ${NEXT_STATUS[item.status].replace("_", " ")}`}
-                        className="flex items-start gap-3 text-sm w-full text-left group rounded-lg px-2 py-1 -mx-2 hover:bg-white/5 transition disabled:opacity-50"
+                        className="flex items-start gap-3 text-sm w-full text-left group rounded-lg px-2 py-1 -mx-2 hover:bg-white/5 transition disabled:opacity-50 disabled:cursor-wait"
                       >
                         <span className={`mt-0.5 font-mono text-sm shrink-0 ${statusColor(item.status)} group-hover:scale-110 transition-transform`}>
                           {isPending ? "…" : statusGlyph(item.status)}
@@ -2711,7 +2746,7 @@ function RoadmapTab() {
                         <span
                           className={
                             item.status === "done"
-                              ? "text-zinc-500 line-through"
+                              ? "text-zinc-500 line-through group-hover:text-zinc-300 group-hover:no-underline transition-colors"
                               : item.status === "in_progress"
                                 ? "text-amber-100"
                                 : "text-zinc-200"
