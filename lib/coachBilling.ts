@@ -49,7 +49,7 @@ export async function syncCoachQuantity(coachId: string): Promise<void> {
     if (count === 0) {
       // Cancel subscription — no athletes left
       await stripe.subscriptions.cancel(coach.stripe_coach_sub_id);
-      await dbPatch("profiles", { id: `eq.${coachId}` }, { stripe_coach_sub_id: null });
+      await dbPatch("profiles", { id: coachId }, { stripe_coach_sub_id: null });
     } else {
       // Update quantity on existing subscription
       const sub = await stripe.subscriptions.retrieve(coach.stripe_coach_sub_id);
@@ -92,7 +92,7 @@ export async function createCoachCheckoutSession(
       metadata: { supabase_user_id: coachId },
     });
     customerId = customer.id;
-    await dbPatch("profiles", { id: `eq.${coachId}` }, { stripe_customer_id: customerId });
+    await dbPatch("profiles", { id: coachId }, { stripe_customer_id: customerId });
   }
 
   const athleteCount = await countAthletes(coachId);

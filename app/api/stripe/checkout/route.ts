@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       metadata: { supabase_user_id: user.id },
     });
     customerId = customer.id;
-    await dbPatch("profiles", { id: `eq.${user.id}` }, { stripe_customer_id: customerId });
+    await dbPatch("profiles", { id: user.id }, { stripe_customer_id: customerId });
   }
 
   const base = appUrl();

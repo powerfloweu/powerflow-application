@@ -40,7 +40,7 @@ async function activateTier(userId: string, subscriptionId: string, priceId: str
   if (!tier) { console.error(`[webhook] Unknown price: ${priceId}`); return; }
   const isCourse = tier === "pr";
   const isTools  = tier === "second" || tier === "pr";
-  await dbPatch("profiles", { id: `eq.${userId}` }, {
+  await dbPatch("profiles", { id: userId }, {
     plan_tier: tier,
     stripe_subscription_id: subscriptionId,
     stripe_price_id: priceId,
@@ -52,7 +52,7 @@ async function activateTier(userId: string, subscriptionId: string, priceId: str
 }
 
 async function deactivateTier(userId: string, subscriptionId: string) {
-  await dbPatch("profiles", { id: `eq.${userId}` }, {
+  await dbPatch("profiles", { id: userId }, {
     plan_tier: "opener",
     stripe_subscription_id: null,
     stripe_price_id: null,
@@ -66,14 +66,14 @@ async function deactivateTier(userId: string, subscriptionId: string) {
 // ─── coach plan handlers ─────────────────────────────────────────────────────
 
 async function activateCoachSub(userId: string, subscriptionId: string) {
-  await dbPatch("profiles", { id: `eq.${userId}` }, {
+  await dbPatch("profiles", { id: userId }, {
     stripe_coach_sub_id: subscriptionId,
   });
   console.log(`[webhook] ✅ Coach ${userId} → coach plan active`);
 }
 
 async function deactivateCoachSub(userId: string) {
-  await dbPatch("profiles", { id: `eq.${userId}` }, {
+  await dbPatch("profiles", { id: userId }, {
     stripe_coach_sub_id: null,
   });
   console.log(`[webhook] ⬇️  Coach ${userId} → coach plan cancelled`);
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
         if (!userId) { console.error("[webhook] No user for customer:", customerId); break; }
 
         // Persist customer ID in case checkout route hit a race condition
-        await dbPatch("profiles", { id: `eq.${userId}` }, { stripe_customer_id: customerId });
+        await dbPatch("profiles", { id: userId }, { stripe_customer_id: customerId });
 
         if (isCoachPlan) {
           await activateCoachSub(userId, subscriptionId);
