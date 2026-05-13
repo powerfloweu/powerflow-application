@@ -80,7 +80,7 @@ function UpgradePageInner() {
       .then((p) => {
         if (!p) return;
         if (p.plan_tier) setCurrent(p.plan_tier as PlanTier);
-        if (p.role === "coach") setCurrent("pr");
+        // coaches pay like athletes — no automatic tier elevation
         setHasSubscription(!!p.stripe_subscription_id);
       })
       .catch(() => {});

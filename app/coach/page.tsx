@@ -89,6 +89,7 @@ type CoachProfile = {
   avatar_url: string | null;
   role: "athlete" | "coach";
   coach_code: string | null;
+  stripe_coach_sub_id?: string | null;
 };
 
 // ── Data computation ───────────────────────────────────────────────────────────
@@ -2382,6 +2383,74 @@ function AttentionBanner({ attentionAthletes }: { attentionAthletes: Client[] })
   );
 }
 
+// ── Coach billing card ─────────────────────────────────────────────────────────
+
+function CoachBillingCard({
+  athleteCount,
+  hasSubscription,
+}: {
+  athleteCount: number;
+  hasSubscription: boolean;
+}) {
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  async function handleBilling() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/stripe/coach-checkout", { method: "POST" });
+      const data = await res.json() as { url?: string; error?: string };
+      if (!res.ok || !data.url) throw new Error(data.error ?? "Something went wrong");
+      window.location.href = data.url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+      setLoading(false);
+    }
+  }
+
+  const monthlyTotal = athleteCount * 5;
+
+  return (
+    <div className={`mb-6 rounded-2xl border px-5 py-4 ${
+      !hasSubscription && athleteCount > 0
+        ? "border-amber-500/30 bg-amber-500/[0.06]"
+        : "border-white/8 bg-white/3"
+    }`}>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-zinc-400 mb-1">
+            Coach Plan
+          </p>
+          <p className="text-white font-semibold text-sm">
+            {athleteCount} {athleteCount === 1 ? "athlete" : "athletes"}
+            {" · "}
+            <span className="text-purple-300">€{monthlyTotal}/month</span>
+          </p>
+          <p className="text-xs text-zinc-400 mt-0.5">€5 per athlete · billed monthly</p>
+        </div>
+        <button
+          onClick={handleBilling}
+          disabled={loading}
+          className={`flex-shrink-0 rounded-xl px-4 py-2 font-saira text-[10px] uppercase tracking-wider font-semibold transition disabled:opacity-60 disabled:cursor-wait ${
+            !hasSubscription && athleteCount > 0
+              ? "bg-amber-500 hover:bg-amber-400 text-black"
+              : "bg-white/8 hover:bg-white/12 text-zinc-300"
+          }`}
+        >
+          {loading ? "Loading…" : hasSubscription ? "Manage billing" : "Set up billing"}
+        </button>
+      </div>
+      {!hasSubscription && athleteCount > 0 && (
+        <p className="mt-2 font-saira text-[10px] text-amber-300">
+          ⚠ Billing not set up — please add a payment method to stay active.
+        </p>
+      )}
+      {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+    </div>
+  );
+}
+
 // ── Invite link panel ──────────────────────────────────────────────────────────
 
 function InvitePanel({ coachCode }: { coachCode: string }) {
@@ -2787,6 +2856,12 @@ export default function CoachPage() {
               <p className="font-saira text-sm text-red-300">{error}</p>
             </div>
           )}
+
+          {/* Coach billing */}
+          <CoachBillingCard
+            athleteCount={clients.length}
+            hasSubscription={!!profile?.stripe_coach_sub_id}
+          />
 
           {/* Invite link */}
           {profile?.coach_code && <InvitePanel coachCode={profile.coach_code} />}

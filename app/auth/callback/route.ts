@@ -211,7 +211,7 @@ async function ensureProfile(
       display_name:  meta.display_name,
       avatar_url:    meta.avatar_url,
       coach_code,
-      plan_tier:     role === "coach" ? "pr" : "opener",
+      plan_tier:     "opener",
       coach_status:  role === "coach" ? "pending" : null,
     }),
   });

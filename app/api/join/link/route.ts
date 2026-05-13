@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
+import { syncCoachQuantity } from "@/lib/coachBilling";
 
 type ProfileRow = { id: string; coach_code: string };
 
@@ -49,6 +50,9 @@ export async function POST(request: NextRequest) {
       coach_id: coachId,
     });
   }
+
+  // Sync coach subscription quantity (fire-and-forget)
+  syncCoachQuantity(coachId).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

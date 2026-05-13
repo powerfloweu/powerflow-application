@@ -13,6 +13,8 @@ type ProfileRow = {
   avatar_url: string | null;
   role: string;
   coach_code: string | null;
+  coach_status: string | null;
+  stripe_coach_sub_id: string | null;
   created_at: string;
 };
 
@@ -24,7 +26,7 @@ export async function GET() {
 
   const rows = await dbSelect<ProfileRow>("profiles", {
     id: `eq.${user.id}`,
-    select: "id,display_name,avatar_url,role,coach_code,created_at",
+    select: "id,display_name,avatar_url,role,coach_code,coach_status,stripe_coach_sub_id,created_at",
   });
 
   if (!rows.length) return NextResponse.json({ error: "Profile not found" }, { status: 404 });

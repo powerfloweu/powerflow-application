@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbPatch, dbInsert } from "@/lib/supabaseAdmin";
+import { syncCoachQuantity } from "@/lib/coachBilling";
 import type { AthleteProfile } from "@/lib/athlete";
 
 const SELECT_COLS = [
@@ -283,6 +284,20 @@ export async function PATCH(req: NextRequest) {
       { error: "Database write failed — check server logs or run missing migrations." },
       { status: 500 },
     );
+  }
+
+  // If coach_id changed, sync old and new coach subscription quantities
+  if ("coach_id" in patch) {
+    const newCoachId = patch.coach_id as string | null;
+    if (newCoachId) syncCoachQuantity(newCoachId).catch(() => {});
+    // Also sync old coach if athlete was previously linked to someone else
+    const profileRows = await dbSelect<{ coach_id: string | null }>("profiles", {
+      id: `eq.${user.id}`, select: "coach_id",
+    });
+    const oldCoachId = profileRows[0]?.coach_id;
+    if (oldCoachId && oldCoachId !== newCoachId) {
+      syncCoachQuantity(oldCoachId).catch(() => {});
+    }
   }
 
   return NextResponse.json({ ok: true });
