@@ -2582,6 +2582,7 @@ function RoadmapTab() {
   const [loading, setLoading] = React.useState(true);
   const [err, setErr] = React.useState<string | null>(null);
   const [patching, setPatching] = React.useState<string | null>(null);
+  const [search, setSearch] = React.useState("");
 
   React.useEffect(() => {
     fetch("/api/admin/roadmap")
@@ -2688,6 +2689,14 @@ function RoadmapTab() {
         ? "text-amber-300"
         : "text-zinc-500";
 
+  const q = search.trim().toLowerCase();
+  const visibleSections = q
+    ? data.sections
+        .map((s) => ({ ...s, items: s.items.filter((i) => i.text.toLowerCase().includes(q)) }))
+        .filter((s) => s.items.length > 0)
+    : data.sections;
+  const matchCount = q ? visibleSections.reduce((n, s) => n + s.items.length, 0) : null;
+
   return (
     <div className="space-y-8">
       {/* Summary */}
@@ -2709,9 +2718,43 @@ function RoadmapTab() {
         </p>
       </div>
 
+      {/* Search */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M10.5 10.5l3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search roadmap items…"
+            className="w-full rounded-xl border border-white/8 bg-surface-section pl-9 pr-4 py-2 font-saira text-sm text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        {matchCount !== null && (
+          <span className="font-saira text-xs text-zinc-400">
+            {matchCount} {matchCount === 1 ? "match" : "matches"}
+          </span>
+        )}
+      </div>
+
       {/* Sections */}
       <div className="grid gap-5 md:grid-cols-2">
-        {data.sections.map((section) => {
+        {visibleSections.length === 0 ? (
+          <p className="font-saira text-sm text-zinc-500 col-span-2 py-4">No items match &ldquo;{search}&rdquo;.</p>
+        ) : null}
+        {visibleSections.map((section) => {
           const total = section.items.length;
           const doneCount = section.items.filter((i) => i.status === "done").length;
           const wipCount = section.items.filter((i) => i.status === "in_progress").length;

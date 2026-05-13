@@ -21,21 +21,21 @@ heading structure without updating the parser.
 
 ### Coach AI
 - [ ] Clarice voice install
-- [ ] Voice selector for Coach AI
+- [x] Voice selector for Coach AI
 - [x] Coach dashboard (replace "just select an athlete" with a real dashboard)
 - [ ] Monthly check-in simulation
 
 ### Localization
-- [ ] Hide languages that are not translated yet
+- [x] Hide languages that are not translated yet (ES, FR hidden until complete — use READY_LOCALES)
 - [ ] Ask someone for Hungarian translation
-- [ ] Fix national flags on coach language selector
+- [x] Fix national flags on coach language selector (fixed by hiding incomplete locales)
 
 ### Admin / Tools
 - [ ] Move AI Insights to Dev Tools
 
 ### Suggested fixes & cleanup
 - [ ] Replace the create-next-app boilerplate README with real project docs
-- [ ] Consolidate duplicate `next.config.js` and `next.config.ts` into one file
+- [x] Consolidate duplicate `next.config.js` and `next.config.ts` into one file
 - [ ] Refresh the docstring at the top of `app/admin/master/page.tsx` (lists only 5 tabs; we now have 8+)
 - [ ] Split `app/admin/master/page.tsx` (2600+ lines) into per-tab files under `app/admin/master/tabs/`
 - [ ] Add a basic test setup (no tests configured yet)
@@ -53,7 +53,7 @@ heading structure without updating the parser.
 - [ ] Audit ~59 `as any` / unchecked casts and tighten types
 
 ### Dev experience
-- [ ] Add `"typecheck": "tsc --noEmit"` script to `package.json`
+- [x] Add `"typecheck": "tsc --noEmit"` script to `package.json`
 - [ ] Add Husky + lint-staged for pre-commit lint/typecheck
 
 ### Accessibility
@@ -66,10 +66,25 @@ heading structure without updating the parser.
 - [x] Install `web-push`, add `push_subscriptions` table in Supabase, create `/api/push/subscribe` endpoint
 - [x] Build a sender (e.g. `/api/push/send` or cron) that calls `webpush.sendNotification` for check-in reminders and broadcasts
 
+## Medium-term tasks
+These are the next meaningful features after quick wins are done.
+
+- **Monthly check-in simulation** — let coaches trigger/preview a monthly check-in for an athlete without waiting for the real date
+- **Per-user rate limiting on AI endpoints** — sliding-window limiter (Vercel KV or in-memory) on `/api/chat`, `/api/tts`, `/api/coach/*`
+- **Split `admin/master/page.tsx`** — 2600+ lines; move each tab into `app/admin/master/tabs/<tab>.tsx`
+
 ## Session log
 
 Append a short note at the end of each working session: date, branch, what
 changed, and what's next. Newest entries on top.
+
+### 2026-05-13 — main (continued)
+- Coach dashboard revamp: mobile home (greeting, 3-tile strip, priority/stable sections, MobileAthleteSheet), desktop home (CoachHomePanel with stats + attention list + activity feed), sticky athlete header, sidebar sparklines + grouped Priority/Stable sections.
+- 4-tab coach bottom nav (Home/Athletes/Activity/You) + new /coach/athletes and /coach/activity pages.
+- Broadcast push notifications on publish (fire-and-forget, tag dedup).
+- AI voice selector on You page (Clarice/David/Jacqueline, play preview, auto-save via preferred_voice_id).
+- Quick wins: hide incomplete locales (ES/FR) via READY_LOCALES, typecheck script, merged next.config, roadmap search.
+- Next: monthly check-in simulation or per-user AI rate limiting.
 
 ### 2026-05-13 — main
 - Stripe integration: checkout sessions, billing portal, webhook handler syncing plan_tier + access flags, admin migrate-stripe endpoint, setup script for products.

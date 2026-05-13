@@ -11,6 +11,13 @@ export const LOCALES: Locale[] = ["en", "de", "hu", "es", "fr"];
 /** Locales that can be selected by end-users in the app */
 export const APP_LOCALES: Locale[] = ["en", "de", "hu", "es", "fr"];
 
+/**
+ * Locales with complete translations — shown in the language switcher.
+ * Add a locale here only when its dictionary matches EN in coverage.
+ * ES and FR are currently stubs (~12 keys vs ~1000 for EN/DE/HU).
+ */
+export const READY_LOCALES: Locale[] = ["en", "de", "hu"];
+
 /** Locales available for translation (all non-English) */
 export const TRANSLATABLE_LOCALES: Locale[] = ["de", "hu", "es", "fr"];
 

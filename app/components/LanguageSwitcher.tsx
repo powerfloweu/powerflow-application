@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useT, LOCALES, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from "@/lib/i18n";
+import { useT, READY_LOCALES, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from "@/lib/i18n";
 
 /**
  * Language picker — two variants:
@@ -14,7 +14,7 @@ export default function LanguageSwitcher({ compact }: { compact?: boolean }) {
   if (compact) {
     return (
       <div className="flex items-center gap-1">
-        {LOCALES.map((loc) => {
+        {READY_LOCALES.map((loc) => {
           const active = loc === locale;
           return (
             <button
@@ -50,7 +50,7 @@ export default function LanguageSwitcher({ compact }: { compact?: boolean }) {
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        {LOCALES.map((loc) => {
+        {READY_LOCALES.map((loc) => {
           const active = loc === locale;
           return (
             <button

@@ -195,6 +195,6 @@ export function useT(): I18nContextValue {
 }
 
 // Re-export types for convenience
-export { LOCALES, LOCALE_LABELS, LOCALE_FLAGS, DEFAULT_LOCALE, normaliseLocale } from "./types";
+export { LOCALES, READY_LOCALES, LOCALE_LABELS, LOCALE_FLAGS, DEFAULT_LOCALE, normaliseLocale } from "./types";
 export type { Locale } from "./types";
 export type { Dict } from "./en";
