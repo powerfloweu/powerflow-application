@@ -2,7 +2,7 @@
  * Admin broadcasts API (requires coach role or admin email)
  *
  * GET  /api/admin/broadcasts           → list all broadcasts
- * POST /api/admin/broadcasts           → create a new broadcast
+ * POST /api/admin/broadcasts           → create a new broadcast + send push to subscribers
  *   body: { title, body, target_role }
  * PATCH /api/admin/broadcasts?id=<id>  → toggle active on/off
  *   body: { active: boolean }
@@ -10,7 +10,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
-import { dbSelect } from "@/lib/supabaseAdmin";
+import { dbSelect, dbDelete } from "@/lib/supabaseAdmin";
+import { sendPush, type PushSubscriptionRow } from "@/lib/push";
 import type { BroadcastRow } from "@/app/api/notifications/route";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -28,6 +29,58 @@ async function isAdmin(supabase: Awaited<ReturnType<typeof createClient>>): Prom
     limit: "1",
   });
   return profiles[0]?.role === "coach";
+}
+
+// ── Push helper ───────────────────────────────────────────────────────────────
+
+/**
+ * Sends a "New Broadcast available" push notification to all subscribers
+ * whose role matches the broadcast's target_role.
+ * Expired subscriptions (404/410) are cleaned up automatically.
+ */
+async function sendBroadcastPush(broadcast: BroadcastRow): Promise<void> {
+  // Resolve which user IDs to notify
+  let targetUserIds: string[] | null = null;
+  if (broadcast.target_role !== "all") {
+    const profiles = await dbSelect<{ id: string }>("profiles", {
+      select: "id",
+      role: `eq.${broadcast.target_role}`,
+    });
+    targetUserIds = profiles.map((p) => p.id);
+    if (targetUserIds.length === 0) return;
+  }
+
+  // Fetch matching push subscriptions
+  const params: Record<string, string> = {
+    select: "endpoint,p256dh,auth",
+  };
+  if (targetUserIds) {
+    params.user_id = `in.(${targetUserIds.join(",")})`;
+  }
+
+  type Row = PushSubscriptionRow;
+  const subs = await dbSelect<Row>("push_subscriptions", params);
+  if (subs.length === 0) return;
+
+  const results = await Promise.all(
+    subs.map((s) =>
+      sendPush(s, {
+        title: "📣 New Broadcast",
+        body: "New Broadcast available — tap to read",
+        url: "/",
+        tag: "broadcast",
+      }),
+    ),
+  );
+
+  // Clean up expired subscriptions
+  const expiredEndpoints = results.filter((r) => r.expired).map((r) => r.endpoint);
+  await Promise.all(
+    expiredEndpoints.map((endpoint) => dbDelete("push_subscriptions", { endpoint })),
+  );
+
+  const sent = results.filter((r) => r.ok).length;
+  console.log(`[broadcasts] push sent=${sent} expired=${expiredEndpoints.length} total=${subs.length}`);
 }
 
 // ── GET ───────────────────────────────────────────────────────────────────────
@@ -77,7 +130,15 @@ export async function POST(req: NextRequest) {
 
   if (!res.ok) return NextResponse.json({ error: "Insert failed" }, { status: 500 });
   const rows = await res.json();
-  return NextResponse.json(rows[0], { status: 201 });
+  const saved = rows[0] as BroadcastRow;
+
+  // ── Send push notification to all matching subscribers ─────────────────────
+  // Fire-and-forget — don't let push failures block the 201 response.
+  sendBroadcastPush(saved).catch((err) =>
+    console.error("[broadcasts] push error:", err),
+  );
+
+  return NextResponse.json(saved, { status: 201 });
 }
 
 // ── PATCH ─────────────────────────────────────────────────────────────────────

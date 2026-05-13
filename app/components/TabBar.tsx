@@ -15,10 +15,12 @@ const ATHLETE_TABS = [
   { href: "/you",     labelKey: "nav.you",     icon: YouIcon     },
 ] as const;
 
-// Coach mode: only the dashboard + profile (no athlete tabs)
+// Coach mode: home + athletes + activity + profile
 const COACH_TABS = [
-  { href: "/coach", labelKey: "nav.coach", icon: CoachTabIcon, isCoach: true  },
-  { href: "/you",   labelKey: "nav.you",   icon: YouIcon,      isCoach: true  },
+  { href: "/coach",          labelKey: "nav.coachHome",     icon: CoachHomeIcon,     isCoach: true },
+  { href: "/coach/athletes", labelKey: "nav.coachAthletes", icon: CoachAthletesIcon, isCoach: true },
+  { href: "/coach/activity", labelKey: "nav.coachActivity", icon: CoachActivityIcon, isCoach: true },
+  { href: "/you",            labelKey: "nav.you",           icon: YouIcon,           isCoach: true },
 ] as const;
 
 interface Props {
@@ -59,7 +61,9 @@ export default function TabBar({ planTier = "pr", role }: Props) {
       <div className="relative flex items-stretch justify-around px-1">
         {tabs.map(({ href, labelKey, icon: Icon, ...rest }) => {
           const isCoachTab = "isCoach" in rest && rest.isCoach;
-          const active = pathname === href || pathname.startsWith(href + "/");
+          const active = href === "/coach"
+            ? pathname === "/coach"
+            : pathname === href || pathname.startsWith(href + "/");
           const showBadge = href === "/today" && !checkinDone;
           const locked = !isCoach && (
             (href === "/library" && !canAccessTools(planTier)) ||
@@ -170,6 +174,38 @@ function CoachTabIcon({ active }: { active: boolean }) {
       <path d="M1.5 16c0-2.485 2.462-4.5 5.5-4.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" />
       <circle cx="14" cy="7" r="2.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} />
       <path d="M18.5 16c0-2.485-2.462-4.5-5.5-4.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Dashboard/home icon for coach home tab
+function CoachHomeIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none" aria-hidden>
+      <path d="M2 7.5L10 2l8 5.5V18H13v-5H7v5H2V7.5z"
+        stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinejoin="round"
+        fill={active ? "currentColor" : "none"} fillOpacity={active ? 0.15 : 0} />
+    </svg>
+  );
+}
+
+// Two-people / athletes icon
+function CoachAthletesIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none" aria-hidden>
+      <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} />
+      <path d="M1.5 16c0-2.485 2.462-4.5 5.5-4.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" />
+      <circle cx="14" cy="7" r="2.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} />
+      <path d="M18.5 16c0-2.485-2.462-4.5-5.5-4.5" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Activity / feed icon
+function CoachActivityIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" className="w-5 h-5" fill="none" aria-hidden>
+      <path d="M2 10h2.5l2-4 3 8 2-4H18" stroke="currentColor" strokeWidth={active ? 1.8 : 1.5} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

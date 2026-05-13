@@ -12,4 +12,16 @@ import type { Dict } from "./en";
  *   - Powerlifting terms stay English where standard (Squat, Bench, Deadlift).
  *   - Keep brand "PowerFlow" in English.
  */
-export const fr: Partial<Dict> = {};
+export const fr: Partial<Dict> = {
+  nav: {
+    home: "Accueil",
+    journal: "Journal",
+    course: "Cours",
+    tools: "Outils",
+    you: "Toi",
+    coach: "Coach",
+    coachHome: "Accueil",
+    coachAthletes: "Athlètes",
+    coachActivity: "Activité",
+  },
+};

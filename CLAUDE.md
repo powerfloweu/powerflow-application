@@ -17,12 +17,12 @@ heading structure without updating the parser.
 ## Roadmap
 
 ### Payments & Tiers
-- [~] Stripe payment for all three tiers (opener / second / pr) with upgrade options
+- [x] Stripe payment for all three tiers (opener / second / pr) with upgrade options
 
 ### Coach AI
 - [ ] Clarice voice install
 - [ ] Voice selector for Coach AI
-- [ ] Coach dashboard (replace "just select an athlete" with a real dashboard)
+- [x] Coach dashboard (replace "just select an athlete" with a real dashboard)
 - [ ] Monthly check-in simulation
 
 ### Localization

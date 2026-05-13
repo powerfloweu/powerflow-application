@@ -597,8 +597,9 @@ export default function ChatPage() {
     setShowFeedback(false);
   };
 
-  // ElevenLabs voice ID of the athlete's coach (null = use env-var default)
+  // Voice priority: coach cloned voice → athlete preference → server default
   const [coachVoiceId, setCoachVoiceId] = React.useState<string | null>(null);
+  const [preferredVoiceId, setPreferredVoiceId] = React.useState<string | null>(null);
 
   // ── Audio / script state ───────────────────────────────────────────────────
   const [playingScriptId, setPlayingScriptId] = React.useState<string | null>(null);
@@ -671,6 +672,7 @@ export default function ChatPage() {
           return;
         }
         if (profile.coach_tts_voice_id) setCoachVoiceId(profile.coach_tts_voice_id);
+        if (profile.preferred_voice_id) setPreferredVoiceId(profile.preferred_voice_id);
         if (Array.isArray(history) && history.length > 0) {
           const loaded = history.map(
             (m: { id: string; role: "user" | "assistant"; content: string; created_at: string }) => ({
@@ -791,7 +793,7 @@ export default function ChatPage() {
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: content, ...(coachVoiceId ? { voiceId: coachVoiceId } : {}) }),
+        body: JSON.stringify({ text: content, voiceId: coachVoiceId ?? preferredVoiceId ?? undefined }),
         signal: controller.signal,
       });
       if (!res.ok) throw new Error(`TTS ${res.status}`);

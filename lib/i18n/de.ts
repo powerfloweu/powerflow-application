@@ -22,6 +22,9 @@ export const de: Dict = {
     tools: "Tools",
     you: "Du",
     coach: "Coach",
+    coachHome: "Übersicht",
+    coachAthletes: "Athleten",
+    coachActivity: "Aktivität",
   },
 
   common: {

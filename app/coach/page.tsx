@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import BottomSheet from "@/app/components/BottomSheet";
 import EntryCard from "@/app/components/EntryCard";
 import TagChip from "@/app/components/TagChip";
 import { THEME_DEFS, detectSentiment, type Sentiment, type Context } from "@/lib/journal";
@@ -2309,6 +2310,393 @@ function MiniStat({ label, value, color = "text-zinc-100" }: { label: string; va
   );
 }
 
+// ── Mobile athlete row ────────────────────────────────────────────────────────
+
+function MobileAthleteRow({ client, onClick }: { client: Client; onClick: () => void }) {
+  const { t } = useT();
+  const flagBar =
+    client.flag === "attention" ? "bg-rose-500" :
+    client.flag === "monitor"   ? "bg-amber-500" :
+    "bg-emerald-500";
+
+  const renderLastActive = (la: Client["lastActive"]): string => {
+    if (la.key === "never")     return t("coach.lastActiveNever");
+    if (la.key === "justNow")   return t("coach.lastActiveJustNow");
+    if (la.key === "yesterday") return t("coach.lastActiveYesterday");
+    if (la.key === "hoursAgo")  return t("coach.hoursAgo").replace("{h}", String(la.h));
+    if (la.key === "daysAgo")   return t("coach.lastActiveDaysAgo").replace("{n}", String(la.d));
+    return "";
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left flex items-center gap-0 hover:bg-white/[0.03] active:bg-white/5 transition"
+    >
+      {/* Colored flag bar */}
+      <div className={`flex-shrink-0 w-1 self-stretch ${flagBar} opacity-70`} />
+
+      {/* Avatar */}
+      <div className="flex-shrink-0 ml-3 mr-3">
+        {client.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={client.avatarUrl} alt={client.name} className="w-9 h-9 rounded-full border border-white/10" />
+        ) : (
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center font-saira text-xs font-bold ${
+            client.flag === "attention" ? "bg-rose-500/20 text-rose-300" :
+            client.flag === "monitor"   ? "bg-amber-500/20 text-amber-300" :
+            "bg-emerald-500/15 text-emerald-300"
+          }`}>
+            {client.initials}
+          </div>
+        )}
+      </div>
+
+      {/* Name + meta */}
+      <div className="flex-1 min-w-0 py-3">
+        <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{client.name}</p>
+        <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
+          {client.entriesThisWeek > 0
+            ? `${client.entriesThisWeek} ${client.entriesThisWeek === 1 ? "entry" : "entries"} this week`
+            : renderLastActive(client.lastActive)
+          }
+        </p>
+      </div>
+
+      {/* Right: sparkline + positive % */}
+      <div className="flex-shrink-0 flex flex-col items-end gap-1 pr-4 py-3">
+        <SentimentSparkline data={client.sentimentWeek} />
+        <span className={`font-saira text-xs font-bold tabular-nums ${
+          client.positiveRate >= 60 ? "text-emerald-400" :
+          client.positiveRate >= 40 ? "text-amber-400" :
+          "text-rose-400"
+        }`}>{client.positiveRate}%</span>
+      </div>
+    </button>
+  );
+}
+
+// ── Mobile athlete sheet ───────────────────────────────────────────────────────
+
+type SheetTab = "overview" | "activity" | "profile";
+
+function MobileAthleteSheet({
+  client,
+  coachNote,
+  onNoteChange,
+  noteSaving,
+  feedbackByEntry,
+  onFeedbackSaved,
+}: {
+  client: Client;
+  coachNote: string;
+  onNoteChange: (id: string, val: string) => void;
+  noteSaving: boolean;
+  feedbackByEntry: Record<string, { id: string; content: string; created_at: string }>;
+  onFeedbackSaved: (athleteId: string, entryId: string, fb: { id: string; content: string; created_at: string }) => void;
+}) {
+  const { t } = useT();
+  const [tab, setTab] = React.useState<SheetTab>("overview");
+  const [showNotes, setShowNotes] = React.useState(false);
+  const flag = FLAG_CONFIG[client.flag];
+
+  return (
+    <div className="space-y-4">
+      {/* Flag + positive rate row */}
+      <div className="flex items-center gap-3">
+        <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.18em] ${flag.border} ${flag.text} ${flag.bg}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${flag.dot}`} />
+          {t(flag.labelKey)}
+        </span>
+        <span className={`font-saira text-sm font-bold tabular-nums ${
+          client.positiveRate >= 60 ? "text-emerald-400" :
+          client.positiveRate >= 40 ? "text-amber-400" : "text-rose-400"
+        }`}>{client.positiveRate}% positive</span>
+        <span className={`font-saira text-sm ${TREND_COLOR[client.trend]}`}>
+          {TREND_ICON[client.trend]}
+        </span>
+        {/* Notes toggle */}
+        <button
+          type="button"
+          onClick={() => setShowNotes((v) => !v)}
+          className={`ml-auto rounded-full w-7 h-7 flex items-center justify-center border transition ${
+            showNotes ? "border-purple-500/50 bg-purple-500/20 text-purple-300" : "border-white/10 text-zinc-400 hover:text-zinc-200"
+          }`}
+          title="Coach notes"
+        >
+          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" aria-hidden>
+            <path d="M2 2h12v9H9.5l-2 3-1-3H2V2z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+            <path d="M5 5.5h6M5 8h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Notes panel */}
+      {showNotes && (
+        <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 space-y-1.5">
+          <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-purple-300">
+            Coach notes {noteSaving ? "· Saving…" : ""}
+          </p>
+          <textarea
+            value={coachNote}
+            onChange={(e) => onNoteChange(client.id, e.target.value)}
+            rows={4}
+            placeholder="Private notes about this athlete…"
+            className="w-full bg-transparent font-saira text-sm text-zinc-200 placeholder:text-zinc-500 resize-none focus:outline-none"
+          />
+        </div>
+      )}
+
+      {/* Tab segmented control */}
+      <div className="flex rounded-xl border border-white/8 overflow-hidden">
+        {([
+          { key: "overview", label: "Overview" },
+          { key: "activity", label: "Activity" },
+          { key: "profile",  label: "Profile"  },
+        ] as { key: SheetTab; label: string }[]).map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`flex-1 py-2 font-saira text-[10px] uppercase tracking-[0.16em] transition ${
+              tab === key
+                ? "bg-purple-500/20 text-white"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Overview tab ── */}
+      {tab === "overview" && (
+        <div className="space-y-4">
+          {/* 7-day sparkline */}
+          <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
+            <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
+              7-day sentiment
+            </p>
+            <div className="flex items-end gap-1.5">
+              {client.sentimentWeek.map((v, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <div
+                    className={`w-full rounded-sm ${
+                      v >= 60 ? "bg-emerald-500/60" : v >= 40 ? "bg-amber-500/60" : v > 0 ? "bg-rose-500/60" : "bg-white/8"
+                    }`}
+                    style={{ height: `${Math.max(v, 4)}%`, maxHeight: "48px", minHeight: "4px" }}
+                  />
+                  <span className="font-saira text-[8px] text-zinc-500">
+                    {["M","T","W","T","F","S","S"][i]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent check-ins */}
+          {client.weeklyCheckins.length > 0 && (
+            <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
+              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
+                Recent check-ins
+              </p>
+              <div className="space-y-2">
+                {client.weeklyCheckins.slice(0, 4).map((wc, i) => {
+                  const avg = Math.round(
+                    (wc.mood_rating + wc.training_quality + wc.readiness_rating + wc.energy_rating + wc.sleep_rating) / 5
+                  );
+                  const color = avg >= 7 ? "text-emerald-400" : avg >= 5 ? "text-amber-400" : "text-rose-400";
+                  return (
+                    <div key={i} className="flex items-center justify-between">
+                      <span className="font-saira text-xs text-zinc-400">
+                        {new Date(wc.week_start ?? wc.created_at ?? "").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      </span>
+                      <span className={`font-saira text-sm font-bold tabular-nums ${color}`}>{avg}/10</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Top themes */}
+          {client.themes.length > 0 && (
+            <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
+              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
+                Top themes this week
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {client.themes.slice(0, 5).map((theme) => (
+                  <span
+                    key={theme.label}
+                    className="rounded-full border border-white/10 px-2.5 py-1 font-saira text-[10px] text-zinc-300"
+                  >
+                    {theme.label}
+                    {theme.trend === "up" && <span className="text-emerald-400 ml-1">↑</span>}
+                    {theme.trend === "down" && <span className="text-rose-400 ml-1">↓</span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {client.themes.length === 0 && client.entriesThisWeek === 0 && (
+            <p className="font-saira text-sm text-zinc-400 text-center py-4">
+              No entries this week
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ── Activity tab ── */}
+      {tab === "activity" && (
+        <div className="space-y-3">
+          {(() => {
+            // Merge journal entries + training logs, sorted newest first
+            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 14);
+            const journalItems = client.allEntries
+              .filter((e) => new Date(e.created_at) >= cutoff)
+              .map((e) => ({
+                id: e.id,
+                type: "journal" as const,
+                date: new Date(e.created_at),
+                preview: e.content.slice(0, 100),
+                sentiment: e.sentiment,
+              }));
+            const trainingItems = client.allTrainingWithContent
+              .filter((e) => new Date(e.entry_date + "T12:00:00") >= cutoff)
+              .map((e) => ({
+                id: e.id,
+                type: "training" as const,
+                date: new Date(e.entry_date + "T12:00:00"),
+                preview: [e.thoughts_after, e.what_went_well, e.frustrations].filter(Boolean).join(" · ").slice(0, 100),
+                sentiment: null,
+              }));
+            const all = [...journalItems, ...trainingItems]
+              .sort((a, b) => b.date.getTime() - a.date.getTime())
+              .slice(0, 20);
+
+            if (all.length === 0) return (
+              <p className="font-saira text-sm text-zinc-400 text-center py-4">
+                No activity in the last 14 days
+              </p>
+            );
+
+            return all.map((item) => (
+              <div
+                key={item.type + item.id}
+                className="rounded-xl border border-white/6 bg-surface-alt p-3 space-y-1.5"
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-full px-2 py-0.5 font-saira text-[9px] uppercase tracking-[0.16em] ${
+                    item.type === "journal"
+                      ? "bg-purple-500/15 text-purple-300 border border-purple-500/20"
+                      : "bg-blue-500/15 text-blue-300 border border-blue-500/20"
+                  }`}>
+                    {item.type}
+                  </span>
+                  <span className="font-saira text-[10px] text-zinc-400">
+                    {item.date.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  </span>
+                  {item.sentiment === "positive" && <span className="ml-auto text-emerald-400 text-xs">+</span>}
+                  {item.sentiment === "negative" && <span className="ml-auto text-rose-400 text-xs">–</span>}
+                </div>
+                {item.preview && (
+                  <p className="font-saira text-xs text-zinc-300 leading-relaxed line-clamp-2">
+                    {item.preview}
+                  </p>
+                )}
+              </div>
+            ));
+          })()}
+        </div>
+      )}
+
+      {/* ── Profile tab ── */}
+      {tab === "profile" && (
+        <div className="space-y-4">
+          {/* Lifts */}
+          {(client.profile.squat_current_kg || client.profile.bench_current_kg || client.profile.deadlift_current_kg) && (
+            <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
+              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">Current → Goal</p>
+              {[
+                { label: "SQ", cur: client.profile.squat_current_kg, goal: client.profile.squat_goal_kg },
+                { label: "BP", cur: client.profile.bench_current_kg, goal: client.profile.bench_goal_kg },
+                { label: "DL", cur: client.profile.deadlift_current_kg, goal: client.profile.deadlift_goal_kg },
+              ].filter((l) => l.cur).map((l) => (
+                <div key={l.label} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
+                  <span className="font-saira text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-400 w-8">{l.label}</span>
+                  <span className="font-saira text-sm text-zinc-200 tabular-nums">
+                    {l.cur}kg
+                    {l.goal && <span className="text-zinc-400"> → {l.goal}kg</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Test scores */}
+          {(client.testScores.sat.length > 0 || client.testScores.acsi.length > 0 || client.testScores.csai.length > 0 || client.testScores.das.length > 0) && (
+            <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
+              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">Latest test scores</p>
+              <div className="grid grid-cols-2 gap-2">
+                {client.testScores.sat[0] && (
+                  <div className="rounded-lg border border-white/5 p-2.5 text-center">
+                    <p className="font-saira text-xs font-bold text-purple-300">{client.testScores.sat[0].total_score}</p>
+                    <p className="font-saira text-[9px] text-zinc-400 uppercase tracking-[0.14em]">SAT</p>
+                  </div>
+                )}
+                {client.testScores.acsi[0] && (
+                  <div className="rounded-lg border border-white/5 p-2.5 text-center">
+                    <p className="font-saira text-xs font-bold text-blue-300">{client.testScores.acsi[0].total_score}</p>
+                    <p className="font-saira text-[9px] text-zinc-400 uppercase tracking-[0.14em]">ACSI</p>
+                  </div>
+                )}
+                {client.testScores.csai[0] && (
+                  <div className="rounded-lg border border-white/5 p-2.5 text-center">
+                    <p className="font-saira text-xs font-bold text-amber-300">{client.testScores.csai[0].score_cognitive}</p>
+                    <p className="font-saira text-[9px] text-zinc-400 uppercase tracking-[0.14em]">CSAI-2</p>
+                  </div>
+                )}
+                {client.testScores.das[0] && (
+                  <div className="rounded-lg border border-white/5 p-2.5 text-center">
+                    <p className="font-saira text-xs font-bold text-rose-300">{client.testScores.das[0].total_score}</p>
+                    <p className="font-saira text-[9px] text-zinc-400 uppercase tracking-[0.14em]">DAS</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Meet date + other key fields */}
+          <div className="rounded-xl border border-white/6 bg-surface-alt p-4 space-y-2">
+            <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">Profile</p>
+            {client.profile.meet_date && (
+              <div className="flex justify-between">
+                <span className="font-saira text-xs text-zinc-400">Meet date</span>
+                <span className="font-saira text-xs text-zinc-200">{new Date(client.profile.meet_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+              </div>
+            )}
+            {client.profile.training_days_per_week && (
+              <div className="flex justify-between">
+                <span className="font-saira text-xs text-zinc-400">Training days/wk</span>
+                <span className="font-saira text-xs text-zinc-200">{client.profile.training_days_per_week}</span>
+              </div>
+            )}
+            {client.profile.weight_category && (
+              <div className="flex justify-between">
+                <span className="font-saira text-xs text-zinc-400">Weight class</span>
+                <span className="font-saira text-xs text-zinc-200">{client.profile.weight_category}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Roster summary bar ─────────────────────────────────────────────────────────
 
 function RosterSummary({ clients }: { clients: Client[] }) {
@@ -2554,6 +2942,230 @@ function sortClients(clients: Client[], sort: SortKey): Client[] {
   });
 }
 
+// ── Desktop: stat card ────────────────────────────────────────────────────────
+
+function DesktopStatCard({
+  value, label, accent,
+}: {
+  value: string;
+  label: string;
+  accent: "purple" | "rose" | "amber" | "emerald" | "zinc";
+}) {
+  const palette = {
+    purple:  { text: "text-purple-300",  bg: "bg-purple-500/10",  border: "border-purple-500/20" },
+    rose:    { text: "text-rose-300",    bg: "bg-rose-500/10",    border: "border-rose-500/20" },
+    amber:   { text: "text-amber-300",   bg: "bg-amber-500/10",   border: "border-amber-500/20" },
+    emerald: { text: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+    zinc:    { text: "text-zinc-300",    bg: "bg-white/4",        border: "border-white/8" },
+  };
+  const c = palette[accent];
+  return (
+    <div className={`rounded-2xl border ${c.border} ${c.bg} px-5 py-4`}>
+      <p className={`font-saira text-2xl font-extrabold tabular-nums ${c.text}`}>{value}</p>
+      <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400 mt-1.5">{label}</p>
+    </div>
+  );
+}
+
+// ── Desktop: Coach home dashboard (shown when no athlete selected) ─────────────
+
+function CoachHomePanel({
+  clients,
+  profile,
+  attentionCount,
+  noCheckinCount,
+  silentCount,
+  onSelect,
+}: {
+  clients: Client[];
+  profile: CoachProfile | null;
+  attentionCount: number;
+  noCheckinCount: number;
+  silentCount: number;
+  onSelect: (id: string) => void;
+}) {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = profile?.display_name.split(" ")[0] ?? "";
+  const todayStr = new Date().toLocaleDateString("en-GB", {
+    weekday: "long", day: "numeric", month: "long",
+  });
+
+  const avgPositive = clients.length
+    ? Math.round(clients.reduce((s, c) => s + c.positiveRate, 0) / clients.length)
+    : 0;
+
+  const attentionClients = clients.filter((c) => c.flag === "attention");
+
+  // Cross-athlete recent activity feed
+  type FeedItem = {
+    clientId: string; clientName: string; clientInitials: string;
+    avatarUrl: string | null; flag: Flag;
+    type: "journal" | "training"; content: string; date: string;
+    sentiment?: string;
+  };
+  const feedItems: FeedItem[] = [];
+  for (const c of clients) {
+    for (const e of c.allEntries.slice(0, 3)) {
+      feedItems.push({
+        clientId: c.id, clientName: c.name, clientInitials: c.initials,
+        avatarUrl: c.avatarUrl, flag: c.flag,
+        type: "journal", content: e.content, date: e.created_at, sentiment: e.sentiment,
+      });
+    }
+    for (const e of c.allTrainingWithContent.slice(0, 2)) {
+      const text = [e.thoughts_before, e.thoughts_after, e.what_went_well, e.frustrations, e.next_session]
+        .filter(Boolean).join(" ");
+      feedItems.push({
+        clientId: c.id, clientName: c.name, clientInitials: c.initials,
+        avatarUrl: c.avatarUrl, flag: c.flag,
+        type: "training", content: text, date: e.entry_date + "T12:00:00",
+      });
+    }
+  }
+  feedItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  if (clients.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center max-w-sm px-8">
+          <p className="text-5xl mb-5">🏋️</p>
+          <p className="font-saira text-base font-semibold text-zinc-300 mb-2">No athletes yet</p>
+          <p className="font-saira text-sm text-zinc-500 leading-relaxed">
+            Share your invite link to get started. Athletes who join via your link will appear here.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 overflow-y-auto h-full">
+      {/* Greeting */}
+      <div className="mb-7">
+        <h1 className="font-saira text-2xl font-bold text-white">
+          {greeting}{firstName ? `, ${firstName}` : ""} 👋
+        </h1>
+        <p className="font-saira text-sm text-zinc-400 mt-1">{todayStr}</p>
+      </div>
+
+      {/* Stats strip */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        <DesktopStatCard value={String(clients.length)} label="Athletes" accent="purple" />
+        <DesktopStatCard
+          value={String(attentionCount)}
+          label="Need attention"
+          accent={attentionCount > 0 ? "rose" : "emerald"}
+        />
+        <DesktopStatCard
+          value={String(noCheckinCount)}
+          label="No check-in this week"
+          accent={noCheckinCount > 0 ? "amber" : "emerald"}
+        />
+        <DesktopStatCard
+          value={clients.length > 0 ? `${avgPositive}%` : "—"}
+          label="Avg positive"
+          accent={avgPositive >= 60 ? "emerald" : avgPositive >= 40 ? "amber" : "rose"}
+        />
+      </div>
+
+      {/* Two-column body */}
+      <div className="grid grid-cols-5 gap-6">
+        {/* Left 2 cols: Attention athletes */}
+        <div className="col-span-2">
+          <p className="font-saira text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
+            Needs attention
+          </p>
+          {attentionClients.length === 0 ? (
+            <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-5 text-center">
+              <p className="text-2xl mb-2">✓</p>
+              <p className="font-saira text-sm font-semibold text-emerald-400">Everyone&apos;s on track</p>
+              <p className="font-saira text-xs text-zinc-400 mt-1">No athletes flagged for attention</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {attentionClients.map((c) => {
+                const fc = FLAG_CONFIG[c.flag];
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => onSelect(c.id)}
+                    className="w-full text-left rounded-xl border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 transition px-3 py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      {c.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.avatarUrl} alt={c.name} className="w-9 h-9 rounded-full flex-shrink-0 border border-rose-500/20" />
+                      ) : (
+                        <div className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-xs font-bold ${fc.bg} ${fc.text} border ${fc.border}`}>
+                          {c.initials}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{c.name}</p>
+                        <p className="font-saira text-xs text-zinc-400">{c.positiveRate}% positive · {c.entriesThisWeek} entries this week</p>
+                      </div>
+                      <SentimentSparkline data={c.sentimentWeek} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Right 3 cols: Recent activity feed */}
+        <div className="col-span-3">
+          <p className="font-saira text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
+            Recent activity
+          </p>
+          {feedItems.length === 0 ? (
+            <p className="font-saira text-sm text-zinc-500 text-center py-10">No entries yet</p>
+          ) : (
+            <div className="space-y-2">
+              {feedItems.slice(0, 8).map((item, i) => {
+                const fc = FLAG_CONFIG[item.flag];
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => onSelect(item.clientId)}
+                    className="w-full text-left rounded-xl border border-white/5 bg-surface-alt hover:bg-white/[0.04] transition px-4 py-2.5"
+                  >
+                    <div className="flex items-center gap-3">
+                      {item.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.avatarUrl} alt={item.clientName} className="w-7 h-7 rounded-full flex-shrink-0 border border-white/10" />
+                      ) : (
+                        <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-[10px] font-bold ${fc.bg} ${fc.text}`}>
+                          {item.clientInitials}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-saira text-xs font-semibold text-zinc-200">{item.clientName}</span>
+                          <span className={`font-saira text-[9px] uppercase tracking-wider font-bold ${item.type === "journal" ? "text-purple-400" : "text-blue-400"}`}>
+                            {item.type}
+                          </span>
+                        </div>
+                        <p className="font-saira text-xs text-zinc-400 truncate">{item.content.slice(0, 100)}</p>
+                      </div>
+                      <span className="font-saira text-[10px] text-zinc-500 flex-shrink-0 whitespace-nowrap">
+                        {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Compact athlete row (desktop sidebar roster) ───────────────────────────────
 
 function CompactAthleteRow({
@@ -2617,10 +3229,10 @@ function CompactAthleteRow({
           {client.entriesThisWeek} entries · {renderLastActive(client.lastActive)}
         </p>
       </div>
-      {/* Flag dot + positive % */}
+      {/* Sparkline + positive % */}
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-        <span className={`inline-block w-2 h-2 rounded-full ${flag.dot}`} />
-        <span className={`font-saira text-xs font-semibold ${
+        <SentimentSparkline data={client.sentimentWeek} />
+        <span className={`font-saira text-[10px] font-semibold tabular-nums ${
           client.positiveRate >= 60 ? "text-emerald-400" :
           client.positiveRate >= 40 ? "text-amber-400" :
           "text-rose-400"
@@ -2663,6 +3275,9 @@ export default function CoachPage() {
 
   // Desktop two-panel: selected athlete
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+
+  // Mobile: selected athlete for bottom sheet
+  const [mobileSelectedId, setMobileSelectedId] = React.useState<string | null>(null);
 
   // What's New / broadcast modal
   const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
@@ -2800,6 +3415,25 @@ export default function CoachPage() {
     [clients, selectedId],
   );
 
+  const mobileSelectedClient = React.useMemo(
+    () => clients.find((c) => c.id === mobileSelectedId) ?? null,
+    [clients, mobileSelectedId],
+  );
+
+  const noCheckinThisWeek = React.useMemo(() => {
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    return clients.filter((c) =>
+      !c.weeklyCheckins.some((wc) => new Date(wc.week_start ?? wc.created_at ?? "") >= weekStart)
+    ).length;
+  }, [clients]);
+
+  const silentThisWeek = React.useMemo(
+    () => clients.filter((c) => c.entriesThisWeek === 0).length,
+    [clients],
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-surface-base flex items-center justify-center">
@@ -2823,129 +3457,146 @@ export default function CoachPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(168,85,247,0.11),transparent_55%)]" />
       </div>
 
-      {/* ══ MOBILE layout (stacked cards) ══════════════════════════════════════ */}
-      <div className="md:hidden relative z-10 min-h-screen pt-24 pb-20">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      {/* ══ MOBILE HOME view ══════════════════════════════════════════════════ */}
+      <div className="md:hidden relative z-10 min-h-screen pt-16 pb-24">
+        <div className="mx-auto max-w-lg px-4">
 
-          {/* Page header */}
-          <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="font-saira text-xs font-semibold uppercase tracking-[0.28em] text-purple-300">
-                PowerFlow · Coach
-              </p>
-              <h1 className="mt-2 font-saira text-3xl font-extrabold uppercase tracking-[0.12em]">
-                {t("coach.pageHeading")}
-              </h1>
-              <p className="mt-3 font-saira text-sm text-zinc-400 max-w-xl">
-                {t("coach.pageSubtitle")}
-              </p>
-            </div>
-            <div className="flex gap-3 self-start mt-1">
-              <Link href="/tests" className="rounded-full border border-white/10 px-4 py-2 font-saira text-[11px] text-zinc-400 hover:border-purple-400/50 hover:text-zinc-200 transition">
-                {t("coach.testsLink")}
-              </Link>
-            </div>
+          {/* Header */}
+          <div className="mb-5 pt-4">
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-400">
+              PowerFlow · Coach
+            </p>
+            <h1 className="mt-1 font-saira text-2xl font-extrabold uppercase tracking-tight text-white">
+              {profile?.display_name ? `Hey, ${profile.display_name.split(" ")[0]}` : t("coach.pageHeading")}
+            </h1>
           </div>
 
-          {/* Coach header */}
-          {profile && <CoachHeader profile={profile} />}
+          {/* Invite / billing when no athletes yet */}
+          {profile?.coach_code && clients.length === 0 && <InvitePanel coachCode={profile.coach_code} />}
+          <CoachBillingCard athleteCount={clients.length} hasSubscription={!!profile?.stripe_coach_sub_id} />
 
-          {/* Error */}
-          {error && (
-            <div className="mb-8 rounded-2xl border border-red-500/20 bg-red-500/5 px-5 py-4">
-              <p className="font-saira text-sm text-red-300">{error}</p>
+          {/* ── Summary strip ── */}
+          {clients.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              {/* Needs attention */}
+              <div className={`rounded-2xl border p-3 text-center ${
+                attentionAthletes.length > 0
+                  ? "border-rose-500/30 bg-rose-500/8"
+                  : "border-white/6 bg-surface-alt"
+              }`}>
+                <p className={`font-saira text-2xl font-extrabold ${attentionAthletes.length > 0 ? "text-rose-300" : "text-zinc-400"}`}>
+                  {attentionAthletes.length}
+                </p>
+                <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400 mt-0.5 leading-tight">
+                  {t("coach.attention")}
+                </p>
+              </div>
+              {/* No check-in */}
+              <div className={`rounded-2xl border p-3 text-center ${
+                noCheckinThisWeek > 0
+                  ? "border-amber-500/30 bg-amber-500/8"
+                  : "border-white/6 bg-surface-alt"
+              }`}>
+                <p className={`font-saira text-2xl font-extrabold ${noCheckinThisWeek > 0 ? "text-amber-300" : "text-zinc-400"}`}>
+                  {noCheckinThisWeek}
+                </p>
+                <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400 mt-0.5 leading-tight">
+                  No check-in
+                </p>
+              </div>
+              {/* Silent this week */}
+              <div className={`rounded-2xl border p-3 text-center ${
+                silentThisWeek > 0
+                  ? "border-zinc-500/30 bg-zinc-500/8"
+                  : "border-white/6 bg-surface-alt"
+              }`}>
+                <p className={`font-saira text-2xl font-extrabold ${silentThisWeek > 0 ? "text-zinc-300" : "text-zinc-400"}`}>
+                  {silentThisWeek}
+                </p>
+                <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400 mt-0.5 leading-tight">
+                  Silent 7d
+                </p>
+              </div>
             </div>
           )}
 
-          {/* Coach billing */}
-          <CoachBillingCard
-            athleteCount={clients.length}
-            hasSubscription={!!profile?.stripe_coach_sub_id}
-          />
-
-          {/* Invite link */}
-          {profile?.coach_code && <InvitePanel coachCode={profile.coach_code} />}
-
-          {/* Roster summary */}
-          {clients.length > 0 && <RosterSummary clients={clients} />}
-
-          {/* Attention banner */}
-          <AttentionBanner attentionAthletes={attentionAthletes} />
-
-          {/* Empty state */}
+          {/* ── Empty state ── */}
           {!error && clients.length === 0 && (
-            <div className="rounded-3xl border border-white/5 bg-surface-alt p-14 text-center mb-8">
-              <p className="font-saira text-3xl mb-4">&#128101;</p>
-              <p className="font-saira text-sm font-semibold text-zinc-300 mb-2">{t("coach.noAthletesTitle")}</p>
-              <p className="font-saira text-xs text-zinc-400 max-w-xs mx-auto mb-6">
-                {t("coach.noAthletesBody")}
-              </p>
+            <div className="rounded-3xl border border-white/5 bg-surface-alt p-10 text-center mt-4">
+              <p className="font-saira text-3xl mb-3">👥</p>
+              <p className="font-saira text-sm font-semibold text-zinc-300 mb-1">{t("coach.noAthletesTitle")}</p>
+              <p className="font-saira text-xs text-zinc-400 max-w-xs mx-auto mb-4">{t("coach.noAthletesBody")}</p>
               {profile?.coach_code && (
                 <p className="font-saira text-xs text-purple-400 font-mono">/join/{profile.coach_code}</p>
               )}
             </div>
           )}
 
-          {/* Controls */}
+          {/* ── Priority athletes (attention + monitor) ── */}
+          {clients.length > 0 && (() => {
+            const priority = filtered.filter((c) => c.flag !== "stable");
+            const stable   = filtered.filter((c) => c.flag === "stable");
+            return (
+              <>
+                {priority.length > 0 && (
+                  <div className="mb-4">
+                    <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-2 px-1">
+                      {t("coach.attention")} &amp; {t("coach.monitor")}
+                    </p>
+                    <div className="rounded-2xl border border-white/6 overflow-hidden divide-y divide-white/5">
+                      {priority.map((c) => (
+                        <MobileAthleteRow key={c.id} client={c} onClick={() => setMobileSelectedId(c.id)} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {stable.length > 0 && (
+                  <div className="mb-4">
+                    <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-2 px-1">
+                      {t("coach.onTrack")} · {stable.length}
+                    </p>
+                    <div className="rounded-2xl border border-white/6 overflow-hidden divide-y divide-white/5">
+                      {stable.map((c) => (
+                        <MobileAthleteRow key={c.id} client={c} onClick={() => setMobileSelectedId(c.id)} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+
+          {/* ── See all link ── */}
           {clients.length > 0 && (
-            <div className="flex flex-wrap items-center gap-3 mb-5">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("coach.searchPlaceholder")}
-                className="rounded-xl border border-zinc-700/70 bg-surface-section px-4 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30 w-52"
-              />
-              <div className="flex gap-1.5 ml-auto">
-                <span className="font-saira text-[10px] text-zinc-400 self-center mr-1 uppercase tracking-[0.18em]">{t("coach.sortLabel")}</span>
-                {([
-                  { key: "flag",     label: t("coach.sortPriority") },
-                  { key: "positive", label: t("coach.sortPositive") },
-                  { key: "entries",  label: t("coach.sortActivity") },
-                  { key: "name",     label: t("coach.sortName") },
-                ] as { key: SortKey; label: string }[]).map((s) => (
-                  <button
-                    key={s.key}
-                    type="button"
-                    onClick={() => setSort(s.key)}
-                    className={`rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.13em] transition ${
-                      sort === s.key
-                        ? "border-purple-400 bg-purple-500/20 text-white"
-                        : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+            <div className="mt-2 mb-6 text-center">
+              <Link
+                href="/coach/athletes"
+                className="font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-400 hover:text-zinc-200 transition"
+              >
+                Manage roster →
+              </Link>
             </div>
           )}
 
-          {/* Client list */}
-          <div className="space-y-4">
-            {filtered.map((client) => (
-              <ClientCard
-                key={client.id}
-                client={client}
-                coachNote={coachNotes[client.id] ?? ""}
-                noteSavedAt={notesSavedAt[client.id] ?? null}
-                noteSaving={notesSaving[client.id] ?? false}
+          {/* ── Athlete detail bottom sheet ── */}
+          {mobileSelectedClient && (
+            <BottomSheet
+              open={!!mobileSelectedClient}
+              onClose={() => setMobileSelectedId(null)}
+              title={mobileSelectedClient.name}
+            >
+              <MobileAthleteSheet
+                client={mobileSelectedClient}
+                coachNote={coachNotes[mobileSelectedClient.id] ?? ""}
                 onNoteChange={handleNoteChange}
-                feedbackByEntry={feedbackByAthlete[client.id] ?? {}}
+                noteSaving={notesSaving[mobileSelectedClient.id] ?? false}
+                feedbackByEntry={feedbackByAthlete[mobileSelectedClient.id] ?? {}}
                 onFeedbackSaved={handleFeedbackSaved}
-                trainingNoteByEntry={trainingNoteByAthlete[client.id] ?? {}}
-                onTrainingNoteSaved={handleTrainingNoteSaved}
-                sentimentWindow={sentimentWindows[client.id] ?? 7}
-                onSentimentWindowChange={handleSentimentWindowChange}
               />
-            ))}
-            {clients.length > 0 && filtered.length === 0 && (
-              <p className="font-saira text-sm text-zinc-400 text-center py-10">{t("coach.noSearchMatch")}</p>
-            )}
-          </div>
+            </BottomSheet>
+          )}
 
-          {/* Footer */}
-          <div className="mt-12" />
         </div>
       </div>
 
@@ -3078,7 +3729,7 @@ export default function CoachPage() {
             </div>
           )}
 
-          {/* Roster list */}
+          {/* Roster list — grouped by flag */}
           <div className="flex-1 overflow-y-auto">
             {clients.length === 0 ? (
               <div className="px-5 py-10 text-center">
@@ -3090,105 +3741,163 @@ export default function CoachPage() {
               </div>
             ) : filtered.length === 0 ? (
               <p className="font-saira text-sm text-zinc-400 text-center py-10">{t("coach.noSearchMatch")}</p>
-            ) : (
-              filtered.map((client) => (
+            ) : (() => {
+              const priorityRows = filtered.filter((c) => c.flag === "attention" || c.flag === "monitor");
+              const stableRows   = filtered.filter((c) => c.flag === "stable");
+              const renderRow = (client: Client) => (
                 <CompactAthleteRow
                   key={client.id}
                   client={client}
                   selected={selectedId === client.id}
                   onClick={() => setSelectedId(selectedId === client.id ? null : client.id)}
                 />
-              ))
-            )}
+              );
+              return (
+                <>
+                  {priorityRows.length > 0 && (
+                    <>
+                      <div className="px-4 pt-3 pb-1.5">
+                        <span className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-rose-400/70">
+                          Priority
+                        </span>
+                      </div>
+                      {priorityRows.map(renderRow)}
+                    </>
+                  )}
+                  {stableRows.length > 0 && (
+                    <>
+                      <div className={`px-4 pb-1.5 ${priorityRows.length > 0 ? "pt-3 border-t border-white/5 mt-1" : "pt-3"}`}>
+                        <span className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                          Stable
+                        </span>
+                      </div>
+                      {stableRows.map(renderRow)}
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
         </aside>
 
-        {/* ── Right panel: athlete detail ── */}
-        <main className="flex-1 overflow-y-auto bg-surface-base">
+        {/* ── Right panel ── */}
+        <main className="flex-1 flex flex-col overflow-hidden bg-surface-base">
           {selectedClient ? (
-            <div className="p-8">
-              {/* Athlete name header */}
-              <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/5">
-                {selectedClient.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={selectedClient.avatarUrl}
-                    alt={selectedClient.name}
-                    className={`w-12 h-12 rounded-full border ${
-                      selectedClient.flag === "attention" ? "border-rose-500/40" :
-                      selectedClient.flag === "monitor"   ? "border-amber-500/40" :
-                      "border-purple-500/30"
-                    }`}
-                  />
-                ) : (
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-saira text-base font-bold ${
-                    selectedClient.flag === "attention" ? "bg-rose-500/20 text-rose-200 border border-rose-500/30" :
-                    selectedClient.flag === "monitor"   ? "bg-amber-500/20 text-amber-200 border border-amber-500/30" :
-                    "bg-purple-500/20 text-purple-200 border border-purple-500/30"
-                  }`}>
-                    {selectedClient.initials}
+            <>
+              {/* Sticky athlete header */}
+              <div className="flex-shrink-0 sticky top-0 z-10 bg-surface-base/95 backdrop-blur-sm border-b border-white/6 px-8 py-5">
+                <div className="flex items-center gap-4">
+                  {/* Avatar */}
+                  {selectedClient.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={selectedClient.avatarUrl}
+                      alt={selectedClient.name}
+                      className={`w-12 h-12 rounded-full flex-shrink-0 border ${
+                        selectedClient.flag === "attention" ? "border-rose-500/40" :
+                        selectedClient.flag === "monitor"   ? "border-amber-500/40" :
+                        "border-purple-500/30"
+                      }`}
+                    />
+                  ) : (
+                    <div className={`w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-base font-bold border ${
+                      selectedClient.flag === "attention" ? "bg-rose-500/20 text-rose-200 border-rose-500/30" :
+                      selectedClient.flag === "monitor"   ? "bg-amber-500/20 text-amber-200 border-amber-500/30" :
+                      "bg-purple-500/20 text-purple-200 border-purple-500/30"
+                    }`}>
+                      {selectedClient.initials}
+                    </div>
+                  )}
+
+                  {/* Name + meta */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="font-saira text-lg font-bold text-white leading-none">{selectedClient.name}</h2>
+                      {selectedClient.isCoach && (
+                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-emerald-400">
+                          {t("coach.roleCoach")}
+                        </span>
+                      )}
+                      {/* Flag badge */}
+                      {(() => {
+                        const fc = FLAG_CONFIG[selectedClient.flag];
+                        return (
+                          <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-saira text-[9px] uppercase tracking-[0.16em] ${fc.border} ${fc.bg} ${fc.text}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${fc.dot}`} />
+                            {t(fc.labelKey)}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    <p className="font-saira text-xs text-zinc-400 mt-1">
+                      {(() => {
+                        const la = selectedClient.lastActive;
+                        const laStr = la.key === "never" ? t("coach.lastActiveNever")
+                          : la.key === "justNow" ? t("coach.lastActiveJustNow")
+                          : la.key === "yesterday" ? t("coach.lastActiveYesterday")
+                          : la.key === "hoursAgo" ? t("coach.hoursAgo").replace("{h}", String(la.h))
+                          : t("coach.lastActiveDaysAgo").replace("{n}", String((la as { key: "daysAgo"; d: number }).d));
+                        return `${selectedClient.entriesThisWeek} entries this week · last active ${laStr}`;
+                      })()}
+                    </p>
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="font-saira text-xl font-bold text-white leading-none">{selectedClient.name}</h2>
-                    {selectedClient.isCoach && (
-                      <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-saira text-[10px] uppercase tracking-wider text-emerald-400">
-                        {t("coach.roleCoach")}
-                      </span>
+
+                  {/* Right-side quick stats */}
+                  <div className="flex items-center gap-5 flex-shrink-0">
+                    <div title="7-day sentiment trend">
+                      <SentimentSparkline data={selectedClient.sentimentWeek} />
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-saira text-xl font-extrabold tabular-nums ${
+                        selectedClient.positiveRate >= 60 ? "text-emerald-300" :
+                        selectedClient.positiveRate >= 40 ? "text-amber-300" : "text-rose-300"
+                      }`}>{selectedClient.positiveRate}%</p>
+                      <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400">positive</p>
+                    </div>
+                    <span className={`font-saira text-xl font-bold ${TREND_COLOR[selectedClient.trend]}`}>
+                      {TREND_ICON[selectedClient.trend]}
+                    </span>
+                    {selectedClient.flag === "attention" && (
+                      <a
+                        href={`mailto:?subject=Checking in — ${selectedClient.displayName}&body=Hi ${selectedClient.displayName.split(" ")[0]},%0A%0AI noticed you've had a tough week. Wanted to check in — how are you doing?%0A%0ABest`}
+                        className="font-saira text-xs uppercase tracking-[0.12em] text-rose-400 border border-rose-500/20 rounded-xl px-4 py-2 hover:bg-rose-500/10 transition flex-shrink-0"
+                      >
+                        ⚠ {t("coach.emailBtn")}
+                      </a>
                     )}
                   </div>
-                  <p className="font-saira text-sm text-zinc-300 mt-1">
-                    {t("coach.lastActiveDetail")
-                      .replace("{la}", (() => {
-                        const la = selectedClient.lastActive;
-                        if (la.key === "never") return t("coach.lastActiveNever");
-                        if (la.key === "justNow") return t("coach.lastActiveJustNow");
-                        if (la.key === "yesterday") return t("coach.lastActiveYesterday");
-                        if (la.key === "hoursAgo") return t("coach.hoursAgo").replace("{h}", String(la.h));
-                        if (la.key === "daysAgo") return t("coach.lastActiveDaysAgo").replace("{n}", String(la.d));
-                        return "";
-                      })())
-                      .replace("{n}", String(selectedClient.entriesThisWeek))
-                      .replace("{pct}", String(selectedClient.positiveRate))}
-                  </p>
                 </div>
-                {selectedClient.flag === "attention" && (
-                  <a
-                    href={`mailto:?subject=Checking in — ${selectedClient.displayName}&body=Hi ${selectedClient.displayName.split(" ")[0]},%0A%0AI noticed you've had a tough week. Wanted to check in — how are you doing?%0A%0ABest`}
-                    className="flex-shrink-0 font-saira text-sm uppercase tracking-[0.12em] text-rose-400 border border-rose-500/20 rounded-xl px-4 py-2 hover:bg-rose-500/10 transition"
-                  >
-                    ⚠ {t("coach.emailBtn")}
-                  </a>
-                )}
               </div>
-              <ClientCard
-                key={selectedClient.id}
-                client={selectedClient}
-                forceOpen={true}
-                coachNote={coachNotes[selectedClient.id] ?? ""}
-                noteSavedAt={notesSavedAt[selectedClient.id] ?? null}
-                noteSaving={notesSaving[selectedClient.id] ?? false}
-                onNoteChange={handleNoteChange}
-                feedbackByEntry={feedbackByAthlete[selectedClient.id] ?? {}}
-                onFeedbackSaved={handleFeedbackSaved}
-                trainingNoteByEntry={trainingNoteByAthlete[selectedClient.id] ?? {}}
-                onTrainingNoteSaved={handleTrainingNoteSaved}
-                sentimentWindow={sentimentWindows[selectedClient.id] ?? 7}
-                onSentimentWindowChange={handleSentimentWindowChange}
-              />
-            </div>
+
+              {/* Scrollable detail body */}
+              <div className="flex-1 overflow-y-auto p-8">
+                <ClientCard
+                  key={selectedClient.id}
+                  client={selectedClient}
+                  forceOpen={true}
+                  coachNote={coachNotes[selectedClient.id] ?? ""}
+                  noteSavedAt={notesSavedAt[selectedClient.id] ?? null}
+                  noteSaving={notesSaving[selectedClient.id] ?? false}
+                  onNoteChange={handleNoteChange}
+                  feedbackByEntry={feedbackByAthlete[selectedClient.id] ?? {}}
+                  onFeedbackSaved={handleFeedbackSaved}
+                  trainingNoteByEntry={trainingNoteByAthlete[selectedClient.id] ?? {}}
+                  onTrainingNoteSaved={handleTrainingNoteSaved}
+                  sentimentWindow={sentimentWindows[selectedClient.id] ?? 7}
+                  onSentimentWindowChange={handleSentimentWindowChange}
+                />
+              </div>
+            </>
           ) : (
-            <div className="flex h-full items-center justify-center">
-              <div className="text-center px-8 max-w-sm">
-                <p className="text-5xl mb-6">👈</p>
-                <p className="font-saira text-base font-semibold text-zinc-400">{t("coach.selectAthleteHint")}</p>
-                <p className="font-saira text-sm text-zinc-400 mt-2 leading-relaxed">
-                  {t("coach.selectAthleteBody")}
-                </p>
-              </div>
-            </div>
+            <CoachHomePanel
+              clients={clients}
+              profile={profile}
+              attentionCount={attentionAthletes.length}
+              noCheckinCount={noCheckinThisWeek}
+              silentCount={silentThisWeek}
+              onSelect={(id) => setSelectedId(id)}
+            />
           )}
         </main>
       </div>

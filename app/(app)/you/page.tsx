@@ -701,6 +701,17 @@ export default function YouPage() {
       {/* ── Notifications ─────────────────────────────────────── */}
       <NotificationsRow />
 
+      {/* ── AI Coach Voice (PR tier only) ────────────────────── */}
+      {profile?.ai_access && (
+        <AiVoiceRow
+          currentVoiceId={profile.preferred_voice_id ?? null}
+          onSave={(id) => {
+            setProfile((p) => p ? { ...p, preferred_voice_id: id } : p);
+            save("voice", { preferred_voice_id: id });
+          }}
+        />
+      )}
+
       {/* ── Language ─────────────────────────────────────────── */}
       <LanguageSwitcher />
 
@@ -714,6 +725,133 @@ export default function YouPage() {
 
       {/* ── Sign out ─────────────────────────────────────────── */}
       <SignOutButton />
+    </div>
+  );
+}
+
+// ── AI Coach Voice selector ───────────────────────────────────────────────────
+
+const AI_VOICES = [
+  { id: "VWknec4A1Xstw9k9JeMP", name: "Clarice", description: "Warm & motivating" },
+  { id: "e2NxMia8kZbV4DC84FLu", name: "David",   description: "Clear & direct" },
+  { id: "kynNV0Agr0aEsL81PMd4", name: "Jacqueline", description: "Calm & focused" },
+] as const;
+
+const VOICE_PREVIEW_TEXT = "Trust the process. You're ready for this.";
+
+function AiVoiceRow({
+  currentVoiceId,
+  onSave,
+}: {
+  currentVoiceId: string | null;
+  onSave: (id: string) => void;
+}) {
+  const [previewing, setPreviewing] = React.useState<string | null>(null);
+
+  const playPreview = async (voiceId: string) => {
+    if (previewing) return;
+    setPreviewing(voiceId);
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: VOICE_PREVIEW_TEXT, voiceId }),
+      });
+      if (!res.ok) throw new Error("TTS failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.addEventListener("ended", () => URL.revokeObjectURL(url));
+      await audio.play();
+    } catch {
+      // silently ignore preview errors
+    } finally {
+      setPreviewing(null);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-white/5 bg-surface-card mb-4 px-5 py-4">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-purple-500/15 text-purple-400">
+          <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" aria-hidden>
+            <path d="M10 2a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+            <path d="M5 10a5 5 0 0 0 10 0M10 15v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
+            AI Coach Voice
+          </p>
+          <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
+            Choose the voice for your AI Coach
+          </p>
+        </div>
+      </div>
+
+      {/* Voice cards */}
+      <div className="flex flex-col gap-2">
+        {AI_VOICES.map((voice) => {
+          const isSelected = (currentVoiceId ?? AI_VOICES[0].id) === voice.id;
+          const isLoading = previewing === voice.id;
+          return (
+            <button
+              key={voice.id}
+              type="button"
+              onClick={() => onSave(voice.id)}
+              className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition-all border ${
+                isSelected
+                  ? "border-purple-500/60 bg-purple-500/10"
+                  : "border-white/5 bg-white/3 hover:bg-white/5"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Selection indicator */}
+                <span className={`w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center border-2 transition ${
+                  isSelected ? "border-purple-400 bg-purple-400" : "border-zinc-600"
+                }`}>
+                  {isSelected && (
+                    <svg viewBox="0 0 8 8" className="w-2 h-2 text-white" fill="currentColor" aria-hidden>
+                      <circle cx="4" cy="4" r="2" />
+                    </svg>
+                  )}
+                </span>
+                <div className="min-w-0">
+                  <p className={`font-saira text-sm font-semibold ${isSelected ? "text-white" : "text-zinc-300"}`}>
+                    {voice.name}
+                  </p>
+                  <p className="font-saira text-[11px] text-zinc-500">{voice.description}</p>
+                </div>
+              </div>
+
+              {/* Preview button */}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); playPreview(voice.id); }}
+                disabled={!!previewing}
+                className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition ${
+                  isLoading
+                    ? "bg-purple-500/30 text-purple-300 animate-pulse"
+                    : "bg-white/6 text-zinc-400 hover:bg-white/10 hover:text-white disabled:opacity-40"
+                }`}
+                aria-label={`Preview ${voice.name} voice`}
+              >
+                {isLoading ? (
+                  <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="currentColor" aria-hidden>
+                    <rect x="4" y="4" width="4" height="12" rx="1" />
+                    <rect x="12" y="4" width="4" height="12" rx="1" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="currentColor" aria-hidden>
+                    <path d="M6.3 4.2a1 1 0 0 0-1.3.96v9.68a1 1 0 0 0 1.3.96l9-4.84a1 1 0 0 0 0-1.92L6.3 4.2z" />
+                  </svg>
+                )}
+              </button>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

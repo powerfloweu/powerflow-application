@@ -39,6 +39,8 @@ const SELECT_COLS = [
   // v11 — stripe billing
   "stripe_customer_id",
   "stripe_subscription_id",
+  // v12 — AI Coach voice preference
+  "preferred_voice_id",
 ].join(",");
 
 export async function GET() {
@@ -104,6 +106,7 @@ export async function GET() {
       coach_status: null,
       coach_application: null,
       coach_notes: null,
+      preferred_voice_id: null,
     } satisfies AthleteProfile);
   }
 
@@ -184,6 +187,8 @@ export async function PATCH(req: NextRequest) {
     "journal_prompt_labels",
     // v11 — coach application
     "coach_application",
+    // v12 — AI Coach voice preference
+    "preferred_voice_id",
   ];
 
   const patch: Record<string, unknown> = {};

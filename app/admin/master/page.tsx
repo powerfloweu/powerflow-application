@@ -2373,7 +2373,7 @@ function BroadcastTab({ users }: { users: UserRow[] }) {
             {sent ? "✓ Published" : sending ? "Publishing…" : "Publish broadcast →"}
           </button>
           <p className="font-saira text-[10px] text-zinc-400">
-            {previewEmails.length} recipient{previewEmails.length !== 1 ? "s" : ""} · shown on next login
+            {previewEmails.length} recipient{previewEmails.length !== 1 ? "s" : ""} · push + in-app on next login
           </p>
         </div>
       </div>

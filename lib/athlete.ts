@@ -133,6 +133,13 @@ export type AthleteProfile = {
    * When present, overrides the athlete's own journal_prompt_labels.
    */
   coach_journal_prompt_labels: string[] | null;
+  // v12 — AI Coach voice preference
+  /**
+   * ElevenLabs voice ID the athlete has chosen for their AI Coach.
+   * Null = use the server default (ELEVENLABS_VOICE_ID env var).
+   * Coach's cloned voice (coach_tts_voice_id) still takes priority over this.
+   */
+  preferred_voice_id: string | null;
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */
