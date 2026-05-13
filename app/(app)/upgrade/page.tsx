@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
 import { type PlanTier } from "@/lib/plan";
+import { type BillingPeriod, TIER_PERIODS, PERIOD_LABELS, PERIOD_SAVINGS, PERIOD_PRICES } from "@/lib/stripe";
 import { useT } from "@/lib/i18n";
 
 const TIERS: PlanTier[] = ["opener", "second", "pr"];
@@ -48,30 +48,29 @@ const FEATURE_KEYS: Record<PlanTier, string[]> = {
   ],
 };
 
-/** Price labels shown on cards. */
-const TIER_PRICE: Record<PlanTier, string> = {
-  opener: "Free",
-  second: "€9 / month",
-  pr: "€19 / month",
-};
-
 function UpgradePageInner() {
   const { t } = useT();
   const searchParams = useSearchParams();
   const [current, setCurrent] = React.useState<PlanTier>("opener");
   const [hasSubscription, setHasSubscription] = React.useState(false);
-  const [loading, setLoading] = React.useState<PlanTier | "portal" | null>(null);
+  const [loading, setLoading] = React.useState<string | null>(null);
   const [toast, setToast] = React.useState<{ type: "success" | "error"; msg: string } | null>(null);
 
-  // Show success / cancelled toasts from Stripe redirect
+  // Per-tier selected period
+  const [periods, setPeriods] = React.useState<Record<string, BillingPeriod>>({
+    second: "monthly",
+    pr: "monthly",
+  });
+
+  // Success / cancelled toasts from Stripe redirect
   React.useEffect(() => {
     if (searchParams.get("success") === "1") {
       setToast({ type: "success", msg: "Welcome to your new plan! Your access has been unlocked." });
     } else if (searchParams.get("cancelled") === "1") {
       setToast({ type: "error", msg: "Checkout cancelled — no charge was made." });
     }
-    const t = setTimeout(() => setToast(null), 6000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(timer);
   }, [searchParams]);
 
   // Load current profile
@@ -87,15 +86,19 @@ function UpgradePageInner() {
       .catch(() => {});
   }, []);
 
-  /** Start Stripe Checkout for the given tier. */
-  async function startCheckout(tier: PlanTier) {
-    if (tier === "opener") return;
-    setLoading(tier);
+  function setPeriod(tier: string, period: BillingPeriod) {
+    setPeriods((prev) => ({ ...prev, [tier]: period }));
+  }
+
+  async function startCheckout(tier: Exclude<PlanTier, "opener">) {
+    const period = periods[tier] ?? "monthly";
+    const key = `${tier}-${period}`;
+    setLoading(key);
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, period }),
       });
       const data = await res.json() as { url?: string; error?: string };
       if (!res.ok || !data.url) throw new Error(data.error ?? "Checkout failed");
@@ -106,7 +109,6 @@ function UpgradePageInner() {
     }
   }
 
-  /** Open Stripe Billing Portal (manage / cancel subscription). */
   async function openPortal() {
     setLoading("portal");
     try {
@@ -148,7 +150,11 @@ function UpgradePageInner() {
         {TIERS.map((tier) => {
           const isCurrent = tier === current;
           const isHigher = TIERS.indexOf(tier) > TIERS.indexOf(current);
-          const isLoadingThis = loading === tier;
+          const isPaid = tier === "second" || tier === "pr";
+          const periods_for_tier = isPaid ? TIER_PERIODS[tier as Exclude<PlanTier, "opener">] : [];
+          const selectedPeriod = periods[tier] as BillingPeriod ?? "monthly";
+          const priceLabel = isPaid ? (PERIOD_PRICES[`${tier}_${selectedPeriod}`] ?? "") : "Free";
+          const isLoadingThis = loading === `${tier}-${selectedPeriod}`;
 
           return (
             <div
@@ -169,13 +175,40 @@ function UpgradePageInner() {
 
               {/* Tier name + price */}
               <div className="mb-4">
-                <p className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-300 mb-1">
+                <p className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-400 mb-1">
                   {t(TIER_SUBTITLE_KEY[tier])}
                 </p>
                 <h2 className="text-lg font-bold text-white">{t(TIER_KEY[tier])}</h2>
-                <p className="text-purple-300 font-semibold text-sm mt-0.5">{TIER_PRICE[tier]}</p>
+                <p className="text-purple-300 font-semibold text-sm mt-0.5 leading-tight">{priceLabel}</p>
                 <p className="text-xs text-zinc-400 mt-1">{t(TIER_DESC_KEY[tier])}</p>
               </div>
+
+              {/* Billing period selector */}
+              {isPaid && periods_for_tier.length > 1 && (
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {periods_for_tier.map((p) => {
+                    const saving = PERIOD_SAVINGS[p];
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setPeriod(tier, p)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-saira uppercase tracking-wider transition ${
+                          selectedPeriod === p
+                            ? "bg-purple-600 text-white"
+                            : "bg-white/5 text-zinc-400 hover:bg-white/10"
+                        }`}
+                      >
+                        {PERIOD_LABELS[p]}
+                        {saving && (
+                          <span className={`text-[8px] ${selectedPeriod === p ? "text-purple-200" : "text-green-400"}`}>
+                            {saving}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Features */}
               <ul className="flex-1 space-y-2 mb-6">
@@ -192,9 +225,9 @@ function UpgradePageInner() {
                 <div className="text-center py-2.5 rounded-xl border-2 border-purple-500/60 bg-purple-500/10 text-purple-300 font-saira text-[10px] uppercase tracking-[0.2em] font-semibold">
                   ✓ {t("upgrade.currentPlan")}
                 </div>
-              ) : isHigher ? (
+              ) : isHigher && isPaid ? (
                 <button
-                  onClick={() => startCheckout(tier)}
+                  onClick={() => startCheckout(tier as Exclude<PlanTier, "opener">)}
                   disabled={loading !== null}
                   className="block w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-60 disabled:cursor-wait text-white font-saira text-[10px] uppercase tracking-[0.2em] text-center transition"
                 >
@@ -214,7 +247,7 @@ function UpgradePageInner() {
         })}
       </div>
 
-      {/* Manage subscription link */}
+      {/* Manage subscription */}
       {hasSubscription && current !== "opener" && (
         <div className="text-center mt-8">
           <button

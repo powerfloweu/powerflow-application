@@ -1,28 +1,23 @@
 /**
  * POST /api/stripe/checkout
- * Body: { tier: "second" | "pr" }
+ * Body: { tier: "second" | "pr", period?: "monthly" | "6mo" | "yearly" }
  *
- * Creates a Stripe Checkout Session for the given tier and returns { url }.
- * The browser should redirect to that URL immediately.
+ * Creates a Stripe Checkout Session for the given tier + billing period.
+ * Returns { url } — the browser should redirect immediately.
  *
  * - Looks up (or creates) a Stripe Customer for this Supabase user.
- * - If the user already has an active subscription, returns 409 with a portal URL.
- * - On success redirects to /upgrade?success=1, on cancel to /upgrade.
- *
- * Required env vars:
- *   STRIPE_SECRET_KEY, STRIPE_SECOND_PRICE_ID, STRIPE_PR_PRICE_ID,
- *   NEXT_PUBLIC_APP_URL
+ * - If the user already has an active subscription, redirects to Billing Portal.
  */
 
 import { NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
-import { stripe, PRICE_IDS, appUrl } from "@/lib/stripe";
+import { stripe, priceIdFor, appUrl, type BillingPeriod } from "@/lib/stripe";
 import type { PlanTier } from "@/lib/plan";
 
 export const runtime = "nodejs";
 
-type RequestBody = { tier?: string };
+type RequestBody = { tier?: string; period?: string };
 type ProfileRow = {
   id: string;
   stripe_customer_id?: string | null;
@@ -46,10 +41,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
   }
 
-  const priceId = PRICE_IDS[tier];
+  const period = (body.period ?? "monthly") as BillingPeriod;
+  const priceId = priceIdFor(tier, period);
   if (!priceId) {
     return NextResponse.json(
-      { error: `STRIPE_${tier.toUpperCase()}_PRICE_ID env var is not set` },
+      { error: `Price not configured for ${tier} / ${period}` },
       { status: 503 },
     );
   }
@@ -61,7 +57,7 @@ export async function POST(req: Request) {
   });
   const profile = rows[0];
 
-  // If already subscribed, send them to the billing portal instead
+  // If already subscribed, send to billing portal instead
   if (profile?.stripe_subscription_id) {
     try {
       const sub = await stripe.subscriptions.retrieve(profile.stripe_subscription_id);
@@ -73,7 +69,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ url: session.url, alreadySubscribed: true });
       }
     } catch {
-      // subscription may have been deleted — fall through to create new checkout
+      // subscription may have been deleted — fall through to new checkout
     }
   }
 
@@ -85,7 +81,6 @@ export async function POST(req: Request) {
       metadata: { supabase_user_id: user.id },
     });
     customerId = customer.id;
-    // Persist immediately so we don't create duplicates on retries
     await dbPatch("profiles", { id: `eq.${user.id}` }, { stripe_customer_id: customerId });
   }
 
