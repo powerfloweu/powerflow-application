@@ -727,8 +727,8 @@ function CoachPromptBanner({ onDismiss }: { onDismiss: () => void }) {
  * Shown in the form area when the athlete selects a past date on the journal
  * page. Handles three states:
  *   null     → day not logged yet → show mini day-type buttons
- *   rest     → rest day message
- *   training → defer to TrainingJournalForm (handled in parent)
+ *   rest     → rest day badge + QuickEntry (athletes always have thoughts to log)
+ *   training → TrainingJournalForm
  */
 function PastDateForm({
   dateLabel,
@@ -737,6 +737,7 @@ function PastDateForm({
   marking,
   onSave,
   promptLabels,
+  onAdd,
 }: {
   dateLabel: string;
   entry: TrainingEntry | null;
@@ -744,6 +745,7 @@ function PastDateForm({
   marking: boolean;
   onSave: (updated: TrainingEntry) => void;
   promptLabels: string[];
+  onAdd: (e: JournalEntry) => void;
 }) {
   const { t } = useT();
 
@@ -779,12 +781,15 @@ function PastDateForm({
   }
 
   if (!entry.is_training_day) {
+    // Rest day — still show quick entry; thoughts don't stop on rest days
     return (
-      <div className="rounded-3xl border border-white/8 bg-surface-alt p-5 sm:p-6">
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-300 mb-1">
-          {dateLabel}
-        </p>
-        <p className="font-saira text-sm text-zinc-300">{t("journal.pastRestDay")}</p>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-zinc-600/40 bg-zinc-600/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-400">
+            {t("today.rest")} · {dateLabel}
+          </span>
+        </div>
+        <QuickEntry onAdd={onAdd} />
       </div>
     );
   }
@@ -1089,7 +1094,16 @@ export default function JournalPage() {
                   )}
                 </>
               ) : (
-                <QuickEntry onAdd={handleAdd} />
+                <div className="space-y-3">
+                  {todayTraining !== undefined && todayTraining !== null && (
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full border border-zinc-600/40 bg-zinc-600/10 px-2.5 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-400">
+                        {t("today.rest")} · {t("today.tabToday")}
+                      </span>
+                    </div>
+                  )}
+                  <QuickEntry onAdd={handleAdd} />
+                </div>
               )
             ) : (
               // Past date
@@ -1099,6 +1113,7 @@ export default function JournalPage() {
                 onMark={(mode) => markPastDay(selectedDate, mode)}
                 marking={pastDayMarking}
                 promptLabels={effectivePromptLabels}
+                onAdd={handleAdd}
                 onSave={(updated) => {
                   setAllTraining((prev) =>
                     prev.map((e) => e.entry_date === updated.entry_date ? updated : e),
