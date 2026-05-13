@@ -35,6 +35,9 @@ const SELECT_COLS = [
   "language",
   // v10 — custom journal prompts
   "journal_prompt_labels",
+  // v11 — stripe billing
+  "stripe_customer_id",
+  "stripe_subscription_id",
 ].join(",");
 
 export async function GET() {
