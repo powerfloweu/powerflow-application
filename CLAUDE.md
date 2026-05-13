@@ -17,7 +17,7 @@ heading structure without updating the parser.
 ## Roadmap
 
 ### Payments & Tiers
-- [ ] Stripe payment for all three tiers (opener / second / pr) with upgrade options
+- [~] Stripe payment for all three tiers (opener / second / pr) with upgrade options
 
 ### Coach AI
 - [ ] Clarice voice install
@@ -70,6 +70,12 @@ heading structure without updating the parser.
 
 Append a short note at the end of each working session: date, branch, what
 changed, and what's next. Newest entries on top.
+
+### 2026-05-13 — main
+- Stripe integration: checkout sessions, billing portal, webhook handler syncing plan_tier + access flags, admin migrate-stripe endpoint, setup script for products.
+- Upgrade page: real Stripe CTAs (replaces mailto), manage-subscription link, success/cancel toasts.
+- stripe_customer_id + stripe_subscription_id + stripe_price_id added to profiles table (migration + /api/me exposure).
+- Next: run `node scripts/stripe-setup.mjs` (with sk_live_ key) to create products, add env vars (STRIPE_SECOND_PRICE_ID, STRIPE_PR_PRICE_ID, STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_APP_URL), apply DB migration via /api/admin/migrate-stripe.
 
 ### 2026-05-12 — main (continued)
 - Security: `ADMIN_PASSWORD` moved from URL query param to `Authorization: Bearer` header in `all-results` and `results` routes.
