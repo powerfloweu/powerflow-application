@@ -23,6 +23,7 @@ import { DateTabs, offsetDate } from "@/app/components/DateTabs";
 import { useT } from "@/lib/i18n";
 import WeeklyCheckinModal from "@/app/components/WeeklyCheckinModal";
 import { weekLabel, type WeeklyCheckin } from "@/lib/weeklyCheckin";
+import VoicePhotoCapture, { type ParsedResult } from "@/app/components/VoicePhotoCapture";
 
 /** Map TRAINING_QUESTIONS keys to journal-dict translation keys */
 const TRAINING_QKEY: Record<string, string> = {
@@ -252,9 +253,25 @@ function TrainingJournalForm({
     }
     return init;
   });
-  const [saving, setSaving]   = React.useState(false);
-  const [saved, setSaved]     = React.useState(false);
-  const [error, setError]     = React.useState<string | null>(null);
+  const [saving, setSaving]       = React.useState(false);
+  const [saved, setSaved]         = React.useState(false);
+  const [error, setError]         = React.useState<string | null>(null);
+  const [aiFilled, setAiFilled]   = React.useState(false);
+  const [aiProcessing, setAiProcessing] = React.useState(false);
+
+  function handleAiParsed(result: ParsedResult) {
+    if (result.type !== "training") return;
+    setAnswers((prev) => {
+      const updated = { ...prev };
+      for (const q of TRAINING_QUESTIONS) {
+        const val = (result as Record<string, string | undefined>)[q.key];
+        if (val) updated[q.key] = val;
+      }
+      return updated;
+    });
+    setAiFilled(true);
+    setTimeout(() => setAiFilled(false), 3000);
+  }
 
   const hasAny = promptLabels.some((_, i) => answers[TRAINING_KEYS[i]]?.trim().length > 0);
 
@@ -289,12 +306,25 @@ function TrainingJournalForm({
 
   return (
     <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 via-fuchsia-500/5 to-transparent p-5 sm:p-6 shadow-[0_16px_40px_rgba(126,34,206,0.15)]">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-base">🏋️</span>
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-300">
-          {t("journal.trainingDay")}
-        </p>
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-base">🏋️</span>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.26em] text-purple-300">
+            {t("journal.trainingDay")}
+          </p>
+        </div>
+        <VoicePhotoCapture
+          mode="training"
+          onParsed={handleAiParsed}
+          onProcessingChange={setAiProcessing}
+        />
       </div>
+
+      {aiFilled && (
+        <div className="mb-3 rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-3 py-2 font-saira text-[10px] text-emerald-300">
+          ✓ AI filled in your fields — review and save when ready
+        </div>
+      )}
 
       <div className="space-y-4">
         {promptLabels.map((label, i) => {
@@ -325,10 +355,10 @@ function TrainingJournalForm({
         <button
           type="button"
           onClick={handleSave}
-          disabled={!hasAny || saving}
+          disabled={!hasAny || saving || aiProcessing}
           className={`ml-auto rounded-full px-5 py-2.5 sm:py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
             saved ? "bg-emerald-500 text-white"
-            : hasAny && !saving ? "bg-purple-500 text-white hover:bg-purple-400"
+            : hasAny && !saving && !aiProcessing ? "bg-purple-500 text-white hover:bg-purple-400"
             : "bg-purple-500/20 text-purple-500/50 cursor-not-allowed"
           }`}
         >
@@ -465,12 +495,19 @@ function PromptCustomizer({
 
 function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
   const { t } = useT();
-  const [text, setText]             = React.useState("");
-  const [submitting, setSubmitting] = React.useState(false);
-  const [submitted, setSubmitted]   = React.useState(false);
-  const [error, setError]           = React.useState<string | null>(null);
+  const [text, setText]               = React.useState("");
+  const [submitting, setSubmitting]   = React.useState(false);
+  const [submitted, setSubmitted]     = React.useState(false);
+  const [error, setError]             = React.useState<string | null>(null);
+  const [aiProcessing, setAiProcessing] = React.useState(false);
 
-  const canSubmit = text.trim().length >= 3 && !submitting;
+  function handleAiParsed(result: ParsedResult) {
+    if (result.type === "journal" && result.content) {
+      setText(result.content);
+    }
+  }
+
+  const canSubmit = text.trim().length >= 3 && !submitting && !aiProcessing;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -511,7 +548,12 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
         className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-base sm:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
       />
 
-      <div className="mt-4 flex items-center">
+      <div className="mt-4 flex items-center gap-3">
+        <VoicePhotoCapture
+          mode="journal"
+          onParsed={handleAiParsed}
+          onProcessingChange={setAiProcessing}
+        />
         <button type="button" onClick={handleSubmit} disabled={!canSubmit}
           className={`ml-auto rounded-full px-5 py-2.5 sm:py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] transition ${
             submitted ? "bg-emerald-500 text-white"
