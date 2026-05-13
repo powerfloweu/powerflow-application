@@ -20,9 +20,8 @@ if (!key) {
   console.error("Error: STRIPE_SECRET_KEY env var is not set.");
   process.exit(1);
 }
-if (!key.startsWith("sk_")) {
-  console.error("Error: A full secret key (sk_live_... or sk_test_...) is required.");
-  console.error("Restricted keys (rk_live_...) don't have write access to products.");
+if (!key.startsWith("sk_") && !key.startsWith("rk_")) {
+  console.error("Error: A Stripe secret or restricted key is required (sk_live_... or rk_live_...).");
   process.exit(1);
 }
 

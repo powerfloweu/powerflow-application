@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { type PlanTier } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
 
@@ -54,7 +55,7 @@ const TIER_PRICE: Record<PlanTier, string> = {
   pr: "€19 / month",
 };
 
-export default function UpgradePage() {
+function UpgradePageInner() {
   const { t } = useT();
   const searchParams = useSearchParams();
   const [current, setCurrent] = React.useState<PlanTier>("opener");
@@ -233,5 +234,13 @@ export default function UpgradePage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function UpgradePage() {
+  return (
+    <Suspense>
+      <UpgradePageInner />
+    </Suspense>
   );
 }
