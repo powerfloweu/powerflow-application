@@ -4,7 +4,7 @@ import React, { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { type PlanTier } from "@/lib/plan";
-import { type BillingPeriod, TIER_PERIODS, PERIOD_LABELS, PERIOD_SAVINGS, PERIOD_PRICES } from "@/lib/stripe";
+import { type BillingPeriod, TIER_PERIODS, PERIOD_LABELS, PERIOD_SAVINGS, PERIOD_PRICES } from "@/lib/stripePricing";
 import { useT } from "@/lib/i18n";
 
 const TIERS: PlanTier[] = ["opener", "second", "pr"];
