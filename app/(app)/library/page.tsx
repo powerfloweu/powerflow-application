@@ -840,36 +840,80 @@ function ToolsPageInner() {
         </p>
       </div>
 
-      {/* ── AI Coach card (PR tier only) ──────────────────────── */}
-      {profileLoaded && (aiAccess || planTier === "pr") && (
+      {/* ── AI Coach card — unlocked (PR) or locked teaser (Second) ─ */}
+      {profileLoaded && (aiAccess || planTier === "second" || planTier === "pr") && (
         <div className="mb-8">
-          <div className="rounded-2xl border border-purple-500/25 bg-purple-500/5 px-5 py-4 flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-purple-400 text-sm">✦</span>
-                <p className="font-saira text-sm font-semibold text-white uppercase tracking-[0.1em]">
-                  {t("library.aiCoachTitle")}
-                </p>
+          {aiAccess ? (
+            /* ── Unlocked ─────────────────────────────────────── */
+            <>
+              <div className="rounded-2xl border border-purple-500/25 bg-purple-500/5 px-5 py-4 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-purple-400 text-sm">✦</span>
+                    <p className="font-saira text-sm font-semibold text-white uppercase tracking-[0.1em]">
+                      {t("library.aiCoachTitle")}
+                    </p>
+                  </div>
+                  <p className="font-saira text-xs text-zinc-400 leading-snug">
+                    {t("library.aiCoachDesc")}
+                  </p>
+                </div>
+                <Link
+                  href="/chat"
+                  className="flex-shrink-0 rounded-xl bg-purple-600 hover:bg-purple-500 px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition whitespace-nowrap"
+                >
+                  {t("library.aiCoachOpen")}
+                </Link>
               </div>
-              <p className="font-saira text-xs text-zinc-400 leading-snug">
-                {t("library.aiCoachDesc")}
-              </p>
+              <div className="mt-2 text-center">
+                <Link
+                  href="/scripts"
+                  className="font-saira text-xs text-zinc-300 hover:text-zinc-300 transition"
+                >
+                  {t("library.savedScripts")}
+                </Link>
+              </div>
+            </>
+          ) : (
+            /* ── Locked teaser (Second tier) ──────────────────── */
+            <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.04] p-5">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-base">🔒</span>
+                    <p className="font-saira text-sm font-semibold text-zinc-200 uppercase tracking-[0.1em]">
+                      {t("library.aiCoachTitle")}
+                    </p>
+                    <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 font-saira text-[9px] uppercase tracking-[0.14em] text-purple-300">
+                      PR
+                    </span>
+                  </div>
+                  <p className="font-saira text-xs text-zinc-400 leading-snug">
+                    {t("library.aiCoachDesc")}
+                  </p>
+                </div>
+                <Link
+                  href="/upgrade"
+                  className="flex-shrink-0 rounded-xl bg-purple-600 hover:bg-purple-500 px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition whitespace-nowrap"
+                >
+                  Upgrade →
+                </Link>
+              </div>
+              {/* Blurred chat preview */}
+              <div className="select-none pointer-events-none opacity-[0.22] space-y-2">
+                <div className="rounded-xl border border-white/5 bg-surface-card px-4 py-3">
+                  <p className="font-saira text-xs text-zinc-300 leading-relaxed">
+                    I felt nervous before my topset today. The weight felt heavy during warm-ups…
+                  </p>
+                </div>
+                <div className="rounded-xl border border-purple-500/20 bg-purple-500/10 px-4 py-3 ml-6">
+                  <p className="font-saira text-xs text-purple-200 leading-relaxed">
+                    That pre-set nervousness is actually a sign your body is ready. Let's work on reframing it as activation…
+                  </p>
+                </div>
+              </div>
             </div>
-            <Link
-              href="/chat"
-              className="flex-shrink-0 rounded-xl bg-purple-600 hover:bg-purple-500 px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition whitespace-nowrap"
-            >
-              {t("library.aiCoachOpen")}
-            </Link>
-          </div>
-          <div className="mt-2 text-center">
-            <Link
-              href="/scripts"
-              className="font-saira text-xs text-zinc-300 hover:text-zinc-300 transition"
-            >
-              {t("library.savedScripts")}
-            </Link>
-          </div>
+          )}
         </div>
       )}
 
