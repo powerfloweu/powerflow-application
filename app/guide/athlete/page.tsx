@@ -334,16 +334,30 @@ export default async function AthleteGuidePage({
             color: #111;
             font-size: 11px;
             line-height: 1.5;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
 
           /* ── Print layout ── */
           .doc { max-width: 780px; margin: 0 auto; padding: 0 32px; }
 
           @media print {
-            body { font-size: 10px; }
+            body { font-size: 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .doc { padding: 0 20px; }
             .page-break { page-break-before: always; }
             .no-break { page-break-inside: avoid; }
+            /* Cover: fill exactly one page, dark bg prints, no overflow to page 2 */
+            .cover {
+              height: 100vh;
+              min-height: unset;
+              justify-content: flex-start;
+              padding-top: 14vh;
+            }
+            /* Keep section heading attached to the content that follows it */
+            .section-heading { break-after: avoid; page-break-after: avoid; }
+            /* Smaller phones so two stacked fit on one page */
+            .phone-frame { width: 152px; }
+            .phone-screen { min-height: 290px; }
           }
 
           /* ── Cover page ── */
@@ -354,10 +368,10 @@ export default async function AthleteGuidePage({
             justify-content: center;
             background: #050608;
             color: #fff;
-            padding: 60px 48px;
+            padding: 60px 0;
           }
           @media print {
-            .cover { min-height: 100vh; page-break-after: always; }
+            .cover { page-break-after: always; }
           }
           .cover-logo {
             width: 72px; height: 72px;
@@ -672,10 +686,9 @@ export default async function AthleteGuidePage({
         <div className="back-bar">
           <a href="/guide">{c.back}</a>
         </div>
-        <div className="doc">
-
-          {/* ── Cover ─────────────────────────────────────────── */}
-          <div className="cover">
+        {/* ── Cover — outside .doc so it spans full page width ── */}
+        <div className="cover">
+          <div style={{ maxWidth: 716, padding: "0 48px" }}>
             <div className="cover-logo">PF</div>
             <div className="cover-eyebrow">{c.cover.eyebrow}</div>
             <h1 className="cover-title">{c.cover.title[0]}<br />{c.cover.title[1]}</h1>
@@ -700,6 +713,9 @@ export default async function AthleteGuidePage({
             </a>
             <p className="cover-meta">{c.cover.meta}</p>
           </div>
+        </div>
+
+        <div className="doc">
 
           {/* ── 00 Install ──────────────────────────────────────── */}
           <Page>
