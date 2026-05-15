@@ -21,6 +21,16 @@ interface Props {
   onDelete?: (id: string) => Promise<void> | void;
 }
 
+/** Split text on @word tokens and render mentions in purple. */
+function renderContent(text: string): React.ReactNode {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part, i) =>
+    part.startsWith("@")
+      ? <span key={i} className="text-purple-400 font-semibold">{part}</span>
+      : part,
+  );
+}
+
 export default function EntryCard({ entry, onDelete }: Props) {
   const [confirm, setConfirm] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
@@ -36,7 +46,7 @@ export default function EntryCard({ entry, onDelete }: Props) {
   return (
     <div className={`rounded-2xl border ${s.ring} ${s.bg} p-4 group transition hover:brightness-110`}>
       <p className="font-saira text-sm leading-relaxed text-zinc-200">
-        {entry.content}
+        {renderContent(entry.content)}
       </p>
 
       <div className="mt-3 flex items-center gap-2 flex-wrap">

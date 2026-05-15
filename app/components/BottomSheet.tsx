@@ -32,10 +32,23 @@ export default function BottomSheet({ open, onClose, title, children, footer }: 
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // Prevent body scroll when open
+  // Prevent body scroll when open.
+  // On iOS, `overflow: hidden` on <body> blocks scroll inside overflow:auto children too.
+  // Safer fix: lock via position:fixed (saves & restores scroll position).
   React.useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (!open) return;
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      window.scrollTo(0, scrollY);
+    };
   }, [open]);
 
   if (!open) return null;
@@ -55,10 +68,10 @@ export default function BottomSheet({ open, onClose, title, children, footer }: 
         aria-modal
         className={[
           "fixed z-[70] bg-surface-alt flex flex-col",
-          // Mobile: bottom sheet
-          "bottom-0 inset-x-0 rounded-t-2xl max-h-[90dvh]",
+          // Mobile: bottom sheet — min-h so short content still gives a usable sheet
+          "bottom-0 inset-x-0 rounded-t-2xl min-h-[55dvh] max-h-[90dvh]",
           // Desktop: centred modal
-          "md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2",
+          "md:min-h-0 md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2",
           "md:w-full md:max-w-lg md:rounded-2xl md:max-h-[80vh]",
         ].join(" ")}
       >
@@ -82,8 +95,12 @@ export default function BottomSheet({ open, onClose, title, children, footer }: 
           </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+        {/* Scrollable body — overscroll-behavior: contain keeps pull-to-refresh
+            from firing, WebkitOverflowScrolling enables momentum scroll on iOS */}
+        <div
+          className="flex-1 overflow-y-auto px-5 py-4"
+          style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+        >
           {children}
         </div>
 

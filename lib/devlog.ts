@@ -13,9 +13,22 @@ export type DevLogEntry = {
   items: string[];
 };
 
-export const CURRENT_DEVLOG_VERSION = "2026-05-01";
+export const CURRENT_DEVLOG_VERSION = "2026-05-15";
 
 export const DEVLOG: DevLogEntry[] = [
+  {
+    version: "2026-05-15",
+    date: "15 May 2026",
+    title: "@mentions · background audio · coach fixes",
+    items: [
+      "@mention your coach in journal entries — type @ in the quick-entry box, pick your coach from the dropdown, and they get a push notification straight away.",
+      "Relaxation and visualisation audio now keeps playing when your phone screen locks — no more tracks cutting out mid-session.",
+      "Playback speed button added to both the Scripts and Library audio players: cycle between 0.75×, 1×, and 1.25× while playing.",
+      "Coach activity feed: tapping any card now takes you directly to that athlete's profile sheet.",
+      "Athlete profile sheet (coach side): scrolling on iOS is fixed — the card no longer gets stuck.",
+      "Coach interface: athlete-only tabs and banners no longer flash briefly on load for coach accounts.",
+    ],
+  },
   {
     version: "2026-05-01",
     date: "1 May 2026",

@@ -226,16 +226,20 @@ export default function AppShell({ children }: Props) {
             </Link>
 
             {/* Mode badge — reflects the active profile, not the DB role */}
-            <span className={`font-saira text-[9px] font-bold uppercase tracking-[0.32em] -mt-1 mb-1 ${
-              effectiveRole === "coach" ? "text-emerald-400/80" : "text-purple-300/80"
-            }`}>
-              {effectiveRole === "coach" ? "Coach" : "Athlete"}
-            </span>
+            {role !== null && (
+              <span className={`font-saira text-[9px] font-bold uppercase tracking-[0.32em] -mt-1 mb-1 ${
+                effectiveRole === "coach" ? "text-emerald-400/80" : "text-purple-300/80"
+              }`}>
+                {effectiveRole === "coach" ? "Coach" : "Athlete"}
+              </span>
+            )}
           </div>
 
           {/* Nav links — athlete tabs in athlete mode, coach dashboard in coach mode */}
+          {/* role===null while /api/me is loading — render nothing so athlete links
+              never flash before the coach role is confirmed */}
           <nav className="flex-1 py-4 px-3 space-y-0.5 flex flex-col">
-            {effectiveRole === "coach" ? (
+            {role === null ? null : effectiveRole === "coach" ? (
               /* Coach mode: coach dashboard + profile (for mode switching) */
               <>
                 <Link
@@ -423,13 +427,16 @@ export default function AppShell({ children }: Props) {
       </main>
 
       {/* ── Mobile bottom tab bar ───────────────────────────────── */}
-      <TabBar planTier={planTier} role={effectiveRole ?? undefined} />
+      {/* Suppress until role is known — avoids athlete tabs flashing on coach sessions */}
+      {role !== null && <TabBar planTier={planTier} role={effectiveRole ?? undefined} />}
 
       {/* ── Daily check-in reminder (athletes only) ──────────────── */}
-      {effectiveRole !== "coach" && <CheckinReminderScheduler />}
+      {/* Use role === "athlete" (not !== "coach") so these never render while
+          role is still null — prevents athlete UI flashing on coach sessions */}
+      {effectiveRole === "athlete" && <CheckinReminderScheduler />}
 
       {/* ── Push notification permission banner (athletes only) ───── */}
-      {effectiveRole !== "coach" && <NotificationPermissionBanner />}
+      {effectiveRole === "athlete" && <NotificationPermissionBanner />}
 
       {/* ── In-app broadcast + devlog modal ────────────────────────── */}
       {notifications && (
@@ -440,7 +447,7 @@ export default function AppShell({ children }: Props) {
       )}
 
       {/* ── Weekly / monthly check-in popup (athletes only) ─────── */}
-      {effectiveRole !== "coach" && weeklyCheckinTarget && !checkinSkipped && !notifications && (
+      {effectiveRole === "athlete" && weeklyCheckinTarget && !checkinSkipped && !notifications && (
         checkinIsMonthly ? (
           <MonthlyCheckinModal
             targetWeek={weeklyCheckinTarget}

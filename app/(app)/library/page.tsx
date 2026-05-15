@@ -557,6 +557,9 @@ const STORAGE_BASES: Record<Locale, string> = {
   fr: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/",
 };
 
+const SPEEDS = [0.75, 1, 1.25] as const;
+type Speed = (typeof SPEEDS)[number];
+
 function AudioPlayer({ fileKey, color }: { fileKey: FileKeys | null; color: ToolColor }) {
   const { t, locale } = useT();
   const audioRef  = React.useRef<HTMLAudioElement>(null);
@@ -566,6 +569,7 @@ function AudioPlayer({ fileKey, color }: { fileKey: FileKeys | null; color: Tool
   const [progress, setProgress]       = React.useState(0);
   const [currentTime, setCurrentTime] = React.useState(0);
   const [duration, setDuration]       = React.useState(0);
+  const [speed, setSpeed]             = React.useState<Speed>(1);
   const c = COLOR_MAP[color];
 
   // Resolve locale-specific key + matching bucket, fall back to "en"
@@ -580,10 +584,17 @@ function AudioPlayer({ fileKey, color }: { fileKey: FileKeys | null; color: Tool
     const el = audioRef.current;
     if (!el || !url) return;
     if (playing) { el.pause(); setPlaying(false); return; }
+    el.playbackRate = speed;
     setBuffering(true);
     el.play()
       .catch(() => setErrored(true))
       .finally(() => setBuffering(false));
+  };
+
+  const cycleSpeed = () => {
+    const next = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length];
+    setSpeed(next);
+    if (audioRef.current) audioRef.current.playbackRate = next;
   };
 
   const handleTimeUpdate = () => {
@@ -698,8 +709,16 @@ function AudioPlayer({ fileKey, color }: { fileKey: FileKeys | null; color: Tool
               style={{ width: `${progress * 100}%` }}
             />
           </div>
-          <div className="flex justify-between mt-1.5">
+          <div className="flex justify-between items-center mt-1.5">
             <span className="font-saira text-[10px] text-zinc-400 tabular-nums">{fmt(currentTime)}</span>
+            <button
+              type="button"
+              onClick={cycleSpeed}
+              className="rounded-md border border-white/10 px-2 py-0.5 font-saira text-[10px] font-semibold text-zinc-400 hover:text-white hover:border-white/30 transition tabular-nums"
+              aria-label="Cycle playback speed"
+            >
+              {speed}×
+            </button>
             <span className="font-saira text-[10px] text-zinc-400 tabular-nums">{duration ? fmt(duration) : "--:--"}</span>
           </div>
         </div>

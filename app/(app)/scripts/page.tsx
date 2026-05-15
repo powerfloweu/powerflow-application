@@ -37,14 +37,15 @@ export default function ScriptsPage() {
   const [audioTime, setAudioTime] = React.useState<{ current: number; duration: number } | null>(null);
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [speed, setSpeed] = React.useState<0.75 | 1 | 1.25>(1);
 
-  const audioCtxRef = React.useRef<AudioContext | null>(null);
-  const audioSrcRef = React.useRef<AudioBufferSourceNode | null>(null);
-  const audioBufRef = React.useRef<AudioBuffer | null>(null);
-  const playStartRef = React.useRef<number>(0);
-  const playOffsetRef = React.useRef<number>(0);
-  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
-  const abortRef = React.useRef<AbortController | null>(null);
+  // ── Audio engine refs ─────────────────────────────────────────────────────────
+  // Uses HTMLAudioElement (not Web Audio API) so the OS keeps audio playing when
+  // the screen locks — Web Audio AudioContext gets suspended on iOS/Android sleep.
+  const audioElRef  = React.useRef<HTMLAudioElement | null>(null);
+  const blobUrlRef  = React.useRef<string | null>(null);
+  const timerRef    = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const abortRef    = React.useRef<AbortController | null>(null);
 
   // ── On mount: verify ai_access + load scripts ──────────────────────────────
 
@@ -75,8 +76,6 @@ export default function ScriptsPage() {
   }, []);
 
   // ── Audio engine ───────────────────────────────────────────────────────────
-  // Same AudioBufferSourceNode approach as the chat page — avoids HTMLAudio.play()
-  // so iOS autoplay policy never blocks us.
 
   const clearTimer = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -86,14 +85,18 @@ export default function ScriptsPage() {
     clearTimer();
     abortRef.current?.abort();
     abortRef.current = null;
-    if (audioSrcRef.current) {
-      try { audioSrcRef.current.stop(); } catch { /* already stopped */ }
-      audioSrcRef.current.onended = null;
-      audioSrcRef.current = null;
+    if (audioElRef.current) {
+      audioElRef.current.pause();
+      audioElRef.current.onended = null;
+      audioElRef.current.onplay  = null;
+      audioElRef.current.src = "";
+      audioElRef.current = null;
     }
-    audioBufRef.current = null;
-    audioCtxRef.current?.close().catch(() => {});
-    audioCtxRef.current = null;
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+    if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "none";
     if (!silent) { setPlayingId(null); setLoadingId(null); setAudioTime(null); }
   };
 
@@ -106,13 +109,7 @@ export default function ScriptsPage() {
     if (isActive) return; // toggle off
 
     setTtsError(null);
-    setLoadingId(script.id); // show buffering indicator
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const AudioCtx = window.AudioContext ?? (window as any).webkitAudioContext;
-    const ctx = new AudioCtx() as AudioContext;
-    audioCtxRef.current = ctx;
-    ctx.resume().catch(() => {}); // Unlock synchronously in user-gesture
+    setLoadingId(script.id);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -126,47 +123,61 @@ export default function ScriptsPage() {
       });
       if (!res.ok) throw new Error(`TTS ${res.status}`);
 
-      const arrayBuffer = await res.arrayBuffer();
-      if (audioCtxRef.current !== ctx) return; // stopped or superseded
+      const blob = await res.blob();
+      if (abortRef.current !== controller) return; // stopped while loading
 
-      ctx.resume().catch(() => {});
-      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      if (audioCtxRef.current !== ctx) return;
+      const blobUrl = URL.createObjectURL(blob);
+      blobUrlRef.current = blobUrl;
 
-      audioBufRef.current = audioBuffer;
-      playOffsetRef.current = 0;
-      playStartRef.current = ctx.currentTime;
+      const audio = new Audio(blobUrl);
+      audio.playbackRate = speed;
+      audioElRef.current = audio;
 
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(ctx.destination);
-      audioSrcRef.current = source;
+      // ── MediaSession: lock-screen controls ────────────────────────────────
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: script.title,
+          artist: "PowerFlow",
+        });
+        navigator.mediaSession.setActionHandler("play",  () => { audio.play().catch(() => {}); });
+        navigator.mediaSession.setActionHandler("pause", () => { audio.pause(); });
+        navigator.mediaSession.setActionHandler("seekbackward", ({ seekOffset }) => {
+          audio.currentTime = Math.max(0, audio.currentTime - (seekOffset ?? 10));
+        });
+        navigator.mediaSession.setActionHandler("seekforward", ({ seekOffset }) => {
+          audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + (seekOffset ?? 10));
+        });
+      }
 
-      // Audio ready — swap loading → playing
+      audio.onended = () => {
+        clearTimer();
+        setPlayingId(null);
+        setAudioTime(null);
+        audioElRef.current = null;
+        if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = null; }
+        if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "none";
+      };
+
       setLoadingId(null);
       setPlayingId(script.id);
 
       timerRef.current = setInterval(() => {
-        if (!audioSrcRef.current || audioCtxRef.current !== ctx) return;
-        const elapsed = ctx.currentTime - playStartRef.current + playOffsetRef.current;
-        const dur = audioBufRef.current?.duration ?? 0;
-        setAudioTime({ current: Math.min(elapsed, dur), duration: dur });
+        const el = audioElRef.current;
+        if (!el) return;
+        setAudioTime({ current: el.currentTime, duration: el.duration || 0 });
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.setPositionState({
+            duration: el.duration || 0,
+            playbackRate: el.playbackRate,
+            position: el.currentTime,
+          });
+        }
       }, 250);
 
-      source.onended = () => {
-        if (audioSrcRef.current !== source) return;
-        clearTimer();
-        setPlayingId(null);
-        setAudioTime(null);
-        audioSrcRef.current = null;
-        audioBufRef.current = null;
-        ctx.close().catch(() => {});
-        if (audioCtxRef.current === ctx) audioCtxRef.current = null;
-      };
-
-      source.start(0, 0);
+      await audio.play();
+      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") return; // user cancelled — no error shown
+      if ((err as Error)?.name === "AbortError") return;
       const detail = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
       console.error("[TTS] error:", err);
       setPlayingId(null);
@@ -178,38 +189,17 @@ export default function ScriptsPage() {
   };
 
   const seekBy = (delta: number) => {
-    const ctx = audioCtxRef.current;
-    const buf = audioBufRef.current;
-    if (!ctx || !buf) return;
+    const el = audioElRef.current;
+    if (!el) return;
+    el.currentTime = Math.max(0, Math.min(el.currentTime + delta, (el.duration || 0) - 0.05));
+  };
 
-    const elapsed = ctx.currentTime - playStartRef.current + playOffsetRef.current;
-    const newOffset = Math.max(0, Math.min(elapsed + delta, buf.duration - 0.05));
-
-    if (audioSrcRef.current) {
-      try { audioSrcRef.current.stop(); } catch { /* already stopped */ }
-      audioSrcRef.current.onended = null;
-      audioSrcRef.current = null;
-    }
-
-    const source = ctx.createBufferSource();
-    source.buffer = buf;
-    source.connect(ctx.destination);
-    playStartRef.current = ctx.currentTime;
-    playOffsetRef.current = newOffset;
-    audioSrcRef.current = source;
-
-    source.onended = () => {
-      if (audioSrcRef.current !== source) return;
-      clearTimer();
-      setPlayingId(null);
-      setAudioTime(null);
-      audioSrcRef.current = null;
-      audioBufRef.current = null;
-      ctx.close().catch(() => {});
-      if (audioCtxRef.current === ctx) audioCtxRef.current = null;
-    };
-
-    source.start(0, newOffset);
+  const SPEEDS = [0.75, 1, 1.25] as const;
+  const cycleSpeed = () => {
+    const idx = SPEEDS.indexOf(speed);
+    const next = SPEEDS[(idx + 1) % SPEEDS.length];
+    setSpeed(next);
+    if (audioElRef.current) audioElRef.current.playbackRate = next;
   };
 
   const handleStop = () => stopAudio();
@@ -376,9 +366,19 @@ export default function ScriptsPage() {
                         10s →
                       </button>
                     </div>
-                    <p className="font-saira text-[10px] text-zinc-500 text-center">
-                      {t("scripts.noSound")}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="font-saira text-[10px] text-zinc-500">
+                        {t("scripts.noSound")}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={cycleSpeed}
+                        className="rounded-lg border border-white/10 px-2.5 py-1 font-saira text-[11px] font-semibold text-zinc-400 hover:text-white hover:border-white/30 transition tabular-nums"
+                        aria-label="Cycle playback speed"
+                      >
+                        {speed}×
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">

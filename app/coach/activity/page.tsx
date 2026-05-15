@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import type { Sentiment } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
 
@@ -142,9 +143,10 @@ export default function CoachActivityPage() {
         {feed.length > 0 && (
           <div className="space-y-3">
             {feed.map((item) => (
-              <div
+              <Link
                 key={item.type + item.id}
-                className="rounded-2xl border border-white/6 bg-surface-alt p-4"
+                href={`/coach/athletes?open=${item.athleteId}`}
+                className="block rounded-2xl border border-white/6 bg-surface-alt p-4 hover:bg-white/[0.04] active:bg-white/[0.06] transition"
               >
                 {/* Athlete + type row */}
                 <div className="flex items-center gap-2 mb-2">
@@ -184,7 +186,7 @@ export default function CoachActivityPage() {
                     {item.sentiment}
                   </div>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
         )}

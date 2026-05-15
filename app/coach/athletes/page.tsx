@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import BottomSheet from "@/app/components/BottomSheet";
 import type { Sentiment } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
@@ -181,11 +182,23 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
 }
 
 export default function CoachAthletesPage() {
+  return (
+    <React.Suspense>
+      <CoachAthletesInner />
+    </React.Suspense>
+  );
+}
+
+function CoachAthletesInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [athletes, setAthletes] = React.useState<Athlete[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [sort, setSort] = React.useState<SortKey>("flag");
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [selectedId, setSelectedId] = React.useState<string | null>(
+    () => searchParams.get("open"),
+  );
 
   React.useEffect(() => {
     fetch("/api/coach/athletes")
@@ -196,6 +209,16 @@ export default function CoachAthletesPage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  // Sync ?open= param → selectedId after athletes load
+  React.useEffect(() => {
+    const openId = searchParams.get("open");
+    if (openId && athletes.length > 0) {
+      setSelectedId(openId);
+      // Remove the param from the URL so Back still works cleanly
+      router.replace("/coach/athletes", { scroll: false });
+    }
+  }, [athletes, searchParams, router]);
 
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();

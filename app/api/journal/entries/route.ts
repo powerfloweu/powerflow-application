@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbInsert, dbSelect, dbDelete } from "@/lib/supabaseAdmin";
+import { sendPushToUser } from "@/lib/push";
 
 type EntryRow = {
   id: string;
@@ -64,6 +65,45 @@ export async function POST(request: NextRequest) {
   });
 
   if (!row) return NextResponse.json({ error: "Insert failed" }, { status: 500 });
+
+  // ── @mention push notification ─────────────────────────────────────────────
+  // If the entry contains "@word" mentions, check whether any match the
+  // athlete's coach's first name and, if so, push a notification to the coach.
+  const contentStr = String(content);
+  const mentionMatches = [...contentStr.matchAll(/@(\w+)/g)].map((m) => m[1].toLowerCase());
+  if (mentionMatches.length) {
+    try {
+      const profileRows = await dbSelect<{ coach_id: string | null; display_name: string | null }>("profiles", {
+        id: `eq.${user.id}`,
+        select: "coach_id,display_name",
+      });
+      const coachId = profileRows[0]?.coach_id ?? null;
+      const athleteName = profileRows[0]?.display_name ?? "An athlete";
+
+      if (coachId) {
+        const coachRows = await dbSelect<{ display_name: string | null }>("profiles", {
+          id: `eq.${coachId}`,
+          select: "display_name",
+        });
+        const coachFirstName = (coachRows[0]?.display_name ?? "").split(" ")[0].toLowerCase();
+
+        if (coachFirstName && mentionMatches.includes(coachFirstName)) {
+          const preview = contentStr.length > 80
+            ? contentStr.slice(0, 80) + "…"
+            : contentStr;
+          void sendPushToUser(coachId, {
+            title: `${athleteName} mentioned you 📓`,
+            body: `"${preview}"`,
+            tag: `journal-mention-${user.id}`,
+            url: "/coach",
+          }).catch(() => {});
+        }
+      }
+    } catch {
+      // Non-fatal — don't fail the request if push logic errors
+    }
+  }
+
   return NextResponse.json(row, { status: 201 });
 }
 

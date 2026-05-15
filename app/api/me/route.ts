@@ -123,11 +123,12 @@ export async function GET() {
   //   2. Any per-athlete journal prompt labels the coach has set
   let coach_tts_voice_id: string | null = null;
   let coach_journal_prompt_labels: string[] | null = null;
+  let coach_display_name: string | null = null;
   if (row.role === "athlete" && row.coach_id) {
     const [coachRows, settingsRows] = await Promise.all([
-      dbSelect<{ tts_voice_id: string | null }>("profiles", {
+      dbSelect<{ tts_voice_id: string | null; display_name: string | null }>("profiles", {
         id: `eq.${row.coach_id}`,
-        select: "tts_voice_id",
+        select: "tts_voice_id,display_name",
       }),
       dbSelect<{ journal_prompt_labels: string[] | null }>("coach_athlete_settings", {
         coach_id: `eq.${row.coach_id}`,
@@ -136,6 +137,7 @@ export async function GET() {
       }),
     ]);
     coach_tts_voice_id = coachRows[0]?.tts_voice_id ?? null;
+    coach_display_name = coachRows[0]?.display_name ?? null;
     coach_journal_prompt_labels = settingsRows[0]?.journal_prompt_labels ?? null;
   }
 
@@ -147,6 +149,7 @@ export async function GET() {
     plan_tier: planTier,
     coach_tts_voice_id,
     coach_journal_prompt_labels,
+    coach_display_name,
   });
 }
 

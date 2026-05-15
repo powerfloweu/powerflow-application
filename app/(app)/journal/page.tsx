@@ -52,6 +52,7 @@ type UserProfile = {
   plan_tier?: string;
   journal_prompt_labels?: string[] | null;
   coach_journal_prompt_labels?: string[] | null;
+  coach_display_name?: string | null;
 };
 
 type CoachFeedbackItem = {
@@ -493,19 +494,63 @@ function PromptCustomizer({
 
 // ── Quick entry form ───────────────────────────────────────────────────────────
 
-function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
+function QuickEntry({ onAdd, coachName }: { onAdd: (e: JournalEntry) => void; coachName?: string | null }) {
   const { t } = useT();
   const [text, setText]               = React.useState("");
   const [submitting, setSubmitting]   = React.useState(false);
   const [submitted, setSubmitted]     = React.useState(false);
   const [error, setError]             = React.useState<string | null>(null);
   const [aiProcessing, setAiProcessing] = React.useState(false);
+  const [showMention, setShowMention]   = React.useState(false);
+  const [mentionStart, setMentionStart] = React.useState(-1);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // First word of coach's display name — used as the @tag
+  const coachFirstName = coachName ? coachName.split(" ")[0] : null;
 
   function handleAiParsed(result: ParsedResult) {
     if (result.type === "journal" && result.content) {
       setText(result.content);
+      setShowMention(false);
     }
   }
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    const cursor = e.target.selectionStart ?? val.length;
+    setText(val);
+
+    if (coachFirstName) {
+      const beforeCursor = val.slice(0, cursor);
+      const atMatch = beforeCursor.match(/@(\w*)$/);
+      if (atMatch) {
+        const partial = atMatch[1].toLowerCase();
+        if (coachFirstName.toLowerCase().startsWith(partial)) {
+          setShowMention(true);
+          setMentionStart(cursor - atMatch[0].length);
+          return;
+        }
+      }
+    }
+    setShowMention(false);
+  };
+
+  const insertMention = () => {
+    if (!coachFirstName || mentionStart === -1) return;
+    const cursor = textareaRef.current?.selectionStart ?? text.length;
+    const before = text.slice(0, mentionStart);
+    const after  = text.slice(cursor);
+    const newText = `${before}@${coachFirstName} ${after}`;
+    setText(newText);
+    setShowMention(false);
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const pos = mentionStart + coachFirstName.length + 2; // "@" + name + " "
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(pos, pos);
+      }
+    }, 0);
+  };
 
   const canSubmit = text.trim().length >= 3 && !submitting && !aiProcessing;
 
@@ -536,17 +581,45 @@ function QuickEntry({ onAdd }: { onAdd: (e: JournalEntry) => void }) {
   };
 
   const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showMention && e.key === "Escape") { setShowMention(false); return; }
+    if (showMention && (e.key === "Enter" || e.key === "Tab")) {
+      e.preventDefault();
+      insertMention();
+      return;
+    }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
   };
 
   return (
-    <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 via-fuchsia-500/5 to-transparent p-5 sm:p-6 shadow-[0_16px_40px_rgba(126,34,206,0.15)]">
+    <div className="relative rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 via-fuchsia-500/5 to-transparent p-5 sm:p-6 shadow-[0_16px_40px_rgba(126,34,206,0.15)]">
       <textarea
-        value={text} onChange={(e) => setText(e.target.value)} onKeyDown={handleKey}
+        ref={textareaRef}
+        value={text}
+        onChange={handleChange}
+        onKeyDown={handleKey}
         placeholder={t("journal.writePlaceholder")}
         rows={3}
         className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-base sm:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
       />
+
+      {/* @mention picker */}
+      {showMention && coachFirstName && (
+        <div className="absolute left-5 right-5 bottom-[calc(100%-4.5rem)] z-20 rounded-xl border border-purple-500/30 bg-zinc-900/95 shadow-xl backdrop-blur-sm overflow-hidden">
+          <button
+            type="button"
+            onMouseDown={(e) => { e.preventDefault(); insertMention(); }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-purple-500/20 transition"
+          >
+            <span className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-saira text-xs font-bold text-purple-300 flex-shrink-0">
+              {coachFirstName[0].toUpperCase()}
+            </span>
+            <div>
+              <p className="font-saira text-sm text-zinc-100">@{coachFirstName}</p>
+              <p className="font-saira text-[10px] text-zinc-400">Notify your coach</p>
+            </div>
+          </button>
+        </div>
+      )}
 
       <div className="mt-4 flex items-center gap-3">
         <VoicePhotoCapture
@@ -738,6 +811,7 @@ function PastDateForm({
   onSave,
   promptLabels,
   onAdd,
+  coachName,
 }: {
   dateLabel: string;
   entry: TrainingEntry | null;
@@ -746,6 +820,7 @@ function PastDateForm({
   onSave: (updated: TrainingEntry) => void;
   promptLabels: string[];
   onAdd: (e: JournalEntry) => void;
+  coachName?: string | null;
 }) {
   const { t } = useT();
 
@@ -789,7 +864,7 @@ function PastDateForm({
             {t("today.rest")} · {dateLabel}
           </span>
         </div>
-        <QuickEntry onAdd={onAdd} />
+        <QuickEntry onAdd={onAdd} coachName={coachName} />
       </div>
     );
   }
@@ -1102,7 +1177,7 @@ export default function JournalPage() {
                       </span>
                     </div>
                   )}
-                  <QuickEntry onAdd={handleAdd} />
+                  <QuickEntry onAdd={handleAdd} coachName={profile?.coach_display_name} />
                 </div>
               )
             ) : (
@@ -1114,6 +1189,7 @@ export default function JournalPage() {
                 marking={pastDayMarking}
                 promptLabels={effectivePromptLabels}
                 onAdd={handleAdd}
+                coachName={profile?.coach_display_name}
                 onSave={(updated) => {
                   setAllTraining((prev) =>
                     prev.map((e) => e.entry_date === updated.entry_date ? updated : e),
