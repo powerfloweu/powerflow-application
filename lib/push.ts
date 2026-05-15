@@ -36,6 +36,7 @@ export type PushPayload = {
   tag?: string;
   icon?: string;
   badge?: string;
+  requireInteraction?: boolean;
 };
 
 export type SendResult = {
@@ -45,6 +46,31 @@ export type SendResult = {
   status?: number;
   error?: string;
 };
+
+/**
+ * Send a push notification to all subscriptions for a given user.
+ * Fire-and-forget — expired subscriptions are cleaned up automatically.
+ * Import dbSelect/dbDelete lazily to avoid bundling the admin client unnecessarily.
+ */
+export async function sendPushToUser(
+  userId: string,
+  payload: PushPayload,
+): Promise<void> {
+  const { dbSelect, dbDelete } = await import("@/lib/supabaseAdmin");
+  type SubRow = PushSubscriptionRow & { user_id: string };
+  const subs = await dbSelect<SubRow>("push_subscriptions", {
+    user_id: `eq.${userId}`,
+    select: "endpoint,p256dh,auth,user_id",
+  });
+  await Promise.all(
+    subs.map(async (sub) => {
+      const result = await sendPush(sub, payload);
+      if (result.expired) {
+        await dbDelete("push_subscriptions", { endpoint: sub.endpoint });
+      }
+    }),
+  );
+}
 
 export async function sendPush(
   sub: PushSubscriptionRow,

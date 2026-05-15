@@ -8,12 +8,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbInsert, dbDelete } from "@/lib/supabaseAdmin";
+import { sendPushToUser } from "@/lib/push";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const VALID_SLUGS = ["sat", "acsi", "csai", "das"] as const;
 type TestSlug = (typeof VALID_SLUGS)[number];
+
+const TEST_NAMES: Record<TestSlug, string> = {
+  sat:  "Sport Anxiety Test (SAT)",
+  acsi: "Coping Skills Inventory (ACSI)",
+  csai: "Competitive Anxiety Inventory (CSAI-2)",
+  das:  "Depression, Anxiety & Stress Scale (DAS)",
+};
 
 async function getCoachId(): Promise<string | null> {
   const supabase = await createClient();
@@ -70,6 +78,15 @@ export async function POST(req: NextRequest) {
     // Likely a duplicate (already assigned) — treat as success
     return NextResponse.json({ ok: true, duplicate: true });
   }
+
+  // Notify athlete (fire-and-forget — don't block the response)
+  void sendPushToUser(athlete_id, {
+    title: "New test assigned 🧪",
+    body: `Your coach has assigned you the ${TEST_NAMES[test_slug as TestSlug]}`,
+    tag: `test-assigned-${test_slug}`,
+    url: "/tools",
+    requireInteraction: true,
+  }).catch(() => {});
 
   return NextResponse.json({ ok: true, id: inserted.id });
 }
