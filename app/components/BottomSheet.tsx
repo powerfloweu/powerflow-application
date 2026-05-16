@@ -67,9 +67,12 @@ export default function BottomSheet({ open, onClose, title, children, footer }: 
         role="dialog"
         aria-modal
         className={[
-          "fixed z-[70] bg-surface-alt flex flex-col",
-          // Mobile: bottom sheet — min-h so short content still gives a usable sheet
-          "bottom-0 inset-x-0 rounded-t-2xl min-h-[55dvh] max-h-[90dvh]",
+          // overflow-hidden: enforces max-height by clipping flex children that would
+          // otherwise expand past the boundary; also clips rounded corners cleanly.
+          "fixed z-[70] bg-surface-alt flex flex-col overflow-hidden",
+          // Mobile: bottom sheet.
+          // Use vh (not dvh) — dvh requires iOS 15.4+; vh works on all iOS versions.
+          "bottom-0 inset-x-0 rounded-t-2xl min-h-[55vh] max-h-[90vh]",
           // Desktop: centred modal
           "md:min-h-0 md:inset-x-auto md:inset-y-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2",
           "md:w-full md:max-w-lg md:rounded-2xl md:max-h-[80vh]",
@@ -95,10 +98,14 @@ export default function BottomSheet({ open, onClose, title, children, footer }: 
           </button>
         </div>
 
-        {/* Scrollable body — overscroll-behavior: contain keeps pull-to-refresh
-            from firing, WebkitOverflowScrolling enables momentum scroll on iOS */}
+        {/* Scrollable body.
+            min-h-0: without this, flex items have min-height:auto and won't shrink
+            below their content size — overflow-y never activates and content escapes
+            past the sheet boundary instead of scrolling.
+            overscrollBehavior: contain — prevents pull-to-refresh firing.
+            WebkitOverflowScrolling: momentum scroll on iOS. */}
         <div
-          className="flex-1 overflow-y-auto px-5 py-4"
+          className="flex-1 min-h-0 overflow-y-auto px-5 py-4"
           style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
         >
           {children}
