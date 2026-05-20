@@ -37,7 +37,7 @@ export default function ScriptsPage() {
   const [audioTime, setAudioTime] = React.useState<{ current: number; duration: number } | null>(null);
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
-  const [speed, setSpeed] = React.useState<0.75 | 1 | 1.25>(1);
+  const [speed, setSpeed] = React.useState<0.5 | 0.75 | 1 | 1.25>(1);
 
   // ── Audio engine refs ─────────────────────────────────────────────────────────
   // Uses HTMLAudioElement (not Web Audio API) so the OS keeps audio playing when
@@ -211,7 +211,7 @@ export default function ScriptsPage() {
     el.currentTime = Math.max(0, Math.min(el.currentTime + delta, (el.duration || 0) - 0.05));
   };
 
-  const SPEEDS = [0.75, 1, 1.25] as const;
+  const SPEEDS = [0.5, 0.75, 1, 1.25] as const;
   const cycleSpeed = () => {
     const idx = SPEEDS.indexOf(speed);
     const next = SPEEDS[(idx + 1) % SPEEDS.length];

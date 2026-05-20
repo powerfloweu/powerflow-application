@@ -94,7 +94,7 @@ function ScriptBlock({
   loadingId: string | null;
   errorId: string | null;
   audioTime: { current: number; duration: number } | null;
-  speed: 0.75 | 1 | 1.25;
+  speed: 0.5 | 0.75 | 1 | 1.25;
   onPlay: (blockId: string, content: string) => void;
   onStop: () => void;
   onSeekBy: (delta: number) => void;
@@ -390,7 +390,7 @@ function renderContent(
     loadingId: string | null;
     errorId: string | null;
     audioTime: { current: number; duration: number } | null;
-    speed: 0.75 | 1 | 1.25;
+    speed: 0.5 | 0.75 | 1 | 1.25;
     onPlay: (blockId: string, content: string) => void;
     onStop: () => void;
     onSeekBy: (delta: number) => void;
@@ -624,7 +624,7 @@ export default function ChatPage() {
   const [loadingScriptId, setLoadingScriptId] = React.useState<string | null>(null);
   const [ttsErrorId, setTtsErrorId] = React.useState<string | null>(null);
   const [audioTime, setAudioTime] = React.useState<{ current: number; duration: number } | null>(null);
-  const [chatSpeed, setChatSpeed] = React.useState<0.75 | 1 | 1.25>(1);
+  const [chatSpeed, setChatSpeed] = React.useState<0.5 | 0.75 | 1 | 1.25>(1);
   // Uses HTMLAudioElement (not AudioContext) so audio keeps playing when the
   // screen locks — AudioContext is suspended by iOS/Android on sleep.
   const audioElRef  = React.useRef<HTMLAudioElement | null>(null);
@@ -894,7 +894,7 @@ export default function ChatPage() {
     el.currentTime = Math.max(0, Math.min(el.currentTime + delta, (el.duration || 0) - 0.05));
   };
 
-  const CHAT_SPEEDS = [0.75, 1, 1.25] as const;
+  const CHAT_SPEEDS = [0.5, 0.75, 1, 1.25] as const;
   const cycleChatSpeed = () => {
     const next = CHAT_SPEEDS[(CHAT_SPEEDS.indexOf(chatSpeed) + 1) % CHAT_SPEEDS.length];
     setChatSpeed(next);

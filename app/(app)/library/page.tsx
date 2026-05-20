@@ -557,7 +557,7 @@ const STORAGE_BASES: Record<Locale, string> = {
   fr: "https://njpmnglhgteihslgslou.supabase.co/storage/v1/object/public/tools/",
 };
 
-const SPEEDS = [0.75, 1, 1.25] as const;
+const SPEEDS = [0.5, 0.75, 1, 1.25] as const;
 type Speed = (typeof SPEEDS)[number];
 
 function AudioPlayer({ fileKey, color }: { fileKey: FileKeys | null; color: ToolColor }) {
