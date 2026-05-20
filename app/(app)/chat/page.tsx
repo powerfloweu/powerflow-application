@@ -759,11 +759,11 @@ export default function ChatPage() {
   }, []);
 
   // ── Audio engine ─────────────────────────────────────────────────────────────
-  // Strategy: fetch TTS audio as ArrayBuffer → AudioContext.decodeAudioData →
-  // AudioBufferSourceNode.start(). This completely avoids HTMLAudio.play() so
-  // iOS autoplay policy never blocks us. The AudioContext is unlocked once by
-  // the synchronous ctx.resume() call inside the user-gesture handler, and all
-  // subsequent start() calls inherit that unlocked state.
+  // Uses HTMLAudioElement (not AudioContext) so audio keeps playing when the
+  // screen locks — AudioContext is suspended by iOS/Android when the screen sleeps.
+  // iOS gesture fix: audio.play() is called synchronously with a silent WAV primer
+  // to activate the element; subsequent play() calls after the async TTS fetch work
+  // because activation is per-element, not per-source.
 
   const clearTimer = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
