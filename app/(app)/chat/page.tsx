@@ -82,9 +82,11 @@ function ScriptBlock({
   loadingId,
   errorId,
   audioTime,
+  speed,
   onPlay,
   onStop,
   onSeekBy,
+  onCycleSpeed,
 }: {
   content: string;
   blockId: string;
@@ -92,9 +94,11 @@ function ScriptBlock({
   loadingId: string | null;
   errorId: string | null;
   audioTime: { current: number; duration: number } | null;
+  speed: 0.75 | 1 | 1.25;
   onPlay: (blockId: string, content: string) => void;
   onStop: () => void;
   onSeekBy: (delta: number) => void;
+  onCycleSpeed: () => void;
 }) {
   const { t } = useT();
   const [saving, setSaving] = React.useState(false);
@@ -213,9 +217,19 @@ function ScriptBlock({
               10s →
             </button>
           </div>
-          <p className="font-saira text-[10px] text-zinc-500 text-center">
-            {t("chat.noSound")}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="font-saira text-[10px] text-zinc-500">
+              {t("chat.noSound")}
+            </p>
+            <button
+              type="button"
+              onClick={onCycleSpeed}
+              className="rounded-lg border border-white/10 px-2.5 py-1 font-saira text-[11px] font-semibold text-zinc-400 hover:text-white hover:border-white/30 transition tabular-nums"
+              aria-label="Cycle playback speed"
+            >
+              {speed}×
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-2 mb-0">
@@ -376,9 +390,11 @@ function renderContent(
     loadingId: string | null;
     errorId: string | null;
     audioTime: { current: number; duration: number } | null;
+    speed: 0.75 | 1 | 1.25;
     onPlay: (blockId: string, content: string) => void;
     onStop: () => void;
     onSeekBy: (delta: number) => void;
+    onCycleSpeed: () => void;
   }
 ): React.ReactNode {
   // Split on fenced code blocks first
@@ -406,9 +422,11 @@ function renderContent(
             loadingId={scriptProps.loadingId}
             errorId={scriptProps.errorId}
             audioTime={scriptProps.audioTime}
+            speed={scriptProps.speed}
             onPlay={scriptProps.onPlay}
             onStop={scriptProps.onStop}
             onSeekBy={scriptProps.onSeekBy}
+            onCycleSpeed={scriptProps.onCycleSpeed}
           />
         );
       }
@@ -606,16 +624,13 @@ export default function ChatPage() {
   const [loadingScriptId, setLoadingScriptId] = React.useState<string | null>(null);
   const [ttsErrorId, setTtsErrorId] = React.useState<string | null>(null);
   const [audioTime, setAudioTime] = React.useState<{ current: number; duration: number } | null>(null);
-  // AudioContext + AudioBufferSourceNode engine:
-  //   • decodeAudioData avoids HTMLAudio.play() so iOS autoplay never blocks it
-  //   • AudioContext output bypasses the hardware silent/mute switch on iOS
-  const audioCtxRef = React.useRef<AudioContext | null>(null);
-  const audioSrcRef = React.useRef<AudioBufferSourceNode | null>(null);
-  const audioBufRef = React.useRef<AudioBuffer | null>(null);
-  const playStartRef = React.useRef<number>(0);   // ctx.currentTime when playback started
-  const playOffsetRef = React.useRef<number>(0);  // buffer offset (for seeks)
-  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
-  const abortRef = React.useRef<AbortController | null>(null);
+  const [chatSpeed, setChatSpeed] = React.useState<0.75 | 1 | 1.25>(1);
+  // Uses HTMLAudioElement (not AudioContext) so audio keeps playing when the
+  // screen locks — AudioContext is suspended by iOS/Android on sleep.
+  const audioElRef  = React.useRef<HTMLAudioElement | null>(null);
+  const blobUrlRef  = React.useRef<string | null>(null);
+  const timerRef    = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const abortRef    = React.useRef<AbortController | null>(null);
 
   const bottomRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
@@ -758,14 +773,14 @@ export default function ChatPage() {
     clearTimer();
     abortRef.current?.abort();
     abortRef.current = null;
-    if (audioSrcRef.current) {
-      try { audioSrcRef.current.stop(); } catch { /* already stopped */ }
-      audioSrcRef.current.onended = null;
-      audioSrcRef.current = null;
+    if (audioElRef.current) {
+      audioElRef.current.pause();
+      audioElRef.current.onended = null;
+      audioElRef.current.src = "";
+      audioElRef.current = null;
     }
-    audioBufRef.current = null;
-    audioCtxRef.current?.close().catch(() => {});
-    audioCtxRef.current = null;
+    if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = null; }
+    if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "none";
     if (!silent) { setPlayingScriptId(null); setLoadingScriptId(null); setAudioTime(null); }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -778,13 +793,20 @@ export default function ChatPage() {
     if (isActive) return; // toggle off
 
     setTtsErrorId(null);
-    setLoadingScriptId(blockId); // show buffering indicator
+    setLoadingScriptId(blockId);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const AudioCtx = window.AudioContext ?? (window as any).webkitAudioContext;
-    const ctx = new AudioCtx() as AudioContext;
-    audioCtxRef.current = ctx;
-    ctx.resume().catch(() => {});
+    // ── iOS gesture-context fix ──────────────────────────────────────────────
+    // Safari blocks audio.play() unless called synchronously in a user-gesture
+    // handler. The TTS fetch (awaits) before play() would break the chain.
+    // Fix: create the Audio element and call play() HERE (synchronously) with a
+    // tiny silent WAV to activate the element. Once activated, subsequent play()
+    // calls on the same element work even after async src swaps.
+    // HTMLAudioElement (not AudioContext) is used so audio keeps playing on lock screen.
+    const SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+    const audio = new Audio(SILENT);
+    audio.playbackRate = chatSpeed;
+    audioElRef.current = audio;
+    audio.play().catch(() => {}); // activates element; benign if it fails
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -798,48 +820,64 @@ export default function ChatPage() {
       });
       if (!res.ok) throw new Error(`TTS ${res.status}`);
 
-      const arrayBuffer = await res.arrayBuffer();
-      if (audioCtxRef.current !== ctx) return; // stopped or superseded
+      const blob = await res.blob();
+      if (abortRef.current !== controller) return; // stopped or superseded
 
-      ctx.resume().catch(() => {});
-      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      if (audioCtxRef.current !== ctx) return;
+      const blobUrl = URL.createObjectURL(blob);
+      blobUrlRef.current = blobUrl;
 
-      audioBufRef.current = audioBuffer;
-      playOffsetRef.current = 0;
-      playStartRef.current = ctx.currentTime;
+      // Swap src on the already-activated element.
+      // Setting .src implicitly runs the load algorithm — don't call audio.load()
+      // as that resets the iOS audio session and breaks background playback.
+      audio.pause();
+      audio.src = blobUrl;
+      audio.playbackRate = chatSpeed;
 
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(ctx.destination);
-      audioSrcRef.current = source;
+      // ── MediaSession: lock-screen controls ──────────────────────────────────
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: "PowerFlow Coach",
+          artist: "PowerFlow",
+        });
+        navigator.mediaSession.setActionHandler("play",  () => { audio.play().catch(() => {}); });
+        navigator.mediaSession.setActionHandler("pause", () => { audio.pause(); });
+        navigator.mediaSession.setActionHandler("seekbackward", ({ seekOffset }) => {
+          audio.currentTime = Math.max(0, audio.currentTime - (seekOffset ?? 10));
+        });
+        navigator.mediaSession.setActionHandler("seekforward", ({ seekOffset }) => {
+          audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + (seekOffset ?? 10));
+        });
+      }
 
-      // Audio ready — swap loading → playing
-      setLoadingScriptId(null);
-      setPlayingScriptId(blockId);
-
-      // Progress ticker
-      timerRef.current = setInterval(() => {
-        if (!audioSrcRef.current || audioCtxRef.current !== ctx) return;
-        const elapsed = ctx.currentTime - playStartRef.current + playOffsetRef.current;
-        const dur = audioBufRef.current?.duration ?? 0;
-        setAudioTime({ current: Math.min(elapsed, dur), duration: dur });
-      }, 250);
-
-      source.onended = () => {
-        if (audioSrcRef.current !== source) return;
+      audio.onended = () => {
         clearTimer();
         setPlayingScriptId(null);
         setAudioTime(null);
-        audioSrcRef.current = null;
-        audioBufRef.current = null;
-        ctx.close().catch(() => {});
-        if (audioCtxRef.current === ctx) audioCtxRef.current = null;
+        audioElRef.current = null;
+        if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = null; }
+        if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "none";
       };
 
-      source.start(0, 0);
+      setLoadingScriptId(null);
+      setPlayingScriptId(blockId);
+
+      timerRef.current = setInterval(() => {
+        const el = audioElRef.current;
+        if (!el) return;
+        setAudioTime({ current: el.currentTime, duration: el.duration || 0 });
+        if ("mediaSession" in navigator) {
+          navigator.mediaSession.setPositionState({
+            duration: el.duration || 0,
+            playbackRate: el.playbackRate,
+            position: el.currentTime,
+          });
+        }
+      }, 250);
+
+      await audio.play();
+      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") return; // user cancelled
+      if ((err as Error)?.name === "AbortError") return;
       const detail = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
       console.error("[TTS] error:", err);
       setPlayingScriptId(null);
@@ -851,39 +889,16 @@ export default function ChatPage() {
   };
 
   const seekBy = (delta: number) => {
-    const ctx = audioCtxRef.current;
-    const buf = audioBufRef.current;
-    if (!ctx || !buf) return;
+    const el = audioElRef.current;
+    if (!el) return;
+    el.currentTime = Math.max(0, Math.min(el.currentTime + delta, (el.duration || 0) - 0.05));
+  };
 
-    const elapsed = ctx.currentTime - playStartRef.current + playOffsetRef.current;
-    const newOffset = Math.max(0, Math.min(elapsed + delta, buf.duration - 0.05));
-
-    // Stop current source and restart from the new offset
-    if (audioSrcRef.current) {
-      try { audioSrcRef.current.stop(); } catch { /* already stopped */ }
-      audioSrcRef.current.onended = null;
-      audioSrcRef.current = null;
-    }
-
-    const source = ctx.createBufferSource();
-    source.buffer = buf;
-    source.connect(ctx.destination);
-    playStartRef.current = ctx.currentTime;
-    playOffsetRef.current = newOffset;
-    audioSrcRef.current = source;
-
-    source.onended = () => {
-      if (audioSrcRef.current !== source) return;
-      clearTimer();
-      setPlayingScriptId(null);
-      setAudioTime(null);
-      audioSrcRef.current = null;
-      audioBufRef.current = null;
-      ctx.close().catch(() => {});
-      if (audioCtxRef.current === ctx) audioCtxRef.current = null;
-    };
-
-    source.start(0, newOffset);
+  const CHAT_SPEEDS = [0.75, 1, 1.25] as const;
+  const cycleChatSpeed = () => {
+    const next = CHAT_SPEEDS[(CHAT_SPEEDS.indexOf(chatSpeed) + 1) % CHAT_SPEEDS.length];
+    setChatSpeed(next);
+    if (audioElRef.current) audioElRef.current.playbackRate = next;
   };
 
   const handleStop = () => stopAudio();
@@ -1058,9 +1073,11 @@ export default function ChatPage() {
     loadingId: loadingScriptId,
     errorId: ttsErrorId,
     audioTime,
+    speed: chatSpeed,
     onPlay: handlePlay,
     onStop: handleStop,
     onSeekBy: seekBy,
+    onCycleSpeed: cycleChatSpeed,
   };
 
   // ── Loading state ──────────────────────────────────────────────────────────

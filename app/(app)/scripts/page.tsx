@@ -142,11 +142,13 @@ export default function ScriptsPage() {
       const blobUrl = URL.createObjectURL(blob);
       blobUrlRef.current = blobUrl;
 
-      // Swap in the real audio src on the already-activated element
+      // Swap in the real audio src on the already-activated element.
+      // Setting .src implicitly runs the load algorithm (per HTML spec) — don't
+      // call audio.load() explicitly because that resets the iOS audio session
+      // and breaks background playback when the screen locks.
       audio.pause();
       audio.src = blobUrl;
       audio.playbackRate = speed;
-      audio.load(); // required on iOS after src change
 
       // ── MediaSession: lock-screen controls ────────────────────────────────
       if ("mediaSession" in navigator) {
