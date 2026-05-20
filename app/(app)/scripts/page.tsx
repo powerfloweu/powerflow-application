@@ -111,6 +111,19 @@ export default function ScriptsPage() {
     setTtsError(null);
     setLoadingId(script.id);
 
+    // ── iOS gesture-context fix ──────────────────────────────────────────────
+    // Safari only allows audio.play() from a synchronous user-gesture handler.
+    // Any `await` before play() breaks the chain → NotAllowedError.
+    // Fix: create the Audio element and call play() RIGHT NOW (synchronously),
+    // using a tiny silent WAV so the call succeeds and "activates" the element.
+    // Once activated, subsequent play() calls on the same element succeed even
+    // after an async src swap — iOS only gates the *first* play() per element.
+    const SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+    const audio = new Audio(SILENT);
+    audio.playbackRate = speed;
+    audioElRef.current = audio;
+    audio.play().catch(() => {}); // activates element; benign if it fails
+
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -129,9 +142,11 @@ export default function ScriptsPage() {
       const blobUrl = URL.createObjectURL(blob);
       blobUrlRef.current = blobUrl;
 
-      const audio = new Audio(blobUrl);
+      // Swap in the real audio src on the already-activated element
+      audio.pause();
+      audio.src = blobUrl;
       audio.playbackRate = speed;
-      audioElRef.current = audio;
+      audio.load(); // required on iOS after src change
 
       // ── MediaSession: lock-screen controls ────────────────────────────────
       if ("mediaSession" in navigator) {
