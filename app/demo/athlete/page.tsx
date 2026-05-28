@@ -31,9 +31,15 @@ function pal(d: boolean) {
     vbg:      d ? "bg-violet-500/[0.07] border-violet-500/25"  : "bg-violet-50 border-violet-200",
     vbg2:     d ? "bg-violet-500/[0.12] border-violet-500/35"  : "bg-violet-100 border-violet-300",
     vic:      d ? "bg-violet-500/15 text-violet-300"  : "bg-violet-100 text-violet-700",
-    // amber
+    // amber (warnings — meet countdown, etc.)
     at:       d ? "text-amber-400"  : "text-amber-700",
     abg:      d ? "bg-amber-500/[0.07] border-amber-500/25" : "bg-amber-50 border-amber-200",
+    // gold (PR tier — premium accent)
+    gt:       d ? "text-amber-300"  : "text-amber-600",
+    gtl:      d ? "text-amber-200"  : "text-amber-700",
+    gbg:      d ? "bg-amber-500/[0.08] border-amber-500/22"  : "bg-amber-50 border-amber-200",
+    gbg2:     d ? "bg-amber-500/[0.14] border-amber-500/30"  : "bg-amber-100 border-amber-300",
+    gic:      d ? "bg-amber-500/15 text-amber-300"  : "bg-amber-100 text-amber-700",
     // rose
     rt:       d ? "text-rose-400"   : "text-rose-600",
     // sky (training entries)
@@ -243,7 +249,7 @@ function TierBadge({ tier }: { tier: "free" | "second" | "pr" }) {
   const map: Record<ToolTier, [string, string]> = {
     free:   ["Opener", d ? "text-zinc-400 border-zinc-600/40 bg-zinc-600/10" : "text-gray-500 border-gray-300 bg-gray-100"],
     second: ["Second", d ? "text-violet-300 border-violet-500/30 bg-violet-500/10" : "text-violet-700 border-violet-300 bg-violet-50"],
-    pr:     ["PR",     d ? "text-violet-200 border-violet-400/30 bg-violet-500/15" : "text-violet-800 border-violet-400 bg-violet-100"],
+    pr:     ["PR",     d ? "text-amber-200 border-amber-500/30 bg-amber-500/12" : "text-amber-700 border-amber-300 bg-amber-50"],
   };
   const [label, cls] = map[tier];
   return <span className={`rounded-full border px-1.5 py-0.5 font-saira text-[8px] font-bold uppercase ${cls}`}>{label}</span>;
@@ -762,7 +768,7 @@ function S15() {
               <p className={`font-saira text-sm font-bold ${p.t1}`}>16-Week Mental Performance Program</p>
               <p className={`font-saira text-[10px] ${p.t4} mt-0.5`}>Week 3 of 16 · 2 weeks completed</p>
             </div>
-            <span className={`rounded-full border ${p.vbg2} px-2.5 py-1 font-saira text-[9px] font-bold uppercase ${p.vtl} flex-shrink-0 ml-2`}>PR tier</span>
+            <span className={`rounded-full border ${p.gbg2} px-2.5 py-1 font-saira text-[9px] font-bold uppercase ${p.gtl} flex-shrink-0 ml-2`}>PR tier</span>
           </div>
         </FadeIn>
         <FadeIn delay={300}>
@@ -814,9 +820,9 @@ function S16() {
               <div className="space-y-2">
                 {cat.items.map((item, ii) => (
                   <FadeIn key={item.name} delay={ci * 300 + ii * 150}>
-                    <div className={`rounded-xl border px-4 py-3 flex items-center justify-between ${cat.tier === "pr" || cat.tier === "second" ? p.vbg : p.c2}`}>
+                    <div className={`rounded-xl border px-4 py-3 flex items-center justify-between ${cat.tier === "pr" ? p.gbg : cat.tier === "second" ? p.vbg : p.c2}`}>
                       <div className="flex items-center gap-3">
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm ${cat.tier !== "free" ? p.vic : (d ? "bg-white/8 text-zinc-400" : "bg-gray-100 text-gray-500")}`}>▶</div>
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm ${cat.tier === "pr" ? p.gic : cat.tier === "second" ? p.vic : (d ? "bg-white/8 text-zinc-400" : "bg-gray-100 text-gray-500")}`}>▶</div>
                         <div>
                           <p className={`font-saira text-xs font-semibold ${p.t2}`}>{item.name}</p>
                           <p className={`font-saira text-[9px] ${p.t4}`}>{item.dur}</p>
@@ -847,7 +853,7 @@ function S17() {
             <div className={`w-12 h-12 rounded-full ${p.vic} border ${d ? "border-violet-500/25" : "border-violet-200"} flex items-center justify-center font-saira text-sm font-bold flex-shrink-0`}>AM</div>
             <div>
               <p className={`font-saira text-base font-bold ${p.t1}`}>Alex Morrison</p>
-              <p className={`font-saira text-xs ${p.t3}`}>Athlete · <span className={p.vt}>PR tier</span></p>
+              <p className={`font-saira text-xs ${p.t3}`}>Athlete · <span className={p.gt}>PR tier</span></p>
             </div>
           </div>
         </FadeIn>

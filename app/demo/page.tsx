@@ -153,19 +153,19 @@ export default function DemoLanding() {
                 tier.id === "second"
                   ? tc(d,"border-violet-500/35 bg-violet-500/[0.08]","border-violet-300 bg-violet-50")
                   : tier.id === "pr"
-                    ? tc(d,"border-white/15 bg-white/[0.03]","border-gray-200 bg-white")
+                    ? tc(d,"border-amber-500/22 bg-amber-500/[0.06]","border-amber-200 bg-amber-50")
                     : tc(d,"border-white/8 bg-white/[0.02]","border-gray-100 bg-white")
               }`}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <p className={`font-saira text-base font-extrabold uppercase tracking-tight ${
                       tier.id === "second" ? tc(d,"text-violet-200","text-violet-800")
-                      : tier.id === "pr"   ? tc(d,"text-white","text-gray-900")
+                      : tier.id === "pr"   ? tc(d,"text-amber-200","text-amber-800")
                                            : tc(d,"text-white","text-gray-700")
                     }`}>{tier.name}</p>
                     <span className={`rounded-full border px-2.5 py-0.5 font-saira text-[9px] font-bold uppercase tracking-wider ${
                       tier.id === "second" ? tc(d,"border-violet-500/35 bg-violet-500/15 text-violet-300","border-violet-300 bg-violet-100 text-violet-700")
-                      : tier.id === "pr"   ? tc(d,"border-white/15 bg-white/[0.07] text-zinc-200","border-gray-300 bg-gray-100 text-gray-600")
+                      : tier.id === "pr"   ? tc(d,"border-amber-500/30 bg-amber-500/10 text-amber-300","border-amber-300 bg-amber-50 text-amber-700")
                                            : tc(d,"border-white/10 bg-white/[0.04] text-zinc-400","border-gray-200 bg-gray-50 text-gray-500")
                     }`}>{tier.tag}</span>
                   </div>
@@ -178,7 +178,7 @@ export default function DemoLanding() {
                     <li key={f} className={`flex items-start gap-2 text-xs ${tc(d,"text-zinc-400","text-gray-600")}`}>
                       <span className={`mt-0.5 flex-shrink-0 text-[10px] ${
                         tier.id === "second" ? tc(d,"text-violet-400","text-violet-600")
-                        : tier.id === "pr"   ? tc(d,"text-zinc-300","text-gray-500")
+                        : tier.id === "pr"   ? tc(d,"text-amber-400","text-amber-600")
                                              : tc(d,"text-zinc-500","text-gray-400")
                       }`}>✓</span>
                       {f}
