@@ -114,7 +114,7 @@ const STEP_PANEL = [
   { title: "Performance test", desc: "Validated psychometric assessments assigned by the coach. Results appear on the dashboard the moment they're complete." },
   { title: "Your profile",     desc: "The athlete's complete profile — lifts, goals, meet countdown, mindset baseline, and coach connection." },
   { title: "Now playing",      desc: "Visualization scripts play as guided audio with personalised cues — even while the phone is locked." },
-  { title: "Get started",      desc: "Free to start, €9/month for visualization tools, €19/month for the full AI coaching experience. Coach teams: €29/month." },
+  { title: "Get started",      desc: "Free to start, €9/month for visualization tools, €29/month for the full AI coaching experience. Coach teams: €29/month base + €5/athlete/month." },
 ] as const;
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
@@ -1228,7 +1228,7 @@ const TIERS_PRICING = [
     id: "pr" as const,
     name: "PR",
     tag: "All-access",
-    price: "€19" as string | null,
+    price: "€29" as string | null,
     features: ["Everything in Second","16-week mental performance course","AI coaching chat — knows your full history","Personalized course plan · meet day prep"],
     cta: "Sign in & get access",
     href: "/upgrade",
