@@ -3032,6 +3032,9 @@ function TotpGate({
 
 // ── Demo Tab ──────────────────────────────────────────────────────────────────
 
+const DEMO_COACH_EMAIL    = "demo.coach@powerflow.training";
+const DEMO_COACH_PASSWORD = "Demo@PowerFlow1";
+
 function DemoTab() {
   const [seedStatus, setSeedStatus]     = React.useState<"idle"|"loading"|"done"|"error">("idle");
   const [removeStatus, setRemoveStatus] = React.useState<"idle"|"loading"|"done"|"error">("idle");
@@ -3061,7 +3064,7 @@ function DemoTab() {
 
   const ATHLETES = [
     { name: "Marcus Webb",   detail: "93 kg · IPF · 6 weeks out · high cognitive anxiety" },
-    { name: "Kayla Ström",   detail: "72 kg · USAPL · 10 weeks out · confidence block on bench" },
+    { name: "Kayla Ström",   detail: "76 kg · USAPL · 10 weeks out · confidence block on bench" },
     { name: "Jake Hartley",  detail: "83 kg · IPF · no meet date · perfectionism pattern (DAS)" },
     { name: "Sofia Mäkinen", detail: "63 kg · IPF · 3 weeks out · peaking · strongest mental scores" },
   ];
@@ -3071,11 +3074,25 @@ function DemoTab() {
       <div>
         <h2 className="font-saira text-sm font-bold uppercase tracking-[0.22em] text-zinc-300 mb-1">Demo Setup</h2>
         <p className="font-saira text-xs text-zinc-400">
-          Populate your coach dashboard with 4 realistic demo powerlifters for live presentations.
-          Seeding replaces any previous demo athletes automatically. Use{" "}
+          Creates a dedicated demo coach account + 4 realistic athletes so your real dashboard stays clean.
+          Log in as the demo coach to show the coach experience live. Use{" "}
           <a href="/demo" target="_blank" className="text-purple-400 hover:text-purple-300 underline">/demo</a>{" "}
-          for the shareable no-login showcase.
+          for a shareable no-login teaser.
         </p>
+      </div>
+
+      {/* Demo coach credentials — always visible */}
+      <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-2">
+        <p className="font-saira text-[10px] uppercase tracking-widest text-violet-400 mb-1">Demo coach login</p>
+        <div className="flex items-center gap-2">
+          <span className="font-saira text-[10px] text-zinc-500 w-16">Email</span>
+          <code className="font-mono text-xs text-violet-300 bg-violet-500/10 px-2 py-0.5 rounded">{DEMO_COACH_EMAIL}</code>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-saira text-[10px] text-zinc-500 w-16">Password</span>
+          <code className="font-mono text-xs text-violet-300 bg-violet-500/10 px-2 py-0.5 rounded">{DEMO_COACH_PASSWORD}</code>
+        </div>
+        <p className="font-saira text-[10px] text-zinc-600 pt-1">Seed first, then log in as this account to show a clean coach dashboard.</p>
       </div>
 
       {/* Athletes preview */}
@@ -3104,26 +3121,27 @@ function DemoTab() {
           disabled={seedStatus === "loading"}
           className="flex-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 py-2.5 font-saira text-xs font-semibold uppercase tracking-wider hover:bg-emerald-500/25 transition disabled:opacity-50"
         >
-          {seedStatus === "loading" ? "Seeding…" : "Seed Demo Athletes"}
+          {seedStatus === "loading" ? "Seeding…" : "Seed Demo Data"}
         </button>
         <button
           onClick={remove}
           disabled={removeStatus === "loading"}
           className="flex-1 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 py-2.5 font-saira text-xs font-semibold uppercase tracking-wider hover:bg-red-500/20 transition disabled:opacity-50"
         >
-          {removeStatus === "loading" ? "Removing…" : "Remove Demo Athletes"}
+          {removeStatus === "loading" ? "Removing…" : "Remove Demo Data"}
         </button>
       </div>
 
       {seedStatus === "done" && seedResult && (
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
-          <p className="font-saira text-xs font-semibold text-emerald-300">✓ {seedResult.length} demo athletes created — {seedResult.join(", ")}</p>
-          <a href="/coach/athletes" className="font-saira text-[11px] text-emerald-400 hover:text-emerald-300 underline mt-1 inline-block">Open Coach Dashboard →</a>
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-1">
+          <p className="font-saira text-xs font-semibold text-emerald-300">✓ Demo ready — {seedResult.join(", ")}</p>
+          <p className="font-saira text-[11px] text-emerald-400/70">Log in as the demo coach above, then open the coach dashboard.</p>
+          <a href="/auth/sign-in" target="_blank" className="font-saira text-[11px] text-emerald-400 hover:text-emerald-300 underline inline-block">Go to sign-in →</a>
         </div>
       )}
       {removeStatus === "done" && removeCount !== null && (
         <div className="rounded-xl border border-zinc-500/20 bg-zinc-500/5 p-3">
-          <p className="font-saira text-xs text-zinc-300">✓ {removeCount} demo athlete{removeCount !== 1 ? "s" : ""} removed.</p>
+          <p className="font-saira text-xs text-zinc-300">✓ Demo data removed ({removeCount} athlete{removeCount !== 1 ? "s" : ""} + coach account).</p>
         </div>
       )}
       {err && (
@@ -3134,13 +3152,14 @@ function DemoTab() {
 
       {/* Tips */}
       <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 space-y-1.5 font-saira text-[11px] text-zinc-500">
-        <p className="text-zinc-400 font-semibold text-[10px] uppercase tracking-widest mb-2">Demo tips</p>
-        <p>• Seed → open <strong className="text-zinc-300">/coach/athletes</strong> → show athlete cards live</p>
-        <p>• Marcus Webb (6 wks out) has anxiety signals — good for showing coach alerts</p>
-        <p>• Sofia Mäkinen has all 4 tests + strong check-ins — best for full profile view</p>
-        <p>• Jake Hartley has a DAS perfectionism flag — great for mental health screening angle</p>
-        <p>• Share <strong className="text-zinc-300">/demo</strong> before the meeting as a teaser link</p>
-        <p>• After the demo, hit Remove to keep your dashboard clean</p>
+        <p className="text-zinc-400 font-semibold text-[10px] uppercase tracking-widest mb-2">Demo flow</p>
+        <p>1. Hit <strong className="text-zinc-300">Seed Demo Data</strong> → log out → sign in as the demo coach</p>
+        <p>2. Open <strong className="text-zinc-300">/coach/athletes</strong> to show a clean dashboard</p>
+        <p>3. Marcus Webb (6 wks out) has anxiety signals — good for coach alerts</p>
+        <p>4. Sofia Mäkinen has all 4 tests + strong check-ins — best for full profile view</p>
+        <p>5. Jake Hartley has a DAS perfectionism flag — great for mental health screening angle</p>
+        <p>6. Share <strong className="text-zinc-300">/demo</strong> before the meeting as a teaser link</p>
+        <p>7. After the demo, hit <strong className="text-zinc-300">Remove Demo Data</strong> to clean up</p>
       </div>
     </div>
   );

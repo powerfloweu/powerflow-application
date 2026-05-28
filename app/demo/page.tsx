@@ -113,7 +113,7 @@ const ATHLETES: DemoAthlete[] = [
     initials: "KS",
     gender: "female",
     federation: "USAPL",
-    bw: 71.2,
+    bw: 74.6,
     daysToMeet: 70,
     squat: [148, 165],
     bench: [82.5, 92.5],

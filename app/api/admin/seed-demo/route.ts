@@ -1,28 +1,35 @@
 /**
  * Demo data seed / cleanup endpoint.
  *
- * POST  /api/admin/seed-demo  — creates 4 realistic demo powerlifters linked to
- *                               the requesting admin's coach account.
- *                               Automatically removes any existing demo athletes first.
- * DELETE /api/admin/seed-demo — removes all demo athletes for this coach.
+ * POST   /api/admin/seed-demo  — ensures a dedicated demo coach account exists,
+ *                                creates 4 realistic demo powerlifters linked to it,
+ *                                and removes any previous demo athletes first.
+ * DELETE /api/admin/seed-demo  — removes all demo athletes + the demo coach account.
  *
- * Demo athletes are identified by coach_notes = "DEMO_ATHLETE".
+ * Demo coach:   demo.coach@powerflow.training  /  Demo@PowerFlow1
+ * Demo athletes identified by: coach_notes = "DEMO_ATHLETE"
+ * Demo coach identified by:    coach_notes = "DEMO_COACH"
+ *
  * Deleting the auth user cascades to profile → journal/training/checkin/test rows.
  */
 
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
-import { createClient } from "@/lib/supabase/server";
 import { dbInsert, dbSelect, deleteAuthUser } from "@/lib/supabaseAdmin";
 
 const SB_URL =
   process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-const DEMO_TAG = "DEMO_ATHLETE";
+
+const DEMO_ATHLETE_TAG = "DEMO_ATHLETE";
+const DEMO_COACH_TAG   = "DEMO_COACH";
+
+export const DEMO_COACH_EMAIL    = "demo.coach@powerflow.training";
+export const DEMO_COACH_PASSWORD = "Demo@PowerFlow1";
 
 // ─── GoTrue helpers ────────────────────────────────────────────────────────
 
-async function createAuthUser(email: string): Promise<string | null> {
+async function createAuthUser(email: string, password?: string): Promise<string | null> {
   const res = await fetch(`${SB_URL}/auth/v1/admin/users`, {
     method: "POST",
     headers: {
@@ -32,7 +39,7 @@ async function createAuthUser(email: string): Promise<string | null> {
     },
     body: JSON.stringify({
       email,
-      password: crypto.randomUUID(), // random — demo athletes never log in
+      password: password ?? crypto.randomUUID(),
       email_confirm: true,
     }),
   });
@@ -43,6 +50,43 @@ async function createAuthUser(email: string): Promise<string | null> {
   }
   const user = (await res.json()) as { id: string };
   return user.id;
+}
+
+// ─── Demo coach ────────────────────────────────────────────────────────────
+
+/** Finds or creates the shared demo coach account. Returns its user_id. */
+async function ensureDemoCoach(): Promise<string | null> {
+  type Row = { id: string };
+
+  // Reuse existing demo coach if already seeded
+  const existing = await dbSelect<Row>("profiles", {
+    coach_notes: `eq.${DEMO_COACH_TAG}`,
+    select: "id",
+  });
+  if (existing.length > 0) return existing[0].id;
+
+  // Create auth user with known credentials
+  const uid = await createAuthUser(DEMO_COACH_EMAIL, DEMO_COACH_PASSWORD);
+  if (!uid) return null;
+
+  const profile = await dbInsert("profiles", {
+    id: uid,
+    display_name: "Demo Coach",
+    role: "coach",
+    onboarding_complete: true,
+    plan_tier: "pr",
+    language: "en",
+    ai_access: true,
+    test_access: true,
+    coach_notes: DEMO_COACH_TAG,
+  });
+
+  if (!profile) {
+    await deleteAuthUser(uid);
+    return null;
+  }
+
+  return uid;
 }
 
 // ─── Date / week helpers ───────────────────────────────────────────────────
@@ -116,7 +160,7 @@ function buildAthletes(coachId: string) {
         ai_access: true,
         test_access: true,
         years_powerlifting: "7",
-        coach_notes: DEMO_TAG,
+        coach_notes: DEMO_ATHLETE_TAG,
         self_confidence_reg: 6,
         self_focus_fatigue: 7,
         self_handling_pressure: 5,
@@ -165,7 +209,7 @@ function buildAthletes(coachId: string) {
       },
     },
 
-    // ── Kayla Ström  ·  72 kg  ·  USAPL  ·  10 weeks out ─────────────────
+    // ── Kayla Ström  ·  76 kg  ·  USAPL  ·  10 weeks out ─────────────────
     {
       email: "demo.kayla.strom@powerflow.training",
       profile: {
@@ -174,7 +218,7 @@ function buildAthletes(coachId: string) {
         coach_id: coachId,
         gender: "female",
         federation: "USAPL",
-        bodyweight_kg: 71.2,
+        bodyweight_kg: 74.6,
         squat_current_kg: 148,  squat_goal_kg: 165,
         bench_current_kg: 82.5, bench_goal_kg: 92.5,
         deadlift_current_kg: 185, deadlift_goal_kg: 205,
@@ -185,7 +229,7 @@ function buildAthletes(coachId: string) {
         ai_access: true,
         test_access: true,
         years_powerlifting: "4",
-        coach_notes: DEMO_TAG,
+        coach_notes: DEMO_ATHLETE_TAG,
         self_confidence_reg: 5,
         self_focus_fatigue: 6,
         self_handling_pressure: 4,
@@ -249,7 +293,7 @@ function buildAthletes(coachId: string) {
         ai_access: true,
         test_access: true,
         years_powerlifting: "3",
-        coach_notes: DEMO_TAG,
+        coach_notes: DEMO_ATHLETE_TAG,
         self_confidence_reg: 6,
         self_focus_fatigue: 5,
         self_handling_pressure: 6,
@@ -317,7 +361,7 @@ function buildAthletes(coachId: string) {
         ai_access: true,
         test_access: true,
         years_powerlifting: "6",
-        coach_notes: DEMO_TAG,
+        coach_notes: DEMO_ATHLETE_TAG,
         self_confidence_reg: 8,
         self_focus_fatigue: 7,
         self_handling_pressure: 8,
@@ -366,13 +410,13 @@ function buildAthletes(coachId: string) {
   ];
 }
 
-// ─── Cleanup helper ────────────────────────────────────────────────────────
+// ─── Cleanup helpers ───────────────────────────────────────────────────────
 
 async function removeDemoAthletes(coachId: string): Promise<number> {
   type ProfileRow = { id: string };
   const rows = await dbSelect<ProfileRow>("profiles", {
     coach_id: `eq.${coachId}`,
-    coach_notes: `eq.${DEMO_TAG}`,
+    coach_notes: `eq.${DEMO_ATHLETE_TAG}`,
     select: "id",
   });
   for (const row of rows) {
@@ -381,19 +425,28 @@ async function removeDemoAthletes(coachId: string): Promise<number> {
   return rows.length;
 }
 
+async function removeDemoCoach(): Promise<void> {
+  type ProfileRow = { id: string };
+  const rows = await dbSelect<ProfileRow>("profiles", {
+    coach_notes: `eq.${DEMO_COACH_TAG}`,
+    select: "id",
+  });
+  for (const row of rows) {
+    await deleteAuthUser(row.id);
+  }
+}
+
 // ─── POST — seed ───────────────────────────────────────────────────────────
 
 export async function POST() {
   const ok = await requireAdmin();
   if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const sb = await createClient();
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return NextResponse.json({ error: "no session" }, { status: 401 });
+  // Ensure demo coach exists (creates if needed)
+  const coachId = await ensureDemoCoach();
+  if (!coachId) return NextResponse.json({ error: "failed to create demo coach" }, { status: 500 });
 
-  const coachId = user.id;
-
-  // Always start clean
+  // Always start with a clean slate for athletes
   await removeDemoAthletes(coachId);
 
   const athletes = buildAthletes(coachId);
@@ -446,7 +499,10 @@ export async function POST() {
     created.push(def.profile.display_name);
   }
 
-  return NextResponse.json({ created });
+  return NextResponse.json({
+    created,
+    coach: { email: DEMO_COACH_EMAIL, password: DEMO_COACH_PASSWORD },
+  });
 }
 
 // ─── DELETE — cleanup ──────────────────────────────────────────────────────
@@ -455,10 +511,20 @@ export async function DELETE() {
   const ok = await requireAdmin();
   if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const sb = await createClient();
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return NextResponse.json({ error: "no session" }, { status: 401 });
+  // Find demo coach first (need their ID to delete their athletes)
+  type Row = { id: string };
+  const coaches = await dbSelect<Row>("profiles", {
+    coach_notes: `eq.${DEMO_COACH_TAG}`,
+    select: "id",
+  });
 
-  const removed = await removeDemoAthletes(user.id);
-  return NextResponse.json({ removed });
+  let athleteCount = 0;
+  for (const coach of coaches) {
+    athleteCount += await removeDemoAthletes(coach.id);
+  }
+
+  // Then delete the coach account(s)
+  await removeDemoCoach();
+
+  return NextResponse.json({ removed: athleteCount });
 }
