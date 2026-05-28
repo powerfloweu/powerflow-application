@@ -1,10 +1,9 @@
 /**
  * POST /api/admin/demo-sign-in
  *
- * Generates a Supabase magic link for the demo coach account using the
- * admin API (no email sent — returns the link directly).
- * The caller can open the link to sign in as demo.coach@powerflow.training
- * without needing Google OAuth or email/password auth enabled.
+ * Returns the email OTP for the demo coach account so the caller can verify
+ * it client-side via supabase.auth.verifyOtp() — no email sent, no redirect
+ * chain, no dependence on Supabase's redirect_to allowlist.
  */
 
 import { NextResponse } from "next/server";
@@ -18,7 +17,7 @@ const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 const DEMO_COACH_TAG   = "DEMO_COACH";
 const DEMO_COACH_EMAIL = "demo.coach@powerflow.training";
 
-export async function POST(req: Request) {
+export async function POST() {
   const ok = await requireAdmin();
   if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
@@ -35,18 +34,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    (process.env.NODE_ENV === "production"
-      ? "https://app.power-flow.eu"
-      : "http://localhost:3000");
-
-  // redirect_to must point to /auth/confirm so it can handle the implicit-flow
-  // hash fragment (#access_token=…).  The `next` param tells confirm where to
-  // forward after the session is established.
-  const confirmUrl = `${appUrl}/auth/confirm?next=/coach/athletes`;
-
-  // Generate magic link via Supabase admin API (no email sent)
+  // Generate a magic link via the Supabase admin API.
+  // We don't use the action_link redirect — instead we return the email_otp
+  // so the client can call supabase.auth.verifyOtp() directly, which avoids
+  // any dependence on Supabase's redirect_to allowlist.
   const res = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, {
     method: "POST",
     headers: {
@@ -57,9 +48,6 @@ export async function POST(req: Request) {
     body: JSON.stringify({
       type: "magiclink",
       email: DEMO_COACH_EMAIL,
-      options: {
-        redirect_to: confirmUrl,
-      },
     }),
   });
 
@@ -67,18 +55,20 @@ export async function POST(req: Request) {
     const text = await res.text();
     console.error("[demo-sign-in] generate_link failed", res.status, text);
     return NextResponse.json(
-      { error: `Failed to generate link: ${res.status}` },
+      { error: `Failed to generate OTP: ${res.status}` },
       { status: 500 }
     );
   }
 
-  const data = (await res.json()) as { action_link?: string; properties?: { action_link?: string } };
-  // Supabase returns action_link at top level or inside properties
-  const link = data.action_link ?? data.properties?.action_link;
+  const data = (await res.json()) as {
+    email_otp?: string;
+    properties?: { email_otp?: string };
+  };
 
-  if (!link) {
-    return NextResponse.json({ error: "No action_link in response" }, { status: 500 });
+  const otp = data.email_otp ?? data.properties?.email_otp;
+  if (!otp) {
+    return NextResponse.json({ error: "No OTP in response" }, { status: 500 });
   }
 
-  return NextResponse.json({ link });
+  return NextResponse.json({ otp, email: DEMO_COACH_EMAIL });
 }

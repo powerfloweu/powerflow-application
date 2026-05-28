@@ -15,6 +15,7 @@
 import React from "react";
 import Link from "next/link";
 import type { SatRow, AcsiRow, CsaiRow, DasRow } from "@/app/api/admin/test-results/route";
+import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -3066,11 +3067,22 @@ function DemoTab() {
   async function signInAsDemo() {
     setSignInStatus("loading"); setErr(null);
     try {
+      // 1. Get OTP from admin API (no email sent, no redirect chain needed)
       const res  = await fetch("/api/admin/demo-sign-in", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `${res.status}`);
-      // Navigate current tab to the magic link — Supabase will sign in and redirect
-      window.location.href = data.link;
+
+      // 2. Verify OTP client-side — establishes session via @supabase/ssr cookies
+      const supabase = createSupabaseClient();
+      const { error: otpErr } = await supabase.auth.verifyOtp({
+        email: data.email,
+        token: data.otp,
+        type:  "email",
+      });
+      if (otpErr) throw new Error(otpErr.message);
+
+      // 3. Full-page navigation so the server re-reads the new session cookie
+      window.location.href = "/coach/athletes";
     } catch (e) { setErr((e as Error).message); setSignInStatus("idle"); }
   }
 
