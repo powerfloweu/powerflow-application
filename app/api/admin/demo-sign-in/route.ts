@@ -35,18 +35,16 @@ export async function POST(req: Request) {
     );
   }
 
-  // Parse optional redirect from request body
-  let redirectTo = "/coach/athletes";
-  try {
-    const body = await req.json().catch(() => ({}));
-    if (body?.redirectTo) redirectTo = body.redirectTo;
-  } catch { /* ignore */ }
-
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
     (process.env.NODE_ENV === "production"
-      ? "https://powerflow.training"
+      ? "https://app.power-flow.eu"
       : "http://localhost:3000");
+
+  // redirect_to must point to /auth/confirm so it can handle the implicit-flow
+  // hash fragment (#access_token=…).  The `next` param tells confirm where to
+  // forward after the session is established.
+  const confirmUrl = `${appUrl}/auth/confirm?next=/coach/athletes`;
 
   // Generate magic link via Supabase admin API (no email sent)
   const res = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, {
@@ -60,7 +58,7 @@ export async function POST(req: Request) {
       type: "magiclink",
       email: DEMO_COACH_EMAIL,
       options: {
-        redirect_to: `${appUrl}${redirectTo}`,
+        redirect_to: confirmUrl,
       },
     }),
   });
