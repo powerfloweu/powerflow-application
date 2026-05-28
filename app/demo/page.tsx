@@ -75,7 +75,7 @@ export default function DemoLanding() {
                 PowerFlow
               </p>
               <p className={`text-[9px] uppercase tracking-widest leading-none mt-1 ${tc(d,"text-zinc-500","text-gray-400")}`}>
-                powerflow.training
+                mental coaching
               </p>
             </div>
           </div>
@@ -177,16 +177,16 @@ export default function DemoLanding() {
           </p>
           <div className="space-y-2.5">
             {EVIDENCE.map(item => (
-              <div key={item.claim} className={`rounded-2xl border p-4 ${tc(d,"border-white/[0.06] bg-white/[0.02]","border-gray-100 bg-white")}`}>
+              <div key={item.claim} className={`rounded-2xl border p-4 ${tc(d,"border-white/[0.12] bg-white/[0.04]","border-gray-200 bg-white")}`}>
                 <p className={`text-xs font-bold mb-1.5 ${tc(d,"text-white","text-gray-900")}`}>{item.claim}</p>
-                <p className={`text-[11px] leading-relaxed mb-2 ${tc(d,"text-zinc-400","text-gray-500")}`}>{item.body}</p>
+                <p className={`text-[11px] leading-relaxed mb-2 ${tc(d,"text-zinc-300","text-gray-600")}`}>{item.body}</p>
                 <a
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`text-[9px] transition ${tc(d,"text-zinc-600 hover:text-violet-400","text-gray-400 hover:text-violet-600")}`}
+                  className={`text-[9px] transition ${tc(d,"text-violet-400 hover:text-violet-300","text-violet-600 hover:text-violet-700")}`}
                 >
-                  <span className={tc(d,"text-zinc-500","text-gray-400")}>↳ </span>{item.cite} ↗
+                  ↳ {item.cite} ↗
                 </a>
               </div>
             ))}
