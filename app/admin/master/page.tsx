@@ -3030,9 +3030,125 @@ function TotpGate({
   );
 }
 
+// ── Demo Tab ──────────────────────────────────────────────────────────────────
+
+function DemoTab() {
+  const [seedStatus, setSeedStatus]     = React.useState<"idle"|"loading"|"done"|"error">("idle");
+  const [removeStatus, setRemoveStatus] = React.useState<"idle"|"loading"|"done"|"error">("idle");
+  const [seedResult,   setSeedResult]   = React.useState<string[] | null>(null);
+  const [removeCount,  setRemoveCount]  = React.useState<number | null>(null);
+  const [err, setErr] = React.useState<string | null>(null);
+
+  async function seed() {
+    setSeedStatus("loading"); setErr(null);
+    try {
+      const res  = await fetch("/api/admin/seed-demo", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `${res.status}`);
+      setSeedResult(data.created ?? []); setSeedStatus("done"); setRemoveCount(null);
+    } catch (e) { setErr((e as Error).message); setSeedStatus("error"); }
+  }
+
+  async function remove() {
+    setRemoveStatus("loading"); setErr(null);
+    try {
+      const res  = await fetch("/api/admin/seed-demo", { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `${res.status}`);
+      setRemoveCount(data.removed ?? 0); setRemoveStatus("done"); setSeedResult(null);
+    } catch (e) { setErr((e as Error).message); setRemoveStatus("error"); }
+  }
+
+  const ATHLETES = [
+    { name: "Marcus Webb",   detail: "93 kg · IPF · 6 weeks out · high cognitive anxiety" },
+    { name: "Kayla Ström",   detail: "72 kg · USAPL · 10 weeks out · confidence block on bench" },
+    { name: "Jake Hartley",  detail: "83 kg · IPF · no meet date · perfectionism pattern (DAS)" },
+    { name: "Sofia Mäkinen", detail: "63 kg · IPF · 3 weeks out · peaking · strongest mental scores" },
+  ];
+
+  return (
+    <div className="max-w-lg space-y-6">
+      <div>
+        <h2 className="font-saira text-sm font-bold uppercase tracking-[0.22em] text-zinc-300 mb-1">Demo Setup</h2>
+        <p className="font-saira text-xs text-zinc-400">
+          Populate your coach dashboard with 4 realistic demo powerlifters for live presentations.
+          Seeding replaces any previous demo athletes automatically. Use{" "}
+          <a href="/demo" target="_blank" className="text-purple-400 hover:text-purple-300 underline">/demo</a>{" "}
+          for the shareable no-login showcase.
+        </p>
+      </div>
+
+      {/* Athletes preview */}
+      <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4 space-y-2.5">
+        <p className="font-saira text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Athletes included</p>
+        {ATHLETES.map((a) => (
+          <div key={a.name} className="flex items-start gap-3">
+            <div className="w-7 h-7 rounded-full bg-emerald-500/15 flex items-center justify-center text-[10px] font-bold text-emerald-300 flex-shrink-0 mt-0.5">
+              {a.name.split(" ").map((p) => p[0]).join("")}
+            </div>
+            <div>
+              <p className="font-saira text-xs font-semibold text-white">{a.name}</p>
+              <p className="font-saira text-[10px] text-zinc-400">{a.detail}</p>
+            </div>
+          </div>
+        ))}
+        <p className="font-saira text-[10px] text-zinc-600 pt-1 border-t border-white/5">
+          Each athlete has journal entries, training logs, 3 weekly check-ins, and test scores (CSAI · ACSI · DAS · SAT).
+        </p>
+      </div>
+
+      {/* Buttons */}
+      <div className="flex gap-3">
+        <button
+          onClick={seed}
+          disabled={seedStatus === "loading"}
+          className="flex-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 py-2.5 font-saira text-xs font-semibold uppercase tracking-wider hover:bg-emerald-500/25 transition disabled:opacity-50"
+        >
+          {seedStatus === "loading" ? "Seeding…" : "Seed Demo Athletes"}
+        </button>
+        <button
+          onClick={remove}
+          disabled={removeStatus === "loading"}
+          className="flex-1 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 py-2.5 font-saira text-xs font-semibold uppercase tracking-wider hover:bg-red-500/20 transition disabled:opacity-50"
+        >
+          {removeStatus === "loading" ? "Removing…" : "Remove Demo Athletes"}
+        </button>
+      </div>
+
+      {seedStatus === "done" && seedResult && (
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+          <p className="font-saira text-xs font-semibold text-emerald-300">✓ {seedResult.length} demo athletes created — {seedResult.join(", ")}</p>
+          <a href="/coach/athletes" className="font-saira text-[11px] text-emerald-400 hover:text-emerald-300 underline mt-1 inline-block">Open Coach Dashboard →</a>
+        </div>
+      )}
+      {removeStatus === "done" && removeCount !== null && (
+        <div className="rounded-xl border border-zinc-500/20 bg-zinc-500/5 p-3">
+          <p className="font-saira text-xs text-zinc-300">✓ {removeCount} demo athlete{removeCount !== 1 ? "s" : ""} removed.</p>
+        </div>
+      )}
+      {err && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3">
+          <p className="font-saira text-xs text-red-400">Error: {err}</p>
+        </div>
+      )}
+
+      {/* Tips */}
+      <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 space-y-1.5 font-saira text-[11px] text-zinc-500">
+        <p className="text-zinc-400 font-semibold text-[10px] uppercase tracking-widest mb-2">Demo tips</p>
+        <p>• Seed → open <strong className="text-zinc-300">/coach/athletes</strong> → show athlete cards live</p>
+        <p>• Marcus Webb (6 wks out) has anxiety signals — good for showing coach alerts</p>
+        <p>• Sofia Mäkinen has all 4 tests + strong check-ins — best for full profile view</p>
+        <p>• Jake Hartley has a DAS perfectionism flag — great for mental health screening angle</p>
+        <p>• Share <strong className="text-zinc-300">/demo</strong> before the meeting as a teaser link</p>
+        <p>• After the demo, hit Remove to keep your dashboard clean</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "roadmap" | "devtools";
+type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "roadmap" | "devtools" | "demo";
 
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -3206,6 +3322,7 @@ export default function MasterAdminPage() {
     ["ai-insights",    "AI Insights",     "✦"],
     ["roadmap",        "Roadmap",         "▸"],
     ["devtools",       "Dev Tools",       "⚙"],
+    ["demo",           "Demo Setup",      "▶"],
   ];
 
   return (
@@ -3303,6 +3420,7 @@ export default function MasterAdminPage() {
               {activeTab === "ai-insights" && <AiInsightsTab users={users} />}
               {activeTab === "roadmap" && <RoadmapTab />}
               {activeTab === "devtools" && <DevToolsTab users={users} />}
+              {activeTab === "demo" && <DemoTab />}
             </>
           )}
         </div>
