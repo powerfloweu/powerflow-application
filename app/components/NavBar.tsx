@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 /** Routes that render the app shell — suppress the marketing NavBar on these. */
 const APP_ROUTES = [
   "/today", "/journal", "/library", "/course", "/you", "/coach",
-  "/auth", "/join", "/admin", "/voices",
+  "/auth", "/join", "/admin", "/voices", "/demo",
   "/onboarding", "/guide", "/chat", "/scripts", "/tiers", "/translate",
 ];
 
