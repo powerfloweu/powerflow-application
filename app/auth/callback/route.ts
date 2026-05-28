@@ -91,18 +91,6 @@ export async function GET(request: NextRequest) {
   // ── Fetch the actual profile to inform routing decisions ───────────────────
   const profileData = await fetchProfileData(user.id);
 
-  // ── Coach signed in via "Sign in as Athlete" button ────────────────────────
-  // Detect mismatch: pf_auth_role cookie = "athlete" but actual profile = "coach".
-  // In this case activate athlete view-mode client-side via a short-lived hint cookie.
-  if (role === "athlete" && profileData?.role === "coach") {
-    const response = NextResponse.redirect(`${origin}/today`);
-    response.cookies.set("pf_mode_hint", "athlete", { maxAge: 60, path: "/" });
-    response.cookies.set("pf_auth_role", "", { maxAge: 0, path: "/" });
-    response.cookies.set("pf_auth_next", "", { maxAge: 0, path: "/" });
-    response.cookies.set("pf_join_code", "", { maxAge: 0, path: "/" });
-    return response;
-  }
-
   // ── Coach-specific post-login logic ────────────────────────────────────────
   let redirectTo = next;
   if (profileData?.role === "coach") {

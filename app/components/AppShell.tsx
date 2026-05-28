@@ -14,7 +14,6 @@ import ThemeToggle from "./ThemeToggle";
 import { WeeklyCheckinContext } from "./WeeklyCheckinContext";
 import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
 import { useT } from "@/lib/i18n";
-import { VIEW_MODE_KEY, VIEW_MODE_EVENT, type ViewMode } from "@/lib/viewMode";
 
 interface Props {
   children: React.ReactNode;
@@ -41,13 +40,6 @@ export default function AppShell({ children }: Props) {
   const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
   const [planTier, setPlanTier] = React.useState<PlanTier>("pr");
   const [role, setRole] = React.useState<string | null>(null);
-  // For coach accounts: "athlete" hides the coach dashboard and shows only athlete tabs.
-  // Lazy initializer reads localStorage synchronously so there is no flash on first render.
-  const [viewMode, setViewMode] = React.useState<ViewMode>(() => {
-    if (typeof window === "undefined") return "coach";
-    const stored = localStorage.getItem(VIEW_MODE_KEY);
-    return stored === "athlete" || stored === "coach" ? stored : "coach";
-  });
   // Weekly / monthly check-in popup
   const [weeklyCheckinTarget, setWeeklyCheckinTarget] = React.useState<{
     week: number; year: number; weekStart: string;
@@ -72,33 +64,6 @@ export default function AppShell({ children }: Props) {
     setSidebarReady(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // ── View-mode (coach ↔ athlete) for dual-role users ──────────────────────
-
-  // On mount: check one-time hint cookie from auth callback, set up event listener
-  React.useEffect(() => {
-    const hint = document.cookie
-      .split("; ")
-      .find((c) => c.startsWith("pf_mode_hint="))
-      ?.split("=")[1];
-    if (hint === "athlete") {
-      localStorage.setItem(VIEW_MODE_KEY, "athlete");
-      document.cookie = "pf_mode_hint=; max-age=0; path=/";
-      setViewMode("athlete");
-    }
-    // React to mode changes dispatched by the /you page (same tab, no reload)
-    const onModeChange = (e: Event) =>
-      setViewMode((e as CustomEvent<ViewMode>).detail);
-    window.addEventListener(VIEW_MODE_EVENT, onModeChange);
-    return () => window.removeEventListener(VIEW_MODE_EVENT, onModeChange);
-  }, []);
-
-  // Re-read localStorage on every navigation — ensures mode is correct even if
-  // the event dispatch was missed (e.g. user switches mode then immediately navigates)
-  React.useEffect(() => {
-    const stored = localStorage.getItem(VIEW_MODE_KEY);
-    if (stored === "athlete" || stored === "coach") setViewMode(stored);
-  }, [pathname]);
 
   const toggleSidebar = () => {
     setSidebarOpen((v) => {
@@ -161,9 +126,6 @@ export default function AppShell({ children }: Props) {
 
   const canCollapse = !!role; // all authenticated users can collapse to icon rail
 
-  // When a coach switches to athlete mode we show athlete-only UI
-  const effectiveRole = role === "coach" && viewMode === "athlete" ? "athlete" : role;
-
   const checkinCtxValue = React.useMemo(() => ({
     pendingCheckin: (weeklyCheckinTarget && checkinSkipped) ? weeklyCheckinTarget : null,
     isMonthly: checkinIsMonthly,
@@ -206,7 +168,7 @@ export default function AppShell({ children }: Props) {
             )}
 
             {/* Logo — CSS classes switch dark/light variant without JS */}
-            <Link href={effectiveRole === "coach" ? "/coach" : "/today"} className="block">
+            <Link href={role === "coach" ? "/coach" : "/today"} className="block">
               <Image
                 src="/fm_powerflow_logo_verziok_01_negative.png"
                 alt="PowerFlow"
@@ -228,9 +190,9 @@ export default function AppShell({ children }: Props) {
             {/* Mode badge — reflects the active profile, not the DB role */}
             {role !== null && (
               <span className={`font-saira text-[9px] font-bold uppercase tracking-[0.32em] -mt-1 mb-1 ${
-                effectiveRole === "coach" ? "text-emerald-400/80" : "text-purple-300/80"
+                role === "coach" ? "text-emerald-400/80" : "text-purple-300/80"
               }`}>
-                {effectiveRole === "coach" ? "Coach" : "Athlete"}
+                {role === "coach" ? "Coach" : "Athlete"}
               </span>
             )}
           </div>
@@ -239,7 +201,7 @@ export default function AppShell({ children }: Props) {
           {/* role===null while /api/me is loading — render nothing so athlete links
               never flash before the coach role is confirmed */}
           <nav className="flex-1 py-4 px-3 space-y-0.5 flex flex-col">
-            {role === null ? null : effectiveRole === "coach" ? (
+            {role === null ? null : role === "coach" ? (
               /* Coach mode: coach dashboard + profile (for mode switching) */
               <>
                 <Link
@@ -329,7 +291,7 @@ export default function AppShell({ children }: Props) {
 
           {/* Icon-only nav links */}
           <nav className="flex-1 py-4 flex flex-col items-center gap-1">
-            {effectiveRole === "coach" ? (
+            {role === "coach" ? (
               /* Coach mode: coach icon + you icon */
               <>
                 <Link
@@ -396,7 +358,7 @@ export default function AppShell({ children }: Props) {
         className="md:hidden fixed inset-x-0 z-40 h-20 flex items-center justify-between px-5 border-b border-white/5 bg-surface-panel/90 backdrop-blur-md"
         style={{ top: "env(safe-area-inset-top)" }}
       >
-        <Link href={effectiveRole === "coach" ? "/coach" : "/today"} className="block">
+        <Link href={role === "coach" ? "/coach" : "/today"} className="block">
           <Image
             src="/fm_powerflow_logo_verziok_01_negative.png"
             alt="PowerFlow"
@@ -428,15 +390,15 @@ export default function AppShell({ children }: Props) {
 
       {/* ── Mobile bottom tab bar ───────────────────────────────── */}
       {/* Suppress until role is known — avoids athlete tabs flashing on coach sessions */}
-      {role !== null && <TabBar planTier={planTier} role={effectiveRole ?? undefined} />}
+      {role !== null && <TabBar planTier={planTier} role={role ?? undefined} />}
 
       {/* ── Daily check-in reminder (athletes only) ──────────────── */}
       {/* Use role === "athlete" (not !== "coach") so these never render while
           role is still null — prevents athlete UI flashing on coach sessions */}
-      {effectiveRole === "athlete" && <CheckinReminderScheduler />}
+      {role === "athlete" && <CheckinReminderScheduler />}
 
       {/* ── Push notification permission banner (athletes only) ───── */}
-      {effectiveRole === "athlete" && <NotificationPermissionBanner />}
+      {role === "athlete" && <NotificationPermissionBanner />}
 
       {/* ── In-app broadcast + devlog modal ────────────────────────── */}
       {notifications && (
@@ -447,7 +409,7 @@ export default function AppShell({ children }: Props) {
       )}
 
       {/* ── Weekly / monthly check-in popup (athletes only) ─────── */}
-      {effectiveRole === "athlete" && weeklyCheckinTarget && !checkinSkipped && !notifications && (
+      {role === "athlete" && weeklyCheckinTarget && !checkinSkipped && !notifications && (
         checkinIsMonthly ? (
           <MonthlyCheckinModal
             targetWeek={weeklyCheckinTarget}

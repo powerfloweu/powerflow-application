@@ -446,8 +446,12 @@ function buildDemoAthlete(coachId: string) {
       self_competition_anxiety: 6,
       self_emotional_recovery: 7,
       // Pre-set affirmations + keywords so coach panel shows them
-      affirmations: "I am strong and prepared.\nI trust my training.\nThe platform is where I belong.",
-      viz_keywords: "strong, explosive, locked in, smooth, confident",
+      affirmations: ["I am strong and prepared.", "I trust my training.", "The platform is where I belong."],
+      viz_keywords: {
+        "viz-squat":    ["strong", "explosive", "locked in"],
+        "viz-bench":    ["smooth", "confident"],
+        "viz-deadlift": ["strong", "explosive", "patient"],
+      },
     },
     journals: [
       { created_at: isoTs(14), sentiment: "neutral", context: "post-training",
