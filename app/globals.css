@@ -111,6 +111,22 @@ html[data-theme="light"] .logo-dark  { display: none;  }
 html[data-theme="light"] .logo-light { display: block; }
 
 /* ══════════════════════════════════════════════════════════════
+   DEMO SLIDE TRANSITIONS
+   Subtle iOS-style enter animation — 18 px shift + fade.
+   Parent overflow:hidden clips to phone bounds.
+   ══════════════════════════════════════════════════════════════ */
+@keyframes demo-enter-fwd {
+  from { transform: translateX(18px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes demo-enter-back {
+  from { transform: translateX(-18px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+.demo-enter-fwd  { animation: demo-enter-fwd  0.21s cubic-bezier(0.25,0.46,0.45,0.94); }
+.demo-enter-back { animation: demo-enter-back 0.21s cubic-bezier(0.25,0.46,0.45,0.94); }
+
+/* ══════════════════════════════════════════════════════════════
    CHAT SCREEN HEIGHT
    ══════════════════════════════════════════════════════════════ */
 .chat-screen {

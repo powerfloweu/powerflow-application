@@ -168,6 +168,56 @@ function meetColor(d: boolean, days: number | null): string {
 function sentimentDot(s?: Sentiment) { return s === "positive" ? "bg-violet-400" : s === "negative" ? "bg-rose-400" : "bg-zinc-400"; }
 function hasFlag(a: DemoAthlete) { return a.topics.some(t => /flag|block|anxiety|fixat|perfectionism/i.test(t)); }
 
+// ─── Phone chrome ─────────────────────────────────────────────────────────────
+
+function StatusBar({ dark }: { dark: boolean }) {
+  const [time, setTime] = React.useState(() => {
+    const n = new Date();
+    return `${n.getHours()}:${String(n.getMinutes()).padStart(2, "0")}`;
+  });
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      const n = new Date();
+      setTime(`${n.getHours()}:${String(n.getMinutes()).padStart(2, "0")}`);
+    }, 30000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className={`flex items-center justify-between px-6 pt-3 pb-1 flex-shrink-0 ${dark ? "text-white" : "text-gray-900"}`}>
+      <span className="text-[13px] font-semibold tabular-nums">{time}</span>
+      <div className="flex items-center gap-[5px]">
+        {/* Signal */}
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="currentColor">
+          <rect x="0" y="8" width="3" height="4" rx="0.5" opacity="0.4"/>
+          <rect x="4.5" y="5.5" width="3" height="6.5" rx="0.5" opacity="0.6"/>
+          <rect x="9" y="3" width="3" height="9" rx="0.5" opacity="0.8"/>
+          <rect x="13.5" y="0" width="3" height="12" rx="0.5"/>
+        </svg>
+        {/* Wifi */}
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
+          <path d="M8 9.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>
+          <path d="M3.5 6.5a6.5 6.5 0 0 1 9 0" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.7"/>
+          <path d="M1 4A9.5 9.5 0 0 1 15 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.4"/>
+        </svg>
+        {/* Battery */}
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor">
+          <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.35"/>
+          <rect x="2" y="2" width="16" height="8" rx="1.5"/>
+          <path d="M22.5 4v4a2 2 0 0 0 0-4z" opacity="0.4"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function HomeIndicator({ dark }: { dark: boolean }) {
+  return (
+    <div className="flex justify-center pt-2 pb-2 flex-shrink-0">
+      <div className="w-32 h-[5px] rounded-full" style={{ background: dark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.16)" }} />
+    </div>
+  );
+}
+
 // ─── Score bar ────────────────────────────────────────────────────────────────
 
 function ScoreBar({ label, value, max, hi = false }: { label: string; value: number; max: number; hi?: boolean }) {
@@ -786,10 +836,7 @@ export default function DemoCoach() {
             className="w-full sm:w-[390px] sm:rounded-[44px] sm:border-[7px] sm:border-zinc-800 sm:shadow-[0_32px_120px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden relative flex flex-col"
             style={{ minHeight: "820px", background: p.phone }}
           >
-            {/* Demo banner */}
-            <div className={`border-b ${isDark ? "bg-violet-600/20 border-violet-500/20" : "bg-violet-50 border-violet-200"} px-4 py-1.5 text-center flex-shrink-0`}>
-              <p className={`font-saira text-[10px] font-semibold uppercase tracking-widest ${isDark ? "text-violet-300" : "text-violet-700"}`}>Demo · Coach View</p>
-            </div>
+            <StatusBar dark={isDark} />
             {/* Header */}
             <div className="px-4 pt-5 pb-3 flex items-center justify-between flex-shrink-0">
               <div>
@@ -809,6 +856,7 @@ export default function DemoCoach() {
               </div>
             </div>
             <MobileView onSelectAthlete={a => setOpen(a)} tab={mobileTab} setTab={setMobileTab} />
+            <HomeIndicator dark={isDark} />
           </div>
         )}
 
@@ -826,6 +874,48 @@ export default function DemoCoach() {
             </div>
           </div>
         )}
+
+        {/* Coach pricing */}
+        <div className={`mt-4 ${isDesktop ? "w-full max-w-[960px]" : "w-full sm:w-[390px] px-4 sm:px-0"}`}>
+          <div className={`rounded-2xl border p-5 ${isDark ? "border-white/[0.07] bg-white/[0.02]" : "border-gray-200 bg-white"}`}>
+            <p className={`font-saira text-[9px] font-bold uppercase tracking-[0.22em] mb-4 ${isDark ? "text-violet-400" : "text-violet-600"}`}>
+              Coach pricing
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              {/* Base plan */}
+              <div className={`flex-1 rounded-xl border p-4 ${isDark ? "border-violet-500/25 bg-violet-500/[0.07]" : "border-violet-200 bg-violet-50"}`}>
+                <p className={`font-saira text-[9px] uppercase tracking-widest mb-1 ${isDark ? "text-violet-400" : "text-violet-600"}`}>Base plan</p>
+                <div className="flex items-baseline gap-1">
+                  <span className={`font-saira text-3xl font-extrabold leading-none ${isDark ? "text-white" : "text-gray-900"}`}>€29</span>
+                  <span className={`font-saira text-xs ${isDark ? "text-zinc-400" : "text-gray-500"}`}>/month</span>
+                </div>
+                <p className={`font-saira text-[10px] leading-relaxed mt-2 ${isDark ? "text-zinc-300" : "text-gray-700"}`}>
+                  Full coach dashboard. Includes all <span className={`font-semibold ${isDark ? "text-amber-300" : "text-amber-700"}`}>PR tier</span> features for you as an athlete.
+                </p>
+              </div>
+              {/* Per-athlete */}
+              <div className={`flex-1 rounded-xl border p-4 ${isDark ? "border-white/8 bg-white/[0.02]" : "border-gray-100 bg-white"}`}>
+                <p className={`font-saira text-[9px] uppercase tracking-widest mb-1 ${isDark ? "text-zinc-400" : "text-gray-500"}`}>Dashboard visibility</p>
+                <div className="flex items-baseline gap-1">
+                  <span className={`font-saira text-3xl font-extrabold leading-none ${isDark ? "text-white" : "text-gray-900"}`}>+€5</span>
+                  <span className={`font-saira text-xs ${isDark ? "text-zinc-400" : "text-gray-500"}`}>/athlete/month</span>
+                </div>
+                <p className={`font-saira text-[10px] leading-relaxed mt-2 ${isDark ? "text-zinc-400" : "text-gray-600"}`}>
+                  Full profiles, activity feed, test results & AI context — per athlete you coach.
+                </p>
+              </div>
+            </div>
+            <p className={`font-saira text-[10px] mb-4 ${isDark ? "text-zinc-500" : "text-gray-400"}`}>
+              Example: 10 athletes → €29 + 10×€5 = <span className={`font-semibold ${isDark ? "text-zinc-300" : "text-gray-700"}`}>€79/month</span> for the whole team.
+            </p>
+            <a
+              href="mailto:trainer.pod@gmail.com?subject=PowerFlow%20Coach%20Plan"
+              className={`block w-full rounded-xl border px-4 py-3 font-saira text-[11px] font-bold uppercase tracking-wider text-center transition ${isDark ? "border-violet-500/35 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20" : "border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100"}`}
+            >
+              Get in touch →
+            </a>
+          </div>
+        </div>
 
         {/* Athlete sheet */}
         <BottomSheet open={open !== null} onClose={() => setOpen(null)} title={open?.name ?? ""}>
