@@ -2,11 +2,12 @@
  * Demo data seed / cleanup endpoint.
  *
  * POST   /api/admin/seed-demo  — ensures a dedicated demo coach account exists,
- *                                creates 4 realistic demo powerlifters linked to it,
- *                                and removes any previous demo athletes first.
+ *                                creates 4 roster athletes + 1 demo athlete account,
+ *                                and removes any previous demo data first.
  * DELETE /api/admin/seed-demo  — removes all demo athletes + the demo coach account.
  *
- * Demo coach:   demo.coach@powerflow.training  /  Demo@PowerFlow1
+ * Demo coach:   demo.coach@powerflow.training   (sign in via admin "Sign in as Demo Coach")
+ * Demo athlete: demo.athlete@powerflow.training (sign in via admin "Sign in as Demo Athlete")
  * Demo athletes identified by: coach_notes = "DEMO_ATHLETE"
  * Demo coach identified by:    coach_notes = "DEMO_COACH"
  *
@@ -24,8 +25,8 @@ const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 const DEMO_ATHLETE_TAG = "DEMO_ATHLETE";
 const DEMO_COACH_TAG   = "DEMO_COACH";
 
-export const DEMO_COACH_EMAIL    = "demo.coach@powerflow.training";
-export const DEMO_COACH_PASSWORD = "Demo@PowerFlow1";
+export const DEMO_COACH_EMAIL   = "demo.coach@powerflow.training";
+export const DEMO_ATHLETE_EMAIL = "demo.athlete@powerflow.training";
 
 // ─── GoTrue helpers ────────────────────────────────────────────────────────
 
@@ -66,18 +67,21 @@ async function ensureDemoCoach(): Promise<string | null> {
   if (existing.length > 0) return existing[0].id;
 
   // Create auth user with known credentials
-  const uid = await createAuthUser(DEMO_COACH_EMAIL, DEMO_COACH_PASSWORD);
+  const uid = await createAuthUser(DEMO_COACH_EMAIL);
   if (!uid) return null;
 
   const profile = await dbInsert("profiles", {
     id: uid,
     display_name: "Demo Coach",
     role: "coach",
+    coach_status: "approved",
+    coach_code: "DEMOSHOW",
     onboarding_complete: true,
     plan_tier: "pr",
     language: "en",
     ai_access: true,
     test_access: true,
+    preferred_voice_id: "Jacqueline",
     coach_notes: DEMO_COACH_TAG,
   });
 
@@ -410,6 +414,103 @@ function buildAthletes(coachId: string) {
   ];
 }
 
+// ─── Demo athlete (for showing the athlete UX) ─────────────────────────────
+// Alex Morrison is the athlete account the presenter can sign into to show
+// the full athlete experience: /today, /journal, /chat, /scripts, /you, etc.
+// Linked to the demo coach so the coach dashboard also shows 5 athletes.
+
+function buildDemoAthlete(coachId: string) {
+  return {
+    email: DEMO_ATHLETE_EMAIL,
+    profile: {
+      display_name: "Alex Morrison",
+      role: "athlete",
+      coach_id: coachId,
+      gender: "male",
+      federation: "IPF",
+      bodyweight_kg: 82.6,
+      squat_current_kg: 220,    squat_goal_kg: 247.5,
+      bench_current_kg: 152.5,  bench_goal_kg: 170,
+      deadlift_current_kg: 272.5, deadlift_goal_kg: 300,
+      meet_date: daysFromNow(56),
+      plan_tier: "pr",
+      language: "en",
+      onboarding_complete: true,
+      ai_access: true,
+      test_access: true,
+      years_powerlifting: "5",
+      coach_notes: DEMO_ATHLETE_TAG,
+      self_confidence_reg: 7,
+      self_focus_fatigue: 6,
+      self_handling_pressure: 7,
+      self_competition_anxiety: 6,
+      self_emotional_recovery: 7,
+      // Pre-set affirmations + keywords so coach panel shows them
+      affirmations: "I am strong and prepared.\nI trust my training.\nThe platform is where I belong.",
+      viz_keywords: "strong, explosive, locked in, smooth, confident",
+    },
+    journals: [
+      { created_at: isoTs(14), sentiment: "neutral", context: "post-training",
+        themes: ["squat", "technique", "focus"],
+        content: "Heavy squat day. 215 for 4×3 — all felt within myself. Bar path was clean, depth was automatic. Nothing flashy but everything where it needed to be. This is what consistent prep looks like." },
+      { created_at: isoTs(11), sentiment: "positive", context: "post-training",
+        themes: ["bench press", "confidence", "breakthrough"],
+        content: "147.5 bench for a paused triple. Cleanest set of the block. The cue Coach gave me about leg drive actually clicked today — felt like a completely different movement. Confidence is building." },
+      { created_at: isoTs(9), sentiment: "negative", context: "rest-day",
+        themes: ["recovery", "mental fatigue", "sleep"],
+        content: "Rest day but mind wouldn't switch off. Kept running numbers, thinking about the meet, calculating totals. Ended up journaling for 30 minutes to get it out of my head. Tomorrow I need to train, not simulate competitions in my head." },
+      { created_at: isoTs(7), sentiment: "positive", context: "post-training",
+        themes: ["deadlift", "visualization", "breakthrough"],
+        content: "Ran through the deadlift visualization script before the session. Something about hearing the cues in Coach's voice before I even touch the bar changes my state. Pulled 267.5 for 5 — never done that before. Visualization works. Full stop." },
+      { created_at: isoTs(5), sentiment: "neutral", context: "post-training",
+        themes: ["competition prep", "process", "mindset"],
+        content: "8 weeks out. Today was about accumulation — volume, not intensity. Felt flat but that's expected mid-block. Coach reminded me that feeling good in training and performing well at the meet are two different things. Trust the process." },
+      { created_at: isoTs(3), sentiment: "positive", context: "post-training",
+        themes: ["squat", "confidence", "mental rehearsal"],
+        content: "PR attempt day. 237.5 squat — called the depth, felt the lockout, heard the rack command. Exactly what I trained for. 8 weeks and I'm already where I need to be. Now maintain and peak." },
+      { created_at: isoTs(1), sentiment: "positive", context: "general",
+        themes: ["competition prep", "readiness", "mental rehearsal"],
+        content: "Did the full competition day visualization this morning. Walked out, set up, hit every lift. By the time I was done I'd already competed at this meet once in my head. That's 8 weeks of prep wrapped up in 20 minutes. Ready." },
+    ],
+    training: [
+      { entry_date: daysAgo(13), is_training_day: true,  mood_rating: 7, thoughts_before: "Energized. Ready to squat.", thoughts_after: "215×3×4. Everything clicked.", what_went_well: "Bar path perfectly vertical", frustrations: null },
+      { entry_date: daysAgo(12), is_training_day: false, mood_rating: null },
+      { entry_date: daysAgo(11), is_training_day: true,  mood_rating: 8, thoughts_before: "Bench day — going in with the new cue.", thoughts_after: "147.5 paused triple. Best bench in months.", what_went_well: "Leg drive locked in", frustrations: null },
+      { entry_date: daysAgo(10), is_training_day: false, mood_rating: null },
+      { entry_date: daysAgo(9),  is_training_day: false, mood_rating: null },
+      { entry_date: daysAgo(8),  is_training_day: true,  mood_rating: 6, thoughts_before: "Tired from bad sleep.", thoughts_after: "Got through it. Deadlifts moved okay.", what_went_well: "Technique held up despite fatigue", frustrations: "Flat. Not a great session." },
+      { entry_date: daysAgo(7),  is_training_day: false, mood_rating: null },
+      { entry_date: daysAgo(6),  is_training_day: true,  mood_rating: 9, thoughts_before: "Did the deadlift visualization script. Dialed in.", thoughts_after: "267.5×5. New training PR. Visualization made the difference.", what_went_well: "Lat engagement, setup, everything.", frustrations: null },
+      { entry_date: daysAgo(5),  is_training_day: false, mood_rating: null },
+      { entry_date: daysAgo(4),  is_training_day: true,  mood_rating: 7, thoughts_before: "Volume day. Just accumulate.", thoughts_after: "Done. Not exciting but necessary.", what_went_well: "Consistency", frustrations: "Felt flat mid-session" },
+      { entry_date: daysAgo(3),  is_training_day: false, mood_rating: null },
+      { entry_date: daysAgo(2),  is_training_day: true,  mood_rating: 9, thoughts_before: "PR attempt day. Everything prepared.", thoughts_after: "237.5 squat. Done. 8 weeks early.", what_went_well: "Depth, lockout, mental focus — everything.", frustrations: null },
+      { entry_date: daysAgo(1),  is_training_day: false, mood_rating: null },
+      { entry_date: daysAgo(0),  is_training_day: true,  mood_rating: 8, thoughts_before: "Peaking block starts today.", thoughts_after: "Opener hits. Light and fast. Taper is on.", what_went_well: "Bar speed excellent", frustrations: null },
+    ],
+    checkins: [
+      { ...isoWeekData(21), mood_rating: 7, training_quality: 7, readiness_rating: 7, energy_rating: 7, sleep_rating: 6,
+        biggest_win: "Squat technique has been consistent all week",
+        biggest_challenge: "Sleep quality still not where it should be",
+        focus_next_week: "Evening wind-down protocol — no screens after 10pm" },
+      { ...isoWeekData(14), mood_rating: 7, training_quality: 8, readiness_rating: 7, energy_rating: 7, sleep_rating: 7,
+        biggest_win: "Bench leg drive cue finally clicked — new PB in training",
+        biggest_challenge: "Mid-week mental fatigue — overthinking the meet",
+        focus_next_week: "Stay in the process. One session at a time." },
+      { ...isoWeekData(7), mood_rating: 9, training_quality: 9, readiness_rating: 9, energy_rating: 8, sleep_rating: 8,
+        biggest_win: "237.5 squat. Visualization script working. Feeling ready.",
+        biggest_challenge: "Managing excitement — want to go heavier but trusting the plan",
+        focus_next_week: "Opener day. Keep everything controlled." },
+    ],
+    tests: {
+      csai: { score_cognitive: 18, score_somatic: 14, score_confidence: 29 },
+      acsi: { score_coping: 11, score_peaking: 12, score_goal_setting: 13, score_concentration: 12, score_freedom: 11, score_confidence: 13, score_coachability: 14, total_score: 86 },
+      das:  { score_external_approval: 7, score_lovability: 4, score_achievement: 10, score_perfectionism: 11, score_entitlement: 3, score_omnipotence: 5, score_external_control: 4, total_score: 44, depression_prone: false },
+      sat:  { score_performance: 14, score_affiliation: 10, score_aggression: 7, score_defensiveness: 10, score_consciousness: 13, score_dominance: 9, score_exhibition: 8, score_autonomy: 13, score_caregiving: 9, score_order: 12, score_helplessness: 5, sf_self_confirmation: 23, sf_rational_dominance: 19, sf_aggressive_nonconformity: 14, sf_passive_dependence: 14, sf_sociability: 18, sf_agreeableness: 21, sum_yes: 113, total_score: 113, validity_reliable: true },
+    },
+  };
+}
+
 // ─── Cleanup helpers ───────────────────────────────────────────────────────
 
 async function removeDemoAthletes(coachId: string): Promise<number> {
@@ -449,10 +550,10 @@ export async function POST() {
   // Always start with a clean slate for athletes
   await removeDemoAthletes(coachId);
 
-  const athletes = buildAthletes(coachId);
+  const allAthletes = [...buildAthletes(coachId), buildDemoAthlete(coachId)];
   const created: string[] = [];
 
-  for (const def of athletes) {
+  for (const def of allAthletes) {
     // 1. Auth user
     const uid = await createAuthUser(def.email);
     if (!uid) continue;
@@ -499,10 +600,7 @@ export async function POST() {
     created.push(def.profile.display_name);
   }
 
-  return NextResponse.json({
-    created,
-    coach: { email: DEMO_COACH_EMAIL, password: DEMO_COACH_PASSWORD },
-  });
+  return NextResponse.json({ created });
 }
 
 // ─── DELETE — cleanup ──────────────────────────────────────────────────────

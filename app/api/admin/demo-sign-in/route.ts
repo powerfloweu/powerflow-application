@@ -1,9 +1,11 @@
 /**
  * POST /api/admin/demo-sign-in
  *
- * Returns the email OTP for the demo coach account so the caller can verify
- * it client-side via supabase.auth.verifyOtp() — no email sent, no redirect
- * chain, no dependence on Supabase's redirect_to allowlist.
+ * Returns an email OTP for the requested demo account (coach or athlete) so
+ * the caller can verify it client-side via supabase.auth.verifyOtp().
+ * No email sent, no redirect chain, no Supabase redirect allowlist needed.
+ *
+ * Body: { account: "coach" | "athlete" }
  */
 
 import { NextResponse } from "next/server";
@@ -14,30 +16,36 @@ const SB_URL =
   process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 
-const DEMO_COACH_TAG   = "DEMO_COACH";
-const DEMO_COACH_EMAIL = "demo.coach@powerflow.training";
+const DEMO_COACH_EMAIL   = "demo.coach@powerflow.training";
+const DEMO_ATHLETE_EMAIL = "demo.athlete@powerflow.training";
+const DEMO_COACH_TAG     = "DEMO_COACH";
+const DEMO_ATHLETE_TAG   = "DEMO_ATHLETE";
 
-export async function POST() {
+export async function POST(req: Request) {
   const ok = await requireAdmin();
   if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  // Make sure the demo coach account actually exists
+  const body = await req.json().catch(() => ({})) as { account?: string };
+  const account = body.account === "athlete" ? "athlete" : "coach";
+
+  const email     = account === "athlete" ? DEMO_ATHLETE_EMAIL : DEMO_COACH_EMAIL;
+  const coachNotes = account === "athlete" ? DEMO_ATHLETE_TAG  : DEMO_COACH_TAG;
+  const redirectTo = account === "athlete" ? "/today"          : "/coach/athletes";
+
+  // Verify the account exists
   type Row = { id: string };
   const rows = await dbSelect<Row>("profiles", {
-    coach_notes: `eq.${DEMO_COACH_TAG}`,
+    coach_notes: `eq.${coachNotes}`,
     select: "id",
   });
   if (rows.length === 0) {
     return NextResponse.json(
-      { error: "Demo coach not found — seed demo data first." },
+      { error: `Demo ${account} not found — seed demo data first.` },
       { status: 404 }
     );
   }
 
-  // Generate a magic link via the Supabase admin API.
-  // We don't use the action_link redirect — instead we return the email_otp
-  // so the client can call supabase.auth.verifyOtp() directly, which avoids
-  // any dependence on Supabase's redirect_to allowlist.
+  // Generate OTP via Supabase admin API (no email sent)
   const res = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, {
     method: "POST",
     headers: {
@@ -47,7 +55,7 @@ export async function POST() {
     },
     body: JSON.stringify({
       type: "magiclink",
-      email: DEMO_COACH_EMAIL,
+      email,
     }),
   });
 
@@ -70,5 +78,5 @@ export async function POST() {
     return NextResponse.json({ error: "No OTP in response" }, { status: 500 });
   }
 
-  return NextResponse.json({ otp, email: DEMO_COACH_EMAIL });
+  return NextResponse.json({ otp, email, redirectTo });
 }

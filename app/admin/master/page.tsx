@@ -3033,15 +3033,16 @@ function TotpGate({
 
 // ── Demo Tab ──────────────────────────────────────────────────────────────────
 
-const DEMO_COACH_EMAIL    = "demo.coach@powerflow.training";
-const DEMO_COACH_PASSWORD = "Demo@PowerFlow1";
+const DEMO_COACH_EMAIL   = "demo.coach@powerflow.training";
+const DEMO_ATHLETE_EMAIL = "demo.athlete@powerflow.training";
 
 function DemoTab() {
-  const [seedStatus,   setSeedStatus]   = React.useState<"idle"|"loading"|"done"|"error">("idle");
-  const [removeStatus, setRemoveStatus] = React.useState<"idle"|"loading"|"done"|"error">("idle");
-  const [signInStatus, setSignInStatus] = React.useState<"idle"|"loading">("idle");
-  const [seedResult,   setSeedResult]   = React.useState<string[] | null>(null);
-  const [removeCount,  setRemoveCount]  = React.useState<number | null>(null);
+  const [seedStatus,        setSeedStatus]        = React.useState<"idle"|"loading"|"done"|"error">("idle");
+  const [removeStatus,      setRemoveStatus]      = React.useState<"idle"|"loading"|"done"|"error">("idle");
+  const [coachSignInStatus, setCoachSignInStatus] = React.useState<"idle"|"loading">("idle");
+  const [athSignInStatus,   setAthSignInStatus]   = React.useState<"idle"|"loading">("idle");
+  const [seedResult,        setSeedResult]        = React.useState<string[] | null>(null);
+  const [removeCount,       setRemoveCount]       = React.useState<number | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
 
   async function seed() {
@@ -3064,15 +3065,18 @@ function DemoTab() {
     } catch (e) { setErr((e as Error).message); setRemoveStatus("error"); }
   }
 
-  async function signInAsDemo() {
-    setSignInStatus("loading"); setErr(null);
+  async function signInAs(account: "coach" | "athlete") {
+    const setStatus = account === "coach" ? setCoachSignInStatus : setAthSignInStatus;
+    setStatus("loading"); setErr(null);
     try {
-      // 1. Get OTP from admin API (no email sent, no redirect chain needed)
-      const res  = await fetch("/api/admin/demo-sign-in", { method: "POST" });
+      const res  = await fetch("/api/admin/demo-sign-in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ account }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `${res.status}`);
 
-      // 2. Verify OTP client-side — establishes session via @supabase/ssr cookies
       const supabase = createSupabaseClient();
       const { error: otpErr } = await supabase.auth.verifyOtp({
         email: data.email,
@@ -3081,16 +3085,16 @@ function DemoTab() {
       });
       if (otpErr) throw new Error(otpErr.message);
 
-      // 3. Full-page navigation so the server re-reads the new session cookie
-      window.location.href = "/coach/athletes";
-    } catch (e) { setErr((e as Error).message); setSignInStatus("idle"); }
+      window.location.href = data.redirectTo;
+    } catch (e) { setErr((e as Error).message); setStatus("idle"); }
   }
 
-  const ATHLETES = [
+  const ROSTER = [
     { name: "Marcus Webb",   detail: "93 kg · IPF · 6 weeks out · high cognitive anxiety" },
     { name: "Kayla Ström",   detail: "76 kg · USAPL · 10 weeks out · confidence block on bench" },
     { name: "Jake Hartley",  detail: "83 kg · IPF · no meet date · perfectionism pattern (DAS)" },
     { name: "Sofia Mäkinen", detail: "63 kg · IPF · 3 weeks out · peaking · strongest mental scores" },
+    { name: "Alex Morrison", detail: "83 kg · IPF · 8 weeks out · demo athlete account · all 4 tests" },
   ];
 
   return (
@@ -3105,26 +3109,39 @@ function DemoTab() {
         </p>
       </div>
 
-      {/* Demo coach — one-click sign-in */}
-      <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
-        <p className="font-saira text-[10px] uppercase tracking-widest text-violet-400">Demo coach</p>
-        <div className="flex items-center gap-2">
-          <code className="font-mono text-xs text-violet-300 bg-violet-500/10 px-2 py-0.5 rounded flex-1 truncate">{DEMO_COACH_EMAIL}</code>
+      {/* Sign-in buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Coach */}
+        <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-3 space-y-2">
+          <p className="font-saira text-[10px] uppercase tracking-widest text-violet-400">Coach view</p>
+          <code className="block font-mono text-[10px] text-violet-300/70 truncate">{DEMO_COACH_EMAIL}</code>
+          <button
+            onClick={() => signInAs("coach")}
+            disabled={coachSignInStatus === "loading"}
+            className="w-full rounded-lg bg-violet-500/15 border border-violet-500/30 text-violet-300 py-2 font-saira text-[11px] font-semibold uppercase tracking-wider hover:bg-violet-500/25 transition disabled:opacity-50"
+          >
+            {coachSignInStatus === "loading" ? "Opening…" : "Sign in as Coach →"}
+          </button>
         </div>
-        <button
-          onClick={signInAsDemo}
-          disabled={signInStatus === "loading"}
-          className="w-full rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 py-2.5 font-saira text-xs font-semibold uppercase tracking-wider hover:bg-violet-500/25 transition disabled:opacity-50"
-        >
-          {signInStatus === "loading" ? "Opening session…" : "Sign in as Demo Coach →"}
-        </button>
-        <p className="font-saira text-[10px] text-zinc-600">Generates a one-time magic link — no Google account needed. Seed first.</p>
+        {/* Athlete */}
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-2">
+          <p className="font-saira text-[10px] uppercase tracking-widest text-emerald-400">Athlete view</p>
+          <code className="block font-mono text-[10px] text-emerald-300/70 truncate">{DEMO_ATHLETE_EMAIL}</code>
+          <button
+            onClick={() => signInAs("athlete")}
+            disabled={athSignInStatus === "loading"}
+            className="w-full rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 py-2 font-saira text-[11px] font-semibold uppercase tracking-wider hover:bg-emerald-500/25 transition disabled:opacity-50"
+          >
+            {athSignInStatus === "loading" ? "Opening…" : "Sign in as Athlete →"}
+          </button>
+        </div>
       </div>
+      <p className="font-saira text-[10px] text-zinc-600 -mt-3">One-time OTP — no Google account needed. Seed first.</p>
 
       {/* Athletes preview */}
       <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4 space-y-2.5">
         <p className="font-saira text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Athletes included</p>
-        {ATHLETES.map((a) => (
+        {ROSTER.map((a) => (
           <div key={a.name} className="flex items-start gap-3">
             <div className="w-7 h-7 rounded-full bg-emerald-500/15 flex items-center justify-center text-[10px] font-bold text-emerald-300 flex-shrink-0 mt-0.5">
               {a.name.split(" ").map((p) => p[0]).join("")}
@@ -3136,7 +3153,7 @@ function DemoTab() {
           </div>
         ))}
         <p className="font-saira text-[10px] text-zinc-600 pt-1 border-t border-white/5">
-          Each athlete has journal entries, training logs, 3 weekly check-ins, and test scores (CSAI · ACSI · DAS · SAT).
+          Each athlete has journal entries, training logs, 3 weekly check-ins, and test scores (CSAI · ACSI · DAS · SAT). Alex Morrison is also the demo athlete account.
         </p>
       </div>
 
@@ -3178,13 +3195,19 @@ function DemoTab() {
       {/* Tips */}
       <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 space-y-1.5 font-saira text-[11px] text-zinc-500">
         <p className="text-zinc-400 font-semibold text-[10px] uppercase tracking-widest mb-2">Demo flow</p>
-        <p>1. Hit <strong className="text-zinc-300">Seed Demo Data</strong></p>
-        <p>2. Hit <strong className="text-zinc-300">Sign in as Demo Coach</strong> — lands on <strong className="text-zinc-300">/coach/athletes</strong></p>
-        <p>3. Marcus Webb (6 wks out) has anxiety signals — good for coach alerts</p>
-        <p>4. Sofia Mäkinen has all 4 tests + strong check-ins — best for full profile view</p>
-        <p>5. Jake Hartley has a DAS perfectionism flag — great for mental health screening angle</p>
-        <p>6. Share <strong className="text-zinc-300">/demo</strong> before the meeting as a teaser link</p>
-        <p>7. After the demo, hit <strong className="text-zinc-300">Remove Demo Data</strong> to clean up</p>
+        <p>1. Hit <strong className="text-zinc-300">Seed Demo Data</strong> (only needed once)</p>
+        <p>2. <strong className="text-zinc-300">Coach view</strong> → lands on /coach/athletes with 5 athletes</p>
+        <p>   · Marcus Webb: anxiety signals + coach alert angle</p>
+        <p>   · Sofia Mäkinen: all 4 tests, strong check-ins, best for full profile</p>
+        <p>   · Jake Hartley: DAS perfectionism flag, mental health screening angle</p>
+        <p>   · Alex Morrison: affirmations + keywords set, all tools visible</p>
+        <p>3. <strong className="text-zinc-300">Athlete view</strong> → lands on /today as Alex Morrison</p>
+        <p>   · /journal — 7 entries with narrative arc</p>
+        <p>   · /chat — AI coach with full context loaded</p>
+        <p>   · /scripts — visualization scripts</p>
+        <p>   · /you — profile, voice selector, notifications</p>
+        <p>4. Share <strong className="text-zinc-300">/demo</strong> as a no-login teaser before the meeting</p>
+        <p>5. After the demo, hit <strong className="text-zinc-300">Remove Demo Data</strong> to clean up</p>
       </div>
     </div>
   );
