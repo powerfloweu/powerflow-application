@@ -195,8 +195,11 @@ export default function DemoLanding() {
 
         {/* ── Footer ─────────────────────────────────────────────── */}
         <div className="mt-2 text-center space-y-1.5">
-          <a href="mailto:david@power-flow.eu?subject=PowerFlow%20enquiry" className={`text-[11px] transition ${tc(d,"text-violet-400 hover:text-violet-300","text-violet-600 hover:text-violet-700")}`}>
+          <a href="mailto:david@power-flow.eu?subject=PowerFlow%20enquiry" className={`block text-[11px] transition ${tc(d,"text-violet-400 hover:text-violet-300","text-violet-600 hover:text-violet-700")}`}>
             david@power-flow.eu
+          </a>
+          <a href="https://www.instagram.com/powerfloweu/" target="_blank" rel="noopener noreferrer" className={`block text-[11px] transition ${tc(d,"text-zinc-500 hover:text-zinc-300","text-gray-400 hover:text-gray-600")}`}>
+            @powerfloweu
           </a>
         </div>
 
