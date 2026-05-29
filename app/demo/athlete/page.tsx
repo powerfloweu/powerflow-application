@@ -362,7 +362,7 @@ function SidePanel({ step, dark }: { step: number; dark: boolean }) {
       </div>
 
       {/* CTA */}
-      <a href="mailto:trainer.pod@gmail.com?subject=PowerFlow%20enquiry"
+      <a href="mailto:david@power-flow.eu?subject=PowerFlow%20enquiry"
         className="block rounded-2xl bg-violet-600 hover:bg-violet-500 px-5 py-3 font-saira text-xs font-bold uppercase tracking-wider text-white transition text-center mb-3">
         Get in touch →
       </a>
@@ -1318,7 +1318,7 @@ function S21() {
           </div>
         </FadeIn>
         <FadeIn delay={900}>
-          <a href="mailto:trainer.pod@gmail.com?subject=PowerFlow%20Coach%20Plan"
+          <a href="mailto:david@power-flow.eu?subject=PowerFlow%20Coach%20Plan"
             className={`block w-full rounded-xl border px-4 py-2.5 font-saira text-[10px] font-bold uppercase tracking-wider text-center transition ${d?"border-violet-500/30 text-violet-300 hover:bg-violet-500/10":"border-violet-300 text-violet-700 hover:bg-violet-50"}`}>
             Get in touch about coaching →
           </a>

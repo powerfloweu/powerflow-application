@@ -909,7 +909,7 @@ export default function DemoCoach() {
               Example: 10 athletes → €29 + 10×€5 = <span className={`font-semibold ${isDark ? "text-zinc-300" : "text-gray-700"}`}>€79/month</span> for the whole team.
             </p>
             <a
-              href="mailto:trainer.pod@gmail.com?subject=PowerFlow%20Coach%20Plan"
+              href="mailto:david@power-flow.eu?subject=PowerFlow%20Coach%20Plan"
               className={`block w-full rounded-xl border px-4 py-3 font-saira text-[11px] font-bold uppercase tracking-wider text-center transition ${isDark ? "border-violet-500/35 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20" : "border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100"}`}
             >
               Get in touch →
