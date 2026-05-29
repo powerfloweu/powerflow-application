@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import MuxPlayer from "@mux/mux-player-react";
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
@@ -68,7 +69,7 @@ const STEPS = [
   { phase: "Home",       label: "Chat — AI reply",   duration: 9000  }, // 14
   { phase: "Journal",    label: "Your history",      duration: 5000  }, // 15
   { phase: "Course",     label: "Your program",      duration: 5000  }, // 16
-  { phase: "Course",     label: "Week 3 · lesson",   duration: 8000  }, // 17  new
+  { phase: "Course",     label: "Week 1 · lesson",   duration: 9000  }, // 17  new
   { phase: "Tools",      label: "AI & scripts",      duration: 5500  }, // 17
   { phase: "Tools",      label: "Performance test",  duration: 5000  }, // 18
   { phase: "You",        label: "Your profile",      duration: 5000  }, // 19
@@ -111,7 +112,7 @@ const STEP_PANEL = [
   { title: "AI response",      desc: "A personalised reply referencing specific journal entries. It knows this athlete — not a generic chatbot." },
   { title: "Journal history",  desc: "Every journal and training log in a scrollable feed, colour-coded by sentiment. The coach sees the same." },
   { title: "16-week course",   desc: "A structured mental performance program. Progress tracked per athlete on the coach dashboard." },
-  { title: "Week 3 · Goal Setting", desc: "Each week opens with a video lesson followed by structured self-reflection questions. Responses are saved and visible to the coach." },
+  { title: "Week 1 · Me and Powerlifting", desc: "Each week opens with a video lesson followed by structured self-reflection questions. Responses are saved and visible to the coach." },
   { title: "Tools",            desc: "The Coach AI and guided audio library. Scripts play on lock screen — even during warm-up." },
   { title: "Performance test", desc: "Validated psychometric assessments assigned by the coach. Results appear on the dashboard the moment they're complete." },
   { title: "Your profile",     desc: "The athlete's complete profile — lifts, goals, meet countdown, mindset baseline, and coach connection." },
@@ -983,26 +984,17 @@ function S16() {
 
 // ─── COURSE WEEK DETAIL ───────────────────────────────────────────────────────
 
-const WEEK3_QUESTIONS = [
-  { q: "What does a meaningful goal look like to you — in powerlifting and beyond?",
-    a: "I want to total 720 kg at nationals. Beyond that I want to prove to myself I can compete without freezing on the platform." },
-  { q: "Where do you feel the gap most clearly between where you are and where you want to be?",
-    a: "Mentally on competition day. Training I'm solid — meets are where the doubts creep in." },
-  { q: "What would change in your training if you committed fully to your goal?",
-    a: "I'd stop second-guessing my opener. Pick it, trust it, and move on." },
+const WEEK1_QUESTIONS = [
+  { q: "How would you describe your relationship with powerlifting — what does it give you?",
+    a: "It's the one place where I'm fully in control. Everything else is noise — under the bar it's just me and the weight." },
+  { q: "What moment made you realise you were serious about this sport?",
+    a: "First meet. Bombed my second squat attempt and came back and hit the third. Knew after that I wasn't going anywhere." },
+  { q: "How do you see yourself as a competitor — what kind of athlete are you becoming?",
+    a: "Consistent. Not flashy. Someone who shows up prepared and doesn't crack under pressure. That's the goal anyway." },
 ] as const;
 
 function S17() {
   const d = useD(); const p = pal(d);
-  const [playing, setPlaying] = React.useState(false);
-  const [secs, setSecs] = React.useState(0);
-  React.useEffect(() => {
-    if (!playing) return;
-    const t = setInterval(() => setSecs(s => s + 1), 1000);
-    return () => clearInterval(t);
-  }, [playing]);
-  const mm = Math.floor(secs / 60), ss = secs % 60;
-  const prog = Math.min(secs / 480, 1) * 100; // 8 min lesson
   return (
     <div className="flex flex-col h-full">
       <AppHeader title="Course" />
@@ -1011,70 +1003,41 @@ function S17() {
         {/* Week badge */}
         <FadeIn>
           <div className="flex items-center gap-2">
-            <div className={`w-6 h-6 rounded-full ${p.vic} flex items-center justify-center flex-shrink-0`}>
-              <span className={`font-saira text-[9px] font-bold ${p.vt}`}>3</span>
+            <div className={`w-6 h-6 rounded-full ${d?"bg-white/10 border-white/10":"bg-gray-100 border-gray-200"} border flex items-center justify-center flex-shrink-0`}>
+              <span className={`font-saira text-[9px] font-bold ${p.t4}`}>✓</span>
             </div>
             <div>
-              <p className={`font-saira text-[9px] uppercase tracking-widest ${p.vt}`}>Week 3 of 16</p>
-              <p className={`font-saira text-sm font-extrabold uppercase tracking-tight ${p.t1}`}>Goal Setting</p>
+              <p className={`font-saira text-[9px] uppercase tracking-widest ${p.t4}`}>Week 1 of 16 · Completed</p>
+              <p className={`font-saira text-sm font-extrabold uppercase tracking-tight ${p.t1}`}>Me and Powerlifting</p>
             </div>
           </div>
         </FadeIn>
 
-        {/* Video player */}
-        <FadeIn delay={350}>
-          <div className={`rounded-2xl border overflow-hidden ${d?"border-white/10":"border-gray-200"}`}>
-            {/* Thumbnail area */}
-            <div
-              className="relative flex items-center justify-center"
-              style={{ height: 168, background: d ? "#0d0d1a" : "#e8e4f0" }}
-            >
-              {/* Fake cinematic bars */}
-              <div className="absolute inset-x-0 top-0 h-5" style={{ background: d?"#000":"#1a1a2e" }}/>
-              <div className="absolute inset-x-0 bottom-0 h-5" style={{ background: d?"#000":"#1a1a2e" }}/>
-              {/* Faint grid / texture */}
-              <div className="absolute inset-0 opacity-10"
-                style={{ backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 23px,rgba(124,58,237,0.4) 23px,rgba(124,58,237,0.4) 24px),repeating-linear-gradient(90deg,transparent,transparent 23px,rgba(124,58,237,0.4) 23px,rgba(124,58,237,0.4) 24px)" }}/>
-              {/* Play button */}
-              <button
-                type="button"
-                onClick={() => setPlaying(x => !x)}
-                className={`relative z-10 w-14 h-14 rounded-full flex items-center justify-center transition-transform active:scale-95 ${p.vbg2} border ${d?"border-violet-500/50":"border-violet-300"}`}
-              >
-                <span className={`${p.vtl} text-xl ml-0.5`}>{playing ? "⏸" : "▶"}</span>
-              </button>
-              {/* Title overlay */}
-              <div className="absolute bottom-7 left-4 right-4">
-                <p className={`font-saira text-[10px] font-bold uppercase tracking-wider text-white`}>Goal Setting · Lesson 1</p>
-                <p className="font-saira text-[9px] text-white/50">8 min · David Toth</p>
-              </div>
-            </div>
-            {/* Progress bar */}
-            <div className={`px-4 py-3 ${d?"bg-[#0d0d1a]":"bg-[#f0ecfa]"}`}>
-              <div className={`h-1.5 ${p.progress} rounded-full overflow-hidden mb-1.5`}>
-                <div className="h-full bg-violet-500 rounded-full transition-all duration-1000" style={{ width: `${prog}%` }}/>
-              </div>
-              <div className="flex justify-between">
-                <span className={`font-saira text-[9px] tabular-nums ${p.t4}`}>{mm}:{String(ss).padStart(2,"0")}</span>
-                <span className={`font-saira text-[9px] ${p.t4}`}>8:00</span>
-              </div>
-            </div>
+        {/* Real Mux video */}
+        <FadeIn delay={300}>
+          <div className={`rounded-2xl overflow-hidden border ${d?"border-white/10":"border-gray-200"}`}>
+            <MuxPlayer
+              playbackId="UFbBTEgcpZ8gLW00b00S01XP01LEXeGKz2XrSGbePyPqmVU"
+              metadata={{ video_title: "Week 1: Me and Powerlifting" }}
+              accentColor="#7C3AED"
+              style={{ width: "100%", aspectRatio: "16/9", display: "block" }}
+            />
           </div>
         </FadeIn>
 
         {/* Lesson intro */}
-        <FadeIn delay={700}>
+        <FadeIn delay={600}>
           <p className={`font-saira text-xs ${p.t3} leading-relaxed`}>
-            Goal setting in sport psychology isn&apos;t about wishful thinking. This week you&apos;ll identify the gap between where you are and where you want to be — and translate it into a structure your brain can actually act on.
+            The first week is about identity — not your numbers, but who you are as a competitor and why this sport matters to you. Understanding that foundation shapes every mental skill that follows.
           </p>
         </FadeIn>
 
         {/* Reflection questions */}
-        <FadeIn delay={1000}>
+        <FadeIn delay={900}>
           <p className={`font-saira text-[9px] uppercase tracking-widest ${p.t4} mb-2`}>Self-reflection</p>
           <div className="space-y-2.5">
-            {WEEK3_QUESTIONS.map(({q, a}, i) => (
-              <FadeIn key={i} delay={1000 + i * 400}>
+            {WEEK1_QUESTIONS.map(({q, a}, i) => (
+              <FadeIn key={i} delay={900 + i * 400}>
                 <div className={`rounded-2xl border ${p.vbg} p-3.5`}>
                   <p className={`font-saira text-[10px] ${p.vt} font-semibold leading-snug mb-2`}>{q}</p>
                   <p className={`font-saira text-xs ${p.t2} leading-relaxed`}>
