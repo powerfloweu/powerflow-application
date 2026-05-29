@@ -60,7 +60,7 @@ const STEPS = [
   { phase: "Onboarding", label: "Meet date",         duration: 4000  }, // 6
   { phase: "Onboarding", label: "All set!",          duration: 3500  }, // 7
   { phase: "Home",       label: "Good morning",      duration: 4000  }, // 8  APP_START
-  { phase: "Home",       label: "Log training day",  duration: 3500  }, // 9
+  { phase: "Home",       label: "Training log",      duration: 6000  }, // 9
   { phase: "Home",       label: "Weekly check-in",   duration: 6000  }, // 10
   { phase: "Home",       label: "Journal entry",     duration: 7000  }, // 11
   { phase: "Home",       label: "Today overview",    duration: 5500  }, // 12
@@ -101,8 +101,8 @@ const STEP_PANEL = [
   { title: "Goal setting",     desc: "Goal lifts appear alongside current bests on the coach dashboard so the gap is always visible." },
   { title: "Meet countdown",   desc: "The countdown appears on the home screen every day. The AI frames all responses around this timeline." },
   { title: "Ready",            desc: "The athlete's full profile is live on the coach dashboard — ready to track from the first session." },
-  { title: "Daily log",        desc: "One tap to log training or rest. The first thing an athlete does each day — under 30 seconds." },
-  { title: "Session log",      desc: "Session type and body readiness logged before training. Appears on the coach activity feed in real time." },
+  { title: "Daily log",        desc: "Home screen shows meet countdown, competition goals, daily affirmations, and current course week. One tap logs training or rest — then straight to the journal." },
+  { title: "Training log",     desc: "Five structured questions capture mental state before and after every session. Visible to the coach on their activity feed in real time." },
   { title: "Weekly check-in",  desc: "Five metrics rated 1–10. The coach sees these plotted over time across their full athlete roster." },
   { title: "Journal",          desc: "Post-session reflection with auto-detected sentiment. Negative patterns are flagged to the coach." },
   { title: "Today overview",   desc: "A daily summary: this week's ratings, affirmations, and meet countdown in one view." },
@@ -141,12 +141,12 @@ const ALEX = {
   tier: "PR" as const,
 };
 
-type JEntry = { day: string; type: "journal" | "training"; sentiment: "positive" | "neutral" | "negative"; text: string; session?: string };
+type JEntry = { day: string; type: "journal" | "training"; sentiment?: "positive" | "neutral" | "negative"; text: string; session?: string };
 const JOURNAL: JEntry[] = [
   { day: "Today",     type: "journal",  sentiment: "neutral",  text: "Been fixating on opener numbers. Trying to remind myself — I pick the number, the number doesn't pick me." },
-  { day: "Yesterday", type: "training", sentiment: "positive", text: "237.5 squat × 2. New training PR. Visualization script made a real difference today.", session: "Squat · Heavy" },
+  { day: "Yesterday", type: "training", text: "Before: just trust the routine — visualised 237.5 all week. After: hit it for 2, everything clicked. Mental routine is working.", session: "Squat" },
   { day: "Yesterday", type: "journal",  sentiment: "positive", text: "237.5 for 2. Never done that in training. The mental routine is working. Goal total is within reach." },
-  { day: "4d ago",    type: "training", sentiment: "positive", text: "5 × 3 @ 245 deadlift. Lat spread cue clicked — bar path was perfect.", session: "Deadlift · Volume" },
+  { day: "4d ago",    type: "training", text: "Before: lat spread cue, stay patient. After: bar path was perfect on every rep. 245 for 5×3.", session: "Deadlift" },
   { day: "5d ago",    type: "journal",  sentiment: "positive", text: "Ran the deadlift visualization script twice this morning. The sequence is starting to feel automatic." },
   { day: "10d ago",   type: "journal",  sentiment: "negative", text: "Bad bench session mentally. Weight was fine but I was in my head the whole time. Need to work on process cues." },
 ];
@@ -641,7 +641,7 @@ function S8() {
   return (
     <div className="flex flex-col h-full">
       <AppHeader title="Home" />
-      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
         <FadeIn>
           <div className={`rounded-2xl border ${p.abg} p-4 flex justify-between items-center`}>
             <div>
@@ -651,17 +651,48 @@ function S8() {
             <p className={`font-saira text-[10px] ${p.t4}`}>IPF · 83 kg</p>
           </div>
         </FadeIn>
-        <FadeIn delay={600}>
+        <FadeIn delay={350}>
           <p className={`font-saira text-lg font-extrabold ${p.t1}`}>Good morning, Alex.</p>
-          <p className={`font-saira text-sm ${p.t3} mt-0.5`}>How are you training today?</p>
         </FadeIn>
-        <FadeIn delay={1100}>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={`rounded-2xl border ${p.c2} p-5 text-center opacity-40`}>
-              <p className={`font-saira text-sm font-bold uppercase ${p.t3} mt-1`}>Rest day</p>
+        <FadeIn delay={650}>
+          <div className={`rounded-2xl border ${p.vbg} p-4`}>
+            <p className={`font-saira text-[9px] uppercase tracking-widest ${p.vt} mb-2.5`}>Competition goals</p>
+            {ALEX.mentalGoals.map((g, i) => (
+              <div key={i} className="flex gap-2 mb-1.5 last:mb-0">
+                <span className={`font-saira text-[10px] ${p.vt} font-bold flex-shrink-0 mt-0.5`}>{i + 1}.</span>
+                <p className={`font-saira text-xs ${p.t2}`}>{g}</p>
+              </div>
+            ))}
+          </div>
+        </FadeIn>
+        <FadeIn delay={950}>
+          <div className={`rounded-2xl border ${p.c2} p-4`}>
+            <p className={`font-saira text-[9px] uppercase tracking-widest ${p.t4} mb-2`}>Today&apos;s affirmations</p>
+            {ALEX.affirmations.map((a, i) => (
+              <p key={i} className={`font-saira text-xs ${p.t3} italic mb-1 last:mb-0`}>&ldquo;{a}&rdquo;</p>
+            ))}
+          </div>
+        </FadeIn>
+        <FadeIn delay={1200}>
+          <div className={`rounded-xl border ${p.gbg} px-4 py-3 flex items-center gap-3`}>
+            <div className={`w-7 h-7 rounded-full ${p.gic} flex items-center justify-center flex-shrink-0`}>
+              <span className={`font-saira text-[10px] font-bold ${p.gt}`}>3</span>
             </div>
-            <div className={`rounded-2xl border ${p.vbg2} p-5 text-center`}>
-              <p className={`font-saira text-sm font-bold uppercase ${p.vtl}`}>Training</p>
+            <div className="flex-1 min-w-0">
+              <p className={`font-saira text-[9px] uppercase tracking-widest ${p.gt} mb-0.5`}>Week 3 · This week</p>
+              <p className={`font-saira text-xs font-semibold ${p.t1}`}>Goal Setting</p>
+            </div>
+            <span className={`font-saira text-[9px] ${p.vt} font-bold uppercase flex-shrink-0`}>Continue →</span>
+          </div>
+        </FadeIn>
+        <FadeIn delay={1500}>
+          <p className={`font-saira text-[9px] uppercase tracking-widest ${p.t4} mb-2`}>How are you training today?</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className={`rounded-2xl border ${p.c2} p-4 text-center opacity-40`}>
+              <p className={`font-saira text-sm font-bold uppercase ${p.t3}`}>Rest day</p>
+            </div>
+            <div className={`rounded-2xl border ${p.vbg2} p-4 text-center`}>
+              <p className={`font-saira text-sm font-bold uppercase ${p.vtl}`}>Training →</p>
             </div>
           </div>
         </FadeIn>
@@ -672,32 +703,37 @@ function S8() {
 
 function S9() {
   const d = useD(); const p = pal(d);
+  const QS = [
+    { q: "What were your primary thoughts BEFORE your top sets today?", a: "237.5 squat today. Visualised this weight all week. Just trust the routine." },
+    { q: "What were your primary thoughts AFTER your top sets today?",  a: "Hit it for 2. Everything clicked. The process cue worked perfectly." },
+    { q: "What went really well today?",                                 a: "Mental routine before the set. Stayed in the moment the whole time." },
+    { q: "Is there anything you're frustrated with from today?",         a: "" },
+    { q: "What would you like to work on in your next session?",         a: "Same pre-set routine on bench day." },
+  ] as const;
   return (
     <div className="flex flex-col h-full">
-      <AppHeader title="Home" />
-      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+      <AppHeader title="Training log" />
+      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2.5">
         <FadeIn>
           <div className={`rounded-xl border ${p.vbg2} px-4 py-3 flex items-center gap-3`}>
             <span className={p.vt}>✓</span>
-            <p className={`font-saira text-sm font-bold ${p.vtl}`}>Training day</p>
+            <p className={`font-saira text-sm font-bold ${p.vtl}`}>Training day · Squat</p>
           </div>
         </FadeIn>
-        <FadeIn delay={500}>
-          <p className={`font-saira text-[9px] uppercase tracking-widest ${p.t4} mb-2`}>Session type</p>
-          <div className="flex gap-2 flex-wrap">
-            {["Squat","Bench","Deadlift","Full body"].map(t=>(
-              <div key={t} className={`rounded-xl border px-4 py-2.5 font-saira text-xs font-bold uppercase ${t==="Squat"?p.selOn:p.selOff}`}>{t}</div>
-            ))}
-          </div>
-        </FadeIn>
-        <FadeIn delay={1000}>
-          <p className={`font-saira text-[9px] uppercase tracking-widest ${p.t4} mb-2`}>How&apos;s your body today?</p>
-          <div className="grid grid-cols-3 gap-2">
-            {["Fresh","Normal","Tired"].map(f=>(
-              <div key={f} className={`rounded-xl border p-3 text-center font-saira text-xs font-bold uppercase ${f==="Normal"?p.selOn:p.selOff}`}>{f}</div>
-            ))}
-          </div>
-        </FadeIn>
+        {QS.map(({q, a}, i) => (
+          <FadeIn key={i} delay={350 + i * 400}>
+            <div className={`rounded-2xl border ${p.c2} p-3.5`}>
+              <p className={`font-saira text-[10px] ${p.t4} leading-snug mb-2`}>{q}</p>
+              {a ? (
+                <p className={`font-saira text-xs ${p.t2} leading-relaxed`}>
+                  {i === 0 ? <TypedText text={a} speed={26} /> : a}
+                </p>
+              ) : (
+                <p className={`font-saira text-xs ${p.t4} italic`}>Nothing today.</p>
+              )}
+            </div>
+          </FadeIn>
+        ))}
       </div>
     </div>
   );
@@ -750,14 +786,6 @@ function S11() {
             <p className={`font-saira text-sm ${p.t2} leading-relaxed`}>
               <TypedText text="237.5 squat for 2. Never done that before in training. Whatever the mental routine is doing, it's working. Starting to believe the goal total is within reach." speed={22}/>
             </p>
-          </div>
-        </FadeIn>
-        <FadeIn delay={800}>
-          <div className="flex gap-2 items-center">
-            <p className={`font-saira text-[9px] uppercase tracking-widest ${p.t4} mr-1`}>Mood:</p>
-            {["Positive","Neutral","Negative"].map(s=>(
-              <div key={s} className={`rounded-full border px-3 py-1 font-saira text-[10px] font-bold uppercase ${s==="Positive"?p.selOn:p.selOff}`}>{s}</div>
-            ))}
           </div>
         </FadeIn>
       </div>
@@ -892,7 +920,6 @@ function S15() {
           <FadeIn key={i} delay={i*300}>
             <div className={`rounded-2xl border p-4 ${e.type==="training"?(d?"border-sky-500/15 bg-sky-500/[0.04]":"border-sky-200 bg-sky-50"):p.vbg}`}>
               <div className="flex items-center gap-2 mb-1.5">
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${e.sentiment==="positive"?"bg-violet-400":e.sentiment==="negative"?"bg-rose-400":"bg-zinc-400"}`}/>
                 <span className={`rounded-full border px-2 py-0.5 font-saira text-[9px] uppercase ${e.type==="training"?p.skl:(d?"bg-violet-500/12 text-violet-300 border-violet-500/20":"bg-violet-50 text-violet-700 border-violet-200")}`}>{e.session??"Journal"}</span>
                 <span className={`font-saira text-[10px] ${p.t4} ml-auto`}>{e.day}</span>
               </div>
