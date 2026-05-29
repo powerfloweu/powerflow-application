@@ -53,7 +53,7 @@ function pal(d: boolean) {
 const STEPS = [
   { phase: "Onboarding", label: "Welcome",           duration: 4000  }, // 0
   { phase: "Onboarding", label: "Your name",         duration: 5200  }, // 1
-  { phase: "Onboarding", label: "Sport & class",     duration: 4500  }, // 2
+  { phase: "Onboarding", label: "Federation & class", duration: 4500  }, // 2
   { phase: "Onboarding", label: "Current lifts",     duration: 5000  }, // 3
   { phase: "Onboarding", label: "Mindset profile",   duration: 7500  }, // 4
   { phase: "Onboarding", label: "Goals",             duration: 5000  }, // 5
@@ -95,7 +95,7 @@ function getActiveTab(s: number): "home" | "journal" | "course" | "tools" | "you
 const STEP_PANEL = [
   { title: "Welcome",          desc: "Athletes open to this screen on first launch. Onboarding takes under 5 minutes." },
   { title: "Identity",         desc: "Name is shared with the coach from day one. All data is private to the athlete–coach pair." },
-  { title: "Setup",            desc: "Federation and weight class personalise every AI response and coach dashboard context." },
+  { title: "Federation & class", desc: "Federation and weight class personalise every AI response and coach dashboard context." },
   { title: "Baseline lifts",   desc: "Current training maxes set the performance baseline tracked through the whole prep cycle." },
   { title: "Mindset profile",  desc: "Four open questions and five psychometric scales build the mental baseline — visible to the coach immediately." },
   { title: "Goal setting",     desc: "Goal lifts appear alongside current bests on the coach dashboard so the gap is always visible." },
@@ -435,7 +435,7 @@ function S2() {
       <div className="flex-1 flex flex-col px-5 pt-5">
         <FadeIn>
           <p className={`font-saira text-[9px] uppercase tracking-widest ${p.t4} mb-1`}>Step 2 of 7</p>
-          <h2 className={`font-saira text-2xl font-extrabold uppercase tracking-tight ${p.t1} mb-1`}>Sport &amp; weight class</h2>
+          <h2 className={`font-saira text-2xl font-extrabold uppercase tracking-tight ${p.t1} mb-1`}>Federation &amp; weight class</h2>
         </FadeIn>
         <div className="mt-6 space-y-5">
           <FadeIn delay={500}>
