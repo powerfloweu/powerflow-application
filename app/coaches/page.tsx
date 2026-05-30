@@ -32,7 +32,7 @@ const COACHES: Coach[] = [
     name: "Jacqueline Ulrich",
     initials: "JU",
     title: "Mental Performance Coach",
-    bio: "Works with athletes on the mental foundations of consistent training and competitive performance. Focuses on building mental resilience and the confidence habits that hold up when it counts.",
+    bio: "Having participated in international-level powerlifting competitions, Jay knows what it feels like to deal with pressure, doubt, and expectations. As a powerlifting coach she realised long-term development takes more than training plans — and went deeper into the mental side. She helps athletes understand their own thoughts and experiences and find their way toward more clarity and confidence in themselves.",
     instagram: "omgitsjacqueline",
     tags: ["Mental resilience", "Confidence", "Performance routines", "Consistency"],
   },
