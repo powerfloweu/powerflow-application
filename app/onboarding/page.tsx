@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { WEIGHT_CATEGORIES } from "@/lib/athlete";
 import type { AthleteProfile } from "@/lib/athlete";
 import { useT } from "@/lib/i18n";
@@ -652,6 +652,8 @@ function Step6({
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedCoachSlug = searchParams.get("coach"); // e.g. "david", "jacqueline"
   const { t } = useT();
   const [authChecked, setAuthChecked] = React.useState(false);
 
@@ -726,10 +728,20 @@ export default function OnboardingPage() {
     setLoadingCoaches(true);
     fetch("/api/coaches")
       .then((r) => r.json())
-      .then((data: CoachOption[]) => setCoaches(Array.isArray(data) ? data : []))
+      .then((data: CoachOption[]) => {
+        const list = Array.isArray(data) ? data : [];
+        setCoaches(list);
+        // Pre-select coach from ?coach= URL param (matched on first name, case-insensitive)
+        if (preselectedCoachSlug && selectedCoachId === null) {
+          const match = list.find((c) =>
+            c.display_name.toLowerCase().startsWith(preselectedCoachSlug.toLowerCase())
+          );
+          if (match) setSelectedCoachId(match.id);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoadingCoaches(false));
-  }, [step]);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Validation ───────────────────────────────────────────────────────────────
   const canNext = React.useMemo(() => {
