@@ -13,6 +13,7 @@ type Coach = {
   title: string;
   bio: string;
   instagram: string | null;
+  photo: string | null;
   tags: string[];
   external?: boolean;
 };
@@ -22,9 +23,10 @@ const COACHES: Coach[] = [
     slug: "david",
     name: "David Sipos",
     initials: "DS",
-    title: "Mental Performance Coach · Founder",
+    title: "Sport Psychologist (MSc) · Founder",
     bio: "Hungarian powerlifter competing since 2016 across the 93 and 105 kg classes — 612.5 kg total. David built PowerFlow after 600+ hours of practice with strength athletes, distilling sport psychology into tools any athlete can apply: visualization scripts, pre-meet routines, competition anxiety work and individualized mental skill sets. Works with athletes across IPF, USAPL and EPF.",
     instagram: "powerfloweu",
+    photo: "/coaches/david.jpg",
     tags: ["Visualization", "Competition anxiety", "Goal setting", "Meet-day prep"],
   },
   {
@@ -34,24 +36,27 @@ const COACHES: Coach[] = [
     title: "Mental Performance Coach",
     bio: "Having participated in international-level powerlifting competitions, Jay knows what it feels like to deal with pressure, doubt, and expectations. As a powerlifting coach she realised long-term development takes more than training plans — and went deeper into the mental side. She helps athletes understand their own thoughts and experiences and find their way toward more clarity and confidence in themselves.",
     instagram: "omgitsjacqueline",
+    photo: null,
     tags: ["Mental resilience", "Confidence", "Performance routines", "Consistency"],
   },
   {
     slug: "clarice",
     name: "Clarice Tighe",
     initials: "CT",
-    title: "Mental Performance Coach",
+    title: "Sport Psychologist (MSc)",
     bio: "Full-time performance mentality coach at Odyssey Strength and competing powerlifter based in Ireland. Having navigated life with Multiple Sclerosis while continuing to compete — returning to the platform at the 2024 IrishPF Open after what she describes as her lowest points — Clarice brings a depth of lived resilience to her coaching. She specialises in the self-talk and mental habits that keep athletes together when conditions are hardest.",
     instagram: "clarice_odyssey",
+    photo: "/coaches/clarice.jpg",
     tags: ["Self-talk", "Cognitive patterns", "Pressure performance", "Mindset"],
   },
   {
     slug: "kate",
-    name: "Kate Cohen-Maher",
+    name: "Dr. Kate Cohen-Maher",
     initials: "KC",
-    title: "Sport Psychologist",
+    title: "Sport Psychologist (PhD)",
     bio: "Sport psychologist (PhD candidate, Florida State University), 48 kg pro powerlifter and 2× USAPL National Champion. Former Raw American junior and collegiate record holder in squat, bench and deadlift. Works with D1 and elite athletes on confidence, attention control, anxiety regulation and performing under pressure. Affiliated with Juggernaut Training Systems.",
     instagram: "kateco220",
+    photo: "/coaches/kate.jpg",
     tags: ["Confidence", "Anxiety regulation", "Focus & attention", "Elite performance"],
     external: true,
   },
@@ -128,8 +133,21 @@ export default function CoachesPage() {
             >
               {/* Top row */}
               <div className="flex items-start gap-4 mb-4">
-                <div className={`w-11 h-11 rounded-full flex items-center justify-center font-extrabold text-sm flex-shrink-0 ${tc(d, "bg-violet-500/15 text-violet-300", "bg-violet-100 text-violet-700")}`}>
-                  {coach.initials}
+                {/* Avatar — photo or initials fallback */}
+                <div className="w-16 h-16 rounded-full flex-shrink-0 overflow-hidden relative">
+                  {coach.photo ? (
+                    <Image
+                      src={coach.photo}
+                      alt={coach.name}
+                      fill
+                      className="object-cover object-top"
+                      sizes="64px"
+                    />
+                  ) : (
+                    <div className={`w-full h-full flex items-center justify-center font-extrabold text-sm ${tc(d, "bg-violet-500/15 text-violet-300", "bg-violet-100 text-violet-700")}`}>
+                      {coach.initials}
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
