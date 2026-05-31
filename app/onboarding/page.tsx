@@ -702,6 +702,8 @@ function OnboardingInner() {
   const [coaches, setCoaches]           = React.useState<CoachOption[]>([]);
   const [loadingCoaches, setLoadingCoaches] = React.useState(false);
   const [selectedCoachId, setSelectedCoachId] = React.useState<string | null>(null);
+  // coach_id already on the profile (set by a previous partial onboarding or join-code link)
+  const [profileCoachId, setProfileCoachId] = React.useState<string | null>(null);
 
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -725,6 +727,9 @@ function OnboardingInner() {
         if (prof.role === "coach") { router.replace("/coach"); return; }
         if (prof.onboarding_complete) { router.replace("/today"); return; }
         if (prof.display_name) setDisplayName(prof.display_name);
+        // If they're already linked to a coach (e.g. via join-code or partial
+        // onboarding), remember the ID so step 6 can pre-select it.
+        if (prof.coach_id) setProfileCoachId(prof.coach_id);
         setAuthChecked(true);
       })
       .catch(() => router.replace(signInUrl()));
@@ -738,8 +743,9 @@ function OnboardingInner() {
       .then((r) => r.json())
       .then((data: CoachOption[]) => {
         const full = Array.isArray(data) ? data : [];
-        // Match by any word in display_name starting with the slug, e.g.
-        // slug="david" matches "Sipos David"; slug="jay" matches "Jay"
+
+        // Priority 1: match by ?coach= URL slug (word-level, case-insensitive)
+        // e.g. slug="david" matches "Sipos David"; slug="jay" matches "Jay"
         let matched: CoachOption | undefined;
         if (preselectedCoachSlug) {
           const slug = preselectedCoachSlug.toLowerCase();
@@ -747,14 +753,20 @@ function OnboardingInner() {
             c.display_name.toLowerCase().split(/\s+/).some((w) => w.startsWith(slug))
           );
         }
-        // When a coach was pre-selected, hide the rest of the roster so the
-        // athlete only sees their chosen coach (+ no-coach option).
+        // Priority 2: if the profile already has a coach_id (from a join-code
+        // link or a previous partial onboarding), use that as fallback.
+        if (!matched && profileCoachId) {
+          matched = full.find((c) => c.id === profileCoachId);
+        }
+
+        // When a coach was identified, show only them (+ no-coach option) so
+        // the athlete isn't distracted by the full roster.
         setCoaches(matched ? [matched] : full);
         if (matched && selectedCoachId === null) setSelectedCoachId(matched.id);
       })
       .catch(() => {})
       .finally(() => setLoadingCoaches(false));
-  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [step, preselectedCoachSlug, profileCoachId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Validation ───────────────────────────────────────────────────────────────
   const canNext = React.useMemo(() => {
