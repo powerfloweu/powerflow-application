@@ -707,9 +707,17 @@ function OnboardingInner() {
 
   // ── Auth check + pre-fill ────────────────────────────────────────────────────
   React.useEffect(() => {
+    // Build the sign-in redirect URL preserving the current path + ?coach= param
+    // so that after OAuth the user returns to /onboarding?coach=<slug> and the
+    // pre-selection still works.
+    const signInUrl = () => {
+      const next = window.location.pathname + window.location.search;
+      return `/auth/sign-in?next=${encodeURIComponent(next)}`;
+    };
+
     fetch("/api/me")
       .then((r) => {
-        if (r.status === 401) { router.replace("/auth/sign-in"); return null; }
+        if (r.status === 401) { router.replace(signInUrl()); return null; }
         return r.json();
       })
       .then((prof: AthleteProfile | null) => {
@@ -719,7 +727,7 @@ function OnboardingInner() {
         if (prof.display_name) setDisplayName(prof.display_name);
         setAuthChecked(true);
       })
-      .catch(() => router.replace("/auth/sign-in"));
+      .catch(() => router.replace(signInUrl()));
   }, [router]);
 
   // ── Load coaches when reaching step 6 ───────────────────────────────────────
