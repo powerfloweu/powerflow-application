@@ -16,6 +16,7 @@ type Coach = {
   photo: string | null;
   tags: string[];
   external?: boolean;
+  applyUrl?: string;
 };
 
 const COACHES: Coach[] = [
@@ -48,6 +49,7 @@ const COACHES: Coach[] = [
     instagram: "clarice_odyssey",
     photo: "/coaches/clarice.jpg",
     tags: ["Self-talk", "Cognitive patterns", "Pressure performance", "Mindset"],
+    applyUrl: "https://docs.google.com/forms/d/e/1FAIpQLSdeIVKKhkAn5SZgBuJZWm2SigpHBeCR__RwyWaQPcKrkJO20Q/viewform",
   },
   {
     slug: "kate",
@@ -59,6 +61,7 @@ const COACHES: Coach[] = [
     photo: "/coaches/kate.jpg",
     tags: ["Confidence", "Anxiety regulation", "Focus & attention", "Elite performance"],
     external: true,
+    applyUrl: "https://docs.google.com/forms/d/e/1FAIpQLSepNr4SC7zIy40wUV_nTohd06a8bXEXD8dJsYJ03BUzIxhVgw/viewform",
   },
 ];
 
@@ -192,7 +195,19 @@ export default function CoachesPage() {
               </p>
 
               {/* CTA */}
-              {coach.external ? (
+              {coach.applyUrl ? (
+                <a
+                  href={coach.applyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold uppercase tracking-wider transition ${tc(d,
+                    "bg-violet-500/15 border-violet-500/30 text-violet-200 hover:bg-violet-500/25",
+                    "bg-violet-600 border-violet-600 text-white hover:bg-violet-500"
+                  )}`}
+                >
+                  Apply for 1:1 coaching with {coach.name.split(" ")[0]} →
+                </a>
+              ) : coach.external ? (
                 <a
                   href={`https://www.instagram.com/${coach.instagram}/`}
                   target="_blank"
