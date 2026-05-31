@@ -3213,9 +3213,105 @@ function DemoTab() {
   );
 }
 
+// ── Tools Tab ─────────────────────────────────────────────────────────────────
+
+type ToolUsageRow = {
+  tool_id: string;
+  name: string;
+  total: number;
+  last30d: number;
+  last_used: string;
+};
+
+function ToolsTab() {
+  const [rows, setRows] = React.useState<ToolUsageRow[]>([]);
+  const [totalEvents, setTotalEvents] = React.useState(0);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    fetch("/api/admin/tool-usage")
+      .then((r) => r.json())
+      .then((d) => {
+        setRows(d.rows ?? []);
+        setTotalEvents(d.total_events ?? 0);
+      })
+      .catch(() => setError("Failed to load tool usage data"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="p-6 text-sm text-red-400">{error}</div>
+  );
+
+  return (
+    <div className="p-6 max-w-3xl space-y-6">
+      <div>
+        <h2 className="font-saira text-lg font-extrabold uppercase tracking-tight text-white mb-1">
+          Tool Usage
+        </h2>
+        <p className="font-saira text-xs text-zinc-400">
+          Tracked each time an athlete opens a tool in the library.
+          {totalEvents > 0 && <> {totalEvents.toLocaleString()} total opens recorded.</>}
+          {totalEvents === 0 && <> No data yet — tracking goes live with this deploy.</>}
+        </p>
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="rounded-2xl border border-white/8 bg-surface-panel p-8 text-center">
+          <p className="font-saira text-sm text-zinc-400">No tool opens recorded yet.</p>
+          <p className="font-saira text-xs text-zinc-600 mt-1">
+            Data will appear once athletes start using the library.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-white/8 bg-surface-panel overflow-hidden">
+          <table className="w-full text-left font-saira text-xs">
+            <thead>
+              <tr className="border-b border-white/5">
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Tool</th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 text-right">Total opens</th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 text-right">Last 30 days</th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 text-right">Last used</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={row.tool_id} className={i < rows.length - 1 ? "border-b border-white/5" : ""}>
+                  <td className="px-4 py-3 text-white font-medium">
+                    <span className="text-zinc-500 mr-2 tabular-nums">{i + 1}.</span>
+                    {row.name}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-white font-semibold">
+                    {row.total.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    <span className={row.last30d > 0 ? "text-violet-400" : "text-zinc-600"}>
+                      {row.last30d.toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right text-zinc-500">
+                    {new Date(row.last_used).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "roadmap" | "devtools" | "demo";
+type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "tools" | "roadmap" | "devtools" | "demo";
 
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -3387,6 +3483,7 @@ export default function MasterAdminPage() {
     ["broadcast",      "Broadcast",       "✉"],
     ["conversations",  "Conversations",   "💬"],
     ["ai-insights",    "AI Insights",     "✦"],
+    ["tools",          "Tool Usage",      "◈"],
     ["roadmap",        "Roadmap",         "▸"],
     ["devtools",       "Dev Tools",       "⚙"],
     ["demo",           "Demo Setup",      "▶"],
@@ -3485,6 +3582,7 @@ export default function MasterAdminPage() {
               {activeTab === "broadcast" && <BroadcastTab users={users} />}
               {activeTab === "conversations" && <ConversationsTab />}
               {activeTab === "ai-insights" && <AiInsightsTab users={users} />}
+              {activeTab === "tools" && <ToolsTab />}
               {activeTab === "roadmap" && <RoadmapTab />}
               {activeTab === "devtools" && <DevToolsTab users={users} />}
               {activeTab === "demo" && <DemoTab />}

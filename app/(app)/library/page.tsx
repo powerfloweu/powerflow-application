@@ -793,7 +793,18 @@ function ToolsPageInner() {
   }, []);
 
   const toggle = (id: string) => {
-    setOpenId((prev) => (prev === id ? null : id));
+    setOpenId((prev) => {
+      const opening = prev !== id;
+      if (opening) {
+        // Fire-and-forget usage event — best effort, never blocks the UI
+        fetch("/api/tools/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tool_id: id }),
+        }).catch(() => {});
+      }
+      return opening ? id : null;
+    });
   };
 
   const toggleFavorite = (id: string) => {
