@@ -31,7 +31,7 @@ const COACHES: Coach[] = [
     tags: ["Visualization", "Competition anxiety", "Goal setting", "Meet-day prep"],
   },
   {
-    slug: "jacqueline",
+    slug: "jay",
     name: "Jacqueline Ulrich",
     initials: "JU",
     title: "Mental Performance Coach",

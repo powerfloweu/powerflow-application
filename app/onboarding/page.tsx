@@ -737,15 +737,20 @@ function OnboardingInner() {
     fetch("/api/coaches")
       .then((r) => r.json())
       .then((data: CoachOption[]) => {
-        const list = Array.isArray(data) ? data : [];
-        setCoaches(list);
-        // Pre-select coach from ?coach= URL param (matched on first name, case-insensitive)
-        if (preselectedCoachSlug && selectedCoachId === null) {
-          const match = list.find((c) =>
-            c.display_name.toLowerCase().startsWith(preselectedCoachSlug.toLowerCase())
+        const full = Array.isArray(data) ? data : [];
+        // Match by any word in display_name starting with the slug, e.g.
+        // slug="david" matches "Sipos David"; slug="jay" matches "Jay"
+        let matched: CoachOption | undefined;
+        if (preselectedCoachSlug) {
+          const slug = preselectedCoachSlug.toLowerCase();
+          matched = full.find((c) =>
+            c.display_name.toLowerCase().split(/\s+/).some((w) => w.startsWith(slug))
           );
-          if (match) setSelectedCoachId(match.id);
         }
+        // When a coach was pre-selected, hide the rest of the roster so the
+        // athlete only sees their chosen coach (+ no-coach option).
+        setCoaches(matched ? [matched] : full);
+        if (matched && selectedCoachId === null) setSelectedCoachId(matched.id);
       })
       .catch(() => {})
       .finally(() => setLoadingCoaches(false));
