@@ -25,7 +25,7 @@ const COACHES: Coach[] = [
     name: "David Sipos",
     initials: "DS",
     title: "Sport Psychologist (MSc) · Founder",
-    bio: "David built PowerFlow after 3+ years of practice with powerlifters, distilling sport psychology into tools any athlete can apply: visualization scripts, pre-meet routines, competition anxiety work and individualized mental skill sets. Works with athletes across IPF, USAPL and EPF.",
+    bio: "David built PowerFlow after 600+ hours of practice with powerlifters, distilling sport psychology into tools any athlete can apply: visualization scripts, pre-meet routines, competition anxiety work and individualized mental skill sets. Works with athletes across IPF, USAPL and EPF.",
     instagram: "powerfloweu",
     photo: "/coaches/david.jpg",
     tags: ["Visualization", "Competition anxiety", "Goal setting", "Meet-day prep"],
