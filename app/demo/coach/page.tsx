@@ -62,6 +62,7 @@ type DemoAthlete = {
   vizKeywords: { squat: string[]; bench: string[]; deadlift: string[] };
   coachNote: string; topics: string[];
   tests: { csai?: { cognitive: number; somatic: number; confidence: number }; acsi?: { total: number; confidence: number; coping: number; concentration: number; goal_setting: number }; das?: { total: number; perfectionism: number; achievement: number; depression_prone: boolean }; sat?: { total: number }; assigned?: string[] };
+  monthlyCheckin?: { month: string; mentalReadiness: number; confidence: number; stress: number; recovery: number; highlight: string };
 };
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
@@ -83,6 +84,7 @@ const ATHLETES: DemoAthlete[] = [
       { daysBack: 3, type: "journal", sentiment: "positive", content: "Opener selection locked. 160/87.5/195 — conservative and very makeable. 3 weeks feels short and exactly right.", coachComment: "Perfect approach. Confidence is your edge right now." },
     ],
     tests: { csai: { cognitive: 14, somatic: 12, confidence: 32 }, acsi: { total: 92, confidence: 14, coping: 12, concentration: 13, goal_setting: 14 }, das: { total: 36, perfectionism: 7, achievement: 8, depression_prone: false }, sat: { total: 117 } },
+    monthlyCheckin: { month: "May", mentalReadiness: 9, confidence: 9, stress: 3, recovery: 9, highlight: "Best mental prep cycle I've had. Visualization has become fully automatic — I can drop into focus in under 30 seconds." },
   },
   {
     id: "marcus", name: "Marcus Webb", initials: "MW", gender: "male", federation: "IPF", bw: 92.8, wc: "93 kg", daysToMeet: 42,
@@ -157,18 +159,21 @@ const ALL_TESTS = ["SAT", "ACSI-28", "CSAI-2", "DAS"];
 // ─── Presentation sequence ─────────────────────────────────────────────────────
 
 type SheetTab = "overview" | "profile" | "activity" | "tests" | "tools";
+type PresentHint = "monthly-checkin" | "comment-open" | "tool-suggest";
 
 const COACH_STEPS = [
-  { phase: "Dashboard",   label: "Home overview",       duration: 4500    }, // 0
-  { phase: "Dashboard",   label: "Needs attention",     duration: 5000    }, // 1
-  { phase: "Dashboard",   label: "Activity feed",       duration: 5500    }, // 2
-  { phase: "Roster",      label: "All athletes",        duration: 5000    }, // 3
-  { phase: "Profile",     label: "Sofia — overview",    duration: 5000    }, // 4
-  { phase: "Profile",     label: "Activity & comments", duration: 6000    }, // 5
-  { phase: "Profile",     label: "Test results",        duration: 6000    }, // 6
-  { phase: "Profile",     label: "Coach tools",         duration: 5500    }, // 7
-  { phase: "Desktop",     label: "Desktop view",        duration: 5000    }, // 8
-  { phase: "Get started", label: "Pricing",             duration: 86400000 }, // 9 terminal
+  { phase: "Dashboard",   label: "Home overview",         duration: 4500    }, // 0
+  { phase: "Dashboard",   label: "Needs attention",       duration: 5000    }, // 1
+  { phase: "Dashboard",   label: "Activity feed",         duration: 5500    }, // 2
+  { phase: "Roster",      label: "All athletes",          duration: 5000    }, // 3
+  { phase: "Check-ins",   label: "Weekly check-in",       duration: 5000    }, // 4
+  { phase: "Check-ins",   label: "Monthly check-in",      duration: 5500    }, // 5
+  { phase: "Activity",    label: "Coach comments",        duration: 5500    }, // 6
+  { phase: "Activity",    label: "Adding a comment",      duration: 6000    }, // 7
+  { phase: "Coach tools", label: "Suggest a tool",        duration: 5500    }, // 8
+  { phase: "Tests",       label: "Test results",          duration: 5500    }, // 9
+  { phase: "Desktop",     label: "Desktop view",          duration: 5000    }, // 10
+  { phase: "Get started", label: "Pricing",               duration: 86400000 }, // 11 terminal
 ] as const;
 
 const COACH_PANEL = [
@@ -176,10 +181,12 @@ const COACH_PANEL = [
   { title: "Needs attention",     desc: "Athletes flagged by negative sentiment, upcoming meet dates, or open topics surface automatically at the top — no manual scanning required." },
   { title: "Activity feed",       desc: "Every journal and training log from your full roster in one scrollable feed, sorted by recency. Sentiment colour-coded: violet for positive, rose for negative." },
   { title: "Athlete roster",      desc: "Meet countdown, current lifts, and a flag indicator for every athlete. Tap any card to open the full profile sheet." },
-  { title: "Sofia · 21 days out", desc: "Overview tab: latest weekly check-in across five metrics, most recent journal entry, and lift progress bars toward her competition goals." },
-  { title: "Activity & comments", desc: "Every journal and training log, most recent first. Coaches can leave a comment on any entry — athletes see it immediately in the app." },
-  { title: "CSAI-2 results",      desc: "Sofia's cognitive anxiety is low (14/36) and self-confidence is high (32/36) — a strong pre-competition mental profile. Results appear the moment the athlete submits." },
-  { title: "Coach tools",         desc: "AI-surfaced discussion topics for this session, private coach notes invisible to the athlete, and personalized visualization keywords per lift." },
+  { title: "Weekly check-in",     desc: "Five metrics rated 1–10 each week: mood, training quality, readiness, energy, and sleep. Tracked across the full prep cycle and visible on the coach dashboard." },
+  { title: "Monthly check-in",    desc: "A deeper monthly review: mental readiness, confidence, competition stress, and recovery quality. Coaches see trends across the full training block." },
+  { title: "Coach comments",      desc: "Every journal and training log, most recent first. Coaches can leave a comment on any entry — athletes see it immediately in the app." },
+  { title: "Adding a comment",    desc: "Coaches type directly on any journal or training entry. The comment appears in the athlete's feed instantly — no separate messaging needed." },
+  { title: "Suggest a tool",      desc: "Coaches can recommend specific tools to athletes — like the Barrier Breaker script to clear mental blocks, or a visualization script for an upcoming meet." },
+  { title: "Test results",        desc: "Sofia's CSAI-2: cognitive anxiety low (14/36), self-confidence high (32/36) — a strong pre-competition mental profile. Results appear the moment the test is submitted." },
   { title: "Desktop view",        desc: "The full dashboard on a larger screen: sidebar navigation, two-column athlete grid, and full activity feed — same data, optimised for desk work." },
   { title: "Get started",         desc: "€29/month coach base + €5/athlete/month. Includes full PR-tier athlete access for you. The dashboard below is fully interactive — click any athlete." },
 ] as const;
@@ -189,19 +196,22 @@ type PStepState = {
   mobileTab: "home" | "athletes" | "activity";
   openAthleteId: string | null;
   sheetTab: SheetTab;
+  hint?: PresentHint;
 };
 
 const PSTEP_STATES: PStepState[] = [
-  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview" }, // 0
-  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview" }, // 1
-  { viewMode: "mobile",  mobileTab: "activity", openAthleteId: null,    sheetTab: "overview" }, // 2
-  { viewMode: "mobile",  mobileTab: "athletes", openAthleteId: null,    sheetTab: "overview" }, // 3
-  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "overview" }, // 4
-  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "activity" }, // 5
-  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "tests"    }, // 6
-  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "tools"    }, // 7
-  { viewMode: "desktop", mobileTab: "home",     openAthleteId: null,    sheetTab: "overview" }, // 8
-  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview" }, // 9 terminal
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview"                              }, // 0
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview"                              }, // 1
+  { viewMode: "mobile",  mobileTab: "activity", openAthleteId: null,    sheetTab: "overview"                              }, // 2
+  { viewMode: "mobile",  mobileTab: "athletes", openAthleteId: null,    sheetTab: "overview"                              }, // 3
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "overview"                              }, // 4
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "overview", hint: "monthly-checkin"     }, // 5
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "activity"                              }, // 6
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "activity", hint: "comment-open"        }, // 7
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "tools",    hint: "tool-suggest"        }, // 8
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "tests"                                 }, // 9
+  { viewMode: "desktop", mobileTab: "home",     openAthleteId: null,    sheetTab: "overview"                              }, // 10
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview"                              }, // 11 terminal
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -297,17 +307,38 @@ function ScoreBar({ label, value, max, hi = false }: { label: string; value: num
 
 // ─── Athlete sheet (5 tabs) ───────────────────────────────────────────────────
 
-function AthleteSheet({ a, forcedTab }: { a: DemoAthlete; forcedTab?: SheetTab }) {
+function AthleteSheet({ a, forcedTab, forcedHint }: { a: DemoAthlete; forcedTab?: SheetTab; forcedHint?: PresentHint }) {
   const d = useD(); const p = pal(d);
   const [tab, setTab] = React.useState<SheetTab>(forcedTab ?? "overview");
+  const [hint, setHint] = React.useState<PresentHint | undefined>(forcedHint);
 
   React.useEffect(() => {
     if (forcedTab !== undefined) setTab(forcedTab);
   }, [forcedTab]);
+
+  React.useEffect(() => {
+    setHint(forcedHint);
+  }, [forcedHint]);
+
   const [assignOpen, setAssignOpen] = React.useState(false);
   const [commenting, setCommenting] = React.useState<number | null>(null);
   const [commentDraft, setCommentDraft] = React.useState("");
   const feed = [...a.feed].sort((x, y) => relDate(y.daysBack, y.hour).getTime() - relDate(x.daysBack, x.hour).getTime());
+
+  // Auto-open comment textarea during presentation
+  React.useEffect(() => {
+    if (hint === "comment-open") {
+      const idx = feed.findIndex(e => !e.coachComment);
+      if (idx !== -1) {
+        setCommenting(idx);
+        setCommentDraft("Great mental preparation — visualization work is clearly paying off. Keep this exact routine going into meet week.");
+      }
+    } else {
+      setCommenting(null);
+      setCommentDraft("");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hint]);
 
   return (
     <div className="space-y-4">
@@ -372,6 +403,29 @@ function AthleteSheet({ a, forcedTab }: { a: DemoAthlete; forcedTab?: SheetTab }
               </div>
             );
           })()}
+
+          {/* Monthly check-in */}
+          {a.monthlyCheckin && (
+            <div className={`rounded-xl border ${hint === "monthly-checkin" ? p.vbg2 : p.c2} p-4 transition-all duration-500`}>
+              <p className={`font-saira text-[10px] uppercase tracking-widest ${hint === "monthly-checkin" ? p.vt : p.t4} mb-3`}>Monthly check-in · {a.monthlyCheckin.month}</p>
+              <div className="grid grid-cols-4 gap-1 mb-3">
+                {([
+                  ["Mental Ready", a.monthlyCheckin.mentalReadiness],
+                  ["Confidence",   a.monthlyCheckin.confidence],
+                  ["Stress",       a.monthlyCheckin.stress],
+                  ["Recovery",     a.monthlyCheckin.recovery],
+                ] as [string, number][]).map(([l, v]) => (
+                  <div key={l} className="text-center">
+                    <div className={`text-xl font-extrabold font-saira ${v >= 8 ? p.vtl : v <= 4 ? p.rt : p.t2}`}>{v}</div>
+                    <div className={`font-saira text-[8px] ${p.t4} uppercase leading-tight`}>{l}</div>
+                  </div>
+                ))}
+              </div>
+              <p className={`font-saira text-xs ${p.t2} leading-relaxed border-t ${d ? "border-white/5" : "border-gray-100"} pt-3`}>
+                <span className={`${p.t4} mr-1`}>Highlight:</span>{a.monthlyCheckin.highlight}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -550,6 +604,25 @@ function AthleteSheet({ a, forcedTab }: { a: DemoAthlete; forcedTab?: SheetTab }
       {/* COACH TOOLS */}
       {tab === "tools" && (
         <div className="space-y-3">
+
+          {/* Tool recommendation */}
+          <div className={`rounded-xl border ${hint === "tool-suggest" ? p.vbg2 : p.c2} p-4 transition-all duration-500`}>
+            <p className={`font-saira text-[10px] uppercase tracking-widest ${hint === "tool-suggest" ? p.vt : p.t4} mb-3`}>Suggest a tool</p>
+            <div className={`rounded-xl border ${hint === "tool-suggest" ? p.vbg : p.c1} p-3`}>
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-7 h-7 rounded-lg ${p.vic} flex items-center justify-center text-sm flex-shrink-0`}>▶</div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-saira text-xs font-semibold ${p.t1}`}>Barrier Breaker</p>
+                  <p className={`font-saira text-[9px] ${p.t4}`}>8 min · PR tier</p>
+                </div>
+              </div>
+              <p className={`font-saira text-[11px] ${p.t3} leading-relaxed mb-3`}>Helps athletes identify and work through psychological barriers — distractions, mental blocks, or self-doubt before competition.</p>
+              <button type="button" className={`w-full rounded-lg border ${hint === "tool-suggest" ? p.vbg2 : p.c1} py-2 font-saira text-[10px] font-bold ${p.vtl} text-center transition hover:opacity-80`}>
+                Send recommendation to {a.name.split(" ")[0]} →
+              </button>
+            </div>
+          </div>
+
           <div className={`rounded-xl border ${p.abg} p-4`}>
             <p className={`font-saira text-[10px] uppercase tracking-widest ${p.at} mb-2`}>Topics to discuss</p>
             <div className="space-y-1.5">
@@ -908,6 +981,7 @@ export default function DemoCoach() {
   const [isDark, setIsDark] = React.useState(true);
   const [presentationStep, setPresentationStep] = React.useState(0);
   const [forcedSheetTab, setForcedSheetTab] = React.useState<SheetTab>("overview");
+  const [forcedHint, setForcedHint] = React.useState<PresentHint | undefined>(undefined);
 
   const TOTAL_STEPS = COACH_STEPS.length;
   const isTerminal = presentationStep >= TOTAL_STEPS - 1;
@@ -918,6 +992,7 @@ export default function DemoCoach() {
     setViewMode(s.viewMode);
     setMobileTab(s.mobileTab);
     setForcedSheetTab(s.sheetTab);
+    setForcedHint(s.hint);
     const athlete = s.openAthleteId ? (ATHLETES.find(a => a.id === s.openAthleteId) ?? null) : null;
     setOpen(athlete);
   }, [presentationStep]);
@@ -1075,8 +1150,8 @@ export default function DemoCoach() {
               </div>
             )}
 
-            {/* Coach pricing */}
-            <div className={`mt-4 ${isDesktop ? "w-full max-w-[960px]" : "w-full sm:w-[390px] px-4 sm:px-0"}`}>
+            {/* Coach pricing — only shown at terminal step */}
+            {isTerminal && <div className={`mt-4 ${isDesktop ? "w-full max-w-[960px]" : "w-full sm:w-[390px] px-4 sm:px-0"}`}>
               <div className={`rounded-2xl border p-5 ${isDark ? "border-white/[0.07] bg-white/[0.02]" : "border-gray-200 bg-white"}`}>
                 <p className={`font-saira text-[9px] font-bold uppercase tracking-[0.22em] mb-4 ${isDark ? "text-violet-400" : "text-violet-600"}`}>
                   Coach pricing
@@ -1113,7 +1188,7 @@ export default function DemoCoach() {
                   Get in touch →
                 </a>
               </div>
-            </div>
+            </div>}
 
           </div>{/* end left column */}
 
@@ -1128,7 +1203,7 @@ export default function DemoCoach() {
 
         {/* Athlete sheet */}
         <BottomSheet open={open !== null} onClose={() => setOpen(null)} title={open?.name ?? ""}>
-          {open && <AthleteSheet a={open} forcedTab={!isTerminal ? forcedSheetTab : undefined} />}
+          {open && <AthleteSheet a={open} forcedTab={!isTerminal ? forcedSheetTab : undefined} forcedHint={!isTerminal ? forcedHint : undefined} />}
         </BottomSheet>
       </div>
     </DarkCtx.Provider>
