@@ -20,6 +20,9 @@ const COACH_PROFILE_PARTS = [
   "Training logs", "Coach AI conversations",
 ];
 
+const ATHLETE_WTP = ["Wouldn't pay", "€1–3/mo", "€4–7/mo", "€8–12/mo", "€13+/mo"];
+const COACH_WTP   = ["Wouldn't pay", "Under €20/mo", "€20–40/mo", "€40–70/mo", "€70+/mo"];
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function MultiSelect({
@@ -113,6 +116,7 @@ export default function SurveyModal() {
   const [profileParts, setProfileParts] = React.useState<string[]>([]);
   const [mentalShift, setMentalShift] = React.useState("");
   const [missing, setMissing]         = React.useState("");
+  const [wtp, setWtp]                 = React.useState<string | null>(null);
   const [nps, setNps]                 = React.useState<number | null>(null);
   const [submitting, setSubmitting]   = React.useState(false);
 
@@ -141,8 +145,8 @@ export default function SurveyModal() {
 
     const answers =
       state.role === "coach"
-        ? { dashboard_change: dashboardQ, profile_parts: profileParts, missing, nps }
-        : { tools_used: toolsUsed, mental_shift: mentalShift, fix_or_add: missing, nps };
+        ? { dashboard_change: dashboardQ, profile_parts: profileParts, missing, wtp, nps }
+        : { tools_used: toolsUsed, mental_shift: mentalShift, fix_or_add: missing, wtp, nps };
 
     await fetch("/api/survey", {
       method: "POST",
@@ -257,6 +261,29 @@ export default function SurveyModal() {
               </div>
             </>
           )}
+
+          {/* Willingness to pay — shared, role-specific bands */}
+          <div className="space-y-2">
+            <p className="font-saira text-xs font-semibold text-zinc-300">
+              What would you pay for this per month?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(isCoach ? COACH_WTP : ATHLETE_WTP).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setWtp(opt)}
+                  className={`rounded-full border px-3 py-1.5 font-saira text-xs font-semibold transition ${
+                    wtp === opt
+                      ? "border-purple-500 bg-purple-600/80 text-white"
+                      : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-zinc-200"
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* NPS — shared */}
           <div className="space-y-2">
