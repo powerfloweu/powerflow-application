@@ -20,8 +20,6 @@ const COACH_PROFILE_PARTS = [
   "Training logs", "Coach AI conversations",
 ];
 
-const ATHLETE_WTP = ["Wouldn't pay", "€1–3/mo", "€4–7/mo", "€8–12/mo", "€13+/mo"];
-const COACH_WTP   = ["Wouldn't pay", "Under €20/mo", "€20–40/mo", "€40–70/mo", "€70+/mo"];
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -262,26 +260,22 @@ export default function SurveyModal() {
             </>
           )}
 
-          {/* Willingness to pay — shared, role-specific bands */}
+          {/* Willingness to pay */}
           <div className="space-y-2">
             <p className="font-saira text-xs font-semibold text-zinc-300">
               What would you pay for this per month?
             </p>
-            <div className="flex flex-wrap gap-2">
-              {(isCoach ? COACH_WTP : ATHLETE_WTP).map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => setWtp(opt)}
-                  className={`rounded-full border px-3 py-1.5 font-saira text-xs font-semibold transition ${
-                    wtp === opt
-                      ? "border-purple-500 bg-purple-600/80 text-white"
-                      : "border-white/10 bg-white/5 text-zinc-400 hover:border-purple-500/40 hover:text-zinc-200"
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <span className="font-saira text-sm text-zinc-400">€</span>
+              <input
+                type="number"
+                min="0"
+                placeholder="0"
+                value={wtp ?? ""}
+                onChange={(e) => setWtp(e.target.value || null)}
+                className="w-28 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 font-saira text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-purple-500/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              <span className="font-saira text-sm text-zinc-500">/month</span>
             </div>
           </div>
 
