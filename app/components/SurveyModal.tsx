@@ -109,13 +109,15 @@ export default function SurveyModal() {
   >({ status: "idle" });
 
   // Answers
-  const [toolsUsed, setToolsUsed]     = React.useState<string[]>([]);
-  const [dashboardQ, setDashboardQ]   = React.useState("");
+  const [toolsUsed, setToolsUsed]       = React.useState<string[]>([]);
+  const [dashboardQ, setDashboardQ]     = React.useState("");
   const [profileParts, setProfileParts] = React.useState<string[]>([]);
-  const [mentalShift, setMentalShift] = React.useState("");
-  const [missing, setMissing]         = React.useState("");
-  const [wtp, setWtp]                 = React.useState<string | null>(null);
-  const [nps, setNps]                 = React.useState<number | null>(null);
+  const [athleteMentioned, setAthleteMentioned] = React.useState("");
+  const [mentalShift, setMentalShift]   = React.useState("");
+  const [surprised, setSurprised]       = React.useState("");
+  const [missing, setMissing]           = React.useState("");
+  const [wtp, setWtp]                   = React.useState<string | null>(null);
+  const [nps, setNps]                   = React.useState<number | null>(null);
   const [submitting, setSubmitting]   = React.useState(false);
 
   React.useEffect(() => {
@@ -143,8 +145,8 @@ export default function SurveyModal() {
 
     const answers =
       state.role === "coach"
-        ? { dashboard_change: dashboardQ, profile_parts: profileParts, missing, wtp, nps }
-        : { tools_used: toolsUsed, mental_shift: mentalShift, fix_or_add: missing, wtp, nps };
+        ? { dashboard_change: dashboardQ, profile_parts: profileParts, athletes_mentioned: athleteMentioned, what_would_help: missing, wtp, nps }
+        : { tools_used: toolsUsed, mental_shift: mentalShift, surprised, fix_or_add: missing, wtp, nps };
 
     await fetch("/api/survey", {
       method: "POST",
@@ -196,12 +198,12 @@ export default function SurveyModal() {
             <>
               <div className="space-y-2">
                 <p className="font-saira text-xs font-semibold text-zinc-300">
-                  Has the dashboard changed how you work with your athletes?
+                  How has the app changed how you work with your athletes — if at all?
                 </p>
                 <TextArea
                   value={dashboardQ}
                   onChange={setDashboardQ}
-                  placeholder="What changed, if anything…"
+                  placeholder="What's different, if anything…"
                 />
               </div>
               <div className="space-y-2">
@@ -216,12 +218,22 @@ export default function SurveyModal() {
               </div>
               <div className="space-y-2">
                 <p className="font-saira text-xs font-semibold text-zinc-300">
-                  What&apos;s missing for day-to-day coaching?
+                  Have any of your athletes mentioned the app to you unprompted?
+                </p>
+                <TextArea
+                  value={athleteMentioned}
+                  onChange={setAthleteMentioned}
+                  placeholder="What did they say…"
+                />
+              </div>
+              <div className="space-y-2">
+                <p className="font-saira text-xs font-semibold text-zinc-300">
+                  What would make you reach for this before a session with an athlete?
                 </p>
                 <TextArea
                   value={missing}
                   onChange={setMissing}
-                  placeholder="The one thing that would make this genuinely useful…"
+                  placeholder="What's missing or what would make it click…"
                 />
               </div>
             </>
@@ -229,7 +241,7 @@ export default function SurveyModal() {
             <>
               <div className="space-y-2">
                 <p className="font-saira text-xs font-semibold text-zinc-300">
-                  Which parts did you use regularly?
+                  Which parts did you actually use?
                 </p>
                 <MultiSelect
                   options={ATHLETE_TOOLS}
@@ -239,7 +251,7 @@ export default function SurveyModal() {
               </div>
               <div className="space-y-2">
                 <p className="font-saira text-xs font-semibold text-zinc-300">
-                  Has anything shifted mentally in how you train or compete?
+                  What, if anything, has shifted in how you think about or approach training since using it?
                 </p>
                 <TextArea
                   value={mentalShift}
@@ -249,7 +261,17 @@ export default function SurveyModal() {
               </div>
               <div className="space-y-2">
                 <p className="font-saira text-xs font-semibold text-zinc-300">
-                  What&apos;s the one thing you&apos;d fix or add?
+                  Has anything surprised you about how you responded to the mental work?
+                </p>
+                <TextArea
+                  value={surprised}
+                  onChange={setSurprised}
+                  placeholder="Expected one thing, got another…"
+                />
+              </div>
+              <div className="space-y-2">
+                <p className="font-saira text-xs font-semibold text-zinc-300">
+                  If you could change one thing, what would it be?
                 </p>
                 <TextArea
                   value={missing}
