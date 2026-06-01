@@ -214,6 +214,18 @@ const PSTEP_STATES: PStepState[] = [
   { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview"                              }, // 11 terminal
 ];
 
+// Step callouts: pulsing dot + label overlaid on the phone frame.
+// null = no callout (BottomSheet open or desktop step).
+// x/y = % of phone frame (820px tall). dot aligns to y; label floats above.
+type StepCallout = { x: number; y: number; label: string };
+const STEP_CALLOUTS: Array<StepCallout | null> = [
+  { x: 50, y: 23, label: "Dashboard at a glance" }, // 0 — stats row
+  { x: 50, y: 40, label: "Auto-flagged athletes"  }, // 1 — needs attention
+  { x: 50, y: 50, label: "Live feed · all athletes" }, // 2 — activity list
+  { x: 50, y: 47, label: "Meet countdowns + flags" }, // 3 — roster cards
+  null, null, null, null, null, null, null, null,       // 4-11
+];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function relDate(d: number, h = 20) { const x = new Date(); x.setDate(x.getDate() - d); x.setHours(h, 0, 0, 0); return x; }
@@ -407,7 +419,15 @@ function AthleteSheet({ a, forcedTab, forcedHint }: { a: DemoAthlete; forcedTab?
           {/* Monthly check-in */}
           {a.monthlyCheckin && (
             <div className={`rounded-xl border ${hint === "monthly-checkin" ? p.vbg2 : p.c2} p-4 transition-all duration-500`}>
-              <p className={`font-saira text-[10px] uppercase tracking-widest ${hint === "monthly-checkin" ? p.vt : p.t4} mb-3`}>Monthly check-in · {a.monthlyCheckin.month}</p>
+              <div className="flex items-center gap-2 mb-3">
+                {hint === "monthly-checkin" && (
+                  <div className="relative w-2.5 h-2.5 flex-shrink-0">
+                    <div className="absolute inset-0 rounded-full bg-violet-400/50 animate-ping" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+                  </div>
+                )}
+                <p className={`font-saira text-[10px] uppercase tracking-widest ${hint === "monthly-checkin" ? p.vt : p.t4}`}>Monthly check-in · {a.monthlyCheckin.month}</p>
+              </div>
               <div className="grid grid-cols-4 gap-1 mb-3">
                 {([
                   ["Mental Ready", a.monthlyCheckin.mentalReadiness],
@@ -607,7 +627,15 @@ function AthleteSheet({ a, forcedTab, forcedHint }: { a: DemoAthlete; forcedTab?
 
           {/* Tool recommendation */}
           <div className={`rounded-xl border ${hint === "tool-suggest" ? p.vbg2 : p.c2} p-4 transition-all duration-500`}>
-            <p className={`font-saira text-[10px] uppercase tracking-widest ${hint === "tool-suggest" ? p.vt : p.t4} mb-3`}>Suggest a tool</p>
+            <div className="flex items-center gap-2 mb-3">
+              {hint === "tool-suggest" && (
+                <div className="relative w-2.5 h-2.5 flex-shrink-0">
+                  <div className="absolute inset-0 rounded-full bg-violet-400/50 animate-ping" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+                </div>
+              )}
+              <p className={`font-saira text-[10px] uppercase tracking-widest ${hint === "tool-suggest" ? p.vt : p.t4}`}>Suggest a tool</p>
+            </div>
             <div className={`rounded-xl border ${hint === "tool-suggest" ? p.vbg : p.c1} p-3`}>
               <div className="flex items-center gap-3 mb-2">
                 <div className={`w-7 h-7 rounded-lg ${p.vic} flex items-center justify-center text-sm flex-shrink-0`}>▶</div>
@@ -982,6 +1010,7 @@ export default function DemoCoach() {
   const [presentationStep, setPresentationStep] = React.useState(0);
   const [forcedSheetTab, setForcedSheetTab] = React.useState<SheetTab>("overview");
   const [forcedHint, setForcedHint] = React.useState<PresentHint | undefined>(undefined);
+  const [athleteCount, setAthleteCount] = React.useState(10);
 
   const TOTAL_STEPS = COACH_STEPS.length;
   const isTerminal = presentationStep >= TOTAL_STEPS - 1;
@@ -1109,7 +1138,11 @@ export default function DemoCoach() {
             {/* MOBILE frame */}
             {!isDesktop && (
               <div
-                className="w-full sm:w-[390px] sm:rounded-[44px] sm:border-[7px] sm:border-zinc-800 sm:shadow-[0_32px_120px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden relative flex flex-col"
+                className={`w-full sm:w-[390px] sm:rounded-[44px] sm:border-[7px] sm:border-zinc-800 overflow-hidden relative flex flex-col transition-shadow duration-700 ${
+                  !isTerminal
+                    ? "sm:shadow-[0_32px_120px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.04),0_0_50px_rgba(124,58,237,0.30)]"
+                    : "sm:shadow-[0_32px_120px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)]"
+                }`}
                 style={{ minHeight: "820px", background: p.phone }}
               >
                 <StatusBar dark={isDark} />
@@ -1132,6 +1165,31 @@ export default function DemoCoach() {
                 </div>
                 <MobileView onSelectAthlete={a => setOpen(a)} tab={mobileTab} setTab={setMobileTab} />
                 <HomeIndicator dark={isDark} />
+
+                {/* ── Step callout overlay ── */}
+                {!isTerminal && (() => {
+                  const c = STEP_CALLOUTS[presentationStep];
+                  if (!c) return null;
+                  return (
+                    <div className="absolute inset-0 pointer-events-none z-30">
+                      <div
+                        className="absolute"
+                        style={{ left: `${c.x}%`, top: `${c.y}%`, transform: "translate(-50%, -100%)" }}
+                      >
+                        <div className="flex flex-col items-center gap-0.5">
+                          <div className="bg-violet-600 text-white font-saira text-[9px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap shadow-[0_4px_20px_rgba(124,58,237,0.5)]">
+                            {c.label}
+                          </div>
+                          <div className="w-px h-3 bg-violet-400/60" />
+                          <div className="relative w-3.5 h-3.5 flex items-center justify-center">
+                            <div className="absolute inset-0 rounded-full bg-violet-400/35 animate-ping" style={{ animationDuration: "1.6s" }} />
+                            <div className="w-3.5 h-3.5 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(124,58,237,0.8)]" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -1151,44 +1209,106 @@ export default function DemoCoach() {
             )}
 
             {/* Coach pricing — only shown at terminal step */}
-            {isTerminal && <div className={`mt-4 ${isDesktop ? "w-full max-w-[960px]" : "w-full sm:w-[390px] px-4 sm:px-0"}`}>
-              <div className={`rounded-2xl border p-5 ${isDark ? "border-white/[0.07] bg-white/[0.02]" : "border-gray-200 bg-white"}`}>
-                <p className={`font-saira text-[9px] font-bold uppercase tracking-[0.22em] mb-4 ${isDark ? "text-violet-400" : "text-violet-600"}`}>
-                  Coach pricing
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                  <div className={`flex-1 rounded-xl border p-4 ${isDark ? "border-violet-500/25 bg-violet-500/[0.07]" : "border-violet-200 bg-violet-50"}`}>
-                    <p className={`font-saira text-[9px] uppercase tracking-widest mb-1 ${isDark ? "text-violet-400" : "text-violet-600"}`}>Base plan</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className={`font-saira text-3xl font-extrabold leading-none ${isDark ? "text-white" : "text-gray-900"}`}>€29</span>
-                      <span className={`font-saira text-xs ${isDark ? "text-zinc-400" : "text-gray-500"}`}>/month</span>
-                    </div>
-                    <p className={`font-saira text-[10px] leading-relaxed mt-2 ${isDark ? "text-zinc-300" : "text-gray-700"}`}>
-                      Full coach dashboard. Includes all <span className={`font-semibold ${isDark ? "text-amber-300" : "text-amber-700"}`}>PR tier</span> features for you as an athlete.
-                    </p>
+            {isTerminal && (
+              <div className={`mt-5 ${isDesktop ? "w-full max-w-[960px]" : "w-full sm:w-[390px] px-4 sm:px-0"}`}>
+                {/* Header strip */}
+                <div className="rounded-t-2xl bg-violet-600 px-5 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-violet-300 animate-pulse" />
+                    <p className="font-saira text-[10px] font-bold uppercase tracking-[0.28em] text-violet-100">PowerFlow · Coach</p>
                   </div>
-                  <div className={`flex-1 rounded-xl border p-4 ${isDark ? "border-white/8 bg-white/[0.02]" : "border-gray-100 bg-white"}`}>
-                    <p className={`font-saira text-[9px] uppercase tracking-widest mb-1 ${isDark ? "text-zinc-400" : "text-gray-500"}`}>Dashboard visibility</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className={`font-saira text-3xl font-extrabold leading-none ${isDark ? "text-white" : "text-gray-900"}`}>+€5</span>
-                      <span className={`font-saira text-xs ${isDark ? "text-zinc-400" : "text-gray-500"}`}>/athlete/month</span>
+                  <p className="font-saira text-[10px] text-violet-200">Includes PR tier for you</p>
+                </div>
+
+                {/* Body */}
+                <div className="rounded-b-2xl border border-t-0 overflow-hidden"
+                  style={{ background: isDark ? "#0c0c14" : "#fff", borderColor: isDark ? "rgba(255,255,255,0.07)" : "#e5e7eb" }}>
+
+                  {/* Price row */}
+                  <div className="px-5 pt-5 pb-4 flex items-end gap-4 border-b"
+                    style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "#f3f4f6" }}>
+                    <div>
+                      <div className="flex items-baseline gap-1">
+                        <span className={`font-saira text-5xl font-black leading-none ${isDark ? "text-white" : "text-gray-900"}`}>€29</span>
+                        <span className={`font-saira text-xs ${isDark ? "text-zinc-500" : "text-gray-400"}`}>/mo</span>
+                      </div>
+                      <p className={`font-saira text-[9px] uppercase tracking-widest mt-1 ${isDark ? "text-zinc-600" : "text-gray-400"}`}>Base · coach dashboard</p>
                     </div>
-                    <p className={`font-saira text-[10px] leading-relaxed mt-2 ${isDark ? "text-zinc-400" : "text-gray-600"}`}>
-                      Full profiles, activity feed, test results & AI context — per athlete you coach.
-                    </p>
+                    <span className={`font-saira text-2xl font-light mb-1 ${isDark ? "text-zinc-700" : "text-gray-300"}`}>+</span>
+                    <div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-saira text-5xl font-black leading-none text-violet-400">€5</span>
+                        <span className={`font-saira text-xs ${isDark ? "text-zinc-500" : "text-gray-400"}`}>/athlete/mo</span>
+                      </div>
+                      <p className={`font-saira text-[9px] uppercase tracking-widest mt-1 ${isDark ? "text-zinc-600" : "text-gray-400"}`}>Per athlete on dashboard</p>
+                    </div>
+                  </div>
+
+                  {/* Features */}
+                  <div className="px-5 py-4 grid grid-cols-1 gap-2 border-b"
+                    style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "#f3f4f6" }}>
+                    {[
+                      "Full coach dashboard + activity feed",
+                      "All athlete profiles, tests & data",
+                      "Weekly & monthly check-in tracking",
+                      "Tool recommendations to athletes",
+                      "PR tier for you as an athlete",
+                      "AI coaching context for your roster",
+                    ].map(f => (
+                      <div key={f} className="flex items-start gap-2.5">
+                        <span className="text-violet-400 text-[11px] font-bold flex-shrink-0 mt-px">✦</span>
+                        <p className={`font-saira text-[11px] leading-snug ${isDark ? "text-zinc-300" : "text-gray-700"}`}>{f}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Interactive calculator */}
+                  <div className="px-5 py-4 border-b" style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "#f3f4f6" }}>
+                    <p className={`font-saira text-[9px] uppercase tracking-widest mb-3 ${isDark ? "text-zinc-600" : "text-gray-400"}`}>Team calculator</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <button
+                        onClick={() => setAthleteCount(c => Math.max(1, c - 1))}
+                        className={`w-9 h-9 rounded-full border font-bold text-lg flex items-center justify-center transition ${isDark ? "border-white/10 text-zinc-400 hover:border-violet-500/50 hover:text-violet-300" : "border-gray-200 text-gray-400 hover:border-violet-400 hover:text-violet-600"}`}
+                      >−</button>
+                      <div className="text-center">
+                        <span className={`font-saira text-3xl font-black ${isDark ? "text-white" : "text-gray-900"}`}>{athleteCount}</span>
+                        <span className={`font-saira text-xs ml-1 ${isDark ? "text-zinc-500" : "text-gray-400"}`}>athletes</span>
+                      </div>
+                      <button
+                        onClick={() => setAthleteCount(c => Math.min(50, c + 1))}
+                        className={`w-9 h-9 rounded-full border font-bold text-lg flex items-center justify-center transition ${isDark ? "border-white/10 text-zinc-400 hover:border-violet-500/50 hover:text-violet-300" : "border-gray-200 text-gray-400 hover:border-violet-400 hover:text-violet-600"}`}
+                      >+</button>
+                    </div>
+                    {/* Price result */}
+                    <div className={`rounded-xl px-4 py-3 text-center ${isDark ? "bg-violet-500/10 border border-violet-500/20" : "bg-violet-50 border border-violet-200"}`}>
+                      <span className={`font-saira text-3xl font-black ${isDark ? "text-white" : "text-gray-900"}`}>
+                        €{29 + athleteCount * 5}
+                      </span>
+                      <span className={`font-saira text-xs ml-1 ${isDark ? "text-zinc-400" : "text-gray-500"}`}>/month</span>
+                      <p className={`font-saira text-[10px] mt-0.5 ${isDark ? "text-zinc-600" : "text-gray-400"}`}>
+                        €29 + {athleteCount}×€5
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* CTAs */}
+                  <div className="px-5 py-4 space-y-2">
+                    <a
+                      href="mailto:david@power-flow.eu?subject=PowerFlow%20Coach%20Plan"
+                      className="block w-full rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-3.5 font-saira text-xs font-bold uppercase tracking-wider text-white text-center transition shadow-[0_4px_20px_rgba(124,58,237,0.35)]"
+                    >
+                      Get in touch →
+                    </a>
+                    <Link
+                      href="/upgrade"
+                      className={`block w-full rounded-xl border px-4 py-2.5 font-saira text-xs font-semibold text-center transition ${isDark ? "border-white/8 text-zinc-400 hover:text-zinc-200 hover:border-white/15" : "border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}
+                    >
+                      View full pricing
+                    </Link>
                   </div>
                 </div>
-                <p className={`font-saira text-[10px] mb-4 ${isDark ? "text-zinc-500" : "text-gray-400"}`}>
-                  Example: 10 athletes → €29 + 10×€5 = <span className={`font-semibold ${isDark ? "text-zinc-300" : "text-gray-700"}`}>€79/month</span> for the whole team.
-                </p>
-                <a
-                  href="mailto:david@power-flow.eu?subject=PowerFlow%20Coach%20Plan"
-                  className={`block w-full rounded-xl border px-4 py-3 font-saira text-[11px] font-bold uppercase tracking-wider text-center transition ${isDark ? "border-violet-500/35 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20" : "border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100"}`}
-                >
-                  Get in touch →
-                </a>
               </div>
-            </div>}
+            )}
 
           </div>{/* end left column */}
 
