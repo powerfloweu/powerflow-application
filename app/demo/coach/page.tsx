@@ -154,6 +154,56 @@ const ATHLETES: DemoAthlete[] = [
 const INVITE_CODE = "DEMOSHOW";
 const ALL_TESTS = ["SAT", "ACSI-28", "CSAI-2", "DAS"];
 
+// ─── Presentation sequence ─────────────────────────────────────────────────────
+
+type SheetTab = "overview" | "profile" | "activity" | "tests" | "tools";
+
+const COACH_STEPS = [
+  { phase: "Dashboard",   label: "Home overview",       duration: 4500    }, // 0
+  { phase: "Dashboard",   label: "Needs attention",     duration: 5000    }, // 1
+  { phase: "Dashboard",   label: "Activity feed",       duration: 5500    }, // 2
+  { phase: "Roster",      label: "All athletes",        duration: 5000    }, // 3
+  { phase: "Profile",     label: "Sofia — overview",    duration: 5000    }, // 4
+  { phase: "Profile",     label: "Activity & comments", duration: 6000    }, // 5
+  { phase: "Profile",     label: "Test results",        duration: 6000    }, // 6
+  { phase: "Profile",     label: "Coach tools",         duration: 5500    }, // 7
+  { phase: "Desktop",     label: "Desktop view",        duration: 5000    }, // 8
+  { phase: "Get started", label: "Pricing",             duration: 86400000 }, // 9 terminal
+] as const;
+
+const COACH_PANEL = [
+  { title: "Coach dashboard",     desc: "Five athletes, real-time data. At a glance: who needs attention, how many entries came in today, and where every prep cycle stands." },
+  { title: "Needs attention",     desc: "Athletes flagged by negative sentiment, upcoming meet dates, or open topics surface automatically at the top — no manual scanning required." },
+  { title: "Activity feed",       desc: "Every journal and training log from your full roster in one scrollable feed, sorted by recency. Sentiment colour-coded: violet for positive, rose for negative." },
+  { title: "Athlete roster",      desc: "Meet countdown, current lifts, and a flag indicator for every athlete. Tap any card to open the full profile sheet." },
+  { title: "Sofia · 21 days out", desc: "Overview tab: latest weekly check-in across five metrics, most recent journal entry, and lift progress bars toward her competition goals." },
+  { title: "Activity & comments", desc: "Every journal and training log, most recent first. Coaches can leave a comment on any entry — athletes see it immediately in the app." },
+  { title: "CSAI-2 results",      desc: "Sofia's cognitive anxiety is low (14/36) and self-confidence is high (32/36) — a strong pre-competition mental profile. Results appear the moment the athlete submits." },
+  { title: "Coach tools",         desc: "AI-surfaced discussion topics for this session, private coach notes invisible to the athlete, and personalized visualization keywords per lift." },
+  { title: "Desktop view",        desc: "The full dashboard on a larger screen: sidebar navigation, two-column athlete grid, and full activity feed — same data, optimised for desk work." },
+  { title: "Get started",         desc: "€29/month coach base + €5/athlete/month. Includes full PR-tier athlete access for you. The dashboard below is fully interactive — click any athlete." },
+] as const;
+
+type PStepState = {
+  viewMode: "mobile" | "desktop";
+  mobileTab: "home" | "athletes" | "activity";
+  openAthleteId: string | null;
+  sheetTab: SheetTab;
+};
+
+const PSTEP_STATES: PStepState[] = [
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview" }, // 0
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview" }, // 1
+  { viewMode: "mobile",  mobileTab: "activity", openAthleteId: null,    sheetTab: "overview" }, // 2
+  { viewMode: "mobile",  mobileTab: "athletes", openAthleteId: null,    sheetTab: "overview" }, // 3
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "overview" }, // 4
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "activity" }, // 5
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "tests"    }, // 6
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "tools"    }, // 7
+  { viewMode: "desktop", mobileTab: "home",     openAthleteId: null,    sheetTab: "overview" }, // 8
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview" }, // 9 terminal
+];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function relDate(d: number, h = 20) { const x = new Date(); x.setDate(x.getDate() - d); x.setHours(h, 0, 0, 0); return x; }
@@ -167,6 +217,16 @@ function meetColor(d: boolean, days: number | null): string {
 }
 function sentimentDot(s?: Sentiment) { return s === "positive" ? "bg-violet-400" : s === "negative" ? "bg-rose-400" : "bg-zinc-400"; }
 function hasFlag(a: DemoAthlete) { return a.topics.some(t => /flag|block|anxiety|fixat|perfectionism/i.test(t)); }
+
+function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const [vis, setVis] = React.useState(delay === 0);
+  React.useEffect(() => {
+    if (delay === 0) { setVis(true); return; }
+    const t = setTimeout(() => setVis(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  return <div className={`transition-all duration-500 ${vis ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"} ${className}`}>{children}</div>;
+}
 
 // ─── Phone chrome ─────────────────────────────────────────────────────────────
 
@@ -237,9 +297,13 @@ function ScoreBar({ label, value, max, hi = false }: { label: string; value: num
 
 // ─── Athlete sheet (5 tabs) ───────────────────────────────────────────────────
 
-function AthleteSheet({ a }: { a: DemoAthlete }) {
+function AthleteSheet({ a, forcedTab }: { a: DemoAthlete; forcedTab?: SheetTab }) {
   const d = useD(); const p = pal(d);
-  const [tab, setTab] = React.useState<"overview" | "profile" | "activity" | "tests" | "tools">("overview");
+  const [tab, setTab] = React.useState<SheetTab>(forcedTab ?? "overview");
+
+  React.useEffect(() => {
+    if (forcedTab !== undefined) setTab(forcedTab);
+  }, [forcedTab]);
   const [assignOpen, setAssignOpen] = React.useState(false);
   const [commenting, setCommenting] = React.useState<number | null>(null);
   const [commentDraft, setCommentDraft] = React.useState("");
@@ -785,6 +849,56 @@ function DesktopView({ onSelectAthlete }: { onSelectAthlete: (a: DemoAthlete) =>
   );
 }
 
+// ─── Coach side panel ──────────────────────────────────────────────────────────
+
+function CoachSidePanel({ step, dark, onSkip }: { step: number; dark: boolean; onSkip: () => void }) {
+  const TOTAL = COACH_STEPS.length;
+  const isTerminal = step >= TOTAL - 1;
+  const info  = COACH_PANEL[Math.min(step, COACH_PANEL.length - 1)];
+  const phase = COACH_STEPS[Math.min(step, COACH_STEPS.length - 1)].phase;
+
+  return (
+    <div className="sticky top-10">
+      <FadeIn key={step}>
+        <span className={`inline-block font-saira text-[10px] font-bold uppercase tracking-[0.22em] mb-3 ${dark ? "text-violet-400" : "text-violet-600"}`}>{phase}</span>
+        <h2 className={`font-saira text-2xl font-extrabold uppercase tracking-tight mb-3 leading-tight ${dark ? "text-white" : "text-gray-900"}`}>{info.title}</h2>
+        <p className={`font-saira text-sm leading-relaxed mb-8 ${dark ? "text-zinc-400" : "text-gray-500"}`}>{info.desc}</p>
+      </FadeIn>
+
+      {/* Progress bar */}
+      {!isTerminal && (
+        <div className="mb-8">
+          <div className="flex justify-between mb-1.5">
+            <span className={`font-saira text-[10px] uppercase tracking-wider ${dark ? "text-zinc-600" : "text-gray-400"}`}>Demo progress</span>
+            <span className={`font-saira text-[10px] tabular-nums ${dark ? "text-zinc-500" : "text-gray-400"}`}>{step + 1} / {TOTAL}</span>
+          </div>
+          <div className={`h-1 rounded-full overflow-hidden ${dark ? "bg-white/[0.08]" : "bg-gray-200"}`}>
+            <div className="h-full bg-violet-500 rounded-full transition-all duration-700"
+              style={{ width: `${Math.round(((step + 1) / TOTAL) * 100)}%` }} />
+          </div>
+        </div>
+      )}
+
+      {/* CTAs */}
+      <a href="mailto:david@power-flow.eu?subject=PowerFlow%20Coach%20Plan"
+        className="block rounded-2xl bg-violet-600 hover:bg-violet-500 px-5 py-3 font-saira text-xs font-bold uppercase tracking-wider text-white transition text-center mb-3">
+        Get in touch →
+      </a>
+      <Link href="/upgrade"
+        className={`block rounded-2xl border px-5 py-3 font-saira text-xs font-bold uppercase tracking-wider transition text-center mb-4 ${dark ? "border-white/10 text-zinc-400 hover:text-zinc-200 hover:border-white/20" : "border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
+        View pricing →
+      </Link>
+
+      {!isTerminal && (
+        <button type="button" onClick={onSkip}
+          className={`w-full text-center font-saira text-[10px] transition ${dark ? "text-zinc-600 hover:text-zinc-400" : "text-gray-400 hover:text-gray-600"}`}>
+          Skip to interactive mode →
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function DemoCoach() {
@@ -792,134 +906,229 @@ export default function DemoCoach() {
   const [mobileTab, setMobileTab] = React.useState<"home" | "athletes" | "activity">("home");
   const [open, setOpen] = React.useState<DemoAthlete | null>(null);
   const [isDark, setIsDark] = React.useState(true);
+  const [presentationStep, setPresentationStep] = React.useState(0);
+  const [forcedSheetTab, setForcedSheetTab] = React.useState<SheetTab>("overview");
+
+  const TOTAL_STEPS = COACH_STEPS.length;
+  const isTerminal = presentationStep >= TOTAL_STEPS - 1;
+
+  // Apply step state (view, tab, open athlete, sheet tab)
+  React.useEffect(() => {
+    const s = PSTEP_STATES[Math.min(presentationStep, PSTEP_STATES.length - 1)];
+    setViewMode(s.viewMode);
+    setMobileTab(s.mobileTab);
+    setForcedSheetTab(s.sheetTab);
+    const athlete = s.openAthleteId ? (ATHLETES.find(a => a.id === s.openAthleteId) ?? null) : null;
+    setOpen(athlete);
+  }, [presentationStep]);
+
+  // Auto-advance
+  React.useEffect(() => {
+    if (isTerminal) return;
+    const duration = COACH_STEPS[Math.min(presentationStep, COACH_STEPS.length - 1)].duration;
+    const t = setTimeout(() => setPresentationStep(s => s + 1), duration);
+    return () => clearTimeout(t);
+  }, [presentationStep, isTerminal]);
+
+  const skipPresentation = () => {
+    setPresentationStep(TOTAL_STEPS - 1);
+    setOpen(null);
+    setViewMode("mobile");
+    setMobileTab("home");
+  };
 
   const isDesktop = viewMode === "desktop";
   const p = pal(isDark);
 
   return (
     <DarkCtx.Provider value={isDark}>
-      <div className={`min-h-screen font-saira ${isDesktop ? "flex flex-col items-center py-8 px-4" : "sm:flex sm:items-start sm:justify-center sm:py-10"}`} style={{ background: p.screen }}>
+      <div className="min-h-screen font-saira" style={{ background: p.screen }}>
 
-        {/* Top bar — above frame */}
-        <div className={`flex items-center gap-3 mb-4 ${isDesktop ? "w-full max-w-[960px]" : "sm:mb-3 px-4 pt-4 sm:px-0 sm:pt-0"}`}>
-          <div className="flex items-center gap-2">
-            <Image
-              src="/fm_powerflow_logo_verziok_01_negative.png"
-              alt="PowerFlow" width={20} height={20}
-              className="h-5 w-5"
-              style={isDark ? { opacity: 0.8 } : { opacity: 0.6, filter: "invert(1)" }}
-            />
-            <Link href="/demo" className={`font-saira text-[10px] ${isDark ? "text-zinc-500 hover:text-zinc-300" : "text-gray-400 hover:text-gray-700"} transition`}>← Demo</Link>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={() => setIsDark(d => !d)}
-              title={isDark ? "Light mode" : "Dark mode"}
-              className={`text-sm leading-none px-1.5 py-1 rounded-lg transition ${isDark ? "text-zinc-400 hover:text-zinc-100" : "text-gray-400 hover:text-gray-700"}`}
-            >
-              {isDark ? "☀️" : "🌙"}
-            </button>
-            <div className={`flex items-center gap-1 rounded-xl border ${isDark ? "border-white/8 bg-white/[0.03]" : "border-gray-200 bg-white"} p-1`}>
-              {(["mobile","desktop"] as const).map(m => (
-                <button key={m} type="button" onClick={() => setViewMode(m)}
-                  className={`rounded-lg px-3 py-1.5 font-saira text-[10px] font-bold uppercase tracking-wider transition ${viewMode === m ? (isDark ? "bg-white/10 text-white" : "bg-white text-gray-900 shadow-sm") : (isDark ? "text-zinc-500 hover:text-zinc-300" : "text-gray-400 hover:text-gray-600")}`}>
-                  {m === "mobile" ? "📱 Mobile" : "🖥 Desktop"}
+        {/* ── two-column wrapper: phone/desktop on the left, side panel on the right ── */}
+        <div className={`${isDesktop
+          ? "flex flex-col items-center"
+          : "sm:flex sm:gap-12 sm:items-start sm:justify-center"
+        }`}>
+
+          {/* ── Left column ── */}
+          <div className={isDesktop ? "w-full max-w-[960px]" : "w-full sm:w-[390px]"}>
+
+            {/* Top bar */}
+            <div className={`flex items-center gap-3 mb-4 ${isDesktop ? "" : "px-4 pt-4 sm:px-0 sm:pt-0"}`}>
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/fm_powerflow_logo_verziok_01_negative.png"
+                  alt="PowerFlow" width={20} height={20}
+                  className="h-5 w-5"
+                  style={isDark ? { opacity: 0.8 } : { opacity: 0.6, filter: "invert(1)" }}
+                />
+                <Link href="/demo" className={`font-saira text-[10px] ${isDark ? "text-zinc-500 hover:text-zinc-300" : "text-gray-400 hover:text-gray-700"} transition`}>← Demo</Link>
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  onClick={() => setIsDark(d => !d)}
+                  title={isDark ? "Light mode" : "Dark mode"}
+                  className={`text-sm leading-none px-1.5 py-1 rounded-lg transition ${isDark ? "text-zinc-400 hover:text-zinc-100" : "text-gray-400 hover:text-gray-700"}`}
+                >
+                  {isDark ? "☀️" : "🌙"}
                 </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* MOBILE frame */}
-        {!isDesktop && (
-          <div
-            className="w-full sm:w-[390px] sm:rounded-[44px] sm:border-[7px] sm:border-zinc-800 sm:shadow-[0_32px_120px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden relative flex flex-col"
-            style={{ minHeight: "820px", background: p.phone }}
-          >
-            <StatusBar dark={isDark} />
-            {/* Header */}
-            <div className="px-4 pt-5 pb-3 flex items-center justify-between flex-shrink-0">
-              <div>
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <Image
-                    src="/fm_powerflow_logo_verziok_01_negative.png"
-                    alt="PowerFlow" width={14} height={14}
-                    className="h-3.5 w-3.5"
-                    style={isDark ? { opacity: 0.7 } : { opacity: 0.6, filter: "invert(1)" }}
-                  />
-                  <p className={`font-saira text-[10px] font-bold uppercase tracking-[0.28em] ${p.vt}`}>PowerFlow · Coach</p>
-                </div>
-                <h1 className={`font-saira text-2xl font-extrabold uppercase tracking-tight ${p.t1} mt-0.5`}>Dashboard</h1>
-              </div>
-              <div className="text-right">
-                <p className={`font-saira text-xs ${p.t3}`}>{ATHLETES.length} athletes</p>
+                {/* View toggle — visible always, but greyed during presentation */}
+                {isTerminal && (
+                  <div className={`flex items-center gap-1 rounded-xl border ${isDark ? "border-white/8 bg-white/[0.03]" : "border-gray-200 bg-white"} p-1`}>
+                    {(["mobile","desktop"] as const).map(m => (
+                      <button key={m} type="button" onClick={() => setViewMode(m)}
+                        className={`rounded-lg px-3 py-1.5 font-saira text-[10px] font-bold uppercase tracking-wider transition ${viewMode === m ? (isDark ? "bg-white/10 text-white" : "bg-white text-gray-900 shadow-sm") : (isDark ? "text-zinc-500 hover:text-zinc-300" : "text-gray-400 hover:text-gray-600")}`}>
+                        {m === "mobile" ? "📱 Mobile" : "🖥 Desktop"}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-            <MobileView onSelectAthlete={a => setOpen(a)} tab={mobileTab} setTab={setMobileTab} />
-            <HomeIndicator dark={isDark} />
-          </div>
-        )}
 
-        {/* DESKTOP frame */}
-        {isDesktop && (
-          <div
-            className="w-full max-w-[960px] rounded-2xl border border-zinc-800 overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
-            style={{ minHeight: "680px", background: p.phone }}
-          >
-            <div className={`border-b ${isDark ? "bg-violet-600/15 border-violet-500/15" : "bg-violet-50 border-violet-200"} px-5 py-2 flex items-center gap-3`}>
-              <p className={`font-saira text-[10px] font-semibold uppercase tracking-widest ${isDark ? "text-violet-300" : "text-violet-700"}`}>Demo · Coach Dashboard · Desktop View</p>
-            </div>
-            <div className="flex" style={{ minHeight: "640px" }}>
-              <DesktopView onSelectAthlete={a => setOpen(a)} />
-            </div>
-          </div>
-        )}
-
-        {/* Coach pricing */}
-        <div className={`mt-4 ${isDesktop ? "w-full max-w-[960px]" : "w-full sm:w-[390px] px-4 sm:px-0"}`}>
-          <div className={`rounded-2xl border p-5 ${isDark ? "border-white/[0.07] bg-white/[0.02]" : "border-gray-200 bg-white"}`}>
-            <p className={`font-saira text-[9px] font-bold uppercase tracking-[0.22em] mb-4 ${isDark ? "text-violet-400" : "text-violet-600"}`}>
-              Coach pricing
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              {/* Base plan */}
-              <div className={`flex-1 rounded-xl border p-4 ${isDark ? "border-violet-500/25 bg-violet-500/[0.07]" : "border-violet-200 bg-violet-50"}`}>
-                <p className={`font-saira text-[9px] uppercase tracking-widest mb-1 ${isDark ? "text-violet-400" : "text-violet-600"}`}>Base plan</p>
-                <div className="flex items-baseline gap-1">
-                  <span className={`font-saira text-3xl font-extrabold leading-none ${isDark ? "text-white" : "text-gray-900"}`}>€29</span>
-                  <span className={`font-saira text-xs ${isDark ? "text-zinc-400" : "text-gray-500"}`}>/month</span>
+            {/* Mobile step banner (only on small screens where side panel is hidden) */}
+            {!isTerminal && !isDesktop && (
+              <div className={`sm:hidden mx-4 mb-3 rounded-2xl border ${isDark ? "border-white/8 bg-white/[0.03]" : "border-gray-200 bg-white"} px-4 py-3 flex items-center gap-3`}>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-saira text-[9px] uppercase tracking-widest mb-0.5 ${isDark ? "text-violet-400" : "text-violet-600"}`}>
+                    {COACH_STEPS[presentationStep].phase}
+                  </p>
+                  <p className={`font-saira text-xs font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}>
+                    {COACH_PANEL[presentationStep].title}
+                  </p>
                 </div>
-                <p className={`font-saira text-[10px] leading-relaxed mt-2 ${isDark ? "text-zinc-300" : "text-gray-700"}`}>
-                  Full coach dashboard. Includes all <span className={`font-semibold ${isDark ? "text-amber-300" : "text-amber-700"}`}>PR tier</span> features for you as an athlete.
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className={`h-1 w-16 rounded-full overflow-hidden ${isDark ? "bg-white/10" : "bg-gray-200"}`}>
+                    <div className="h-full bg-violet-500 rounded-full transition-all duration-700"
+                      style={{ width: `${Math.round(((presentationStep + 1) / TOTAL_STEPS) * 100)}%` }} />
+                  </div>
+                  <button type="button" onClick={skipPresentation}
+                    className={`font-saira text-[10px] ${isDark ? "text-zinc-500 hover:text-zinc-300" : "text-gray-400 hover:text-gray-600"} transition`}>
+                    Skip →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Desktop step banner (shown above the wide frame during presentation step 8) */}
+            {!isTerminal && isDesktop && (
+              <div className={`mb-4 rounded-2xl border ${isDark ? "border-violet-500/25 bg-violet-500/[0.06]" : "border-violet-200 bg-violet-50"} px-5 py-3 flex items-center gap-4`}>
+                <div className="flex-1">
+                  <p className={`font-saira text-[9px] uppercase tracking-widest mb-0.5 ${isDark ? "text-violet-400" : "text-violet-600"}`}>{COACH_STEPS[presentationStep].phase}</p>
+                  <p className={`font-saira text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{COACH_PANEL[presentationStep].title}</p>
+                  <p className={`font-saira text-xs mt-0.5 ${isDark ? "text-zinc-400" : "text-gray-500"}`}>{COACH_PANEL[presentationStep].desc}</p>
+                </div>
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  <div className={`h-1 w-24 rounded-full overflow-hidden ${isDark ? "bg-white/10" : "bg-gray-200"}`}>
+                    <div className="h-full bg-violet-500 rounded-full transition-all duration-700"
+                      style={{ width: `${Math.round(((presentationStep + 1) / TOTAL_STEPS) * 100)}%` }} />
+                  </div>
+                  <button type="button" onClick={skipPresentation}
+                    className={`font-saira text-[10px] ${isDark ? "text-zinc-500 hover:text-zinc-300" : "text-gray-400 hover:text-gray-600"} transition`}>
+                    Skip →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* MOBILE frame */}
+            {!isDesktop && (
+              <div
+                className="w-full sm:w-[390px] sm:rounded-[44px] sm:border-[7px] sm:border-zinc-800 sm:shadow-[0_32px_120px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] overflow-hidden relative flex flex-col"
+                style={{ minHeight: "820px", background: p.phone }}
+              >
+                <StatusBar dark={isDark} />
+                <div className="px-4 pt-5 pb-3 flex items-center justify-between flex-shrink-0">
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <Image
+                        src="/fm_powerflow_logo_verziok_01_negative.png"
+                        alt="PowerFlow" width={14} height={14}
+                        className="h-3.5 w-3.5"
+                        style={isDark ? { opacity: 0.7 } : { opacity: 0.6, filter: "invert(1)" }}
+                      />
+                      <p className={`font-saira text-[10px] font-bold uppercase tracking-[0.28em] ${p.vt}`}>PowerFlow · Coach</p>
+                    </div>
+                    <h1 className={`font-saira text-2xl font-extrabold uppercase tracking-tight ${p.t1} mt-0.5`}>Dashboard</h1>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-saira text-xs ${p.t3}`}>{ATHLETES.length} athletes</p>
+                  </div>
+                </div>
+                <MobileView onSelectAthlete={a => setOpen(a)} tab={mobileTab} setTab={setMobileTab} />
+                <HomeIndicator dark={isDark} />
+              </div>
+            )}
+
+            {/* DESKTOP frame */}
+            {isDesktop && (
+              <div
+                className="w-full max-w-[960px] rounded-2xl border border-zinc-800 overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
+                style={{ minHeight: "680px", background: p.phone }}
+              >
+                <div className={`border-b ${isDark ? "bg-violet-600/15 border-violet-500/15" : "bg-violet-50 border-violet-200"} px-5 py-2 flex items-center gap-3`}>
+                  <p className={`font-saira text-[10px] font-semibold uppercase tracking-widest ${isDark ? "text-violet-300" : "text-violet-700"}`}>Demo · Coach Dashboard · Desktop View</p>
+                </div>
+                <div className="flex" style={{ minHeight: "640px" }}>
+                  <DesktopView onSelectAthlete={a => setOpen(a)} />
+                </div>
+              </div>
+            )}
+
+            {/* Coach pricing */}
+            <div className={`mt-4 ${isDesktop ? "w-full max-w-[960px]" : "w-full sm:w-[390px] px-4 sm:px-0"}`}>
+              <div className={`rounded-2xl border p-5 ${isDark ? "border-white/[0.07] bg-white/[0.02]" : "border-gray-200 bg-white"}`}>
+                <p className={`font-saira text-[9px] font-bold uppercase tracking-[0.22em] mb-4 ${isDark ? "text-violet-400" : "text-violet-600"}`}>
+                  Coach pricing
                 </p>
-              </div>
-              {/* Per-athlete */}
-              <div className={`flex-1 rounded-xl border p-4 ${isDark ? "border-white/8 bg-white/[0.02]" : "border-gray-100 bg-white"}`}>
-                <p className={`font-saira text-[9px] uppercase tracking-widest mb-1 ${isDark ? "text-zinc-400" : "text-gray-500"}`}>Dashboard visibility</p>
-                <div className="flex items-baseline gap-1">
-                  <span className={`font-saira text-3xl font-extrabold leading-none ${isDark ? "text-white" : "text-gray-900"}`}>+€5</span>
-                  <span className={`font-saira text-xs ${isDark ? "text-zinc-400" : "text-gray-500"}`}>/athlete/month</span>
+                <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                  <div className={`flex-1 rounded-xl border p-4 ${isDark ? "border-violet-500/25 bg-violet-500/[0.07]" : "border-violet-200 bg-violet-50"}`}>
+                    <p className={`font-saira text-[9px] uppercase tracking-widest mb-1 ${isDark ? "text-violet-400" : "text-violet-600"}`}>Base plan</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className={`font-saira text-3xl font-extrabold leading-none ${isDark ? "text-white" : "text-gray-900"}`}>€29</span>
+                      <span className={`font-saira text-xs ${isDark ? "text-zinc-400" : "text-gray-500"}`}>/month</span>
+                    </div>
+                    <p className={`font-saira text-[10px] leading-relaxed mt-2 ${isDark ? "text-zinc-300" : "text-gray-700"}`}>
+                      Full coach dashboard. Includes all <span className={`font-semibold ${isDark ? "text-amber-300" : "text-amber-700"}`}>PR tier</span> features for you as an athlete.
+                    </p>
+                  </div>
+                  <div className={`flex-1 rounded-xl border p-4 ${isDark ? "border-white/8 bg-white/[0.02]" : "border-gray-100 bg-white"}`}>
+                    <p className={`font-saira text-[9px] uppercase tracking-widest mb-1 ${isDark ? "text-zinc-400" : "text-gray-500"}`}>Dashboard visibility</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className={`font-saira text-3xl font-extrabold leading-none ${isDark ? "text-white" : "text-gray-900"}`}>+€5</span>
+                      <span className={`font-saira text-xs ${isDark ? "text-zinc-400" : "text-gray-500"}`}>/athlete/month</span>
+                    </div>
+                    <p className={`font-saira text-[10px] leading-relaxed mt-2 ${isDark ? "text-zinc-400" : "text-gray-600"}`}>
+                      Full profiles, activity feed, test results & AI context — per athlete you coach.
+                    </p>
+                  </div>
                 </div>
-                <p className={`font-saira text-[10px] leading-relaxed mt-2 ${isDark ? "text-zinc-400" : "text-gray-600"}`}>
-                  Full profiles, activity feed, test results & AI context — per athlete you coach.
+                <p className={`font-saira text-[10px] mb-4 ${isDark ? "text-zinc-500" : "text-gray-400"}`}>
+                  Example: 10 athletes → €29 + 10×€5 = <span className={`font-semibold ${isDark ? "text-zinc-300" : "text-gray-700"}`}>€79/month</span> for the whole team.
                 </p>
+                <a
+                  href="mailto:david@power-flow.eu?subject=PowerFlow%20Coach%20Plan"
+                  className={`block w-full rounded-xl border px-4 py-3 font-saira text-[11px] font-bold uppercase tracking-wider text-center transition ${isDark ? "border-violet-500/35 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20" : "border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100"}`}
+                >
+                  Get in touch →
+                </a>
               </div>
             </div>
-            <p className={`font-saira text-[10px] mb-4 ${isDark ? "text-zinc-500" : "text-gray-400"}`}>
-              Example: 10 athletes → €29 + 10×€5 = <span className={`font-semibold ${isDark ? "text-zinc-300" : "text-gray-700"}`}>€79/month</span> for the whole team.
-            </p>
-            <a
-              href="mailto:david@power-flow.eu?subject=PowerFlow%20Coach%20Plan"
-              className={`block w-full rounded-xl border px-4 py-3 font-saira text-[11px] font-bold uppercase tracking-wider text-center transition ${isDark ? "border-violet-500/35 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20" : "border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100"}`}
-            >
-              Get in touch →
-            </a>
-          </div>
-        </div>
+
+          </div>{/* end left column */}
+
+          {/* ── Right column: side panel (desktop screens, mobile phone view only) ── */}
+          {!isDesktop && (
+            <div className="hidden sm:block w-[280px] flex-shrink-0 pt-[52px]">
+              <CoachSidePanel step={presentationStep} dark={isDark} onSkip={skipPresentation} />
+            </div>
+          )}
+
+        </div>{/* end two-column wrapper */}
 
         {/* Athlete sheet */}
         <BottomSheet open={open !== null} onClose={() => setOpen(null)} title={open?.name ?? ""}>
-          {open && <AthleteSheet a={open} />}
+          {open && <AthleteSheet a={open} forcedTab={!isTerminal ? forcedSheetTab : undefined} />}
         </BottomSheet>
       </div>
     </DarkCtx.Provider>
