@@ -94,7 +94,7 @@ export default function DemoLanding() {
           Mental<br />Performance<br />Infrastructure
         </h1>
         <p className={`text-center text-sm leading-relaxed max-w-xs mb-10 ${tc(d,"text-zinc-400","text-gray-500")}`}>
-          Built for strength athletes. Used daily. Visible to coaches.
+          Built for powerlifters. Used daily. Visible to coaches.
         </p>
 
         {/* ── Social proof ────────────────────────────────────────── */}

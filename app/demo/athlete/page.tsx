@@ -392,7 +392,7 @@ function S0() {
         <FadeIn delay={350}>
           <p className={`font-saira text-[10px] font-bold uppercase tracking-[0.3em] ${p.vt} mb-2`}>PowerFlow</p>
           <h2 className={`font-saira text-2xl font-extrabold uppercase tracking-tight ${p.t1} leading-tight mb-4`}>Mental Performance<br />Infrastructure</h2>
-          <p className={`font-saira text-sm ${p.t3} leading-relaxed`}>Built for strength athletes.<br />Used daily. Visible to coaches.</p>
+          <p className={`font-saira text-sm ${p.t3} leading-relaxed`}>Built for powerlifters.<br />Used daily. Visible to coaches.</p>
         </FadeIn>
         <FadeIn delay={1200} className="mt-10">
           <div className={`rounded-xl border ${p.c2} px-5 py-3`}>
