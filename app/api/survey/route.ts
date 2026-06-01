@@ -15,7 +15,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type ProfileRow = { id: string; role: string; created_at: string };
-type ResponseRow = { round: number };
+type ResponseRow = { round: number; submitted_at: string };
 
 export async function GET() {
   if (!isConfigured) return NextResponse.json({ due: false });
@@ -31,21 +31,30 @@ export async function GET() {
   });
   if (!profile) return NextResponse.json({ due: false });
 
-  // How many rounds has this user already completed?
+  // Which rounds has this user already completed, and when?
   const completed = await dbSelect<ResponseRow>("survey_responses", {
-    select:  "round",
+    select:  "round,submitted_at",
     user_id: `eq.${user.id}`,
     limit:   "3",
   });
-  const completedRounds = new Set(completed.map((r) => r.round));
-  const nextRound = ([1, 2, 3] as const).find((r) => !completedRounds.has(r));
+  const byRound = new Map(completed.map((r) => [r.round, r.submitted_at]));
+
+  // Round 1: always due on next login if not yet done.
+  // Round 2: due 30 days after round 1 was submitted.
+  // Round 3: due 30 days after round 2 was submitted.
+  let nextRound: 1 | 2 | 3 | null = null;
+
+  if (!byRound.has(1)) {
+    nextRound = 1;
+  } else if (!byRound.has(2)) {
+    const r1 = new Date(byRound.get(1)!).getTime();
+    if (Date.now() >= r1 + 30 * 24 * 60 * 60 * 1000) nextRound = 2;
+  } else if (!byRound.has(3)) {
+    const r2 = new Date(byRound.get(2)!).getTime();
+    if (Date.now() >= r2 + 30 * 24 * 60 * 60 * 1000) nextRound = 3;
+  }
+
   if (!nextRound) return NextResponse.json({ due: false });
-
-  const daysOld =
-    (Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24);
-  const dueAfter = nextRound * 30; // 30, 60, 90 days
-
-  if (daysOld < dueAfter) return NextResponse.json({ due: false });
 
   return NextResponse.json({ due: true, round: nextRound, role: profile.role });
 }
