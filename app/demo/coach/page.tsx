@@ -159,7 +159,7 @@ const ALL_TESTS = ["SAT", "ACSI-28", "CSAI-2", "DAS"];
 // ─── Presentation sequence ─────────────────────────────────────────────────────
 
 type SheetTab = "overview" | "profile" | "activity" | "tests" | "tools";
-type PresentHint = "monthly-checkin" | "comment-open";
+type PresentHint = "monthly-checkin" | "comment-open" | "tool-suggest";
 
 const COACH_STEPS = [
   { phase: "Dashboard",   label: "Home overview",         duration: 4500    }, // 0
@@ -170,9 +170,10 @@ const COACH_STEPS = [
   { phase: "Check-ins",   label: "Monthly check-in",      duration: 5500    }, // 5
   { phase: "Activity",    label: "Coach comments",        duration: 5500    }, // 6
   { phase: "Activity",    label: "Adding a comment",      duration: 6000    }, // 7
-  { phase: "Tests",       label: "Test results",          duration: 5500    }, // 8
-  { phase: "Desktop",     label: "Desktop view",          duration: 5000    }, // 9
-  { phase: "Get started", label: "Pricing",               duration: 86400000 }, // 10 terminal
+  { phase: "Coach tools", label: "Suggest a tool",        duration: 5500    }, // 8
+  { phase: "Tests",       label: "Test results",          duration: 5500    }, // 9
+  { phase: "Desktop",     label: "Desktop view",          duration: 5000    }, // 10
+  { phase: "Get started", label: "Pricing",               duration: 86400000 }, // 11 terminal
 ] as const;
 
 const COACH_PANEL = [
@@ -184,6 +185,7 @@ const COACH_PANEL = [
   { title: "Monthly check-in",    desc: "A deeper monthly review: mental readiness, confidence, competition stress, and recovery quality. Coaches see trends across the full training block." },
   { title: "Coach comments",      desc: "Every journal and training log, most recent first. Coaches can leave a comment on any entry — athletes see it immediately in the app." },
   { title: "Adding a comment",    desc: "Coaches type directly on any journal or training entry. The comment appears in the athlete's feed instantly — no separate messaging needed." },
+  { title: "Suggest a tool",      desc: "Coaches can recommend a specific library tool to an athlete — the athlete sees it as a card on their Today page and can open it directly from there." },
   { title: "Test results",        desc: "Sofia's CSAI-2: cognitive anxiety low (14/36), self-confidence high (32/36) — a strong pre-competition mental profile. Results appear the moment the test is submitted." },
   { title: "Desktop view",        desc: "The full dashboard on a larger screen: sidebar navigation, two-column athlete grid, and full activity feed — same data, optimised for desk work." },
   { title: "Get started",         desc: "€29/month coach base + €5/athlete/month. Includes full PR-tier athlete access for you. The dashboard below is fully interactive — click any athlete." },
@@ -206,9 +208,10 @@ const PSTEP_STATES: PStepState[] = [
   { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "overview", hint: "monthly-checkin" }, // 5
   { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "activity"                          }, // 6
   { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "activity", hint: "comment-open"    }, // 7
-  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "tests"                             }, // 8
-  { viewMode: "desktop", mobileTab: "home",     openAthleteId: null,    sheetTab: "overview"                          }, // 9
-  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview"                          }, // 10 terminal
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "tools",    hint: "tool-suggest"    }, // 8
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: "sofia", sheetTab: "tests"                             }, // 9
+  { viewMode: "desktop", mobileTab: "home",     openAthleteId: null,    sheetTab: "overview"                          }, // 10
+  { viewMode: "mobile",  mobileTab: "home",     openAthleteId: null,    sheetTab: "overview"                          }, // 11 terminal
 ];
 
 // Step callouts: pulsing dot + label overlaid on the phone frame.
@@ -220,7 +223,7 @@ const STEP_CALLOUTS: Array<StepCallout | null> = [
   { x: 50, y: 40, label: "Auto-flagged athletes"   }, // 1 — needs attention
   { x: 50, y: 50, label: "Live feed · all athletes" }, // 2 — activity list
   { x: 50, y: 47, label: "Meet countdowns + flags"  }, // 3 — roster cards
-  null, null, null, null, null, null, null,             // 4-10
+  null, null, null, null, null, null, null, null,       // 4-11
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -621,6 +624,32 @@ function AthleteSheet({ a, forcedTab, forcedHint }: { a: DemoAthlete; forcedTab?
       {/* COACH TOOLS */}
       {tab === "tools" && (
         <div className="space-y-3">
+
+          {/* Tool recommendation */}
+          <div className={`rounded-xl border ${hint === "tool-suggest" ? p.vbg2 : p.c2} p-4 transition-all duration-500`}>
+            <div className="flex items-center gap-2 mb-3">
+              {hint === "tool-suggest" && (
+                <div className="relative w-2.5 h-2.5 flex-shrink-0">
+                  <div className="absolute inset-0 rounded-full bg-violet-400/50 animate-ping" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+                </div>
+              )}
+              <p className={`font-saira text-[10px] uppercase tracking-widest ${hint === "tool-suggest" ? p.vt : p.t4}`}>Suggest a tool</p>
+            </div>
+            <div className={`rounded-xl border ${hint === "tool-suggest" ? p.vbg : p.c1} p-3`}>
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-7 h-7 rounded-lg ${p.vic} flex items-center justify-center text-sm flex-shrink-0`}>▶</div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-saira text-xs font-semibold ${p.t1}`}>Barrier Breaker</p>
+                  <p className={`font-saira text-[9px] ${p.t4}`}>8 min · PR tier</p>
+                </div>
+              </div>
+              <p className={`font-saira text-[11px] ${p.t3} leading-relaxed mb-3`}>Helps athletes identify and work through psychological barriers — distractions, mental blocks, or self-doubt before competition.</p>
+              <button type="button" className={`w-full rounded-lg border ${hint === "tool-suggest" ? p.vbg2 : p.c1} py-2 font-saira text-[10px] font-bold ${p.vtl} text-center transition hover:opacity-80`}>
+                Send recommendation to {a.name.split(" ")[0]} →
+              </button>
+            </div>
+          </div>
 
           <div className={`rounded-xl border ${p.abg} p-4`}>
             <p className={`font-saira text-[10px] uppercase tracking-widest ${p.at} mb-2`}>Topics to discuss</p>

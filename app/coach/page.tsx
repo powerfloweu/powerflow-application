@@ -684,6 +684,86 @@ function CheckinsTab({
   );
 }
 
+const SUGGEST_TOOLS = [
+  { id: "pmr",               label: "Progressive Muscle Relaxation" },
+  { id: "autogenic-training",label: "Autogenic Training" },
+  { id: "viz-squat",         label: "Visualization — Squat" },
+  { id: "viz-bench",         label: "Visualization — Bench" },
+  { id: "viz-deadlift",      label: "Visualization — Deadlift" },
+  { id: "resource-activation",label: "Resource Activation" },
+  { id: "affirmations",      label: "Affirmations" },
+  { id: "barrier",           label: "Barrier Breaker" },
+  { id: "comp-day-viz",      label: "Competition Day Visualization" },
+];
+
+function SuggestToolSection({ athleteId }: { athleteId: string }) {
+  const [toolId, setToolId]       = React.useState(SUGGEST_TOOLS[0].id);
+  const [message, setMessage]     = React.useState("");
+  const [sending, setSending]     = React.useState(false);
+  const [sent, setSent]           = React.useState(false);
+  const [error, setError]         = React.useState<string | null>(null);
+
+  const send = async () => {
+    setSending(true); setError(null);
+    try {
+      const res = await fetch("/api/coach/suggest-tool", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ athlete_id: athleteId, tool_id: toolId, message: message.trim() || undefined }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setSent(true);
+      setMessage("");
+      setTimeout(() => setSent(false), 3000);
+    } catch {
+      setError("Could not send. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.04] p-4">
+      <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-400 mb-3">
+        Suggest a tool
+      </p>
+      <p className="font-saira text-xs text-zinc-400 mb-3 leading-relaxed">
+        Recommend a specific library tool to this athlete. They&apos;ll see it as a card on their Today page.
+      </p>
+      <select
+        value={toolId}
+        onChange={e => setToolId(e.target.value)}
+        className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 font-saira text-sm text-zinc-100 mb-3 focus:outline-none focus:border-purple-500/40"
+      >
+        {SUGGEST_TOOLS.map(t => (
+          <option key={t.id} value={t.id} className="bg-zinc-900">{t.label}</option>
+        ))}
+      </select>
+      <textarea
+        value={message}
+        onChange={e => setMessage(e.target.value)}
+        placeholder="Optional note to the athlete… (e.g. 'Try this before your next heavy squat session')"
+        rows={2}
+        maxLength={200}
+        className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 font-saira text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-purple-500/40 mb-3"
+      />
+      {error && <p className="font-saira text-xs text-rose-400 mb-2">{error}</p>}
+      <button
+        type="button"
+        onClick={send}
+        disabled={sending || sent}
+        className={`w-full rounded-xl px-4 py-2.5 font-saira text-xs font-bold uppercase tracking-wider transition ${
+          sent
+            ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-300"
+            : "bg-purple-600/80 hover:bg-purple-500/80 text-white disabled:opacity-50"
+        }`}
+      >
+        {sent ? "✓ Sent to athlete" : sending ? "Sending…" : "Send recommendation →"}
+      </button>
+    </div>
+  );
+}
+
 function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["profile"] }) {
   const { t } = useT();
   const goals = profile.mental_goals.filter(Boolean);
@@ -712,6 +792,9 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
 
   return (
     <div className="space-y-6">
+
+      {/* Suggest a tool */}
+      <SuggestToolSection athleteId={profile.athleteId} />
 
       {/* Mental tools */}
       <div>

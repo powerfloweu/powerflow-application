@@ -23,6 +23,21 @@ const TEST_META = {
   das:  { label: "Dysfunctional Attitude Scale",  href: "/tests/das"            },
 } as const;
 
+// ── Tool display names (mirrors library tool IDs) ────────────────────────────
+
+const TOOL_DISPLAY_NAMES: Record<string, string> = {
+  "pmr":                "Progressive Muscle Relaxation",
+  "autogenic-training": "Autogenic Training",
+  "viz-squat":          "Visualization — Squat",
+  "viz-bench":          "Visualization — Bench",
+  "viz-deadlift":       "Visualization — Deadlift",
+  "resource-activation":"Resource Activation",
+  "affirmations":       "Affirmations",
+  "barrier":            "Barrier Breaker",
+  "hibajavitas":        "Barrier Breaker (HU)",
+  "comp-day-viz":       "Competition Day Visualization",
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function greetingKey(): "today.greetingMorning" | "today.greetingAfternoon" | "today.greetingEvening" {
@@ -81,6 +96,26 @@ export default function TodayPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ test_slug: slug }),
+    }).catch(() => {});
+  };
+
+  // ── Tool suggestions from coach ─────────────────────────────────────────────
+  const [toolSuggestions, setToolSuggestions] = React.useState<Array<{
+    id: string; tool_id: string; message: string | null; created_at: string;
+  }>>([]);
+  React.useEffect(() => {
+    fetch("/api/me/tool-suggestions")
+      .then((r) => r.ok ? r.json() : [])
+      .then((rows) => { if (Array.isArray(rows)) setToolSuggestions(rows); })
+      .catch(() => {});
+  }, []);
+
+  const dismissSuggestion = (id: string) => {
+    setToolSuggestions((prev) => prev.filter((s) => s.id !== id));
+    fetch("/api/me/tool-suggestions", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
     }).catch(() => {});
   };
 
@@ -283,6 +318,46 @@ export default function TodayPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ── Tool suggestions from coach ─────────────────────────────── */}
+      {toolSuggestions.length > 0 && (
+        <div className="mb-5 space-y-2">
+          {toolSuggestions.map((s) => (
+            <div key={s.id} className="flex items-center justify-between gap-3 rounded-2xl border border-violet-500/25 bg-violet-500/[0.08] px-4 py-3">
+              <div className="min-w-0">
+                <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-violet-400 mb-0.5">
+                  Coach recommends
+                </p>
+                <p className="font-saira text-sm font-semibold text-zinc-100 truncate">
+                  {TOOL_DISPLAY_NAMES[s.tool_id] ?? s.tool_id}
+                </p>
+                {s.message && (
+                  <p className="font-saira text-xs text-zinc-400 mt-0.5 line-clamp-1">{s.message}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Link
+                  href={`/library#${s.tool_id}`}
+                  onClick={() => dismissSuggestion(s.id)}
+                  className="rounded-full bg-violet-500/20 border border-violet-500/40 px-3 py-1.5 font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-200 hover:bg-violet-500/30 transition"
+                >
+                  Open →
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => dismissSuggestion(s.id)}
+                  className="p-1 text-zinc-500 hover:text-zinc-300 transition"
+                  aria-label="Dismiss"
+                >
+                  <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
+                    <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
