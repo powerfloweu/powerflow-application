@@ -13,6 +13,7 @@ import { weekLabel, type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weekly
 import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import NotificationModal, { type NotificationState } from "@/app/components/NotificationModal";
+import SurveyModal from "@/app/components/SurveyModal";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -3527,6 +3528,9 @@ export default function CoachPage() {
 
   return (
     <div className="relative bg-surface-base text-white">
+      {/* Periodic feedback survey */}
+      <SurveyModal />
+
       {/* What's New / broadcast modal */}
       {notifications && (
         <NotificationModal

@@ -10,6 +10,7 @@ import NotificationPermissionBanner from "./NotificationPermissionBanner";
 import NotificationModal, { type NotificationState } from "./NotificationModal";
 import WeeklyCheckinModal from "./WeeklyCheckinModal";
 import MonthlyCheckinModal from "./MonthlyCheckinModal";
+import SurveyModal from "./SurveyModal";
 import ThemeToggle from "./ThemeToggle";
 import { WeeklyCheckinContext } from "./WeeklyCheckinContext";
 import { canAccessTools, canAccessPR, type PlanTier } from "@/lib/plan";
@@ -407,6 +408,9 @@ export default function AppShell({ children }: Props) {
           onDone={() => setNotifications(null)}
         />
       )}
+
+      {/* ── Periodic feedback survey ────────────────────────────── */}
+      <SurveyModal />
 
       {/* ── Weekly / monthly check-in popup (athletes only) ─────── */}
       {role === "athlete" && weeklyCheckinTarget && !checkinSkipped && !notifications && (
