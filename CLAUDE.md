@@ -25,6 +25,28 @@ heading structure without updating the parser.
 - [x] Coach dashboard (replace "just select an athlete" with a real dashboard)
 - [ ] Monthly check-in simulation
 
+### Coach features
+- [x] Coach can suggest a library tool to an athlete (`tool_suggestions` table, POST /api/coach/suggest-tool)
+- [x] Athlete sees coach tool suggestion as a card on Today page, tapping opens the tool directly
+- [x] Mobile bottom sheet drag-to-expand (handle is live drag target, snaps to 90vh or closes)
+- [x] Mobile check-in rows tappable — expands to show all 5 scores + Biggest Win / Challenge / Focus
+- [x] Coach athletes sheet shows full check-in text answers (no truncation)
+
+### Athlete experience
+- [x] Coach AI one-time nudge cron — PR-tier athletes who haven't used Coach AI after 7 days get a push notification (fires once only, marks `coach_ai_nudge_sent_at`)
+
+### Analytics & feedback
+- [x] Tool usage tracking — `tool_usage` table, POST /api/tools/track fires on library tool open
+- [x] Admin Tool Usage tab (◈) — per-tool open counts, last 30d, last used
+- [x] In-app feedback survey — fires at day 30 (everyone), then 30d after each submission (rounds 2 & 3); role-specific questions; WTP + NPS; results in admin Surveys tab (◉)
+
+### Public-facing / marketing
+- [x] Coaches page — Clarice and Kate have individual Google Form apply links
+- [x] `/coaches` accessible to unauthenticated users (proxy.ts exact-match fix)
+- [x] Onboarding `?coach=` URL param survives Google OAuth and pre-selects the right coach
+- [x] Demo pages — guided auto-play presentations for athlete and coach demos
+- [x] Coach demo — callout arrows, phone glow, interactive pricing calculator
+
 ### Localization
 - [x] Hide languages that are not translated yet (ES, FR hidden until complete — use READY_LOCALES)
 - [ ] Ask someone for Hungarian translation
@@ -32,12 +54,17 @@ heading structure without updating the parser.
 
 ### Admin / Tools
 - [ ] Move AI Insights to Dev Tools
+- [x] Admin Surveys tab — all survey responses with summary stats, collapsible per-response detail
+
+### Guides
+- [x] Athlete & coach printable guides updated with monthly check-ins, tool suggestions, push notifications
+- [x] Interactive guide updated with same + demo CTA card linking to /demo/athlete or /demo/coach
 
 ### Suggested fixes & cleanup
 - [ ] Replace the create-next-app boilerplate README with real project docs
 - [x] Consolidate duplicate `next.config.js` and `next.config.ts` into one file
-- [ ] Refresh the docstring at the top of `app/admin/master/page.tsx` (lists only 5 tabs; we now have 8+)
-- [ ] Split `app/admin/master/page.tsx` (2600+ lines) into per-tab files under `app/admin/master/tabs/`
+- [ ] Refresh the docstring at the top of `app/admin/master/page.tsx` (lists only 5 tabs; we now have 11+)
+- [ ] Split `app/admin/master/page.tsx` (3000+ lines) into per-tab files under `app/admin/master/tabs/`
 - [ ] Add a basic test setup (no tests configured yet)
 
 ### Security & hardening
@@ -71,12 +98,26 @@ These are the next meaningful features after quick wins are done.
 
 - **Monthly check-in simulation** — let coaches trigger/preview a monthly check-in for an athlete without waiting for the real date
 - **Per-user rate limiting on AI endpoints** — sliding-window limiter (Vercel KV or in-memory) on `/api/chat`, `/api/tts`, `/api/coach/*`
-- **Split `admin/master/page.tsx`** — 2600+ lines; move each tab into `app/admin/master/tabs/<tab>.tsx`
+- **Split `admin/master/page.tsx`** — 3000+ lines; move each tab into `app/admin/master/tabs/<tab>.tsx`
+- **Clarice voice install** — add Clarice as a selectable Coach AI voice (ElevenLabs voice ID needed)
+- **Hungarian translation** — find someone to translate remaining i18n keys
 
 ## Session log
 
 Append a short note at the end of each working session: date, branch, what
 changed, and what's next. Newest entries on top.
+
+### 2026-06-02 — main
+- Coaches page: Clarice & Kate apply links; /coaches open to unauthenticated users (proxy.ts fix); ?coach= param survives OAuth.
+- Tool usage tracking: tool_usage table, /api/tools/track, admin Tool Usage tab.
+- Coach AI nudge: one-time push to PR-tier athletes who haven't used AI after 7 days.
+- Coach tool suggestions: tool_suggestions table, POST /api/coach/suggest-tool, GET/PATCH /api/me/tool-suggestions, SuggestToolSection in coach ProfileTab, violet card on athlete Today page.
+- In-app feedback survey: survey_responses table, /api/survey, SurveyModal (fires on next login for everyone, then 30d apart for rounds 2–3), role-specific open-ended questions, WTP + NPS.
+- Admin Surveys tab with summary stats and collapsible response cards.
+- Demo pages: guided auto-play presentation for coach demo (12 steps, callout arrows, phone glow, interactive pricing calculator with team size slider).
+- Mobile fixes: BottomSheet drag-to-expand, tappable check-in rows with full text, athletes/page.tsx check-in text no longer truncated.
+- Guides: athlete & coach printable + interactive guides updated with monthly check-ins, tool suggestions, push notifications, demo CTA.
+- Next: monthly check-in simulation, per-user AI rate limiting, Clarice voice, Hungarian translation.
 
 ### 2026-05-13 — main (continued)
 - Coach dashboard revamp: mobile home (greeting, 3-tile strip, priority/stable sections, MobileAthleteSheet), desktop home (CoachHomePanel with stats + attention list + activity feed), sticky athlete header, sidebar sparklines + grouped Priority/Stable sections.
