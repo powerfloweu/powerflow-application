@@ -2483,6 +2483,7 @@ function MobileAthleteSheet({
   const { t } = useT();
   const [tab, setTab] = React.useState<SheetTab>("overview");
   const [showNotes, setShowNotes] = React.useState(false);
+  const [expandedCheckin, setExpandedCheckin] = React.useState<number | null>(null);
   const flag = FLAG_CONFIG[client.flag];
 
   return (
@@ -2585,18 +2586,44 @@ function MobileAthleteSheet({
               <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
                 Recent check-ins
               </p>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {client.weeklyCheckins.slice(0, 4).map((wc, i) => {
                   const avg = Math.round(
                     (wc.mood_rating + wc.training_quality + wc.readiness_rating + wc.energy_rating + wc.sleep_rating) / 5
                   );
                   const color = avg >= 7 ? "text-emerald-400" : avg >= 5 ? "text-amber-400" : "text-rose-400";
+                  const open  = expandedCheckin === i;
                   return (
-                    <div key={i} className="flex items-center justify-between">
-                      <span className="font-saira text-xs text-zinc-400">
-                        {new Date(wc.week_start ?? wc.created_at ?? "").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                      </span>
-                      <span className={`font-saira text-sm font-bold tabular-nums ${color}`}>{avg}/10</span>
+                    <div key={i}>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedCheckin(open ? null : i)}
+                        className="w-full flex items-center justify-between py-1.5 hover:opacity-80 transition"
+                      >
+                        <span className="font-saira text-xs text-zinc-400">
+                          {new Date(wc.week_start ?? wc.created_at ?? "").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-saira text-sm font-bold tabular-nums ${color}`}>{avg}/10</span>
+                          <span className={`text-zinc-500 text-xs transition-transform duration-200 ${open ? "rotate-90" : ""}`}>›</span>
+                        </div>
+                      </button>
+                      {open && (
+                        <div className={`grid grid-cols-5 gap-1 pt-1 pb-2 border-t ${color.includes("emerald") ? "border-emerald-500/10" : color.includes("amber") ? "border-amber-500/10" : "border-rose-500/10"}`}>
+                          {([
+                            ["Mood",    wc.mood_rating],
+                            ["Quality", wc.training_quality],
+                            ["Ready",   wc.readiness_rating],
+                            ["Energy",  wc.energy_rating],
+                            ["Sleep",   wc.sleep_rating],
+                          ] as [string, number][]).map(([label, val]) => (
+                            <div key={label} className="text-center pt-2">
+                              <div className={`font-saira text-base font-bold tabular-nums ${val >= 7 ? "text-emerald-400" : val >= 5 ? "text-amber-400" : "text-rose-400"}`}>{val}</div>
+                              <div className="font-saira text-[8px] text-zinc-500 uppercase tracking-wide">{label}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
