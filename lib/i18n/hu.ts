@@ -674,6 +674,7 @@ export const hu: Dict = {
       t2: "[[iPhone / iPad (Safari):]] nyisd meg az appot → koppints az alul lévő [[Megosztás ↑]] gombra → görgess le → koppints a [[Főképernyőhöz adás]] opcióra → koppints a [[Hozzáadás]] gombra.",
       t3: "[[Android (Chrome):]] nyisd meg az appot → koppints a jobb felső [[⋮ menüre]] → koppints a [[Hozzáadás a kezdőképernyőhöz]] vagy [[Alkalmazás telepítése]] opcióra → koppints a [[Hozzáadás]] / [[Telepítés]] gombra.",
       t4: "Telepítés után mindig a kezdőképernyő ikonján keresztül nyisd meg a PowerFlow-t — ne böngészőből — hogy az értesítések és a kamera megfelelően működjenek.",
+      t5: "Engedélyezd a [[push értesítéseket]] a [[Te]] fülön (koppints a csengő ikonra, vagy nyisd meg az Értesítések kártyát). Az alkalmazás emlékeztetőt küld, ha esedékes a napi check-in, és az edződ impulzusokat küldhet a Coach AI-n keresztül.",
     },
     s01: {
       title: "Bejelentkezés",
@@ -739,6 +740,13 @@ export const hu: Dict = {
       t1: "Minden hét végén megjelenik egy [[heti check-in]] felszólítás. Körülbelül 60 másodpercet vesz igénybe: értékelj öt területet (hangulat, edzésminőség, energia, alvás, felkészültség a következő hétre), majd adj hozzá egy legnagyobb sikert, fő kihívást és egy következő heti fókuszt.",
       t2: "A [[havi check-in]] három extra reflexiós kérdéssel mélyíti a heti formátumot: legnagyobb áttörés ebben a hónapban, legfontosabb tanulság magadról, és fő szándékod a következő hónapra.",
       t3: "Az edződ a műszerfalon látja az összes check-in választ — így strukturált képet kap arról, hogyan érezted magad minden héten és hónapban az egyes edzésnaplókon túl.",
+      t4: "Mobilon koppints bármelyik korábbi check-in sorra a kibontáshoz és az összes öt értékelés, valamint az írásos válaszaid megtekintéséhez.",
+    },
+    s10: {
+      title: "Edző eszközajánlásai",
+      t1: "Ha az edződ úgy gondolja, hogy egy adott mentális eszköz segítene neked, ajánlást küldhet közvetlenül a [[Ma]] oldaladra.",
+      t2: "Lila kártyaként jelenik meg: [[Az edző ajánlja: [Eszköz neve]]]. Koppints a [[Megnyitás →]] gombra, hogy közvetlenül ahhoz az eszközhöz navigálj a könyvtárban — keresés nélkül.",
+      t3: "Az ajánlások tartalmazhatnak PMR-t, vizualizációt, Barrier Breakert, Affirmációkat vagy bármely más eszközt. Az edződ rövid személyes megjegyzést is fűzhet hozzá.",
     },
   },
 
@@ -816,6 +824,12 @@ export const hu: Dict = {
       t2: "A kiosztott tesztek felszólításként jelennek meg a sportoló [[Eszközök]] fülén. Befejezéskor az eredmények megjelennek a [[Teszteredmények]] fülön, és a kiosztás automatikusan törlődik.",
       t3: "Használd a tesztkiosztást strukturált kiindulópont meghatározásához a coaching elején, vagy ha a naplóbejegyzésekben olyan mintákat látsz, amelyek egy adott terület mérését javasolják.",
     },
+    s13: {
+      title: "Eszköz ajánlása",
+      t1: "Egy sportoló [[Profil]] fülén görgess az [[Eszköz ajánlása]] részhez. Válassz eszközt a legördülő menüből (PMR, Barrier Breaker, Vizualizáció, Affirmációk stb.) és fűzz hozzá egy opcionális személyes megjegyzést.",
+      t2: "A sportoló lila kártyát lát a [[Ma]] oldalán: [[Az edző ajánlja: [Eszköz neve]]]. A [[Megnyitás →]] gombra koppintva közvetlenül oda kerül — keresés nélkül.",
+      t3: "Ezt akkor használd, ha a naplóbejegyzések verseny előtti szorongást mutatnak (Barrier vagy Vizualizáció ajánlása), ha alvás vagy regenerálódás gyenge (PMR vagy Autogén tréning), vagy ha alkalmak között célzott mentális munkát szeretnél ösztönözni.",
+    },
   },
 
   tools: {
@@ -879,6 +893,10 @@ export const hu: Dict = {
     welcome: "Üdv{name}. Íme minden, amit tudnod kell.",
     printable: "Nyomtatható verzió",
     printableHint: "Koppints a megtekintéshez → használj Cmd/Ctrl+P a PDF-ként mentéshez · A Vissza gomb felül a visszatéréshez",
+    tryDemo: "Próbáld ki a demót",
+    tryDemoAthlete: "Sportoló demo felfedezése",
+    tryDemoCoach: "Edző demo felfedezése",
+    tryDemoHint: "Végig vezet az app funkcióin — fiók nélkül is elérhető",
     footer: "Kérdésed van? Keresd a PowerFlow edződet, vagy írj az ügyfélszolgálatnak.",
   },
 

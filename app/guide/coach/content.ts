@@ -125,6 +125,17 @@ export const coachContent = {
       ] as Step[],
     },
     s10: {
+      title: "Suggest a tool",
+      subtitle: "Send a targeted tool recommendation to an athlete's Today page",
+      steps: [
+        { label: "Open the Profile tab", desc: "Expand any athlete card and tap the Profile tab. Scroll down past the mental tools and ego states sections to find Suggest a tool." },
+        { label: "Pick a tool", desc: "Choose from the dropdown: PMR, Autogenic Training, Barrier Breaker, Visualization (Squat / Bench / Deadlift), Affirmations, Resource Activation, or any other tool in the library." },
+        { label: "Add an optional note", desc: "Type a short message explaining why you're recommending this tool — e.g. 'Pre-competition anxiety is high this week — run this before your heaviest session.'" },
+        { label: "Send the suggestion", desc: "Tap Suggest. The athlete immediately sees a violet card on their Today page: 'Coach recommends: [Tool Name]'. Tapping Open → takes them straight to the tool." },
+      ] as Step[],
+      note: { bold: "Best practice:", text: " Use this when journal entries or check-in ratings point to a specific mental skill gap — pre-competition anxiety (suggest Barrier or Visualization), poor sleep or recovery (suggest PMR or Autogenic Training), low confidence scores (suggest Affirmations or Resource Activation). One targeted suggestion is more effective than a general reminder to 'use the tools'." },
+    },
+    s11: {
       title: "Quick reference",
       subtitle: "Dashboard signals at a glance",
       tableHeaders: ["Signal", "What it means", "Suggested action"] as [string, string, string],
@@ -265,6 +276,17 @@ export const coachContent = {
       ] as Step[],
     },
     s10: {
+      title: "Ein Tool empfehlen",
+      subtitle: "Gezielte Tool-Empfehlung auf die Heute-Seite des Athleten senden",
+      steps: [
+        { label: "Profil-Tab öffnen", desc: "Erweitere eine Athleten-Karte und tippe auf den Profil-Tab. Scrolle nach unten, um den Abschnitt Ein Tool empfehlen zu finden." },
+        { label: "Tool auswählen", desc: "Wähle aus dem Dropdown: PMR, Autogenes Training, Barrier Breaker, Visualisierung (Kniebeuge / Bankdrücken / Kreuzheben), Affirmationen, Ressourcenaktivierung oder jedes andere Tool der Bibliothek." },
+        { label: "Optionale Notiz hinzufügen", desc: "Schreibe eine kurze Nachricht, warum du dieses Tool empfiehlst – z. B. 'Vorwettkampf-Angst ist diese Woche hoch – Führe das vor deiner schwersten Einheit durch.'" },
+        { label: "Empfehlung senden", desc: "Tippe auf Empfehlen. Der Athlet sieht sofort eine violette Karte auf seiner Heute-Seite: 'Coach empfiehlt: [Tool-Name]'. Tippen auf Öffnen → führt direkt zum Tool." },
+      ] as Step[],
+      note: { bold: "Best Practice:", text: " Nutze dies, wenn Journaleinträge oder Check-in-Bewertungen auf eine spezifische mentale Lücke hinweisen – Vorwettkampf-Angst (Barrier oder Visualisierung empfehlen), schlechter Schlaf (PMR oder Autogenes Training), niedriges Selbstvertrauen (Affirmationen oder Ressourcenaktivierung). Eine gezielte Empfehlung ist wirksamer als die allgemeine Erinnerung, 'die Tools zu nutzen'." },
+    },
+    s11: {
       title: "Kurzreferenz",
       subtitle: "Dashboard-Signale auf einen Blick",
       tableHeaders: ["Signal", "Bedeutung", "Empfohlene Aktion"] as [string, string, string],
@@ -405,6 +427,17 @@ export const coachContent = {
       ] as Step[],
     },
     s10: {
+      title: "Eszköz ajánlása",
+      subtitle: "Célzott eszközajánlás küldése az atléta Ma oldalára",
+      steps: [
+        { label: "Profil fül megnyitása", desc: "Bontsd ki az atléta kártyát és érintsd meg a Profil fület. Görgess le az Eszköz ajánlása részhez." },
+        { label: "Eszköz kiválasztása", desc: "Válassz a legördülő menüből: PMR, Autogén tréning, Barrier Breaker, Vizualizáció (Guggolás / Fekvenyomás / Elhúzás), Affirmációk, Erőforrás aktiválás vagy bármely más eszköz a könyvtárból." },
+        { label: "Opcionális megjegyzés hozzáadása", desc: "Írj egy rövid üzenetet, hogy miért ajánlod ezt az eszközt – pl. 'A verseny előtti szorongás magas ezen a héten – futtasd le ezt a legnehezebb edzésed előtt.'" },
+        { label: "Ajánlás elküldése", desc: "Érintsd meg az Ajánlás gombot. Az atléta azonnal egy lila kártyát lát a Ma oldalán: 'Az edző ajánlja: [Eszköz neve]'. A Megnyitás → gombra koppintva közvetlenül az eszközhöz jut." },
+      ] as Step[],
+      note: { bold: "Legjobb gyakorlat:", text: " Használd ezt, ha a naplóbejegyzések vagy bejelentkezési értékelések egy konkrét mentális hiányosságra mutatnak – verseny előtti szorongás (Barrier vagy Vizualizáció), rossz alvás (PMR vagy Autogén tréning), alacsony önbizalom (Affirmációk vagy Erőforrás aktiválás). Egy célzott ajánlás hatékonyabb, mint az általános emlékeztető az 'eszközök használatára'." },
+    },
+    s11: {
       title: "Gyors áttekintő",
       subtitle: "Irányítópult jelzések egy pillantásra",
       tableHeaders: ["Jelzés", "Mit jelent", "Javasolt lépés"] as [string, string, string],

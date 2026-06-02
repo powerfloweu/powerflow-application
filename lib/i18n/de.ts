@@ -676,6 +676,7 @@ export const de: Dict = {
       t2: "[[iPhone / iPad (Safari):]] App öffnen → [[Teilen ↑]]-Symbol unten tippen → nach unten scrollen → [[Zum Home-Bildschirm]] tippen → [[Hinzufügen]] tippen.",
       t3: "[[Android (Chrome):]] App öffnen → [[⋮-Menü]] oben rechts tippen → [[Zum Startbildschirm hinzufügen]] oder [[App installieren]] tippen → [[Hinzufügen]] / [[Installieren]] tippen.",
       t4: "Nach der Installation PowerFlow immer über das Home-Bildschirm-Symbol öffnen — nicht über den Browser — damit Benachrichtigungen und Kamera korrekt funktionieren.",
+      t5: "Aktiviere [[Push-Benachrichtigungen]] über deinen [[Du]]-Tab (tippe auf das Glocken-Symbol oder öffne die Benachrichtigungskarte). Die App sendet dir eine Erinnerung, wenn dein täglicher Check-in fällig ist, und dein Coach kann dir über Coach AI Impulse schicken.",
     },
     s01: {
       title: "Anmelden",
@@ -741,6 +742,13 @@ export const de: Dict = {
       t1: "Am Ende jeder Woche erscheint ein [[wöchentlicher Check-in]]-Prompt. Er dauert etwa 60 Sekunden: Bewerte fünf Bereiche (Stimmung, Trainingsqualität, Energie, Schlaf, Bereitschaft für die nächste Woche) und füge deinen größten Erfolg, die Hauptherausforderung und einen Fokus für die nächste Woche hinzu.",
       t2: "Ein [[monatlicher Check-in]] vertieft das wöchentliche Format mit drei zusätzlichen Reflexionsfragen: größter Durchbruch des Monats, wichtigste Erkenntnis über dich selbst und deine Hauptabsicht für den nächsten Monat.",
       t3: "Dein Coach sieht alle Check-in-Antworten in seinem Dashboard — und erhält so ein strukturiertes Bild davon, wie sich jede Woche und jeder Monat angefühlt hat.",
+      t4: "Auf dem Handy kannst du auf eine vergangene Check-in-Zeile tippen, um sie aufzuklappen und alle fünf Bewertungen sowie deine schriftlichen Antworten zu sehen.",
+    },
+    s10: {
+      title: "Tool-Empfehlungen deines Coaches",
+      t1: "Wenn dein Coach ein bestimmtes mentales Tool für dich für sinnvoll hält, kann er eine Empfehlung direkt auf deine [[Heute]]-Seite senden.",
+      t2: "Sie erscheint als violette Karte: [[Coach empfiehlt: [Tool-Name]]]. Tippe auf [[Öffnen →]], um direkt zu diesem Tool in der Bibliothek zu gelangen.",
+      t3: "Empfehlungen können PMR, eine Visualisierung, Barrier Breaker, Affirmationen oder jedes andere Tool in der Bibliothek umfassen. Dein Coach kann auch eine kurze persönliche Notiz hinzufügen.",
     },
   },
 
@@ -818,6 +826,12 @@ export const de: Dict = {
       t2: "Zugewiesene Tests erscheinen als Aufforderung im [[Tools]]-Tab des Athleten. Nach Abschluss erscheinen die Ergebnisse in deinem [[Testergebnisse]]-Tab und die Zuweisung wird automatisch gelöscht.",
       t3: "Nutze die Testzuweisung, um zu Beginn des Coachings einen strukturierten Ausgangspunkt zu erhalten, oder wenn Tagebuchmuster darauf hindeuten, dass ein bestimmter Bereich gemessen werden sollte.",
     },
+    s13: {
+      title: "Ein Tool empfehlen",
+      t1: "Im [[Profil]]-Tab eines Athleten scrolle zum Abschnitt [[Ein Tool empfehlen]]. Wähle ein Tool aus dem Dropdown (PMR, Barrier Breaker, Visualisierung, Affirmationen u. a.) und füge eine optionale persönliche Notiz hinzu.",
+      t2: "Der Athlet sieht eine violette Karte auf seiner [[Heute]]-Seite: [[Coach empfiehlt: [Tool-Name]]]. Ein Tippen auf [[Öffnen →]] führt ihn direkt dorthin — keine Suche nötig.",
+      t3: "Nutze dies, wenn Tagebucheinträge Angst vor einem Wettkampf zeigen (Barrier oder Visualisierung empfehlen), Schlaf oder Erholung schlecht sind (PMR oder Autogenes Training), oder wenn du zwischen Calls gezielte mentale Arbeit anregen möchtest.",
+    },
   },
 
   tools: {
@@ -881,6 +895,10 @@ export const de: Dict = {
     welcome: "Willkommen{name}. Hier ist alles, was du wissen musst.",
     printable: "Druckversion",
     printableHint: "Tippen zum Öffnen → Strg+P zum Speichern als PDF · Zurück-Button oben",
+    tryDemo: "Demo ausprobieren",
+    tryDemoAthlete: "Athleten-Demo erkunden",
+    tryDemoCoach: "Coach-Demo erkunden",
+    tryDemoHint: "Geführter Rundgang durch die App — kein Konto erforderlich",
     footer: "Fragen? Wende dich an deinen PowerFlow-Coach oder den Support.",
   },
 

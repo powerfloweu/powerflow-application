@@ -903,6 +903,13 @@ export default async function AthleteGuidePage({
             <Note>{c.s10.note.text}</Note>
           </Page>
 
+          {/* ── 11 Coach tool suggestions ─────────────────────────── */}
+          <Page>
+            <SectionHeading num="11" title={c.s11.title} subtitle={c.s11.subtitle} />
+            <Steps items={c.s11.steps} />
+            <Note>{c.s11.note.text}</Note>
+          </Page>
+
           {/* ── Quick reference ──────────────────────────────────── */}
           <Page>
             <SectionHeading num="—" title={c.ref.title} subtitle={c.ref.subtitle} />

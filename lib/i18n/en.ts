@@ -704,6 +704,7 @@ export const en = {
       t2: "[[iPhone / iPad (Safari):]] open the app → tap the [[Share ↑]] button at the bottom of the screen → scroll down → tap [[Add to Home Screen]] → tap [[Add]].",
       t3: "[[Android (Chrome):]] open the app → tap the [[⋮ menu]] in the top-right corner → tap [[Add to Home Screen]] or [[Install app]] → tap [[Add]] or [[Install]].",
       t4: "After installing, always open PowerFlow from your home screen icon — not the browser — so notifications and the camera work correctly.",
+      t5: "Enable [[push notifications]] from your [[You]] tab (tap the bell icon or open the Notifications card). The app will send you a reminder when your daily check-in is due, and your coach can send you nudges through Coach AI.",
     },
     s01: {
       title: "Sign in",
@@ -769,6 +770,13 @@ export const en = {
       t1: "A [[weekly check-in]] prompt appears at the end of each week. It takes about 60 seconds: rate five areas (mood, training quality, energy, sleep, readiness for next week), then add your biggest win, main challenge, and one focus for the week ahead.",
       t2: "A [[monthly check-in]] deepens the weekly format with three extra reflection questions: biggest breakthrough this month, key lesson learned about yourself, and your main intention going into next month.",
       t3: "Your coach sees all check-in responses on their dashboard — giving them a structured picture of how each week and month felt, beyond the individual training log entries.",
+      t4: "On mobile, tap any past check-in row to expand it and see all five scores plus your written responses. Useful for tracking your own patterns over time.",
+    },
+    s10: {
+      title: "Coach tool suggestions",
+      t1: "When your coach thinks a specific mental tool would help you, they can send a recommendation directly to your [[Today]] page.",
+      t2: "It appears as a violet card: [[Coach recommends: [Tool Name]]]. Tap [[Open →]] to navigate straight to that tool in the library — no searching needed.",
+      t3: "Suggestions may include PMR, a visualization, Barrier Breaker, Affirmations, or any other tool in the library. Your coach can also add a short personal note explaining why they're recommending it.",
     },
   },
 
@@ -846,6 +854,12 @@ export const en = {
       t1: "To assign a test, expand an athlete card, go to the [[Profile]] tab, and scroll to the [[Assign a test]] section. Pick SAT, ACSI, CSAI-2, or DAS and tap [[Assign]].",
       t2: "Assigned tests appear as a prompt in the athlete's [[Tools]] tab. Once completed, results show in your [[Test Scores]] tab and the assignment is cleared automatically.",
       t3: "Use test assignment to get a structured baseline at the start of coaching, or when journal patterns suggest a specific area needs measurement.",
+    },
+    s13: {
+      title: "Suggest a tool",
+      t1: "In an athlete's [[Profile]] tab, scroll to the [[Suggest a tool]] section. Choose a tool from the dropdown (PMR, Barrier Breaker, Visualization, Affirmations, and more) and add an optional personal note.",
+      t2: "The athlete sees a violet card on their [[Today]] page: [[Coach recommends: [Tool Name]]]. Tapping [[Open →]] takes them straight to that tool — no searching required.",
+      t3: "Use this when journal entries show anxiety before a meet (suggest Barrier or Visualization), when sleep or recovery is poor (suggest PMR or Autogenic Training), or when you want to prompt specific mental work between calls.",
     },
   },
 
@@ -959,6 +973,10 @@ export const en = {
     welcome: "Welcome{name}. Here’s everything you need to know.",
     printable: "Printable version",
     printableHint: "Tap to view → use Cmd/Ctrl+P to save as PDF · Back button at the top to return",
+    tryDemo: "Try the demo",
+    tryDemoAthlete: "Explore the athlete demo",
+    tryDemoCoach: "Explore the coach demo",
+    tryDemoHint: "Tap through a guided walkthrough of the app — no account required",
     footer: "Questions? Contact your PowerFlow coach or email support.",
   },
 

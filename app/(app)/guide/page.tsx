@@ -68,6 +68,7 @@ function AthleteGuide() {
         <Tip text={t(`${a}.s00.t2`)} />
         <Tip text={t(`${a}.s00.t3`)} />
         <Tip text={t(`${a}.s00.t4`)} />
+        <Tip text={t(`${a}.s00.t5`)} />
       </GuideSection>
 
       <GuideSection num="01" title={t(`${a}.s01.title`)}>
@@ -133,6 +134,13 @@ function AthleteGuide() {
         <Tip text={t(`${a}.s09.t1`)} />
         <Tip text={t(`${a}.s09.t2`)} />
         <Tip text={t(`${a}.s09.t3`)} />
+        <Tip text={t(`${a}.s09.t4`)} />
+      </GuideSection>
+
+      <GuideSection num="10" title={t(`${a}.s10.title`)}>
+        <Tip text={t(`${a}.s10.t1`)} />
+        <Tip text={t(`${a}.s10.t2`)} />
+        <Tip text={t(`${a}.s10.t3`)} />
       </GuideSection>
     </>
   );
@@ -216,6 +224,12 @@ function CoachGuide() {
         <Tip text={t(`${c}.s12.t2`)} />
         <Tip text={t(`${c}.s12.t3`)} />
       </GuideSection>
+
+      <GuideSection num="13" title={t(`${c}.s13.title`)}>
+        <Tip text={t(`${c}.s13.t1`)} />
+        <Tip text={t(`${c}.s13.t2`)} />
+        <Tip text={t(`${c}.s13.t3`)} />
+      </GuideSection>
     </>
   );
 }
@@ -297,7 +311,7 @@ export default function GuidePage() {
           installed PWAs, leaving users stranded on the printable view.) */}
       <Link
         href={pdfHref}
-        className="flex items-center justify-between rounded-2xl border border-purple-500/25 bg-purple-500/5 px-5 py-4 mb-6 hover:border-purple-400/50 transition group"
+        className="flex items-center justify-between rounded-2xl border border-purple-500/25 bg-purple-500/5 px-5 py-4 mb-3 hover:border-purple-400/50 transition group"
       >
         <div>
           <p className="font-saira text-sm font-semibold text-purple-300 group-hover:text-white transition mb-0.5">
@@ -309,6 +323,27 @@ export default function GuidePage() {
         </div>
         <span className="text-purple-400 text-lg">→</span>
       </Link>
+
+      {/* Demo CTA */}
+      {role !== null && (
+        <Link
+          href={isCoach ? "/demo/coach" : "/demo/athlete"}
+          className="flex items-center justify-between rounded-2xl border border-purple-500/40 bg-purple-500/15 px-5 py-4 mb-6 hover:border-purple-400/70 hover:bg-purple-500/20 transition group"
+        >
+          <div>
+            <p className="font-saira text-[10px] font-bold uppercase tracking-[0.18em] text-purple-400 mb-0.5">
+              {t("guide.tryDemo")}
+            </p>
+            <p className="font-saira text-sm font-semibold text-white mb-0.5">
+              {isCoach ? t("guide.tryDemoCoach") : t("guide.tryDemoAthlete")}
+            </p>
+            <p className="font-saira text-[10px] text-zinc-400">
+              {t("guide.tryDemoHint")}
+            </p>
+          </div>
+          <span className="text-purple-300 text-xl group-hover:translate-x-0.5 transition-transform">→</span>
+        </Link>
+      )}
 
       {/* Role-specific guide */}
       {role === null ? (

@@ -591,20 +591,29 @@ export default async function CoachGuidePage({
             <Steps items={c.s09.steps} />
           </Page>
 
-          {/* ── 10 Quick reference ──────────────────────────────── */}
+          {/* ── 10 Suggest a tool ───────────────────────────────── */}
           <Page>
             <SectionHeading num="10" title={c.s10.title} subtitle={c.s10.subtitle} />
+            <Steps items={c.s10.steps} />
+            <Note>
+              <strong>{c.s10.note.bold}</strong>{c.s10.note.text}
+            </Note>
+          </Page>
+
+          {/* ── 11 Quick reference ──────────────────────────────── */}
+          <Page>
+            <SectionHeading num="11" title={c.s11.title} subtitle={c.s11.subtitle} />
 
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, marginBottom: 32 }}>
               <thead>
                 <tr style={{ background: "#0891b2", color: "#fff" }}>
-                  <th style={{ padding: "8px 12px", textAlign: "left" }}>{c.s10.tableHeaders[0]}</th>
-                  <th style={{ padding: "8px 12px", textAlign: "left" }}>{c.s10.tableHeaders[1]}</th>
-                  <th style={{ padding: "8px 12px", textAlign: "left" }}>{c.s10.tableHeaders[2]}</th>
+                  <th style={{ padding: "8px 12px", textAlign: "left" }}>{c.s11.tableHeaders[0]}</th>
+                  <th style={{ padding: "8px 12px", textAlign: "left" }}>{c.s11.tableHeaders[1]}</th>
+                  <th style={{ padding: "8px 12px", textAlign: "left" }}>{c.s11.tableHeaders[2]}</th>
                 </tr>
               </thead>
               <tbody>
-                {c.s10.tableRows.map(([signal, meaning, action], i) => (
+                {c.s11.tableRows.map(([signal, meaning, action], i) => (
                   <tr key={i} style={{ background: i % 2 === 0 ? "#ecfeff" : "#fff" }}>
                     <td style={{ padding: "8px 12px", fontWeight: 700, color: "#0e7490" }}>{signal}</td>
                     <td style={{ padding: "8px 12px", color: "#52525b" }}>{meaning}</td>
@@ -615,7 +624,7 @@ export default async function CoachGuidePage({
             </table>
 
             <Note>
-              <strong>{c.s10.note.bold}</strong>{c.s10.note.text}
+              <strong>{c.s11.note.bold}</strong>{c.s11.note.text}
             </Note>
           </Page>
 

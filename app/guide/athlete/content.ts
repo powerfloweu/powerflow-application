@@ -28,7 +28,7 @@ export const athleteContent = {
       intro: "PowerFlow is a web app — nothing to download. Add it to your phone's home screen once and it opens full-screen like a native app, with push notifications and audio working correctly. Always open from the home screen icon, not from the browser.",
       ios: { title: "iPhone / iPad (Safari)", steps: ["Open the PowerFlow URL in Safari", "Tap the Share ↑ button at the bottom", "Scroll down and tap Add to Home Screen", "Tap Add in the top-right corner"] },
       android: { title: "Android (Chrome)", steps: ["Open the PowerFlow URL in Chrome", "Tap the ⋮ menu in the top-right corner", "Tap Add to Home Screen or Install app", "Tap Add or Install"] },
-      note: { bold: "Tip:", text: " On iOS, only Safari supports Add to Home Screen — it will not work from Chrome or Firefox on iPhone." },
+      note: { bold: "Enable notifications:", text: " After installing, open the You tab and tap the bell icon (or the Notifications card) to allow push notifications. The app sends daily check-in reminders at 7 pm on days you haven't logged, and your coach can send you nudges through Coach AI. On iOS, only Safari supports Add to Home Screen — it will not work from Chrome or Firefox on iPhone." },
     },
     s01: {
       title: "Signing in",
@@ -157,8 +157,19 @@ export const athleteContent = {
         { label: "Weekly check-in", desc: "A prompt appears at the end of each week. Rate five areas: overall mood, training quality, energy levels, sleep quality, and readiness for next week (each 1–10). Then add your biggest win, main challenge, and one focus for the week ahead. Takes about 60 seconds." },
         { label: "Monthly check-in", desc: "Appears at the end of each month with the same five ratings plus three deeper questions: biggest breakthrough this month, the most important thing you learned about yourself, and your main intention going into next month." },
         { label: "Coach visibility", desc: "Your coach sees all check-in responses on their dashboard. These give them a structured picture of how each week and month felt — beyond the individual training log entries." },
+        { label: "Expand on mobile", desc: "On mobile, tap any past check-in row to expand it and view all five scores plus your written responses — useful for tracking your own patterns over time." },
       ] as Step[],
       note: { text: "Check-ins are separate from your daily journal and training log. They are a weekly and monthly pulse — the bigger picture sitting above the day-to-day entries." },
+    },
+    s11: {
+      title: "Coach tool suggestions",
+      subtitle: "Personalised recommendations from your coach",
+      steps: [
+        { label: "How it appears", desc: "When your coach wants you to use a specific mental tool, a violet card appears on your Today page: 'Coach recommends: [Tool Name]'. It may include a short personal note from your coach explaining why." },
+        { label: "Open the tool", desc: "Tap Open → on the card to navigate directly to that tool in the library. No searching — one tap takes you straight there." },
+        { label: "What tools can be suggested", desc: "PMR (Progressive Muscle Relaxation), Barrier Breaker, Visualization (Squat / Bench / Deadlift), Autogenic Training, Affirmations, Resource Activation — any tool in the library. Your coach picks based on what they see in your journal and check-ins." },
+      ] as Step[],
+      note: { text: "Tool suggestions are a direct line from your coach's observations to your practice. If one appears, it means your coach has noticed something specific in your recent entries or check-ins and thinks this tool will help address it." },
     },
     ref: {
       title: "Quick reference",
@@ -200,7 +211,7 @@ export const athleteContent = {
       intro: "PowerFlow ist eine Web-App – kein Download erforderlich. Füge sie einmal zum Startbildschirm deines Handys hinzu und sie öffnet sich vollständig wie eine native App, mit Push-Benachrichtigungen und Audio. Öffne die App immer über das Startbildschirm-Symbol, nicht über den Browser.",
       ios: { title: "iPhone / iPad (Safari)", steps: ["Öffne die PowerFlow-URL in Safari", "Tippe unten auf den Teilen ↑ Button", "Scrolle nach unten und tippe Zum Home-Bildschirm", "Tippe oben rechts auf Hinzufügen"] },
       android: { title: "Android (Chrome)", steps: ["Öffne die PowerFlow-URL in Chrome", "Tippe auf das ⋮ Menü oben rechts", "Tippe Zum Startbildschirm hinzufügen oder App installieren", "Tippe Hinzufügen oder Installieren"] },
-      note: { bold: "Tipp:", text: " Auf iOS unterstützt nur Safari das Hinzufügen zum Startbildschirm – bei Chrome oder Firefox auf dem iPhone funktioniert es nicht." },
+      note: { bold: "Benachrichtigungen aktivieren:", text: " Nach der Installation öffne den Ich-Tab und tippe auf das Glocken-Symbol (oder die Benachrichtigungskarte), um Push-Benachrichtigungen zu erlauben. Die App sendet an Tagen, an denen du noch nichts geloggt hast, um 19:00 Uhr eine Erinnerung, und dein Coach kann dir über Coach AI Impulse schicken. Auf iOS unterstützt nur Safari das Hinzufügen zum Startbildschirm – bei Chrome oder Firefox auf dem iPhone funktioniert es nicht." },
     },
     s01: {
       title: "Anmelden",
@@ -329,8 +340,19 @@ export const athleteContent = {
         { label: "Wöchentliches Check-in", desc: "Am Ende jeder Woche erscheint eine Aufforderung. Bewerte fünf Bereiche: Gesamtstimmung, Trainingsqualität, Energielevel, Schlafqualität und Bereitschaft für die nächste Woche (je 1–10). Dann füge deinen größten Erfolg, die Hauptherausforderung und einen Fokus hinzu. Dauert ca. 60 Sekunden." },
         { label: "Monatliches Check-in", desc: "Erscheint am Ende jedes Monats mit denselben fünf Bewertungen plus drei tiefere Fragen: größter Durchbruch dieses Monats, wichtigste Erkenntnis über dich selbst und deine Intention für den nächsten Monat." },
         { label: "Coach-Sichtbarkeit", desc: "Dein Coach sieht alle Check-in-Antworten auf seinem Dashboard. Diese geben ihm ein strukturiertes Bild davon, wie sich jede Woche und jeder Monat angefühlt hat." },
+        { label: "Auf dem Handy aufklappen", desc: "Tippe auf dem Handy auf eine vergangene Check-in-Zeile, um alle fünf Bewertungen und deine schriftlichen Antworten zu sehen." },
       ] as Step[],
       note: { text: "Check-ins sind getrennt von deinem täglichen Journal und Trainingsprotokoll. Sie sind ein wöchentlicher und monatlicher Puls – das große Bild über den alltäglichen Einträgen." },
+    },
+    s11: {
+      title: "Tool-Empfehlungen deines Coaches",
+      subtitle: "Persönliche Empfehlungen direkt auf deiner Heute-Seite",
+      steps: [
+        { label: "So erscheint es", desc: "Wenn dein Coach möchte, dass du ein bestimmtes mentales Tool nutzt, erscheint eine violette Karte auf deiner Heute-Seite: 'Coach empfiehlt: [Tool-Name]'. Sie kann eine kurze persönliche Notiz des Coaches enthalten." },
+        { label: "Tool öffnen", desc: "Tippe auf Öffnen → auf der Karte, um direkt zu diesem Tool in der Bibliothek zu navigieren. Kein Suchen nötig — ein Tippen bringt dich hin." },
+        { label: "Welche Tools empfohlen werden können", desc: "PMR (Progressive Muskelentspannung), Barrier Breaker, Visualisierung (Kniebeuge / Bankdrücken / Kreuzheben), Autogenes Training, Affirmationen, Ressourcenaktivierung — jedes Tool in der Bibliothek." },
+      ] as Step[],
+      note: { text: "Tool-Empfehlungen sind eine direkte Verbindung von den Beobachtungen deines Coaches zu deiner Praxis. Falls eine erscheint, hat dein Coach etwas Spezifisches in deinen Einträgen bemerkt und denkt, dieses Tool hilft dabei." },
     },
     ref: {
       title: "Kurzreferenz",
@@ -372,7 +394,7 @@ export const athleteContent = {
       intro: "A PowerFlow egy webalkalmazás – nincs mit letölteni. Add hozzá a telefon főképernyőjéhez egyszer, és teljes képernyőn nyílik meg, mint egy natív app, push értesítésekkel és hanggal. Mindig a főképernyő ikonból nyisd meg, ne a böngészőből.",
       ios: { title: "iPhone / iPad (Safari)", steps: ["Nyisd meg a PowerFlow URL-t Safariban", "Érintsd meg a Megosztás ↑ gombot alul", "Görgess le és érintsd meg a Főképernyőre adás lehetőséget", "Érintsd meg a Hozzáadás gombot jobb felül"] },
       android: { title: "Android (Chrome)", steps: ["Nyisd meg a PowerFlow URL-t Chrome-ban", "Érintsd meg a ⋮ menüt jobb felül", "Érintsd meg a Hozzáadás a főképernyőhöz vagy App telepítése lehetőséget", "Érintsd meg a Hozzáadás vagy Telepítés gombot"] },
-      note: { bold: "Tipp:", text: " iOS-en csak a Safari támogatja a főképernyőre adást – iPhone-on Chrome vagy Firefox böngészőből ez nem működik." },
+      note: { bold: "Értesítések engedélyezése:", text: " Telepítés után nyisd meg az Én fület, és koppints a csengő ikonra (vagy az Értesítések kártyára) a push értesítések engedélyezéséhez. Az app este 7-kor emlékeztetőt küld, ha még nem naplóztál aznap, és az edződ impulzusokat küldhet a Coach AI-n keresztül. iOS-en csak a Safari támogatja a főképernyőre adást – iPhone-on Chrome vagy Firefox böngészőből ez nem működik." },
     },
     s01: {
       title: "Bejelentkezés",
@@ -501,8 +523,19 @@ export const athleteContent = {
         { label: "Heti bejelentkezés", desc: "Minden hét végén megjelenik egy kérdés. Értékelj öt területet: általános hangulat, edzésminőség, energiaszint, alvásminőség és a következő hétre való felkészültség (mindegyik 1–10). Aztán add meg a legnagyobb sikered, fő kihívásodat és egy fókuszt a következő hétre. Kb. 60 másodpercet vesz igénybe." },
         { label: "Havi bejelentkezés", desc: "Minden hónap végén jelenik meg, ugyanazon öt értékeléssel, plusz három mélyebb kérdéssel: legnagyobb áttörés ebben a hónapban, legfontosabb önismereti tanulság és szándékod a következő hónapra." },
         { label: "Az edző láthatósága", desc: "Az edződ látja az összes bejelentkezési választ az irányítópultján. Ezek strukturált képet adnak arról, hogyan érzett minden hét és hónap – túl az egyes edzésnaplóbejegyzéseken." },
+        { label: "Kibontás mobilon", desc: "Mobilon koppints bármelyik korábbi bejelentkezési sorra a kibontáshoz és az összes öt értékelés, valamint az írásos válaszaid megtekintéséhez." },
       ] as Step[],
       note: { text: "A bejelentkezések elkülönülnek a napi naplódtól és edzésnaplódtól. Ezek heti és havi pulzus – a napi bejegyzések felett álló nagyobb kép." },
+    },
+    s11: {
+      title: "Az edző eszközajánlásai",
+      subtitle: "Személyes ajánlások az edződtől közvetlenül a Ma oldaladra",
+      steps: [
+        { label: "Hogyan jelenik meg", desc: "Ha az edződ szeretné, hogy egy adott mentális eszközt használj, egy lila kártya jelenik meg a Ma oldalon: 'Az edző ajánlja: [Eszköz neve]'. Tartalmazhat az edző rövid személyes megjegyzését is." },
+        { label: "Eszköz megnyitása", desc: "Koppints a Megnyitás → gombra a kártyán, hogy közvetlenül ahhoz az eszközhöz navigálj a könyvtárban. Nincs keresés – egy koppintással oda kerülsz." },
+        { label: "Milyen eszközök ajánlhatók", desc: "PMR (Progresszív izomrelaxáció), Barrier Breaker, Vizualizáció (Guggolás / Fekvenyomás / Elhúzás), Autogén tréning, Affirmációk, Erőforrás aktiválás – bármely eszköz a könyvtárból." },
+      ] as Step[],
+      note: { text: "Az eszközajánlások közvetlen kapcsolatot teremtenek az edző megfigyelései és a te gyakorlatod között. Ha megjelenik egy, az edződ konkrét dolgot észlelt a közelmúltbeli bejegyzéseidben vagy bejelentkezéseidben." },
     },
     ref: {
       title: "Gyors áttekintő",
