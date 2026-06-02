@@ -23,7 +23,7 @@ heading structure without updating the parser.
 - [x] Clarice voice install
 - [x] Voice selector for Coach AI
 - [x] Coach dashboard (replace "just select an athlete" with a real dashboard)
-- [ ] Monthly check-in simulation
+- [~] Monthly check-in simulation
 
 ### Coach features
 - [x] Coach can suggest a library tool to an athlete (`tool_suggestions` table, POST /api/coach/suggest-tool)
