@@ -53,7 +53,7 @@ heading structure without updating the parser.
 - [x] Fix national flags on coach language selector (fixed by hiding incomplete locales)
 
 ### Admin / Tools
-- [~] Move AI Insights to Dev Tools
+- [x] Move AI Insights to Dev Tools
 - [x] Admin Surveys tab — all survey responses with summary stats, collapsible per-response detail
 
 ### Guides
