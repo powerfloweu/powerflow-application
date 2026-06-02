@@ -74,10 +74,10 @@ heading structure without updating the parser.
 - [ ] Add per-user rate limiting on AI endpoints (`/api/chat`, `/api/tts`, `/api/coach/*`)
 
 ### Code quality
-- [ ] Remove `PowerFlow course _ AI.zip` from repo root (move to external storage / `.gitignore`)
+- [x] Remove `PowerFlow course _ AI.zip` from repo root
 - [ ] Audit `/scripts/` and `/handoff/` folders — archive or delete unused files
-- [ ] Strip ~19 stray `console.log` calls or gate them behind a logger
-- [ ] Audit ~59 `as any` / unchecked casts and tighten types
+- [x] Strip stray `console.log` calls — down to 5 (was ~19)
+- [x] Audit `as any` / unchecked casts — down to 1 (was ~59)
 
 ### Dev experience
 - [x] Add `"typecheck": "tsc --noEmit"` script to `package.json`
