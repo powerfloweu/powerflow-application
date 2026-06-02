@@ -3309,9 +3309,183 @@ function ToolsTab() {
   );
 }
 
+// ── Surveys tab ───────────────────────────────────────────────────────────────
+
+type SurveyResponse = {
+  id: string; user_id: string; round: number; role: string;
+  answers: Record<string, unknown>; submitted_at: string;
+};
+
+const ATHLETE_Q_LABELS: Record<string, string> = {
+  tools_used:    "Which parts did you actually use?",
+  mental_shift:  "What, if anything, has shifted since using it?",
+  surprised:     "Has anything surprised you?",
+  fix_or_add:    "If you could change one thing?",
+  wtp:           "Willing to pay",
+  nps:           "How likely to keep using (1–10)",
+};
+
+const COACH_Q_LABELS: Record<string, string> = {
+  dashboard_change:    "How has it changed how you work with athletes?",
+  profile_parts:       "Which profile parts do you actually look at?",
+  athletes_mentioned:  "Any athletes mention it unprompted?",
+  what_would_help:     "What would make you reach for it pre-session?",
+  mental_shift:        "Did it show up when it counted?",
+  surprised:           "Anything surprised you?",
+  wtp:                 "Willing to pay",
+  nps:                 "How likely to keep using (1–10)",
+};
+
+function SurveysTab() {
+  const [responses, setResponses] = React.useState<SurveyResponse[]>([]);
+  const [profiles, setProfiles]   = React.useState<Record<string, { display_name: string | null; email: string | null }>>({});
+  const [loading, setLoading]     = React.useState(true);
+  const [expanded, setExpanded]   = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    fetch("/api/admin/surveys")
+      .then((r) => r.json())
+      .then((d) => { setResponses(d.responses ?? []); setProfiles(d.profiles ?? {}); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+    </div>
+  );
+
+  // ── Summary stats ──────────────────────────────────────────────────────────
+  const total     = responses.length;
+  const byRound   = [1, 2, 3].map((r) => responses.filter((x) => x.round === r).length);
+  const npsList   = responses.map((r) => Number(r.answers.nps)).filter((n) => n > 0);
+  const wtpList   = responses.map((r) => Number(r.answers.wtp)).filter((n) => n > 0);
+  const avgNps    = npsList.length ? (npsList.reduce((a, b) => a + b, 0) / npsList.length).toFixed(1) : null;
+  const avgWtp    = wtpList.length ? Math.round(wtpList.reduce((a, b) => a + b, 0) / wtpList.length) : null;
+  const athletes  = responses.filter((r) => r.role === "athlete").length;
+  const coaches   = responses.filter((r) => r.role === "coach").length;
+
+  return (
+    <div className="p-6 max-w-4xl space-y-6">
+      <div>
+        <h2 className="font-saira text-lg font-extrabold uppercase tracking-tight text-white mb-1">Surveys</h2>
+        <p className="font-saira text-xs text-zinc-400">
+          In-app feedback — round 1 fires on next login, rounds 2–3 spaced 30 days apart.
+        </p>
+      </div>
+
+      {total === 0 ? (
+        <div className="rounded-2xl border border-white/8 bg-surface-panel p-10 text-center">
+          <p className="font-saira text-sm text-zinc-400">No responses yet.</p>
+          <p className="font-saira text-xs text-zinc-600 mt-1">They'll appear here as users submit them.</p>
+        </div>
+      ) : (
+        <>
+          {/* Summary cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Total responses", value: total,                          sub: `${athletes} athletes · ${coaches} coaches` },
+              { label: "Avg NPS",         value: avgNps ? `${avgNps}/10` : "—", sub: `${npsList.length} answered` },
+              { label: "Avg WTP",         value: avgWtp ? `€${avgWtp}/mo` : "—",sub: `${wtpList.length} answered` },
+              { label: "By round",        value: `${byRound[0]} · ${byRound[1]} · ${byRound[2]}`, sub: "R1 · R2 · R3" },
+            ].map(({ label, value, sub }) => (
+              <div key={label} className="rounded-2xl border border-white/8 bg-surface-panel p-4">
+                <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1">{label}</p>
+                <p className="font-saira text-xl font-extrabold text-white tabular-nums">{value}</p>
+                <p className="font-saira text-[10px] text-zinc-500 mt-0.5">{sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Response list */}
+          <div className="space-y-2">
+            {responses.map((r) => {
+              const profile = profiles[r.user_id];
+              const name    = profile?.display_name ?? profile?.email ?? r.user_id.slice(0, 8);
+              const isOpen  = expanded === r.id;
+              const labels  = r.role === "coach" ? COACH_Q_LABELS : ATHLETE_Q_LABELS;
+              const date    = new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" });
+              const nps     = Number(r.answers.nps);
+              const wtp     = Number(r.answers.wtp);
+
+              return (
+                <div key={r.id} className="rounded-2xl border border-white/8 bg-surface-panel overflow-hidden">
+                  {/* Header row — always visible */}
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(isOpen ? null : r.id)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition"
+                  >
+                    {/* Role chip */}
+                    <span className={`flex-shrink-0 rounded-full border px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider ${
+                      r.role === "coach"
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                        : "border-purple-500/30 bg-purple-500/10 text-purple-300"
+                    }`}>{r.role}</span>
+                    {/* Round badge */}
+                    <span className="flex-shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-saira text-[9px] text-zinc-400">
+                      R{r.round}
+                    </span>
+                    {/* Name */}
+                    <span className="font-saira text-sm text-zinc-200 font-medium truncate flex-1">{name}</span>
+                    {/* NPS pill */}
+                    {nps > 0 && (
+                      <span className={`flex-shrink-0 font-saira text-xs font-bold tabular-nums ${
+                        nps >= 8 ? "text-emerald-400" : nps >= 5 ? "text-amber-400" : "text-rose-400"
+                      }`}>{nps}/10</span>
+                    )}
+                    {/* WTP */}
+                    {wtp > 0 && (
+                      <span className="flex-shrink-0 font-saira text-xs text-violet-300 tabular-nums">€{wtp}/mo</span>
+                    )}
+                    {/* Date */}
+                    <span className="flex-shrink-0 font-saira text-[10px] text-zinc-500">{date}</span>
+                    <span className={`flex-shrink-0 text-zinc-500 text-xs transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}>›</span>
+                  </button>
+
+                  {/* Expanded answers */}
+                  {isOpen && (
+                    <div className="border-t border-white/5 px-4 py-4 space-y-4">
+                      {Object.entries(r.answers).map(([key, val]) => {
+                        if (!val && val !== 0) return null;
+                        const label = labels[key] ?? key;
+                        const isArray = Array.isArray(val);
+                        const isEmpty = isArray ? (val as string[]).length === 0 : String(val).trim() === "";
+                        if (isEmpty) return null;
+                        return (
+                          <div key={key}>
+                            <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-500 mb-1">{label}</p>
+                            {isArray ? (
+                              <div className="flex flex-wrap gap-1.5">
+                                {(val as string[]).map((v) => (
+                                  <span key={v} className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-saira text-xs text-zinc-300">{v}</span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className={`font-saira text-sm leading-relaxed ${
+                                key === "nps" ? (Number(val) >= 8 ? "text-emerald-400 font-bold text-xl" : Number(val) >= 5 ? "text-amber-400 font-bold text-xl" : "text-rose-400 font-bold text-xl") :
+                                key === "wtp" ? "text-violet-300 font-bold text-xl" : "text-zinc-200"
+                              }`}>{key === "wtp" ? `€${val}/month` : String(val)}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "tools" | "roadmap" | "devtools" | "demo";
+type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "tools" | "surveys" | "roadmap" | "devtools" | "demo";
 
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -3484,6 +3658,7 @@ export default function MasterAdminPage() {
     ["conversations",  "Conversations",   "💬"],
     ["ai-insights",    "AI Insights",     "✦"],
     ["tools",          "Tool Usage",      "◈"],
+    ["surveys",        "Surveys",         "◉"],
     ["roadmap",        "Roadmap",         "▸"],
     ["devtools",       "Dev Tools",       "⚙"],
     ["demo",           "Demo Setup",      "▶"],
@@ -3583,6 +3758,7 @@ export default function MasterAdminPage() {
               {activeTab === "conversations" && <ConversationsTab />}
               {activeTab === "ai-insights" && <AiInsightsTab users={users} />}
               {activeTab === "tools" && <ToolsTab />}
+              {activeTab === "surveys" && <SurveysTab />}
               {activeTab === "roadmap" && <RoadmapTab />}
               {activeTab === "devtools" && <DevToolsTab users={users} />}
               {activeTab === "demo" && <DemoTab />}
