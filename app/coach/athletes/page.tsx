@@ -270,10 +270,26 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                   </div>
                 ))}
               </div>
-              {latestCheckin.biggest_win && (
-                <div className="mt-3 pt-3 border-t border-white/5">
-                  <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400 mb-1">Biggest win</p>
-                  <p className="font-saira text-xs text-zinc-300 leading-relaxed line-clamp-2">{latestCheckin.biggest_win}</p>
+              {(latestCheckin.biggest_win || latestCheckin.biggest_challenge || latestCheckin.focus_next_week) && (
+                <div className="mt-3 pt-3 border-t border-white/5 space-y-3">
+                  {latestCheckin.biggest_win && (
+                    <div>
+                      <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-emerald-400 mb-1">Biggest win</p>
+                      <p className="font-saira text-xs text-zinc-300 leading-relaxed">{latestCheckin.biggest_win}</p>
+                    </div>
+                  )}
+                  {latestCheckin.biggest_challenge && (
+                    <div>
+                      <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-amber-400 mb-1">Main challenge</p>
+                      <p className="font-saira text-xs text-zinc-300 leading-relaxed">{latestCheckin.biggest_challenge}</p>
+                    </div>
+                  )}
+                  {latestCheckin.focus_next_week && (
+                    <div>
+                      <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-purple-400 mb-1">Focus next week</p>
+                      <p className="font-saira text-xs text-zinc-300 leading-relaxed">{latestCheckin.focus_next_week}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
