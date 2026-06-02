@@ -2609,19 +2609,41 @@ function MobileAthleteSheet({
                         </div>
                       </button>
                       {open && (
-                        <div className={`grid grid-cols-5 gap-1 pt-1 pb-2 border-t ${color.includes("emerald") ? "border-emerald-500/10" : color.includes("amber") ? "border-amber-500/10" : "border-rose-500/10"}`}>
-                          {([
-                            ["Mood",    wc.mood_rating],
-                            ["Quality", wc.training_quality],
-                            ["Ready",   wc.readiness_rating],
-                            ["Energy",  wc.energy_rating],
-                            ["Sleep",   wc.sleep_rating],
-                          ] as [string, number][]).map(([label, val]) => (
-                            <div key={label} className="text-center pt-2">
-                              <div className={`font-saira text-base font-bold tabular-nums ${val >= 7 ? "text-emerald-400" : val >= 5 ? "text-amber-400" : "text-rose-400"}`}>{val}</div>
-                              <div className="font-saira text-[8px] text-zinc-500 uppercase tracking-wide">{label}</div>
+                        <div className="pt-2 pb-1 space-y-3">
+                          {/* 5 metric scores */}
+                          <div className="grid grid-cols-5 gap-1">
+                            {([
+                              ["Mood",    wc.mood_rating],
+                              ["Quality", wc.training_quality],
+                              ["Ready",   wc.readiness_rating],
+                              ["Energy",  wc.energy_rating],
+                              ["Sleep",   wc.sleep_rating],
+                            ] as [string, number][]).map(([label, val]) => (
+                              <div key={label} className="text-center">
+                                <div className={`font-saira text-base font-bold tabular-nums ${val >= 7 ? "text-emerald-400" : val >= 5 ? "text-amber-400" : "text-rose-400"}`}>{val}</div>
+                                <div className="font-saira text-[8px] text-zinc-500 uppercase tracking-wide">{label}</div>
+                              </div>
+                            ))}
+                          </div>
+                          {/* Text answers */}
+                          {wc.biggest_win && (
+                            <div>
+                              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.18em] text-emerald-400 mb-0.5">Biggest win</p>
+                              <p className="font-saira text-xs text-zinc-300 leading-relaxed">{wc.biggest_win}</p>
                             </div>
-                          ))}
+                          )}
+                          {wc.biggest_challenge && (
+                            <div>
+                              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.18em] text-amber-400 mb-0.5">Main challenge</p>
+                              <p className="font-saira text-xs text-zinc-300 leading-relaxed">{wc.biggest_challenge}</p>
+                            </div>
+                          )}
+                          {wc.focus_next_week && (
+                            <div>
+                              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.18em] text-purple-400 mb-0.5">Focus next week</p>
+                              <p className="font-saira text-xs text-zinc-300 leading-relaxed">{wc.focus_next_week}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
