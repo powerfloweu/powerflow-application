@@ -20,7 +20,7 @@ heading structure without updating the parser.
 - [x] Stripe payment for all three tiers (opener / second / pr) with upgrade options
 
 ### Coach AI
-- [~] Clarice voice install
+- [x] Clarice voice install
 - [x] Voice selector for Coach AI
 - [x] Coach dashboard (replace "just select an athlete" with a real dashboard)
 - [ ] Monthly check-in simulation
