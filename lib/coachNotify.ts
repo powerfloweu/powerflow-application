@@ -34,19 +34,18 @@ export async function notifyCoachOfCheckin(
     const athleteName = profile.display_name ?? "An athlete";
     const label = checkinType === "monthly" ? "monthly" : "weekly";
 
-    // Push notification (fire-and-forget)
-    sendPushToUser(profile.coach_id, {
-      title: `New ${label} check-in`,
-      body: `${athleteName} just submitted their ${label} check-in`,
-      url: "/coach",
-      tag: `checkin-${athleteUserId}-${label}`,
-    }).catch(() => {});
-
-    // Email
+    // Push + email in parallel, both awaited so serverless doesn't kill them
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.power-flow.eu";
     const coachEmail = await getAuthUserEmail(profile.coach_id);
-    if (coachEmail) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.power-flow.eu";
-      sendEmail({
+
+    await Promise.all([
+      sendPushToUser(profile.coach_id, {
+        title: `New ${label} check-in`,
+        body: `${athleteName} just submitted their ${label} check-in`,
+        url: "/coach",
+        tag: `checkin-${athleteUserId}-${label}`,
+      }).catch(() => {}),
+      coachEmail ? sendEmail({
         to: coachEmail,
         subject: `${athleteName} submitted their ${label} check-in`,
         html: `
@@ -63,7 +62,7 @@ export async function notifyCoachOfCheckin(
           </div>
         `,
         text: `${athleteName} submitted their ${label} check-in. Visit ${appUrl}/coach to review it.`,
-      }).catch(() => {});
-    }
+      }).catch(() => {}) : Promise.resolve(),
+    ]);
   } catch { /* never throw */ }
 }
