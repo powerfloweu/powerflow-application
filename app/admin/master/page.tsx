@@ -1733,6 +1733,10 @@ function ResultsTab() {
                                 })}
                               </div>
                             </div>
+                            <a href={`/tests/self-awareness/results?adminRef=${r.id}`} target="_blank" rel="noopener"
+                               className="inline-flex items-center gap-1 font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
+                              View full report →
+                            </a>
                           </td>
                         </tr>
                       )}
@@ -1805,6 +1809,10 @@ function ResultsTab() {
                                   );
                                 })}
                               </div>
+                              <a href={`/tests/acsi/results?adminRef=${r.id}`} target="_blank" rel="noopener"
+                                 className="inline-flex items-center gap-1 font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
+                                View full report →
+                              </a>
                             </td>
                           </tr>
                         )}
@@ -1871,6 +1879,10 @@ function ResultsTab() {
                                   </div>
                                 ))}
                               </div>
+                              <a href={`/tests/csai/results?adminRef=${r.id}`} target="_blank" rel="noopener"
+                                 className="inline-flex items-center gap-1 font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
+                                View full report →
+                              </a>
                             </td>
                           </tr>
                         )}
@@ -1948,6 +1960,10 @@ function ResultsTab() {
                                   </div>
                                 ))}
                               </div>
+                              <a href={`/tests/das/results?adminRef=${r.id}`} target="_blank" rel="noopener"
+                                 className="inline-flex items-center gap-1 font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
+                                View full report →
+                              </a>
                             </td>
                           </tr>
                         )}

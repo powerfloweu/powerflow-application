@@ -187,6 +187,23 @@ export default function AcsiResultsPage() {
   const [verifyError, setVerifyError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    // Admin bypass: load result from DB instead of localStorage
+    const adminRef = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("adminRef")
+      : null;
+    if (adminRef) {
+      fetch(`/api/admin/result-detail?type=acsi&id=${encodeURIComponent(adminRef)}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data) {
+            setPayload(data);
+            setUnlocked(true);
+          }
+        })
+        .catch(() => {});
+      return; // skip localStorage flow
+    }
+
     try {
       const raw = localStorage.getItem(RESULT_KEY);
       if (raw) setPayload(JSON.parse(raw));
