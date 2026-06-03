@@ -8,6 +8,7 @@ import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
 import { checkinTargetWeek, isoWeekYear, isMonthlyWeek } from "@/lib/weeklyCheckin";
 import { mondayOfWeek } from "@/lib/date";
+import { notifyCoachOfCheckin } from "@/lib/coachNotify";
 
 export async function POST(req: NextRequest) {
   if (!isConfigured) return NextResponse.json({ error: "Not configured" }, { status: 503 });
@@ -94,6 +95,9 @@ export async function POST(req: NextRequest) {
       week_start:  target.weekStart,
     } as Record<string, unknown>);
   }
+
+  // Fire-and-forget: notify the athlete's coach
+  notifyCoachOfCheckin(user.id, "monthly").catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

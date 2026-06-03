@@ -522,15 +522,163 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
 
 // ── Check-ins tab ─────────────────────────────────────────────────────────────
 
+type CheckinFeedback = {
+  id: string;
+  checkin_id: string;
+  checkin_type: string;
+  content: string | null;
+  audio_url: string | null;
+  reviewed: boolean;
+};
+
+function CheckinFeedbackPanel({
+  checkinId,
+  checkinType,
+  athleteId,
+  existing,
+  onSaved,
+}: {
+  checkinId: string;
+  checkinType: "weekly" | "monthly";
+  athleteId: string;
+  existing: CheckinFeedback | undefined;
+  onSaved: (fb: CheckinFeedback) => void;
+}) {
+  const [text, setText] = React.useState(existing?.content ?? "");
+  const [audioUrl, setAudioUrl] = React.useState(existing?.audio_url ?? "");
+  const [reviewed, setReviewed] = React.useState(existing?.reviewed ?? false);
+  const [saving, setSaving] = React.useState(false);
+  const [recording, setRecording] = React.useState(false);
+  const [mediaRec, setMediaRec] = React.useState<MediaRecorder | null>(null);
+  const chunksRef = React.useRef<Blob[]>([]);
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const fd = new FormData();
+        fd.append("audio", blob, "voice.webm");
+        const res = await fetch("/api/coach/checkin-audio", { method: "POST", body: fd });
+        if (res.ok) {
+          const { url } = await res.json() as { url: string };
+          setAudioUrl(url);
+        }
+      };
+      mr.start();
+      setMediaRec(mr);
+      setRecording(true);
+    } catch { alert("Microphone access denied"); }
+  }
+
+  function stopRecording() {
+    mediaRec?.stop();
+    setMediaRec(null);
+    setRecording(false);
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/coach/checkin-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          checkin_id: checkinId,
+          checkin_type: checkinType,
+          athlete_id: athleteId,
+          content: text || undefined,
+          audio_url: audioUrl || undefined,
+          reviewed,
+        }),
+      });
+      if (res.ok) {
+        const { id } = await res.json() as { id: string };
+        onSaved({ id, checkin_id: checkinId, checkin_type: checkinType, content: text || null, audio_url: audioUrl || null, reviewed });
+      }
+    } finally { setSaving(false); }
+  }
+
+  return (
+    <div className="pt-3 border-t border-white/5 space-y-2">
+      <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-purple-400/80">Coach feedback</p>
+
+      {/* Written message */}
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Leave a written note for this athlete…"
+        rows={3}
+        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-saira text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-400/40 transition resize-none"
+      />
+
+      {/* Audio recording */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {!recording ? (
+          <button type="button" onClick={startRecording}
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-[11px] text-zinc-300 hover:text-white hover:border-white/20 transition">
+            <span className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />
+            {audioUrl ? "Re-record" : "Record voice"}
+          </button>
+        ) : (
+          <button type="button" onClick={stopRecording}
+            className="flex items-center gap-1.5 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-1.5 font-saira text-[11px] text-rose-300 animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-rose-400 flex-shrink-0" />
+            Stop recording
+          </button>
+        )}
+        {audioUrl && !recording && (
+          <audio src={audioUrl} controls className="h-8 flex-1 min-w-0" />
+        )}
+      </div>
+
+      {/* Reviewed tick + save */}
+      <div className="flex items-center justify-between gap-3">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)}
+            className="w-4 h-4 rounded border-white/20 bg-white/5 accent-purple-500 cursor-pointer" />
+          <span className="font-saira text-[11px] text-zinc-400">Mark as reviewed</span>
+        </label>
+        <button type="button" onClick={save} disabled={saving}
+          className="rounded-lg border border-purple-400/30 bg-purple-500/15 px-4 py-1.5 font-saira text-[11px] font-bold text-purple-300 hover:bg-purple-500/25 transition disabled:opacity-50">
+          {saving ? "Saving…" : "Save feedback"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CheckinsTab({
   checkins,
   monthlyCheckins,
+  athleteId,
 }: {
   checkins: WeeklyCheckin[];
   monthlyCheckins: MonthlyCheckin[];
+  athleteId: string;
 }) {
   const { t } = useT();
   const [expandedWeeks, setExpandedWeeks] = React.useState<Set<string>>(new Set());
+  const [feedback, setFeedback] = React.useState<CheckinFeedback[]>([]);
+
+  React.useEffect(() => {
+    if (!athleteId) return;
+    fetch(`/api/coach/checkin-feedback?athlete_id=${encodeURIComponent(athleteId)}`)
+      .then((r) => r.ok ? r.json() : [])
+      .then((rows: CheckinFeedback[]) => setFeedback(rows))
+      .catch(() => {});
+  }, [athleteId]);
+
+  function handleFeedbackSaved(fb: CheckinFeedback) {
+    setFeedback((prev) => {
+      const idx = prev.findIndex((f) => f.checkin_id === fb.checkin_id && f.checkin_type === fb.checkin_type);
+      return idx >= 0 ? prev.map((f, i) => i === idx ? fb : f) : [fb, ...prev];
+    });
+  }
 
   // Merge weekly + monthly into one list, sorted newest-first
   type Row =
@@ -568,6 +716,7 @@ function CheckinsTab({
         ) / 10;
         const avgColor = avg >= 7.5 ? "text-emerald-400" : avg >= 5 ? "text-purple-300" : "text-rose-400";
         const isMonthly = row.kind === "monthly";
+        const existingFb = feedback.find((f) => f.checkin_id === ci.id && f.checkin_type === (isMonthly ? "monthly" : "weekly"));
 
         return (
           <div
@@ -593,7 +742,10 @@ function CheckinsTab({
                 )}
                 <span className="font-saira text-[11px] font-semibold text-zinc-300 truncate">{label}</span>
               </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {existingFb?.reviewed && (
+                  <span className="font-saira text-[9px] font-bold text-emerald-400 border border-emerald-400/30 rounded-full px-1.5 py-0.5">✓</span>
+                )}
                 <span className={`font-saira text-sm font-bold tabular-nums ${avgColor}`}>{avg.toFixed(1)}</span>
                 <svg viewBox="0 0 16 16" className={`w-3 h-3 text-zinc-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none">
                   <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -676,6 +828,15 @@ function CheckinsTab({
                     </>
                   );
                 })()}
+
+                {/* Coach feedback panel */}
+                <CheckinFeedbackPanel
+                  checkinId={ci.id}
+                  checkinType={isMonthly ? "monthly" : "weekly"}
+                  athleteId={athleteId}
+                  existing={existingFb}
+                  onSaved={handleFeedbackSaved}
+                />
               </div>
             )}
           </div>
@@ -1996,7 +2157,7 @@ function ClientCard({
 
             {/* ── Tab: Check-ins ── */}
             {activeTab === "checkins" && (
-              <CheckinsTab checkins={client.weeklyCheckins} monthlyCheckins={client.monthlyCheckins} />
+              <CheckinsTab checkins={client.weeklyCheckins} monthlyCheckins={client.monthlyCheckins} athleteId={client.profile.athleteId} />
             )}
 
             {/* ── Tab: Profile ── */}

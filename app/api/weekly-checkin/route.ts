@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
 import { checkinTargetWeek, isoWeekYear, isMonthlyWeek } from "@/lib/weeklyCheckin";
+import { notifyCoachOfCheckin } from "@/lib/coachNotify";
 import { mondayOfWeek } from "@/lib/date";
 import type { WeeklyCheckin, MonthlyCheckin } from "@/lib/weeklyCheckin";
 
@@ -127,6 +128,9 @@ export async function POST(req: NextRequest) {
       week_start:  target.weekStart,
     } as Record<string, unknown>);
   }
+
+  // Fire-and-forget: notify the athlete's coach
+  notifyCoachOfCheckin(user.id, "weekly").catch(() => {});
 
   return NextResponse.json({ ok: true });
 }
