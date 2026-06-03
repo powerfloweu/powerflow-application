@@ -9,7 +9,7 @@ import type { TrainingEntry } from "@/lib/training";
 import type { WeeklyCheckin } from "@/lib/weeklyCheckin";
 
 // ── Test result row types (mirror /api/coach/athletes) ────────────────────────
-type SatRow  = { id: string; total_score: number; submitted_at: string };
+type SatRow  = { id: string; total_score: number; validity_reliable: boolean; submitted_at: string; score_performance: number; score_affiliation: number; score_aggression: number; score_defensiveness: number; score_consciousness: number; score_dominance: number; score_exhibition: number; score_autonomy: number; score_caregiving: number; score_order: number; score_helplessness: number; sf_self_confirmation: number; sf_rational_dominance: number; sf_aggressive_nonconformity: number; sf_passive_dependence: number; sf_sociability: number; sf_agreeableness: number; };
 type AcsiRow = { id: string; score_coping: number; score_peaking: number; score_concentration: number; score_confidence: number; score_goal_setting: number; score_freedom: number; score_coachability: number; total_score: number; submitted_at: string };
 type CsaiRow = { id: string; score_cognitive: number; score_somatic: number; score_confidence: number; submitted_at: string };
 type DasRow  = { id: string; total_score: number; depression_prone: boolean; submitted_at: string; score_external_approval: number; score_lovability: number; score_achievement: number; score_perfectionism: number; score_entitlement: number; score_omnipotence: number; score_external_control: number; };
@@ -468,18 +468,49 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
           {/* SAT */}
           <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
             <p className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-fuchsia-400 mb-2">SAT — Sport Anxiety Test</p>
-            {athlete.sat[0] ? (
-              <div className="space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="font-saira text-xs text-zinc-400">Total score</span>
-                  <span className="font-saira text-xs font-bold text-zinc-100 tabular-nums">{athlete.sat[0].total_score} / 165</span>
+            {athlete.sat[0] ? (() => {
+              const s = athlete.sat[0];
+              return (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="font-saira text-xs text-zinc-400">Yes count</span>
+                    <span className="font-saira text-xs font-bold text-zinc-100 tabular-nums">{s.total_score} / 165</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-saira text-xs text-zinc-400">Validity</span>
+                    <span className={`font-saira text-xs font-semibold ${s.validity_reliable ? "text-emerald-400" : "text-rose-400"}`}>
+                      {s.validity_reliable ? "Reliable" : "Unreliable"}
+                    </span>
+                  </div>
+                  {s.score_performance !== undefined && (
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 pt-1">
+                      {[
+                        ["Performance",   s.score_performance],
+                        ["Affiliation",   s.score_affiliation],
+                        ["Aggression",    s.score_aggression],
+                        ["Defensiveness", s.score_defensiveness],
+                        ["Consciousness", s.score_consciousness],
+                        ["Dominance",     s.score_dominance],
+                        ["Exhibition",    s.score_exhibition],
+                        ["Autonomy",      s.score_autonomy],
+                        ["Caregiving",    s.score_caregiving],
+                        ["Order",         s.score_order],
+                        ["Helplessness",  s.score_helplessness],
+                      ].map(([l, v]) => (
+                        <div key={l as string} className="flex justify-between">
+                          <span className="font-saira text-[10px] text-zinc-500">{l as string}</span>
+                          <span className="font-saira text-[10px] tabular-nums text-zinc-300">{v as number}/15</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex justify-between pt-1">
+                    <span className="font-saira text-xs text-zinc-400">Date</span>
+                    <span className="font-saira text-xs text-zinc-300">{fmtDate(s.submitted_at)}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-saira text-xs text-zinc-400">Date</span>
-                  <span className="font-saira text-xs text-zinc-300">{fmtDate(athlete.sat[0].submitted_at)}</span>
-                </div>
-              </div>
-            ) : (
+              );
+            })() : (
               <p className="font-saira text-xs text-zinc-500">No result yet</p>
             )}
           </div>

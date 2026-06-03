@@ -1678,12 +1678,60 @@ function ResultsTab() {
                       </tr>
                       {expandedId === r.id && (
                         <tr className="border-b border-white/5 bg-white/[0.015]">
-                          <td colSpan={7} className="px-4 py-3">
+                          <td colSpan={7} className="px-4 py-3 space-y-3">
                             <div className="flex flex-wrap gap-4 font-saira text-[11px]">
                               <span className="text-zinc-400">Gender: <span className="text-white">{r.gender || "—"}</span></span>
                               <span className="text-zinc-400">Lang: <span className="text-white">{(r.lang ?? "").toUpperCase() || "—"}</span></span>
-                              <span className="text-zinc-400">Ref: <span className="text-zinc-300 font-mono text-[10px]">{r.result_ref || "—"}</span></span>
-                              <span className="text-zinc-500 italic">Individual scale breakdown visible to athlete at submission time only.</span>
+                              <span className="text-zinc-400">Yes count: <span className="text-white">{r.sum_yes} / 165</span></span>
+                              <span className="text-zinc-400">Validity: <span className={r.validity_reliable ? "text-green-400" : "text-rose-400"}>{r.validity_reliable ? "Reliable" : "Unreliable"}</span></span>
+                            </div>
+                            {/* 11 primary factors */}
+                            <div>
+                              <p className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-500 mb-1.5">Primary factors (0–15)</p>
+                              <div className="grid grid-cols-3 sm:grid-cols-6 gap-x-4 gap-y-1 font-saira text-[11px]">
+                                {([
+                                  ["Performance",   r.score_performance],
+                                  ["Affiliation",   r.score_affiliation],
+                                  ["Aggression",    r.score_aggression],
+                                  ["Defensiveness", r.score_defensiveness],
+                                  ["Consciousness", r.score_consciousness],
+                                  ["Dominance",     r.score_dominance],
+                                  ["Exhibition",    r.score_exhibition],
+                                  ["Autonomy",      r.score_autonomy],
+                                  ["Caregiving",    r.score_caregiving],
+                                  ["Order",         r.score_order],
+                                  ["Helplessness",  r.score_helplessness],
+                                ] as [string, number][]).map(([label, score]) => (
+                                  <div key={label} className="flex items-center gap-1">
+                                    <span className="text-zinc-400 truncate">{label}:</span>
+                                    <span className="font-bold text-white">{score}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            {/* 6 subfactors */}
+                            <div>
+                              <p className="font-saira text-[9px] uppercase tracking-[0.2em] text-zinc-500 mb-1.5">Subfactors (norm range in parentheses)</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 font-saira text-[11px]">
+                                {([
+                                  ["Self-confirmation",        r.sf_self_confirmation,        120, 165],
+                                  ["Rational dominance",       r.sf_rational_dominance,         5,  40],
+                                  ["Aggressive nonconformity", r.sf_aggressive_nonconformity,  10,  23],
+                                  ["Passive dependence",       r.sf_passive_dependence,        100, 140],
+                                  ["Sociability",              r.sf_sociability,                55,  90],
+                                  ["Agreeableness",            r.sf_agreeableness,              60, 100],
+                                ] as [string, number, number, number][]).map(([label, score, min, max]) => {
+                                  const band = score < min ? "low" : score > max ? "high" : "avg";
+                                  const cls  = band === "avg" ? "text-zinc-200" : "text-rose-400";
+                                  return (
+                                    <div key={label} className="flex items-center gap-1">
+                                      <span className="text-zinc-400 truncate">{label}:</span>
+                                      <span className={`font-bold ${cls}`}>{score}</span>
+                                      <span className="text-zinc-600 text-[9px]">({min}–{max})</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
                           </td>
                         </tr>

@@ -79,7 +79,7 @@ type EntryRow = {
   created_at: string;
 };
 
-type SatRow  = { id: string; user_id?: string; total_score: number; submitted_at: string; paid: boolean };
+type SatRow  = { id: string; user_id?: string; total_score: number; validity_reliable: boolean; submitted_at: string; paid: boolean; score_performance: number; score_affiliation: number; score_aggression: number; score_defensiveness: number; score_consciousness: number; score_dominance: number; score_exhibition: number; score_autonomy: number; score_caregiving: number; score_order: number; score_helplessness: number; sf_self_confirmation: number; sf_rational_dominance: number; sf_aggressive_nonconformity: number; sf_passive_dependence: number; sf_sociability: number; sf_agreeableness: number; };
 type AcsiRow = { id: string; user_id?: string; score_coping: number; score_peaking: number; score_concentration: number; score_confidence: number; score_goal_setting: number; score_freedom: number; score_coachability: number; total_score: number; submitted_at: string; paid: boolean };
 type CsaiRow = { id: string; user_id?: string; score_cognitive: number; score_somatic: number; score_confidence: number; submitted_at: string; paid: boolean };
 type DasRow  = { id: string; user_id?: string; total_score: number; depression_prone: boolean; submitted_at: string; paid: boolean; score_external_approval: number; score_lovability: number; score_achievement: number; score_perfectionism: number; score_entitlement: number; score_omnipotence: number; score_external_control: number; };
@@ -146,7 +146,7 @@ export async function GET() {
     dbSelect<SatRow>("sat_results", {
       user_id: `in.${idList}`,
       order: "submitted_at.desc",
-      select: "id,user_id,total_score,submitted_at,paid",
+      select: "id,user_id,total_score,validity_reliable,submitted_at,paid,score_performance,score_affiliation,score_aggression,score_defensiveness,score_consciousness,score_dominance,score_exhibition,score_autonomy,score_caregiving,score_order,score_helplessness,sf_self_confirmation,sf_rational_dominance,sf_aggressive_nonconformity,sf_passive_dependence,sf_sociability,sf_agreeableness",
     }),
     dbSelect<AcsiRow>("acsi_results", {
       user_id: `in.${idList}`,

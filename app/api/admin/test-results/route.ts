@@ -24,6 +24,25 @@ export type SatRow = {
   user_id: string | null;
   sum_yes: number;
   validity_reliable: boolean;
+  // 11 primary factors (0–15)
+  score_performance: number;
+  score_affiliation: number;
+  score_aggression: number;
+  score_defensiveness: number;
+  score_consciousness: number;
+  score_dominance: number;
+  score_exhibition: number;
+  score_autonomy: number;
+  score_caregiving: number;
+  score_order: number;
+  score_helplessness: number;
+  // 6 subfactors (composite weighted scores)
+  sf_self_confirmation: number;
+  sf_rational_dominance: number;
+  sf_aggressive_nonconformity: number;
+  sf_passive_dependence: number;
+  sf_sociability: number;
+  sf_agreeableness: number;
 };
 
 export type AcsiRow = {
@@ -86,7 +105,7 @@ export type DasRow = {
 const COMMON        = "id,result_ref,first_name,email,gender,lang,submitted_at,paid,user_id";
 const COMMON_NO_GENDER = "id,result_ref,first_name,email,lang,submitted_at,paid,user_id";
 
-const SAT_SELECT  = `${COMMON},sum_yes,validity_reliable`;
+const SAT_SELECT  = `${COMMON},sum_yes,validity_reliable,score_performance,score_affiliation,score_aggression,score_defensiveness,score_consciousness,score_dominance,score_exhibition,score_autonomy,score_caregiving,score_order,score_helplessness,sf_self_confirmation,sf_rational_dominance,sf_aggressive_nonconformity,sf_passive_dependence,sf_sociability,sf_agreeableness`;
 const ACSI_SELECT = `${COMMON},total_score,score_coping,score_peaking,score_goal_setting,score_concentration,score_freedom,score_confidence,score_coachability`;
 const CSAI_SELECT = `${COMMON},score_cognitive,score_somatic,score_confidence`;
 const DAS_SELECT  = `${COMMON_NO_GENDER},total_score,depression_prone,score_external_approval,score_lovability,score_achievement,score_perfectionism,score_entitlement,score_omnipotence,score_external_control`;
