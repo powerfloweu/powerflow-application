@@ -47,8 +47,9 @@ export default function ResultsPage() {
             setPayload(data);
             setUnlocked(true);
           }
+          setHydrated(true);
         })
-        .catch(() => {});
+        .catch(() => { setHydrated(true); });
       return; // skip localStorage flow
     }
 
