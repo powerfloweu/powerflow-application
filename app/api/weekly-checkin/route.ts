@@ -146,7 +146,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Fire-and-forget: notify the athlete's coach
-  notifyCoachOfCheckin(user.id, "weekly").catch(() => {});
+  // Await the notification so it completes before the serverless function exits
+  await notifyCoachOfCheckin(user.id, "weekly");
 
   return NextResponse.json({ ok: true });
 }

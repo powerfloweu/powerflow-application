@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Fire-and-forget: notify the athlete's coach
-  notifyCoachOfCheckin(user.id, "monthly").catch(() => {});
+  await notifyCoachOfCheckin(user.id, "monthly");
 
   return NextResponse.json({ ok: true });
 }
