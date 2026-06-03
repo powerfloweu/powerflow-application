@@ -63,6 +63,9 @@ export async function GET() {
     }
   }
 
+  // Force flag overrides "already submitted" so the modal always shows
+  if (forceFlag) currentSubmitted = false;
+
   return NextResponse.json({ checkins, windowOpen: target !== null, targetWeek: target, currentSubmitted, isMonthly });
 }
 
