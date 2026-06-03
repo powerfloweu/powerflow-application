@@ -1497,7 +1497,28 @@ function ResultsTab() {
   const [error, setError] = React.useState<string | null>(null);
   const [sub, setSub] = React.useState<ResultSubTab>("sat");
   const [search, setSearch] = React.useState("");
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
   const fetched = React.useRef(false);
+
+  function toggleExpand(id: string) {
+    setExpandedId((prev) => (prev === id ? null : id));
+  }
+
+  function acsiBand(score: number) {
+    if (score <= 8)  return { label: "Low",     cls: "bg-rose-500/15 text-rose-400" };
+    if (score <= 12) return { label: "Average",  cls: "bg-yellow-500/15 text-yellow-400" };
+    return                  { label: "High",     cls: "bg-green-500/15 text-green-400" };
+  }
+  function csaiAnxBand(score: number) {
+    if (score <= 15) return { label: "Low",     cls: "bg-green-500/15 text-green-400" };
+    if (score <= 22) return { label: "Average",  cls: "bg-yellow-500/15 text-yellow-400" };
+    return                  { label: "High",     cls: "bg-rose-500/15 text-rose-400" };
+  }
+  function csaiConfBand(score: number) {
+    if (score <= 21) return { label: "Low",     cls: "bg-rose-500/15 text-rose-400" };
+    if (score <= 29) return { label: "Average",  cls: "bg-yellow-500/15 text-yellow-400" };
+    return                  { label: "High",     cls: "bg-green-500/15 text-green-400" };
+  }
 
   React.useEffect(() => {
     if (fetched.current) return;
@@ -1582,6 +1603,16 @@ function ResultsTab() {
           placeholder="Filter by name or email…"
           className="w-full max-w-xs rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-400/40 transition"
         />
+        {search && filtered && (
+          <div className="flex gap-3 font-saira text-[10px]">
+            {(["sat","acsi","csai","das"] as ResultSubTab[]).map((k) => (
+              <button key={k} onClick={() => setSub(k)}
+                className={`uppercase tracking-wider ${filtered[k].length > 0 ? "text-purple-400 font-bold" : "text-zinc-500"}`}>
+                {k}: {filtered[k].length}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {loading && (
@@ -1616,30 +1647,48 @@ function ResultsTab() {
                 </thead>
                 <tbody>
                   {filtered.sat.map((r) => (
-                    <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
-                      <td className="px-4 py-2.5 text-white">{r.first_name}</td>
-                      <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
-                      <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
-                        {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                      </td>
-                      <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
-                      <td className="px-4 py-2.5 font-bold text-white">{r.sum_yes}</td>
-                      <td className="px-4 py-2.5">
-                        <span className={`inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold ${r.validity_reliable ? "bg-green-500/15 text-green-400" : "bg-rose-500/15 text-rose-400"}`}>
-                          {r.validity_reliable ? "Reliable" : "Unreliable"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        {!r.paid && (
-                          <button
-                            onClick={() => handleUnlock("sat_results", r.id)}
-                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
-                          >
-                            Unlock
-                          </button>
-                        )}
-                      </td>
-                    </tr>
+                    <React.Fragment key={r.id}>
+                      <tr className={`border-b border-white/5 hover:bg-white/[0.015] cursor-pointer${expandedId === r.id ? " bg-white/[0.02]" : ""}`}
+                          onClick={() => toggleExpand(r.id)}>
+                        <td className="px-4 py-2.5 text-white">{r.first_name}</td>
+                        <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
+                        <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
+                          {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                        </td>
+                        <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
+                        <td className="px-4 py-2.5 font-bold text-white">{r.sum_yes}</td>
+                        <td className="px-4 py-2.5">
+                          <span className={`inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold ${r.validity_reliable ? "bg-green-500/15 text-green-400" : "bg-rose-500/15 text-rose-400"}`}>
+                            {r.validity_reliable ? "Reliable" : "Unreliable"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-2">
+                            {!r.paid && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleUnlock("sat_results", r.id); }}
+                                className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
+                              >
+                                Unlock
+                              </button>
+                            )}
+                            <span className="text-zinc-600 text-[10px]">{expandedId === r.id ? "▲" : "▼"}</span>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedId === r.id && (
+                        <tr className="border-b border-white/5 bg-white/[0.015]">
+                          <td colSpan={7} className="px-4 py-3">
+                            <div className="flex flex-wrap gap-4 font-saira text-[11px]">
+                              <span className="text-zinc-400">Gender: <span className="text-white">{r.gender || "—"}</span></span>
+                              <span className="text-zinc-400">Lang: <span className="text-white">{(r.lang ?? "").toUpperCase() || "—"}</span></span>
+                              <span className="text-zinc-400">Ref: <span className="text-zinc-300 font-mono text-[10px]">{r.result_ref || "—"}</span></span>
+                              <span className="text-zinc-500 italic">Individual scale breakdown visible to athlete at submission time only.</span>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -1657,36 +1706,61 @@ function ResultsTab() {
                 <tbody>
                   {filtered.acsi.map((r) => {
                     const subscales: [string, number][] = [
-                      ["Coping", r.score_coping],
-                      ["Peaking", r.score_peaking],
-                      ["Goals", r.score_goal_setting],
+                      ["Coping with Adversity", r.score_coping],
+                      ["Peaking Under Pressure", r.score_peaking],
+                      ["Goal Setting", r.score_goal_setting],
                       ["Concentration", r.score_concentration],
-                      ["Freedom", r.score_freedom],
+                      ["Freedom from Worry", r.score_freedom],
                       ["Confidence", r.score_confidence],
                       ["Coachability", r.score_coachability],
                     ];
                     const top = subscales.reduce((a, b) => (b[1] > a[1] ? b : a));
+                    const isExpanded = expandedId === r.id;
                     return (
-                      <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
-                        <td className="px-4 py-2.5 text-white">{r.first_name}</td>
-                        <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
-                        <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
-                          {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                        </td>
-                        <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
-                        <td className="px-4 py-2.5 font-bold text-white">{r.total_score}</td>
-                        <td className="px-4 py-2.5 text-zinc-400">{top[0]} ({top[1]})</td>
-                        <td className="px-4 py-2.5">
-                          {!r.paid && (
-                            <button
-                              onClick={() => handleUnlock("acsi_results", r.id)}
-                              className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
-                            >
-                              Unlock
-                            </button>
-                          )}
-                        </td>
-                      </tr>
+                      <React.Fragment key={r.id}>
+                        <tr className={`border-b border-white/5 hover:bg-white/[0.015] cursor-pointer${isExpanded ? " bg-white/[0.02]" : ""}`}
+                            onClick={() => toggleExpand(r.id)}>
+                          <td className="px-4 py-2.5 text-white">{r.first_name}</td>
+                          <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
+                          <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
+                            {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                          </td>
+                          <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
+                          <td className="px-4 py-2.5 font-bold text-white">{r.total_score}</td>
+                          <td className="px-4 py-2.5 text-zinc-400">{top[0]} ({top[1]})</td>
+                          <td className="px-4 py-2.5">
+                            <div className="flex items-center gap-2">
+                              {!r.paid && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleUnlock("acsi_results", r.id); }}
+                                  className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
+                                >
+                                  Unlock
+                                </button>
+                              )}
+                              <span className="text-zinc-600 text-[10px]">{isExpanded ? "▲" : "▼"}</span>
+                            </div>
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="border-b border-white/5 bg-white/[0.015]">
+                            <td colSpan={7} className="px-4 py-3">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-1.5 font-saira text-[11px]">
+                                {subscales.map(([label, score]) => {
+                                  const b = acsiBand(score as number);
+                                  return (
+                                    <div key={label as string} className="flex items-center gap-1.5">
+                                      <span className="text-zinc-400 shrink-0">{label as string}:</span>
+                                      <span className="font-bold text-white">{score as number}</span>
+                                      <span className={`inline-block rounded px-1 py-0.5 text-[9px] font-bold ${b.cls}`}>{b.label}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
@@ -1703,29 +1777,58 @@ function ResultsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.csai.map((r) => (
-                    <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
-                      <td className="px-4 py-2.5 text-white">{r.first_name}</td>
-                      <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
-                      <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
-                        {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                      </td>
-                      <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
-                      <td className="px-4 py-2.5 font-bold text-white">{r.score_cognitive}</td>
-                      <td className="px-4 py-2.5 font-bold text-white">{r.score_somatic}</td>
-                      <td className="px-4 py-2.5 font-bold text-white">{r.score_confidence}</td>
-                      <td className="px-4 py-2.5">
-                        {!r.paid && (
-                          <button
-                            onClick={() => handleUnlock("csai_results", r.id)}
-                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
-                          >
-                            Unlock
-                          </button>
+                  {filtered.csai.map((r) => {
+                    const isExpanded = expandedId === r.id;
+                    return (
+                      <React.Fragment key={r.id}>
+                        <tr className={`border-b border-white/5 hover:bg-white/[0.015] cursor-pointer${isExpanded ? " bg-white/[0.02]" : ""}`}
+                            onClick={() => toggleExpand(r.id)}>
+                          <td className="px-4 py-2.5 text-white">{r.first_name}</td>
+                          <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
+                          <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
+                            {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                          </td>
+                          <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
+                          <td className="px-4 py-2.5 font-bold text-white">{r.score_cognitive}</td>
+                          <td className="px-4 py-2.5 font-bold text-white">{r.score_somatic}</td>
+                          <td className="px-4 py-2.5 font-bold text-white">{r.score_confidence}</td>
+                          <td className="px-4 py-2.5">
+                            <div className="flex items-center gap-2">
+                              {!r.paid && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleUnlock("csai_results", r.id); }}
+                                  className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
+                                >
+                                  Unlock
+                                </button>
+                              )}
+                              <span className="text-zinc-600 text-[10px]">{isExpanded ? "▲" : "▼"}</span>
+                            </div>
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="border-b border-white/5 bg-white/[0.015]">
+                            <td colSpan={8} className="px-4 py-3">
+                              <div className="flex flex-wrap gap-6 font-saira text-[11px]">
+                                {[
+                                  { label: "Cognitive Anxiety", score: r.score_cognitive, band: csaiAnxBand(r.score_cognitive), note: "lower = better" },
+                                  { label: "Somatic Anxiety",   score: r.score_somatic,   band: csaiAnxBand(r.score_somatic),   note: "lower = better" },
+                                  { label: "Self-Confidence",   score: r.score_confidence, band: csaiConfBand(r.score_confidence), note: "higher = better" },
+                                ].map(({ label, score, band, note }) => (
+                                  <div key={label} className="flex items-center gap-1.5">
+                                    <span className="text-zinc-400">{label}:</span>
+                                    <span className="font-bold text-white">{score}</span>
+                                    <span className={`inline-block rounded px-1 py-0.5 text-[9px] font-bold ${band.cls}`}>{band.label}</span>
+                                    <span className="text-zinc-600 text-[9px]">({note})</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
                         )}
-                      </td>
-                    </tr>
-                  ))}
+                      </React.Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
@@ -1740,32 +1843,53 @@ function ResultsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.das.map((r) => (
-                    <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
-                      <td className="px-4 py-2.5 text-white">{r.first_name}</td>
-                      <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
-                      <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
-                        {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                      </td>
-                      <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
-                      <td className="px-4 py-2.5 font-bold text-white">{r.total_score}</td>
-                      <td className="px-4 py-2.5">
-                        <span className={`inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold ${r.depression_prone ? "bg-rose-500/15 text-rose-400" : "bg-zinc-500/15 text-zinc-300"}`}>
-                          {r.depression_prone ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        {!r.paid && (
-                          <button
-                            onClick={() => handleUnlock("das_results", r.id)}
-                            className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
-                          >
-                            Unlock
-                          </button>
+                  {filtered.das.map((r) => {
+                    const isExpanded = expandedId === r.id;
+                    return (
+                      <React.Fragment key={r.id}>
+                        <tr className={`border-b border-white/5 hover:bg-white/[0.015] cursor-pointer${isExpanded ? " bg-white/[0.02]" : ""}`}
+                            onClick={() => toggleExpand(r.id)}>
+                          <td className="px-4 py-2.5 text-white">{r.first_name}</td>
+                          <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
+                          <td className="px-4 py-2.5 text-zinc-300 whitespace-nowrap">
+                            {new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                          </td>
+                          <td className="px-4 py-2.5"><PaidChip paid={r.paid} /></td>
+                          <td className="px-4 py-2.5 font-bold text-white">{r.total_score}</td>
+                          <td className="px-4 py-2.5">
+                            <span className={`inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold ${r.depression_prone ? "bg-rose-500/15 text-rose-400" : "bg-zinc-500/15 text-zinc-300"}`}>
+                              {r.depression_prone ? "Yes" : "No"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <div className="flex items-center gap-2">
+                              {!r.paid && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleUnlock("das_results", r.id); }}
+                                  className="border border-white/10 rounded px-2 py-0.5 font-saira text-[9px] uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white/30 transition"
+                                >
+                                  Unlock
+                                </button>
+                              )}
+                              <span className="text-zinc-600 text-[10px]">{isExpanded ? "▲" : "▼"}</span>
+                            </div>
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="border-b border-white/5 bg-white/[0.015]">
+                            <td colSpan={7} className="px-4 py-3">
+                              <div className="flex flex-wrap gap-4 font-saira text-[11px]">
+                                <span className="text-zinc-400">Total score: <span className="font-bold text-white">{r.total_score}</span></span>
+                                <span className="text-zinc-400">Depression-prone flag: <span className={`font-bold ${r.depression_prone ? "text-rose-400" : "text-green-400"}`}>{r.depression_prone ? "Yes (≥18)" : "No (<18)"}</span></span>
+                                <span className="text-zinc-400">Gender: <span className="text-white">{r.gender || "—"}</span></span>
+                                <span className="text-zinc-500 italic">Individual subscale scores not stored — visible to athlete at submission time only.</span>
+                              </div>
+                            </td>
+                          </tr>
                         )}
-                      </td>
-                    </tr>
-                  ))}
+                      </React.Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
