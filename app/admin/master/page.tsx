@@ -1496,6 +1496,7 @@ function ResultsTab() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [sub, setSub] = React.useState<ResultSubTab>("sat");
+  const [search, setSearch] = React.useState("");
   const fetched = React.useRef(false);
 
   React.useEffect(() => {
@@ -1542,26 +1543,45 @@ function ResultsTab() {
     { key: "das", label: "DAS" },
   ];
 
-  const counts = data
-    ? { sat: data.sat.length, acsi: data.acsi.length, csai: data.csai.length, das: data.das.length }
+  const q = search.toLowerCase();
+  const filtered = data
+    ? {
+        sat:  data.sat.filter(r  => r.first_name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)),
+        acsi: data.acsi.filter(r => r.first_name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)),
+        csai: data.csai.filter(r => r.first_name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)),
+        das:  data.das.filter(r  => r.first_name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q)),
+      }
+    : null;
+
+  const counts = filtered
+    ? { sat: filtered.sat.length, acsi: filtered.acsi.length, csai: filtered.csai.length, das: filtered.das.length }
     : { sat: 0, acsi: 0, csai: 0, das: 0 };
 
   return (
     <div className="space-y-5">
-      {/* Sub-tab pills */}
-      <div className="flex gap-2 flex-wrap">
-        {subTabs.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setSub(key)}
-            className={`px-3 py-1.5 rounded-lg font-saira text-[11px] font-bold uppercase tracking-wider border transition
-              ${sub === key
-                ? "border-purple-400/40 bg-purple-500/15 text-purple-300"
-                : "border-white/10 text-zinc-300 hover:text-zinc-300"}`}
-          >
-            {label} {data ? `(${counts[key]})` : ""}
-          </button>
-        ))}
+      {/* Sub-tab pills + search */}
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-2 flex-wrap">
+          {subTabs.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setSub(key)}
+              className={`px-3 py-1.5 rounded-lg font-saira text-[11px] font-bold uppercase tracking-wider border transition
+                ${sub === key
+                  ? "border-purple-400/40 bg-purple-500/15 text-purple-300"
+                  : "border-white/10 text-zinc-300 hover:text-zinc-300"}`}
+            >
+              {label} {data ? `(${counts[key]})` : ""}
+            </button>
+          ))}
+        </div>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Filter by name or email…"
+          className="w-full max-w-xs rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-400/40 transition"
+        />
       </div>
 
       {loading && (
@@ -1574,7 +1594,7 @@ function ResultsTab() {
         <p className="font-saira text-sm text-red-400">{error}</p>
       )}
 
-      {data && (
+      {filtered && (
         <div className="rounded-2xl border border-white/5 bg-surface-card overflow-hidden">
           {/* Common header */}
           <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
@@ -1595,7 +1615,7 @@ function ResultsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.sat.map((r) => (
+                  {filtered.sat.map((r) => (
                     <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
                       <td className="px-4 py-2.5 text-white">{r.first_name}</td>
                       <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
@@ -1635,7 +1655,7 @@ function ResultsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.acsi.map((r) => {
+                  {filtered.acsi.map((r) => {
                     const subscales: [string, number][] = [
                       ["Coping", r.score_coping],
                       ["Peaking", r.score_peaking],
@@ -1683,7 +1703,7 @@ function ResultsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.csai.map((r) => (
+                  {filtered.csai.map((r) => (
                     <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
                       <td className="px-4 py-2.5 text-white">{r.first_name}</td>
                       <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
@@ -1720,7 +1740,7 @@ function ResultsTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.das.map((r) => (
+                  {filtered.das.map((r) => (
                     <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.015]">
                       <td className="px-4 py-2.5 text-white">{r.first_name}</td>
                       <td className="px-4 py-2.5 text-zinc-400 truncate max-w-[160px]">{r.email}</td>
