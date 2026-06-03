@@ -2752,7 +2752,7 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
           )}
 
           {/* Force popup — works for any user via server-side flag */}
-          {!!checkinResult?.targetWeek && !checkinResult?.currentSubmitted && (
+          {!!checkinResult?.targetWeek && (
             <div className="flex items-center gap-3">
               <button
                 type="button"
