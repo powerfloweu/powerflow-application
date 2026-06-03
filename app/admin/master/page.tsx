@@ -2683,16 +2683,15 @@ function DevToolsTab({ users }: { users: UserRow[] }) {
     if (forcingPopup || !checkinResult?.targetWeek) return;
     setForcingPopup(true);
     try {
+      // Always use server-side flag so the POST handler can also bypass the day gate.
+      // For own account, also set localStorage so the modal opens immediately without reload.
+      await fetch("/api/admin/weekly-checkin-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selectedUserId || undefined, forceModal: true }),
+      });
       if (!selectedUserId) {
-        // Own account — localStorage is fastest (no page reload needed)
         localStorage.setItem("pf-force-checkin", JSON.stringify(checkinResult.targetWeek));
-      } else {
-        // Another user — set server-side flag; modal fires on their next app load
-        await fetch("/api/admin/weekly-checkin-test", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: selectedUserId, forceModal: true }),
-        });
       }
       setPopupForced(true);
     } finally {

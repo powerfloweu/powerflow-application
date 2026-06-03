@@ -30,13 +30,12 @@ export async function GET() {
   const forceFlag = profileRows[0]?.force_checkin === true;
 
   // If forced, use current week regardless of day; otherwise use normal day gate
+  // NOTE: don't clear the flag here — the POST handler needs it too.
   let target = checkinTargetWeek();
   if (forceFlag && !target) {
     const now = new Date();
     const { week, year } = isoWeekYear(now);
     target = { week, year, weekStart: mondayOfWeek(now) };
-    // Clear the flag immediately so it only fires once
-    await dbPatch("profiles", { id: user.id }, { force_checkin: false });
   }
 
   const checkins = await dbSelect<WeeklyCheckin>("weekly_checkins", {
@@ -73,8 +72,25 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const target = checkinTargetWeek();
+  // Check server-side force flag (set by Dev Tools) — allows submission any day
+  const postProfileRows = await dbSelect<{ force_checkin: boolean }>("profiles", {
+    id: `eq.${user.id}`,
+    select: "force_checkin",
+  });
+  const postForceFlag = postProfileRows[0]?.force_checkin === true;
+
+  let target = checkinTargetWeek();
+  if (!target && postForceFlag) {
+    const now = new Date();
+    const { week, year } = isoWeekYear(now);
+    target = { week, year, weekStart: mondayOfWeek(now) };
+  }
   if (!target) return NextResponse.json({ error: "Check-in window is closed" }, { status: 400 });
+
+  // Clear the force flag now that we're actually submitting
+  if (postForceFlag) {
+    await dbPatch("profiles", { id: user.id }, { force_checkin: false });
+  }
 
   let body: {
     mood_rating: number;
