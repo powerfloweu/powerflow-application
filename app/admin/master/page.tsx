@@ -1881,7 +1881,7 @@ function ResultsTab() {
                               <div className="flex flex-wrap gap-4 font-saira text-[11px]">
                                 <span className="text-zinc-400">Total: <span className={`font-bold ${r.depression_prone ? "text-rose-400" : "text-green-400"}`}>{r.total_score > 0 ? "+" : ""}{r.total_score} / ±70</span></span>
                                 <span className="text-zinc-400">Dep-prone: <span className={`font-bold ${r.depression_prone ? "text-rose-400" : "text-green-400"}`}>{r.depression_prone ? "Yes" : "No"}</span></span>
-                                <span className="text-zinc-400">Gender: <span className="text-white">{r.gender || "—"}</span></span>
+                                <span className="text-zinc-400">Lang: <span className="text-white">{(r.lang ?? "").toUpperCase() || "—"}</span></span>
                               </div>
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-1 font-saira text-[11px]">
                                 {([

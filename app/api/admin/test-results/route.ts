@@ -66,7 +66,6 @@ export type DasRow = {
   result_ref: string;
   first_name: string;
   email: string;
-  gender: string;
   lang: string;
   submitted_at: string;
   paid: boolean;
@@ -84,12 +83,13 @@ export type DasRow = {
 
 // ── Column selects ─────────────────────────────────────────────────────────────
 
-const COMMON = "id,result_ref,first_name,email,gender,lang,submitted_at,paid,user_id";
+const COMMON        = "id,result_ref,first_name,email,gender,lang,submitted_at,paid,user_id";
+const COMMON_NO_GENDER = "id,result_ref,first_name,email,lang,submitted_at,paid,user_id";
 
-const SAT_SELECT = `${COMMON},sum_yes,validity_reliable`;
+const SAT_SELECT  = `${COMMON},sum_yes,validity_reliable`;
 const ACSI_SELECT = `${COMMON},total_score,score_coping,score_peaking,score_goal_setting,score_concentration,score_freedom,score_confidence,score_coachability`;
 const CSAI_SELECT = `${COMMON},score_cognitive,score_somatic,score_confidence`;
-const DAS_SELECT = `${COMMON},total_score,depression_prone,score_external_approval,score_lovability,score_achievement,score_perfectionism,score_entitlement,score_omnipotence,score_external_control`;
+const DAS_SELECT  = `${COMMON_NO_GENDER},total_score,depression_prone,score_external_approval,score_lovability,score_achievement,score_perfectionism,score_entitlement,score_omnipotence,score_external_control`;
 
 // ── GET ────────────────────────────────────────────────────────────────────────
 
