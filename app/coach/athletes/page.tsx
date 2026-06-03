@@ -10,9 +10,9 @@ import type { WeeklyCheckin } from "@/lib/weeklyCheckin";
 
 // ── Test result row types (mirror /api/coach/athletes) ────────────────────────
 type SatRow  = { id: string; total_score: number; submitted_at: string };
-type AcsiRow = { id: string; score_coping: number; score_concentration: number; score_confidence: number; score_goal_setting: number; total_score: number; submitted_at: string };
+type AcsiRow = { id: string; score_coping: number; score_peaking: number; score_concentration: number; score_confidence: number; score_goal_setting: number; score_freedom: number; score_coachability: number; total_score: number; submitted_at: string };
 type CsaiRow = { id: string; score_cognitive: number; score_somatic: number; score_confidence: number; submitted_at: string };
-type DasRow  = { id: string; total_score: number; depression_prone: boolean; submitted_at: string };
+type DasRow  = { id: string; total_score: number; depression_prone: boolean; submitted_at: string; score_external_approval: number; score_lovability: number; score_achievement: number; score_perfectionism: number; score_entitlement: number; score_omnipotence: number; score_external_control: number; };
 
 // ── Athlete data shape from the API ──────────────────────────────────────────
 type AthleteRow = {
@@ -352,26 +352,49 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
           {/* DAS */}
           <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
             <p className="font-saira text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400 mb-2">DAS — Depression / Anxiety / Stress</p>
-            {athlete.das[0] ? (
-              <div className="space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="font-saira text-xs text-zinc-400">Total score</span>
-                  <span className={`font-saira text-xs font-bold tabular-nums ${
-                    athlete.das[0].depression_prone ? "text-rose-400" : athlete.das[0].total_score > 18 ? "text-amber-400" : "text-emerald-400"
-                  }`}>{athlete.das[0].total_score > 0 ? "+" : ""}{athlete.das[0].total_score} / ±70</span>
+            {athlete.das[0] ? (() => {
+              const d = athlete.das[0];
+              return (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="font-saira text-xs text-zinc-400">Total score</span>
+                    <span className={`font-saira text-xs font-bold tabular-nums ${d.depression_prone ? "text-rose-400" : d.total_score > 18 ? "text-amber-400" : "text-emerald-400"}`}>
+                      {d.total_score > 0 ? "+" : ""}{d.total_score} / ±70
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-saira text-xs text-zinc-400">Risk flag</span>
+                    <span className={`font-saira text-xs font-semibold ${d.depression_prone ? "text-rose-400" : "text-emerald-400"}`}>
+                      {d.depression_prone ? "⚠ Elevated" : "Normal"}
+                    </span>
+                  </div>
+                  {d.score_external_approval !== undefined && (
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 pt-1">
+                      {[
+                        ["Ext. Approval",  d.score_external_approval],
+                        ["Lovability",     d.score_lovability],
+                        ["Achievement",    d.score_achievement],
+                        ["Perfectionism",  d.score_perfectionism],
+                        ["Entitlement",    d.score_entitlement],
+                        ["Omnipotence",    d.score_omnipotence],
+                        ["Ext. Control",   d.score_external_control],
+                      ].map(([l, v]) => (
+                        <div key={l as string} className="flex justify-between">
+                          <span className="font-saira text-[10px] text-zinc-500">{l as string}</span>
+                          <span className={`font-saira text-[10px] tabular-nums ${Math.abs(v as number) > 5 ? "text-rose-400" : "text-zinc-300"}`}>
+                            {(v as number) > 0 ? "+" : ""}{v as number}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex justify-between pt-1">
+                    <span className="font-saira text-xs text-zinc-400">Date</span>
+                    <span className="font-saira text-xs text-zinc-300">{fmtDate(d.submitted_at)}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-saira text-xs text-zinc-400">Risk flag</span>
-                  <span className={`font-saira text-xs font-semibold ${athlete.das[0].depression_prone ? "text-rose-400" : "text-emerald-400"}`}>
-                    {athlete.das[0].depression_prone ? "⚠ Elevated" : "Normal"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-saira text-xs text-zinc-400">Date</span>
-                  <span className="font-saira text-xs text-zinc-300">{fmtDate(athlete.das[0].submitted_at)}</span>
-                </div>
-              </div>
-            ) : (
+              );
+            })() : (
               <p className="font-saira text-xs text-zinc-500">No result yet</p>
             )}
           </div>
@@ -390,10 +413,13 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                   </div>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-1">
                     {[
-                      { l: "Coping",     v: r.score_coping,        max: 28 },
-                      { l: "Concentrat.",v: r.score_concentration,  max: 28 },
-                      { l: "Confidence", v: r.score_confidence,     max: 28 },
-                      { l: "Goal-set.",  v: r.score_goal_setting,   max: 28 },
+                      { l: "Coping",      v: r.score_coping,        max: 28 },
+                      { l: "Peaking",     v: r.score_peaking,       max: 28 },
+                      { l: "Goal-set.",   v: r.score_goal_setting,  max: 28 },
+                      { l: "Concentrat.", v: r.score_concentration, max: 28 },
+                      { l: "Freedom",     v: r.score_freedom,       max: 28 },
+                      { l: "Confidence",  v: r.score_confidence,    max: 28 },
+                      { l: "Coachabil.", v: r.score_coachability,  max: 28 },
                     ].map(({ l, v, max }) => (
                       <div key={l} className="flex justify-between">
                         <span className="font-saira text-[10px] text-zinc-500">{l}</span>

@@ -73,6 +73,13 @@ export type DasRow = {
   user_id: string | null;
   total_score: number;
   depression_prone: boolean;
+  score_external_approval: number;
+  score_lovability: number;
+  score_achievement: number;
+  score_perfectionism: number;
+  score_entitlement: number;
+  score_omnipotence: number;
+  score_external_control: number;
 };
 
 // ── Column selects ─────────────────────────────────────────────────────────────
@@ -82,7 +89,7 @@ const COMMON = "id,result_ref,first_name,email,gender,lang,submitted_at,paid,use
 const SAT_SELECT = `${COMMON},sum_yes,validity_reliable`;
 const ACSI_SELECT = `${COMMON},total_score,score_coping,score_peaking,score_goal_setting,score_concentration,score_freedom,score_confidence,score_coachability`;
 const CSAI_SELECT = `${COMMON},score_cognitive,score_somatic,score_confidence`;
-const DAS_SELECT = `${COMMON},total_score,depression_prone`;
+const DAS_SELECT = `${COMMON},total_score,depression_prone,score_external_approval,score_lovability,score_achievement,score_perfectionism,score_entitlement,score_omnipotence,score_external_control`;
 
 // ── GET ────────────────────────────────────────────────────────────────────────
 

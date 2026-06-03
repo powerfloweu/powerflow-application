@@ -1877,12 +1877,28 @@ function ResultsTab() {
                         </tr>
                         {isExpanded && (
                           <tr className="border-b border-white/5 bg-white/[0.015]">
-                            <td colSpan={7} className="px-4 py-3">
+                            <td colSpan={7} className="px-4 py-3 space-y-2">
                               <div className="flex flex-wrap gap-4 font-saira text-[11px]">
-                                <span className="text-zinc-400">Total score: <span className="font-bold text-white">{r.total_score}</span></span>
-                                <span className="text-zinc-400">Depression-prone flag: <span className={`font-bold ${r.depression_prone ? "text-rose-400" : "text-green-400"}`}>{r.depression_prone ? "Yes (≥18)" : "No (<18)"}</span></span>
+                                <span className="text-zinc-400">Total: <span className={`font-bold ${r.depression_prone ? "text-rose-400" : "text-green-400"}`}>{r.total_score > 0 ? "+" : ""}{r.total_score} / ±70</span></span>
+                                <span className="text-zinc-400">Dep-prone: <span className={`font-bold ${r.depression_prone ? "text-rose-400" : "text-green-400"}`}>{r.depression_prone ? "Yes" : "No"}</span></span>
                                 <span className="text-zinc-400">Gender: <span className="text-white">{r.gender || "—"}</span></span>
-                                <span className="text-zinc-500 italic">Individual subscale scores not stored — visible to athlete at submission time only.</span>
+                              </div>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-1 font-saira text-[11px]">
+                                {([
+                                  ["Ext. Approval",  r.score_external_approval],
+                                  ["Lovability",     r.score_lovability],
+                                  ["Achievement",    r.score_achievement],
+                                  ["Perfectionism",  r.score_perfectionism],
+                                  ["Entitlement",    r.score_entitlement],
+                                  ["Omnipotence",    r.score_omnipotence],
+                                  ["Ext. Control",   r.score_external_control],
+                                ] as [string, number][]).map(([label, score]) => (
+                                  <div key={label} className="flex items-center gap-1.5">
+                                    <span className="text-zinc-400 shrink-0">{label}:</span>
+                                    <span className={`font-bold ${Math.abs(score) > 5 ? "text-rose-400" : "text-zinc-200"}`}>{score > 0 ? "+" : ""}{score}</span>
+                                    <span className="text-zinc-600 text-[9px]">/±10</span>
+                                  </div>
+                                ))}
                               </div>
                             </td>
                           </tr>

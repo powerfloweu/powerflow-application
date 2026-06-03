@@ -80,9 +80,9 @@ type EntryRow = {
 };
 
 type SatRow  = { id: string; user_id?: string; total_score: number; submitted_at: string; paid: boolean };
-type AcsiRow = { id: string; user_id?: string; score_coping: number; score_concentration: number; score_confidence: number; score_goal_setting: number; total_score: number; submitted_at: string; paid: boolean };
+type AcsiRow = { id: string; user_id?: string; score_coping: number; score_peaking: number; score_concentration: number; score_confidence: number; score_goal_setting: number; score_freedom: number; score_coachability: number; total_score: number; submitted_at: string; paid: boolean };
 type CsaiRow = { id: string; user_id?: string; score_cognitive: number; score_somatic: number; score_confidence: number; submitted_at: string; paid: boolean };
-type DasRow  = { id: string; user_id?: string; total_score: number; depression_prone: boolean; submitted_at: string; paid: boolean };
+type DasRow  = { id: string; user_id?: string; total_score: number; depression_prone: boolean; submitted_at: string; paid: boolean; score_external_approval: number; score_lovability: number; score_achievement: number; score_perfectionism: number; score_entitlement: number; score_omnipotence: number; score_external_control: number; };
 
 const getMondayOfWeek = (d: Date): string => mondayOfWeek(d);
 const getSundayOfWeek = (d: Date): string => sundayOfWeek(d);
@@ -151,7 +151,7 @@ export async function GET() {
     dbSelect<AcsiRow>("acsi_results", {
       user_id: `in.${idList}`,
       order: "submitted_at.desc",
-      select: "id,user_id,score_coping,score_concentration,score_confidence,score_goal_setting,total_score,submitted_at,paid",
+      select: "id,user_id,score_coping,score_peaking,score_concentration,score_confidence,score_goal_setting,score_freedom,score_coachability,total_score,submitted_at,paid",
     }),
     dbSelect<CsaiRow>("csai_results", {
       user_id: `in.${idList}`,
@@ -161,7 +161,7 @@ export async function GET() {
     dbSelect<DasRow>("das_results", {
       user_id: `in.${idList}`,
       order: "submitted_at.desc",
-      select: "id,user_id,total_score,depression_prone,submitted_at,paid",
+      select: "id,user_id,total_score,depression_prone,submitted_at,paid,score_external_approval,score_lovability,score_achievement,score_perfectionism,score_entitlement,score_omnipotence,score_external_control",
     }),
     // Extended to last 180 days: 28 days for week navigation + full activity feed
     dbSelect<TrainingEntry>("training_entries", {
