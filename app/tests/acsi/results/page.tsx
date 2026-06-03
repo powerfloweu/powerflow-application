@@ -205,6 +205,24 @@ export default function AcsiResultsPage() {
       return; // skip localStorage flow
     }
 
+    // Coach bypass: load result from DB for coach viewing
+    const coachRef = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("coachRef")
+      : null;
+    if (coachRef) {
+      fetch(`/api/coach/result-detail?type=acsi&id=${encodeURIComponent(coachRef)}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data) {
+            setPayload(data);
+            setUnlocked(true);
+          }
+          setHydrated(true);
+        })
+        .catch(() => { setHydrated(true); });
+      return; // skip localStorage flow
+    }
+
     try {
       const raw = localStorage.getItem(RESULT_KEY);
       if (raw) setPayload(JSON.parse(raw));

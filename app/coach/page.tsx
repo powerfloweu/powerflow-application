@@ -1827,6 +1827,10 @@ function ClientCard({
                         );
                       })()}
                     </div>
+                    <a href={`/tests/das/results?coachRef=${client.testScores.das[0].id}`} target="_blank" rel="noopener"
+                       className="inline-block mt-2 font-saira text-[10px] text-amber-400 hover:text-amber-300 transition">
+                      View full report →
+                    </a>
                   </div>
                 )}
 
@@ -1848,6 +1852,10 @@ function ClientCard({
                         </div>
                       );
                     })()}
+                    <a href={`/tests/acsi/results?coachRef=${client.testScores.acsi[0].id}`} target="_blank" rel="noopener"
+                       className="inline-block mt-2 font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
+                      View full report →
+                    </a>
                   </div>
                 )}
 
@@ -1867,6 +1875,10 @@ function ClientCard({
                         </div>
                       );
                     })()}
+                    <a href={`/tests/csai/results?coachRef=${client.testScores.csai[0].id}`} target="_blank" rel="noopener"
+                       className="inline-block mt-2 font-saira text-[10px] text-sky-400 hover:text-sky-300 transition">
+                      View full report →
+                    </a>
                   </div>
                 )}
 
@@ -1885,6 +1897,10 @@ function ClientCard({
                         </div>
                       );
                     })()}
+                    <a href={`/tests/self-awareness/results?coachRef=${client.testScores.sat[0].id}`} target="_blank" rel="noopener"
+                       className="inline-block mt-2 font-saira text-[10px] text-fuchsia-400 hover:text-fuchsia-300 transition">
+                      View full report →
+                    </a>
                   </div>
                 )}
 
