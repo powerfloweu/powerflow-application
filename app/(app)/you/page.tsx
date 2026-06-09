@@ -279,6 +279,11 @@ export default function YouPage() {
         )}
       </Section>
 
+      {/* ── Meet day config ─────────────────────────────────── */}
+      {meetDate && (
+        <MeetConfigSection />
+      )}
+
       {/* ── Body ────────────────────────────────────────────── */}
       <Section
         label={t("you.sectionBody")}
@@ -951,6 +956,84 @@ function SignOutButton() {
     >
       {t("auth.signOut")}
     </button>
+  );
+}
+
+// ── Meet config section ───────────────────────────────────────────────────────
+
+function MeetConfigSection() {
+  type Cfg = { squat_opener?: number; bench_opener?: number; deadlift_opener?: number; flight_size?: number; seconds_per_person?: number };
+  const [cfg, setCfg] = React.useState<Cfg>({});
+  const [saving, setSaving] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch("/api/me/meet-config").then(r => r.ok ? r.json() : {}).then(setCfg).catch(() => {});
+  }, []);
+
+  function field(key: keyof Cfg) {
+    return String(cfg[key] ?? "");
+  }
+  function set(key: keyof Cfg, val: string) {
+    const n = parseFloat(val);
+    setCfg(c => ({ ...c, [key]: isNaN(n) ? undefined : n }));
+  }
+
+  async function save() {
+    setSaving(true);
+    await fetch("/api/me/meet-config", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cfg),
+    });
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  return (
+    <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-5 space-y-4">
+      <p className="font-saira text-[9px] font-bold uppercase tracking-[0.28em] text-rose-400">Meet day setup</p>
+
+      {/* Openers */}
+      <div className="space-y-2">
+        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-400">Openers (kg)</p>
+        <div className="grid grid-cols-3 gap-2">
+          {(["squat", "bench", "deadlift"] as const).map(lift => (
+            <div key={lift}>
+              <label className="block font-saira text-[9px] text-zinc-500 mb-1 uppercase tracking-wider">{lift}</label>
+              <input type="number" step="0.5" value={field(`${lift}_opener` as keyof Cfg)}
+                onChange={e => set(`${lift}_opener` as keyof Cfg, e.target.value)}
+                placeholder="kg"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-sm text-white placeholder-zinc-600 outline-none focus:border-rose-400/40" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Flight */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block font-saira text-[9px] text-zinc-500 mb-1 uppercase tracking-wider">Flight size (people)</label>
+          <input type="number" min={2} max={20} value={field("flight_size")}
+            onChange={e => set("flight_size", e.target.value)}
+            placeholder="e.g. 8"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-sm text-white placeholder-zinc-600 outline-none focus:border-rose-400/40" />
+        </div>
+        <div>
+          <label className="block font-saira text-[9px] text-zinc-500 mb-1 uppercase tracking-wider">Seconds per person</label>
+          <input type="number" min={30} max={180} value={field("seconds_per_person")}
+            onChange={e => set("seconds_per_person", e.target.value)}
+            placeholder="90"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-sm text-white placeholder-zinc-600 outline-none focus:border-rose-400/40" />
+        </div>
+      </div>
+
+      <button onClick={save} disabled={saving}
+        className="w-full rounded-xl bg-rose-600 hover:bg-rose-500 py-2 font-saira text-[11px] font-bold uppercase tracking-[0.18em] text-white disabled:opacity-50 transition">
+        {saving ? "Saving…" : saved ? "✓ Saved" : "Save meet setup"}
+      </button>
+    </div>
   );
 }
 

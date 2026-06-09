@@ -10,7 +10,7 @@ import { syncCoachQuantity } from "@/lib/coachBilling";
 import type { AthleteProfile } from "@/lib/athlete";
 
 const SELECT_COLS = [
-  "id", "display_name", "avatar_url", "role", "coach_id", "coach_code", "coach_status", "coach_application", "meet_date",
+  "id", "display_name", "avatar_url", "role", "coach_id", "coach_code", "coach_status", "coach_application", "meet_date", "meet_config",
   "course_access", "test_access", "onboarding_complete",
   "gender", "bodyweight_kg", "weight_category",
   "squat_current_kg", "squat_goal_kg",
@@ -64,6 +64,7 @@ export async function GET() {
       coach_id: null,
       coach_code: null,
       meet_date: null,
+      meet_config: null,
       course_access: false,
       test_access: false,
       onboarding_complete: false,
@@ -165,7 +166,7 @@ export async function PATCH(req: NextRequest) {
 
   // Allowlist — only these keys may be patched
   const PATCHABLE: Array<keyof AthleteProfile> = [
-    "meet_date", "display_name",
+    "meet_date", "meet_config", "display_name",
     "gender", "bodyweight_kg", "weight_category",
     "squat_current_kg", "squat_goal_kg",
     "bench_current_kg", "bench_goal_kg",

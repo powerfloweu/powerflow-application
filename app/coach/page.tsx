@@ -14,6 +14,7 @@ import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import NotificationModal, { type NotificationState } from "@/app/components/NotificationModal";
 import SurveyModal from "@/app/components/SurveyModal";
+import { PrepLiftGallery } from "@/app/components/MeetDayMode";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -150,7 +151,10 @@ function computeClient(a: AthleteRaw) {
     : positiveRate < prevPositiveRate - 10 ? "down"
     : "stable";
 
-  const flag: Flag = positiveRate < 30 ? "attention" : positiveRate < 55 ? "monitor" : "stable";
+  // Meet day flag overrides everything
+  const todayYmd = new Date().toISOString().slice(0, 10);
+  const isMeetDay = a.meet_date === todayYmd;
+  const flag: Flag = isMeetDay ? "attention" : positiveRate < 30 ? "attention" : positiveRate < 55 ? "monitor" : "stable";
 
   // 7-day daily positive % — journal entries + training logs combined
   const sentimentWeek = Array.from({ length: 7 }, (_, i) => {
@@ -1793,7 +1797,12 @@ function ClientCard({
 
         {/* Name + meta */}
         <div className="flex-1 min-w-0">
-          <p className="font-saira text-sm font-semibold text-zinc-100">{client.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-saira text-sm font-semibold text-zinc-100">{client.name}</p>
+            {client.profile.meet_date === new Date().toISOString().slice(0, 10) && (
+              <span className="rounded-full border border-rose-500/40 bg-rose-500/10 px-1.5 py-0.5 font-saira text-[8px] font-bold uppercase tracking-[0.18em] text-rose-400">🏆 Meet day</span>
+            )}
+          </div>
           <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
             {t("coach.lastActiveMeta").replace("{la}", renderLastActive(client.lastActive)).replace("{n}", String(client.entriesThisWeek))}
           </p>
@@ -2073,6 +2082,11 @@ function ClientCard({
                     {t("coach.noTestsYet")}
                   </p>
                 )}
+
+                {/* ── Prep lift gallery ── */}
+                <div className="mt-4 pt-4 border-t border-white/5">
+                  <PrepLiftGallery isCoach athleteId={client.profile.athleteId} />
+                </div>
 
                 {/* ── Assign test ── */}
                 <div className="mt-4 pt-4 border-t border-white/5">

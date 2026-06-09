@@ -61,6 +61,7 @@ export type AthleteProfile = {
   /** Free-text notes written by the coach/admin. Injected into the AI system prompt. */
   coach_notes: string | null;
   meet_date: string | null;
+  meet_config: { squat_opener?: number | null; bench_opener?: number | null; deadlift_opener?: number | null; flight_size?: number | null; seconds_per_person?: number | null } | null;
   /** Whether the 16-week course is unlocked for this athlete. Granted by coach/admin. */
   course_access: boolean;
   /** Whether all psychological test reports are unlocked for this athlete. Granted by admin. */

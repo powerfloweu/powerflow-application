@@ -13,6 +13,7 @@ import { ymdLocal } from "@/lib/date";
 import { markCheckinDone } from "@/lib/checkinReminder";
 import { useWeeklyCheckin } from "@/app/components/WeeklyCheckinContext";
 import { useT } from "@/lib/i18n";
+import MeetDayMode from "@/app/components/MeetDayMode";
 
 // ── Test metadata ─────────────────────────────────────────────────────────────
 
@@ -273,6 +274,16 @@ export default function TodayPage() {
             locale={locale}
           />
         )}
+      </div>
+    );
+  }
+
+  // ── Meet Day Mode: take over the whole page ──────────────────
+  if (phase?.phase === "Meet day" && isToday && profile) {
+    return (
+      <div className="min-h-screen bg-surface-base px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-3xl">
+        <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
+        <MeetDayMode profile={profile} />
       </div>
     );
   }
