@@ -104,6 +104,12 @@ These are the next meaningful features after quick wins are done.
 
 ## Session log
 
+### 2026-06-24 — main
+- Fixed mental tests bug: logged-in athletes were auto-skipped past the intro page (setPage(1) in /api/me effect), leaving gender=null and causing submit to silently do nothing. Fixed in ACSI, CSAI, and Self-Awareness tests by removing setPage(1) — name/email still auto-fill but user must pick gender before starting.
+- NavBar Sign In link now passes ?next= pointing to current path, so clicking it from a test page returns the user to the test after auth.
+- Post-competition reflection: new meet_reflections table (athlete_id, meet_date, answers JSONB). Athletes see a 5-question reflection card on Today page for 7 days after their meet (questions from w16-post-meet course module). Coach sees all past reflections in the athlete's Profile tab under "Competition Reflections". API at /api/meet-reflections (GET single/list, POST upsert-merge).
+- Next: deploy migration (already ran via Management API), have athletes test the reflection card, confirm coach view works.
+
 Append a short note at the end of each working session: date, branch, what
 changed, and what's next. Newest entries on top.
 

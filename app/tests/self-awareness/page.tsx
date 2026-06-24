@@ -137,18 +137,15 @@ export default function SelfAwarenessTestPage() {
       /* ignore */
     }
     setHydrated(true);
-    // Auto-prefill from logged-in profile and skip intro
+    // Auto-prefill from logged-in profile (but keep intro visible — gender must be selected manually).
     fetch("/api/me")
       .then(r => r.ok ? r.json() : null)
       .then(p => {
         if (!p) return;
         const name = (p.display_name ?? "").split(" ")[0].trim();
         const mail = p.email ?? "";
-        if (name && mail) {
-          const lang: Lang = (p.language === "de" || p.language === "hu") ? p.language : "en";
-          setState(s => ({ ...s, firstName: name, email: mail, lang }));
-          setPage(1);
-        }
+        const lang: Lang = (p.language === "de" || p.language === "hu") ? p.language : "en";
+        setState(s => ({ ...s, ...(name ? { firstName: name } : {}), ...(mail ? { email: mail } : {}), lang }));
       })
       .catch(() => {});
   }, []);

@@ -127,12 +127,10 @@ export default function CsaiTestPage() {
         if (!p) return;
         const name = (p.display_name ?? "").split(" ")[0].trim();
         const mail = p.email ?? "";
-        if (name && mail) {
-          setFirstName(name);
-          setEmail(mail);
-          if (p.language === "de" || p.language === "hu") setLang(p.language as Lang);
-          setPage(1);
-        }
+        if (name) setFirstName(name);
+        if (mail) setEmail(mail);
+        if (p.language === "de" || p.language === "hu") setLang(p.language as Lang);
+        // Do not auto-advance — gender must be selected manually before the test starts.
       })
       .catch(() => {});
   }, []);

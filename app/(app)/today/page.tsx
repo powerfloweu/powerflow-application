@@ -13,7 +13,8 @@ import { ymdLocal } from "@/lib/date";
 import { markCheckinDone } from "@/lib/checkinReminder";
 import { useWeeklyCheckin } from "@/app/components/WeeklyCheckinContext";
 import { useT } from "@/lib/i18n";
-import MeetDayMode from "@/app/components/MeetDayMode";
+import MeetDayMode, { PrepLiftGallery } from "@/app/components/MeetDayMode";
+import PostCompReflection from "@/app/components/PostCompReflection";
 
 // ── Test metadata ─────────────────────────────────────────────────────────────
 
@@ -213,6 +214,32 @@ export default function TodayPage() {
 
   // Date-tab derived values
   const isToday = selectedDate === todayKey();
+
+  // Post-comp reflection: check meet_reflections for any incomplete entry from
+  // the past 7 days. This is independent of profile.meet_date so the coach can
+  // trigger it without touching the athlete's training-phase date.
+  const [pendingReflectionDate, setPendingReflectionDate] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!profile) return;
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const cutoff = sevenDaysAgo.toISOString().slice(0, 10);
+    fetch("/api/meet-reflections")
+      .then(r => r.ok ? r.json() : [])
+      .then((rows: Array<{ meet_date: string; answers: Record<string, string> }>) => {
+        if (!Array.isArray(rows)) return;
+        const QUESTION_IDS = ["post-meet-overall","post-meet-win","post-meet-lesson","post-meet-mental","post-meet-next"];
+        const pending = rows.find(row => {
+          if (row.meet_date < cutoff) return false;
+          const answered = QUESTION_IDS.filter(id => (row.answers[id] ?? "").trim().length > 0).length;
+          return answered < QUESTION_IDS.length;
+        });
+        setPendingReflectionDate(pending?.meet_date ?? null);
+      })
+      .catch(() => {});
+  }, [profile]);
+
+  const showPostCompReflection = isToday && pendingReflectionDate !== null;
   const dateLabel = isToday
     ? t("today.tabToday")
     : selectedDate === offsetDate(1)
@@ -252,6 +279,17 @@ export default function TodayPage() {
     );
   }
 
+  // ── Meet Day Mode: take over the whole page (checked before entry guard so
+  //    athletes reach it without needing to pick a day type first) ─────────────
+  if (phase?.phase === "Meet day" && isToday && profile) {
+    return (
+      <div className="min-h-screen bg-surface-base px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-3xl">
+        <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
+        <MeetDayMode profile={profile} />
+      </div>
+    );
+  }
+
   // ── No entry for selected date (or loading a different date) ────────────────
   if (entry === "loading" || entry === null) {
     return (
@@ -278,21 +316,16 @@ export default function TodayPage() {
     );
   }
 
-  // ── Meet Day Mode: take over the whole page ──────────────────
-  if (phase?.phase === "Meet day" && isToday && profile) {
-    return (
-      <div className="min-h-screen bg-surface-base px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-3xl">
-        <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
-        <MeetDayMode profile={profile} />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-surface-base px-4 pt-10 pb-6 sm:px-6 max-w-lg mx-auto md:max-w-3xl">
 
       {/* ── Date tabs ─────────────────────────────────────────── */}
       <DateTabs selected={selectedDate} onChange={setSelectedDate} labels={tabLabels} />
+
+      {/* ── Post-competition reflection (1–7 days after meet) ─── */}
+      {showPostCompReflection && pendingReflectionDate && (
+        <PostCompReflection meetDate={pendingReflectionDate} />
+      )}
 
       {/* ── Coach-assigned tests ──────────────────────────────── */}
       {assignedTests.length > 0 && (
@@ -583,6 +616,16 @@ export default function TodayPage() {
         </div>
         <span className="text-purple-400 text-lg group-hover:translate-x-0.5 transition-transform">→</span>
       </Link>
+
+      {/* ── Competition prep lifts (Peak & Meet week phases) ──── */}
+      {isToday && (phase?.phase === "Peak" || phase?.phase === "Meet week") && (
+        <div className="rounded-2xl border border-white/8 bg-surface-card px-5 py-4 mb-6">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-rose-400 mb-3">
+            Competition prep lifts
+          </p>
+          <PrepLiftGallery />
+        </div>
+      )}
 
     </div>
   );

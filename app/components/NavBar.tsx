@@ -47,7 +47,7 @@ export default function NavBar() {
             Mental Tests
           </Link>
           <Link
-            href="/auth/sign-in"
+            href={`/auth/sign-in?next=${encodeURIComponent(pathname)}`}
             className="rounded-full border border-purple-500/40 bg-purple-500/10 px-3.5 py-1.5 font-saira text-[11px] font-semibold uppercase tracking-[0.18em] text-purple-300 transition hover:bg-purple-500/20 hover:text-white"
           >
             Sign in

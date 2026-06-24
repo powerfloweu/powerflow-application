@@ -14,7 +14,8 @@ import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import NotificationModal, { type NotificationState } from "@/app/components/NotificationModal";
 import SurveyModal from "@/app/components/SurveyModal";
-import { PrepLiftGallery } from "@/app/components/MeetDayMode";
+import { PrepLiftGallery, CoachMeetDashboard } from "@/app/components/MeetDayMode";
+import { CoachMeetHistory } from "@/app/components/PostCompReflection";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1090,6 +1091,10 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
           </div>
         </div>
       )}
+
+      {/* Competition reflections history */}
+      <CoachMeetHistory athleteId={profile.athleteId} />
+
     </div>
   );
 }
@@ -2081,6 +2086,17 @@ function ClientCard({
                   <p className="font-saira text-sm text-zinc-400 py-4 text-center">
                     {t("coach.noTestsYet")}
                   </p>
+                )}
+
+                {/* ── Meet day: full game day dashboard ── */}
+                {client.profile.meet_date === new Date().toISOString().slice(0, 10) && (
+                  <div className="mt-4 pt-4 border-t border-white/5">
+                    <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-rose-400 mb-3">🏆 Meet day</p>
+                    <CoachMeetDashboard
+                      athleteId={client.profile.athleteId}
+                      meetDate={client.profile.meet_date!}
+                    />
+                  </div>
                 )}
 
                 {/* ── Prep lift gallery ── */}
