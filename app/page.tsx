@@ -39,7 +39,6 @@ type CopyEntry = {
     previousTools: string;
     anythingElse: string;
     consentCase: string;
-    willingToPay: string;
     yes: string;
     no: string;
     submit: string;
@@ -96,7 +95,6 @@ const copy: Record<Lang, CopyEntry> = {
       anythingElse: "Anything else you’d like us to know?",
       consentCase:
         "Do you agree to the anonymous use of your case for educational purposes (e.g., supervision)?",
-      willingToPay: "Are you willing to pay 75 EUR per session, after each session?",
       yes: "Yes",
       no: "No",
       submit: "Submit application",
@@ -152,8 +150,6 @@ const copy: Record<Lang, CopyEntry> = {
       anythingElse: "Gibt es sonst noch etwas Wichtiges?",
       consentCase:
         "Stimmst du der anonymisierten Nutzung deines Falls zu Ausbildungszwecken zu (z. B. Supervision)?",
-      willingToPay:
-        "Bist du bereit, 75 EUR pro Sitzung (nach jeder Sitzung) zu zahlen?",
       yes: "Ja",
       no: "Nein",
       submit: "Bewerbung absenden",
@@ -209,8 +205,6 @@ const copy: Record<Lang, CopyEntry> = {
       anythingElse: "Van még valami fontos?",
       consentCase:
         "Hozzájárulsz az eseted név nélküli felhasználásához oktatási célra (pl. szupervízió)?",
-      willingToPay:
-        "Vállalod, hogy 75 EUR-t fizetsz ülésenként, minden alkalom után?",
       yes: "Igen",
       no: "Nem",
       submit: "Jelentkezés elküldése",
@@ -482,15 +476,6 @@ export default function PowerFlowApplicationPage() {
             <CheckboxGroup
               name="consentCase"
               label={t.labels.consentCase}
-              required
-              options={[
-                { value: "yes", label: t.labels.yes },
-                { value: "no", label: t.labels.no },
-              ]}
-            />
-            <CheckboxGroup
-              name="willingToPay"
-              label={t.labels.willingToPay}
               required
               options={[
                 { value: "yes", label: t.labels.yes },

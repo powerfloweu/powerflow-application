@@ -9,7 +9,6 @@ const REQUIRED_FIELDS = [
   "mentalGoals",
   "expectations",
   "consentCase",
-  "willingToPay",
 ];
 
 export async function POST(req: NextRequest) {
