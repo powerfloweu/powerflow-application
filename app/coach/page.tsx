@@ -3031,6 +3031,9 @@ function MobileAthleteSheet({
               </div>
             )}
           </div>
+
+          {/* Competition reflections */}
+          <CoachMeetHistory athleteId={client.id} />
         </div>
       )}
     </div>
