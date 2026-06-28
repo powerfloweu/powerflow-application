@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     const merged = { ...existing[0].answers, ...answers };
     await dbPatch(
       "meet_reflections",
-      { id: `eq.${existing[0].id}` },
+      { id: existing[0].id },
       { answers: merged, updated_at: new Date().toISOString() },
     );
     return NextResponse.json({ ok: true, merged: true });
