@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
 import { sendEmail } from "@/lib/email";
 
@@ -17,9 +16,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/auth/sign-in`);
   }
 
-  const cookieStore = await cookies();
-
-  // Read one-time cookies set before OAuth redirect
+  // Read one-time cookies set before OAuth redirect (from the request, before any redirect)
   const role     = (request.cookies.get("pf_auth_role")?.value ?? "athlete") as "athlete" | "coach";
   const nextRaw  = request.cookies.get("pf_auth_next")?.value ?? "";
   const joinCode = request.cookies.get("pf_join_code")?.value
@@ -28,16 +25,17 @@ export async function GET(request: NextRequest) {
 
   const next = nextRaw ? decodeURIComponent(nextRaw) : role === "coach" ? "/coach" : "/today";
 
+  // Collect cookies that Supabase wants to set so we can attach them to the redirect response.
+  const pendingCookies: Array<{ name: string; value: string; options: CookieOptions }> = [];
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return cookieStore.getAll(); },
+        getAll() { return request.cookies.getAll(); },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
+          cookiesToSet.forEach((c) => pendingCookies.push(c));
         },
       },
     }
@@ -102,8 +100,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Clear all one-time cookies
+  // Build redirect and attach all cookies to it (session cookies + clear one-time cookies)
   const response = NextResponse.redirect(`${origin}${redirectTo}`);
+  pendingCookies.forEach(({ name, value, options }) =>
+    response.cookies.set(name, value, options)
+  );
   response.cookies.set("pf_auth_role",  "", { maxAge: 0, path: "/" });
   response.cookies.set("pf_auth_next",  "", { maxAge: 0, path: "/" });
   response.cookies.set("pf_join_code",  "", { maxAge: 0, path: "/" });
