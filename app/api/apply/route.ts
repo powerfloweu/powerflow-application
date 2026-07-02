@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const WEBHOOK_URL = "https://hook.eu1.make.com/afdi7p5rw9trr6242r4d52cllvzsmksm";
+// Make.com webhook that receives coaching applications. Set in env; falls back
+// to the historical URL so existing deployments keep working until the env var
+// is configured (rotate the Make.com scenario and drop the fallback afterwards).
+const WEBHOOK_URL =
+  process.env.APPLY_WEBHOOK_URL ??
+  "https://hook.eu1.make.com/afdi7p5rw9trr6242r4d52cllvzsmksm";
 const REQUIRED_FIELDS = [
   "fullName",
   "email",

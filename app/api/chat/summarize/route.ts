@@ -9,6 +9,7 @@
 import { NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import Anthropic from "@anthropic-ai/sdk";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -27,6 +28,10 @@ export async function POST() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Rate limit — this triggers an Anthropic summarization call.
+  const rl = await rateLimit(`summarize:${user.id}`, { limit: 10, windowSec: 60 });
+  if (!rl.ok) return rateLimitResponse(rl);
 
   const today = new Date().toISOString().split("T")[0];
 

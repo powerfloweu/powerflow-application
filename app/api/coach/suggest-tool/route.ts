@@ -48,6 +48,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid tool_id" }, { status: 400 });
   }
 
+  // Verify the athlete actually belongs to this coach — otherwise a coach could
+  // forge suggestions for athletes they don't manage.
+  const owned = await dbSelect<{ id: string }>("profiles", {
+    select: "id",
+    id: `eq.${athlete_id}`,
+    coach_id: `eq.${user.id}`,
+    limit: "1",
+  });
+  if (!owned.length) {
+    return NextResponse.json({ error: "athlete not found or not under this coach" }, { status: 404 });
+  }
+
   const row = await dbInsert("tool_suggestions", {
     coach_id:   user.id,
     athlete_id,
