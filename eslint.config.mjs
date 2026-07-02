@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Non-source directories that must not be linted:
+    ".claude/**",
+    "node_modules/**",
+    "supabase/**",
+    "public/**",
   ]),
 ]);
 

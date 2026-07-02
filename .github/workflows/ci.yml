@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Hard gates: a failure here blocks the merge ────────────────────────
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      # ── Soft gate: reported but non-blocking while the pre-existing lint
+      #    debt (~19 errors) is burned down. Flip continue-on-error to false
+      #    once `npm run lint` is clean. ──────────────────────────────────────
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
