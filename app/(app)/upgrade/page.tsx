@@ -83,7 +83,7 @@ function UpgradePageInner() {
         // coaches pay like athletes — no automatic tier elevation
         setHasSubscription(!!p.stripe_subscription_id);
       })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, []);
 
   function setPeriod(tier: string, period: BillingPeriod) {

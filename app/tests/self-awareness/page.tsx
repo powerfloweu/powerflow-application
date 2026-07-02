@@ -147,7 +147,7 @@ export default function SelfAwarenessTestPage() {
         const lang: Lang = (p.language === "de" || p.language === "hu") ? p.language : "en";
         setState(s => ({ ...s, ...(name ? { firstName: name } : {}), ...(mail ? { email: mail } : {}), lang }));
       })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, []);
 
   // Persist on change

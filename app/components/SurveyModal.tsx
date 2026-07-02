@@ -130,7 +130,7 @@ export default function SurveyModal() {
       .then((data) => {
         if (data?.due) setState({ status: "due", round: data.round, role: data.role });
       })
-      .catch(() => {});
+      .catch((err) => console.error("[SurveyModal] async operation failed", err));
   }, []);
 
   const dismiss = () => {
@@ -152,7 +152,7 @@ export default function SurveyModal() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ round: state.round, answers }),
-    }).catch(() => {});
+    }).catch((err) => console.error("[SurveyModal] async operation failed", err));
 
     localStorage.removeItem(DISMISS_KEY);
     setSubmitting(false);

@@ -80,13 +80,13 @@ export async function POST(req: NextRequest) {
   }
 
   // Notify athlete (fire-and-forget — don't block the response)
-  void sendPushToUser(athlete_id, {
+  await sendPushToUser(athlete_id, {
     title: "New test assigned 🧪",
     body: `Your coach has assigned you the ${TEST_NAMES[test_slug as TestSlug]}`,
     tag: `test-assigned-${test_slug}`,
     url: "/tools",
     requireInteraction: true,
-  }).catch(() => {});
+  }).catch((err) => console.error("[api/coach/assign-test] async operation failed", err));
 
   return NextResponse.json({ ok: true, id: inserted.id });
 }

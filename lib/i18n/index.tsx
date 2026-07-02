@@ -147,7 +147,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
           loadOverrides(loc);
         }
       })
-      .catch(() => {});
+      .catch((err) => console.error("[index] async operation failed", err));
   }, [loadOverrides]);
 
   const setLocale = React.useCallback((loc: Locale) => {
@@ -159,7 +159,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ language: loc }),
-    }).catch(() => {});
+    }).catch((err) => console.error("[index] async operation failed", err));
   }, [loadOverrides]);
 
   const t = React.useCallback(

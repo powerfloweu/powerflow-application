@@ -298,14 +298,14 @@ export async function PATCH(req: NextRequest) {
   // If coach_id changed, sync old and new coach subscription quantities
   if ("coach_id" in patch) {
     const newCoachId = patch.coach_id as string | null;
-    if (newCoachId) syncCoachQuantity(newCoachId).catch(() => {});
+    if (newCoachId) syncCoachQuantity(newCoachId).catch((err) => console.error("[api/me] async operation failed", err));
     // Also sync old coach if athlete was previously linked to someone else
     const profileRows = await dbSelect<{ coach_id: string | null }>("profiles", {
       id: `eq.${user.id}`, select: "coach_id",
     });
     const oldCoachId = profileRows[0]?.coach_id;
     if (oldCoachId && oldCoachId !== newCoachId) {
-      syncCoachQuantity(oldCoachId).catch(() => {});
+      syncCoachQuantity(oldCoachId).catch((err) => console.error("[api/me] async operation failed", err));
     }
   }
 

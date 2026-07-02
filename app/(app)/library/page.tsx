@@ -801,7 +801,7 @@ function ToolsPageInner() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tool_id: id }),
-        }).catch(() => {});
+        }).catch((err) => console.error("[page] async operation failed", err));
       }
       return opening ? id : null;
     });

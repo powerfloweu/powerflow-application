@@ -53,14 +53,14 @@ export default function VizUpload({ toolId, hasExisting, onUploaded, onDeleted }
     fetch(`/api/tools/viz-recording?toolId=${toolId}`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.url) setPlayUrl(d.url); })
-      .catch(() => {})
+      .catch((err) => console.error("[VizUpload] async operation failed", err))
       .finally(() => setLoadingUrl(false));
   }, [phase, toolId]);
 
   const togglePlay = () => {
     const el = audioRef.current;
     if (!el || !playUrl) return;
-    if (playing) { el.pause(); } else { el.play().catch(() => {}); }
+    if (playing) { el.pause(); } else { el.play().catch((err) => console.error("[VizUpload] async operation failed", err)); }
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {

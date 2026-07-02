@@ -675,7 +675,7 @@ function CheckinsTab({
     fetch(`/api/coach/checkin-feedback?athlete_id=${encodeURIComponent(athleteId)}`)
       .then((r) => r.ok ? r.json() : [])
       .then((rows: CheckinFeedback[]) => setFeedback(rows))
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, [athleteId]);
 
   function handleFeedbackSaved(fb: CheckinFeedback) {
@@ -3997,7 +3997,7 @@ export default function CoachPage() {
                   type="button"
                   onClick={() => {
                     const url = `${window.location.origin}/join/${profile.coach_code}`;
-                    navigator.clipboard.writeText(url).catch(() => {});
+                    navigator.clipboard.writeText(url).catch((err) => console.error("[page] async operation failed", err));
                   }}
                   className="flex-shrink-0 font-saira text-xs text-zinc-300 border border-zinc-700 rounded-lg px-2.5 py-1 hover:border-purple-500/40 hover:text-purple-300 transition"
                 >

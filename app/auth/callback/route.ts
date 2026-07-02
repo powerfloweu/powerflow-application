@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   if (adminEmail && isNewCoach) {
     const userName  = user.user_metadata?.full_name ?? "Unknown";
     const userEmail = user.email ?? "no email";
-    sendEmail({
+    await sendEmail({
       to:      adminEmail,
       subject: `🆕 New coach sign-up: ${userName}`,
       html: `
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         </p>
       `,
       text: `New coach sign-up: ${userName} (${userEmail}) — go to /admin/master to approve.`,
-    }).catch(() => {});
+    }).catch((err) => console.error("[auth/callback] async operation failed", err));
   }
 
   // Link athlete to coach if a join code was present before the OAuth redirect

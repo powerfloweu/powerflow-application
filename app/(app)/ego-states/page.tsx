@@ -317,7 +317,7 @@ export default function EgoStatesPage() {
       .then((data) => {
         if (Array.isArray(data)) setStates(data);
       })
-      .catch(() => {})
+      .catch((err) => console.error("[page] async operation failed", err))
       .finally(() => setLoading(false));
   }, []);
 

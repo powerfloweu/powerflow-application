@@ -91,12 +91,12 @@ export async function POST(request: NextRequest) {
           const preview = contentStr.length > 80
             ? contentStr.slice(0, 80) + "…"
             : contentStr;
-          void sendPushToUser(coachId, {
+          await sendPushToUser(coachId, {
             title: `${athleteName} mentioned you 📓`,
             body: `"${preview}"`,
             tag: `journal-mention-${user.id}`,
             url: "/coach",
-          }).catch(() => {});
+          }).catch((err) => console.error("[api/journal/entries] async operation failed", err));
         }
       }
     } catch {

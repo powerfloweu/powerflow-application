@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     await fetch(
       `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(existing[toolId])}`,
       { method: "DELETE", headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } },
-    ).catch(() => {}); // non-fatal
+    ).catch((err) => console.error("[api/tools/viz-recording] async operation failed", err)); // non-fatal
   }
 
   // Ask Supabase Storage for a signed upload URL
@@ -158,7 +158,7 @@ export async function DELETE(req: NextRequest) {
     await fetch(
       `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(path)}`,
       { method: "DELETE", headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } },
-    ).catch(() => {});
+    ).catch((err) => console.error("[api/tools/viz-recording] async operation failed", err));
   }
 
   const next = { ...recordings };

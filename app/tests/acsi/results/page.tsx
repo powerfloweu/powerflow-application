@@ -302,7 +302,7 @@ export default function AcsiResultsPage() {
               const tierOk = tier === "second" || tier === "pr";
               if (profile?.test_access === true || tierOk) setUnlocked(true);
             })
-            .catch(() => {});
+            .catch((err) => console.error("[page] async operation failed", err));
 
           // Check 5: coach-assigned test — opener-tier athletes see full results immediately
           fetch("/api/athlete/assigned-tests")
@@ -313,7 +313,7 @@ export default function AcsiResultsPage() {
                 setUnlocked(true);
               }
             })
-            .catch(() => {});
+            .catch((err) => console.error("[page] async operation failed", err));
         }
       }
     }

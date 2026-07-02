@@ -90,12 +90,12 @@ export async function PATCH(req: NextRequest) {
 
   // 1. Replace the lingering "test assigned" notification on the athlete's device
   //    (same tag → browser replaces the old one; requireInteraction:false lets it fade)
-  void sendPushToUser(user.id, {
+  await sendPushToUser(user.id, {
     title: "Test complete ✓",
     body: `Your ${testName} results have been saved`,
     tag: `test-assigned-${test_slug}`,
     url: "/tools",
-  }).catch(() => {});
+  }).catch((err) => console.error("[api/athlete/assigned-tests] async operation failed", err));
 
   // 2. Notify the coach
   const coachId = rows[0].coach_id;
@@ -106,12 +106,12 @@ export async function PATCH(req: NextRequest) {
     });
     const name = athleteRows[0]?.full_name || "An athlete";
 
-    void sendPushToUser(coachId, {
+    await sendPushToUser(coachId, {
       title: `${name} completed a test 📊`,
       body: `${name} has completed the ${testName}`,
       tag: `test-result-${test_slug}-${user.id}`,
       url: "/coach",
-    }).catch(() => {});
+    }).catch((err) => console.error("[api/athlete/assigned-tests] async operation failed", err));
   }
 
   return NextResponse.json({ ok: true });

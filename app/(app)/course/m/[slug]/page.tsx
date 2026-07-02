@@ -62,7 +62,7 @@ export default function ModuleDetailPage() {
         setAnswers(map);
         if (map["exercise"]) setExerciseText(map["exercise"]);
       })
-      .catch(() => {})
+      .catch((err) => console.error("[page] async operation failed", err))
       .finally(() => setLoading(false));
   }, [slug, router]);
 

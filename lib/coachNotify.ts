@@ -44,7 +44,7 @@ export async function notifyCoachOfCheckin(
         body: `${athleteName} just submitted their ${label} check-in`,
         url: "/coach",
         tag: `checkin-${athleteUserId}-${label}`,
-      }).catch(() => {}),
+      }).catch((err) => console.error("[coachNotify] async operation failed", err)),
       coachEmail ? sendEmail({
         to: coachEmail,
         subject: `${athleteName} submitted their ${label} check-in`,
@@ -62,7 +62,7 @@ export async function notifyCoachOfCheckin(
           </div>
         `,
         text: `${athleteName} submitted their ${label} check-in. Visit ${appUrl}/coach to review it.`,
-      }).catch(() => {}) : Promise.resolve(),
+      }).catch((err) => console.error("[coachNotify] async operation failed", err)) : Promise.resolve(),
     ]);
   } catch { /* never throw */ }
 }

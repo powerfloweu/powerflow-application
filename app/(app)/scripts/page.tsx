@@ -122,7 +122,7 @@ export default function ScriptsPage() {
     const audio = new Audio(SILENT);
     audio.playbackRate = speed;
     audioElRef.current = audio;
-    audio.play().catch(() => {}); // activates element; benign if it fails
+    audio.play().catch((err) => console.error("[page] async operation failed", err)); // activates element; benign if it fails
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -156,7 +156,7 @@ export default function ScriptsPage() {
           title: script.title,
           artist: "PowerFlow",
         });
-        navigator.mediaSession.setActionHandler("play",  () => { audio.play().catch(() => {}); });
+        navigator.mediaSession.setActionHandler("play",  () => { audio.play().catch((err) => console.error("[page] async operation failed", err)); });
         navigator.mediaSession.setActionHandler("pause", () => { audio.pause(); });
         navigator.mediaSession.setActionHandler("seekbackward", ({ seekOffset }) => {
           audio.currentTime = Math.max(0, audio.currentTime - (seekOffset ?? 10));

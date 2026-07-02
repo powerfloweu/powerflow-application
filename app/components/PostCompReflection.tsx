@@ -46,6 +46,7 @@ interface Props {
 export default function PostCompReflection({ meetDate }: Props) {
   const [answers, setAnswers] = React.useState<Answers>({});
   const [saving, setSaving]   = React.useState(false);
+  const [saveError, setSaveError] = React.useState<QuestionId | null>(null);
   const [loaded, setLoaded]   = React.useState(false);
   const [open, setOpen]       = React.useState(true);
 
@@ -65,12 +66,19 @@ export default function PostCompReflection({ meetDate }: Props) {
 
   const save = React.useCallback((id: QuestionId, value: string) => {
     setSaving(true);
+    setSaveError(null);
     fetch("/api/meet-reflections", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ meet_date: meetDate, answers: { [id]: value } }),
     })
-      .catch(() => {})
+      .then(res => {
+        if (!res.ok) throw new Error(`save failed: ${res.status}`);
+      })
+      .catch((err) => {
+        console.error("[PostCompReflection] save failed", err);
+        setSaveError(id);
+      })
       .finally(() => setSaving(false));
   }, [meetDate]);
 
@@ -151,6 +159,15 @@ export default function PostCompReflection({ meetDate }: Props) {
                   rows={3}
                   className="w-full rounded-xl border border-zinc-700/60 bg-surface-input px-3 py-2.5 font-saira text-sm text-zinc-100 placeholder:text-zinc-500 outline-none transition focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 resize-none"
                 />
+                {saveError === q.id && (
+                  <button
+                    type="button"
+                    onClick={() => save(q.id, (answers[q.id] ?? "").trim())}
+                    className="mt-1 font-saira text-[11px] text-red-400 underline underline-offset-2"
+                  >
+                    Save failed — tap to retry
+                  </button>
+                )}
               </div>
             );
           })}

@@ -121,7 +121,7 @@ export default function DasTestPage() {
           setPage(1);
         }
       })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, []);
 
   const totalItemPages = 5; // 35 items / 7 per page

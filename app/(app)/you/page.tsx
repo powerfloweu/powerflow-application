@@ -108,14 +108,14 @@ export default function YouPage() {
           fetch("/api/coaches")
             .then((r) => r.json())
             .then((data: CoachOption[]) => setCoaches(Array.isArray(data) ? data : []))
-            .catch(() => {})
+            .catch((err) => console.error("[page] async operation failed", err))
             .finally(() => {
               setCoachesLoaded(true);
               setLoadingCoaches(false);
             });
         }
       })
-      .catch(() => {})
+      .catch((err) => console.error("[page] async operation failed", err))
       .finally(() => setLoading(false));
 
     // Fetch ego states count (best effort)
@@ -124,7 +124,7 @@ export default function YouPage() {
       .then((data) => {
         if (Array.isArray(data)) setEgoStateCount(data.length);
       })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, []);
 
   // ── Save helper ────────────────────────────────────────────
@@ -501,7 +501,7 @@ export default function YouPage() {
             fetch("/api/coaches")
               .then((r) => r.json())
               .then((data: CoachOption[]) => setCoaches(Array.isArray(data) ? data : []))
-              .catch(() => {})
+              .catch((err) => console.error("[page] async operation failed", err))
               .finally(() => {
                 setCoachesLoaded(true);
                 setLoadingCoaches(false);
@@ -833,7 +833,7 @@ function NotificationsRow() {
       localStorage.removeItem(NOTIF_DISMISSED_KEY);
       // Subscribe to push
       const { subscribeToPush } = await import("@/lib/pushClient");
-      await subscribeToPush().catch(() => {});
+      await subscribeToPush().catch((err) => console.error("[page] async operation failed", err));
       // Schedule the reminder
       const { scheduleCheckinNotification } = await import("@/lib/checkinReminder");
       scheduleCheckinNotification(19);
@@ -968,7 +968,7 @@ function MeetConfigSection() {
   const [saved, setSaved] = React.useState(false);
 
   React.useEffect(() => {
-    fetch("/api/me/meet-config").then(r => r.ok ? r.json() : {}).then(setCfg).catch(() => {});
+    fetch("/api/me/meet-config").then(r => r.ok ? r.json() : {}).then(setCfg).catch((err) => console.error("[page] async operation failed", err));
   }, []);
 
   function field(key: keyof Cfg) {

@@ -82,7 +82,7 @@ export default function AppShell({ children }: Props) {
           setNotifications(data as NotificationState);
         }
       })
-      .catch(() => {});
+      .catch((err) => console.error("[AppShell] async operation failed", err));
 
     fetch("/api/me")
       .then((r) => r.ok ? r.json() : null)
@@ -90,7 +90,7 @@ export default function AppShell({ children }: Props) {
         if (p?.plan_tier) setPlanTier(p.plan_tier as PlanTier);
         if (p?.role) setRole(p.role as string);
       })
-      .catch(() => {});
+      .catch((err) => console.error("[AppShell] async operation failed", err));
 
     // Admin force-flag: Dev Tools can set this to bypass the day gate
     const forcePayload = localStorage.getItem("pf-force-checkin");
@@ -122,7 +122,7 @@ export default function AppShell({ children }: Props) {
           if (skippedThisSession) setCheckinSkipped(true);
         }
       })
-      .catch(() => {});
+      .catch((err) => console.error("[AppShell] async operation failed", err));
   }, []);
 
   const canCollapse = !!role; // all authenticated users can collapse to icon rail

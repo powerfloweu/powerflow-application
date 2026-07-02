@@ -3071,7 +3071,7 @@ function TotpGate({
     fetch("/api/admin/totp/setup")
       .then((r) => r.json())
       .then((d) => setSetupData(d))
-      .catch(() => {})
+      .catch((err) => console.error("[page] async operation failed", err))
       .finally(() => setLoadingSetup(false));
   }, [configured]);
 
@@ -3569,7 +3569,7 @@ function SurveysTab() {
     fetch("/api/admin/surveys")
       .then((r) => r.json())
       .then((d) => { setResponses(d.responses ?? []); setProfiles(d.profiles ?? {}); })
-      .catch(() => {})
+      .catch((err) => console.error("[page] async operation failed", err))
       .finally(() => setLoading(false));
   }, []);
 

@@ -705,7 +705,7 @@ export default function ChatPage() {
           const lastDate = loaded[loaded.length - 1]?.created_at?.split("T")[0];
           const today = new Date().toISOString().split("T")[0];
           if (lastDate && lastDate < today) {
-            fetch("/api/chat/summarize", { method: "POST" }).catch(() => {});
+            fetch("/api/chat/summarize", { method: "POST" }).catch((err) => console.error("[page] async operation failed", err));
           }
         }
         // Populate suggested prompts — fall back to static list if fetch failed
@@ -806,7 +806,7 @@ export default function ChatPage() {
     const audio = new Audio(SILENT);
     audio.playbackRate = chatSpeed;
     audioElRef.current = audio;
-    audio.play().catch(() => {}); // activates element; benign if it fails
+    audio.play().catch((err) => console.error("[page] async operation failed", err)); // activates element; benign if it fails
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -839,7 +839,7 @@ export default function ChatPage() {
           title: "PowerFlow Coach",
           artist: "PowerFlow",
         });
-        navigator.mediaSession.setActionHandler("play",  () => { audio.play().catch(() => {}); });
+        navigator.mediaSession.setActionHandler("play",  () => { audio.play().catch((err) => console.error("[page] async operation failed", err)); });
         navigator.mediaSession.setActionHandler("pause", () => { audio.pause(); });
         navigator.mediaSession.setActionHandler("seekbackward", ({ seekOffset }) => {
           audio.currentTime = Math.max(0, audio.currentTime - (seekOffset ?? 10));
@@ -948,7 +948,7 @@ export default function ChatPage() {
       .then((row) => {
         if (row?.id) setMessages((prev) => prev.map((m) => m.id === userMsg.id ? { ...m, dbId: row.id } : m));
       })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
 
     // Build conversation history for the API
     const conversationHistory = [...messages, userMsg].map((m) => ({
@@ -998,7 +998,7 @@ export default function ChatPage() {
         .then((row) => {
           if (row?.id) setMessages((prev) => prev.map((m) => m.id === assistantMsg.id ? { ...m, dbId: row.id } : m));
         })
-        .catch(() => {});
+        .catch((err) => console.error("[page] async operation failed", err));
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -1061,7 +1061,7 @@ export default function ChatPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message_id: dbId, rating }),
-      }).catch(() => {});
+      }).catch((err) => console.error("[page] async operation failed", err));
       return next;
     });
   };

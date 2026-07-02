@@ -132,7 +132,7 @@ export default function CsaiTestPage() {
         if (p.language === "de" || p.language === "hu") setLang(p.language as Lang);
         // Do not auto-advance — gender must be selected manually before the test starts.
       })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, []);
 
   const answeredCount = Object.keys(answers).length;

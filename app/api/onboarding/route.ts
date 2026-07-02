@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
       ? (patch.mental_goals as string[]).join(", ")
       : null;
 
-    sendEmail({
+    await sendEmail({
       to:      adminEmail,
       subject: `🏋️ New athlete onboarded: ${athleteName}`,
       html: `
@@ -221,7 +221,7 @@ export async function POST(req: NextRequest) {
         </p>
       `,
       text: `New athlete onboarded: ${athleteName} (${athleteEmail}).`,
-    }).catch(() => {}); // fire-and-forget
+    }).catch((err) => console.error("[api/onboarding] async operation failed", err)); // fire-and-forget
   }
 
   return NextResponse.json({ ok: true });

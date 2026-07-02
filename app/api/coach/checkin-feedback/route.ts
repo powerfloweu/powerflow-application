@@ -131,12 +131,12 @@ export async function POST(req: NextRequest) {
       id: `eq.${coachId}`, select: "display_name",
     });
     const coachName = coachProfiles[0]?.display_name ?? "Your coach";
-    sendPushToUser(athlete_id, {
+    await sendPushToUser(athlete_id, {
       title: "Coach feedback",
       body: `${coachName} left feedback on your check-in`,
       url: "/today",
       tag: `coach-feedback-${checkin_id}`,
-    }).catch(() => {});
+    }).catch((err) => console.error("[api/coach/checkin-feedback] async operation failed", err));
   }
 
   return NextResponse.json({ ok: true, id: feedbackId });

@@ -203,14 +203,14 @@ export default function NotificationModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "broadcast", id: state.broadcast.id }),
-      }).catch(() => {});
+      }).catch((err) => console.error("[NotificationModal] async operation failed", err));
       afterBroadcast();
     } else if (phase === "devlog") {
       await fetch("/api/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "devlog" }),
-      }).catch(() => {});
+      }).catch((err) => console.error("[NotificationModal] async operation failed", err));
       afterDevlog();
     }
   // afterBroadcast / afterDevlog are stable closures — deps covered by phase

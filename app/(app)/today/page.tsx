@@ -89,7 +89,7 @@ export default function TodayPage() {
     fetch("/api/athlete/assigned-tests")
       .then((r) => r.ok ? r.json() : [])
       .then((rows) => { if (Array.isArray(rows)) setAssignedTests(rows); })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, []);
 
   const dismissAssignment = (slug: string) => {
@@ -98,7 +98,7 @@ export default function TodayPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ test_slug: slug }),
-    }).catch(() => {});
+    }).catch((err) => console.error("[page] async operation failed", err));
   };
 
   // ── Tool suggestions from coach ─────────────────────────────────────────────
@@ -109,7 +109,7 @@ export default function TodayPage() {
     fetch("/api/me/tool-suggestions")
       .then((r) => r.ok ? r.json() : [])
       .then((rows) => { if (Array.isArray(rows)) setToolSuggestions(rows); })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, []);
 
   const dismissSuggestion = (id: string) => {
@@ -118,7 +118,7 @@ export default function TodayPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
-    }).catch(() => {});
+    }).catch((err) => console.error("[page] async operation failed", err));
   };
 
   // ── Selected date (today by default) ───────────────────────────────────────
@@ -147,7 +147,7 @@ export default function TodayPage() {
         setEntry(e);
         if (selectedDate === todayKey() && e) markCheckinDone();
       })
-      .catch(() => {})
+      .catch((err) => console.error("[page] async operation failed", err))
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -236,7 +236,7 @@ export default function TodayPage() {
         });
         setPendingReflectionDate(pending?.meet_date ?? null);
       })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, [profile]);
 
   const showPostCompReflection = isToday && pendingReflectionDate !== null;

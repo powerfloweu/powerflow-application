@@ -130,7 +130,7 @@ export default function AcsiTestPage() {
         // Do not auto-advance past the intro — gender is required and must be
         // selected manually; silently skipping it causes submit to do nothing.
       })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, []);
 
   const totalItemPages = 2;

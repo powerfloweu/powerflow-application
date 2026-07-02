@@ -764,7 +764,7 @@ function OnboardingInner() {
         setCoaches(matched ? [matched] : full);
         if (matched && selectedCoachId === null) setSelectedCoachId(matched.id);
       })
-      .catch(() => {})
+      .catch((err) => console.error("[page] async operation failed", err))
       .finally(() => setLoadingCoaches(false));
   }, [step, preselectedCoachSlug, profileCoachId]); // eslint-disable-line react-hooks/exhaustive-deps
 

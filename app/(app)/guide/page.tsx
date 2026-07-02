@@ -259,7 +259,7 @@ export default function GuidePage() {
         setRole(p.role);
         setName(p.display_name?.split(" ")[0] ?? "");
       })
-      .catch(() => {});
+      .catch((err) => console.error("[page] async operation failed", err));
   }, [router]);
 
   const base = role === "coach" ? "/guide/coach" : "/guide/athlete";

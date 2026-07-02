@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Sync coach subscription quantity (fire-and-forget)
-  syncCoachQuantity(coachId).catch(() => {});
+  syncCoachQuantity(coachId).catch((err) => console.error("[api/join/link] async operation failed", err));
 
   return NextResponse.json({ ok: true });
 }
