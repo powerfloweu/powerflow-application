@@ -271,6 +271,7 @@ export async function PATCH(req: NextRequest) {
   if (viz_keywords  !== undefined) patch.viz_keywords  = viz_keywords;
   if (!Object.keys(patch).length) return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
 
-  await dbPatch("profiles", { id: athleteId }, patch);
+  const ok = await dbPatch("profiles", { id: athleteId }, patch);
+  if (!ok) return NextResponse.json({ error: "Save failed" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

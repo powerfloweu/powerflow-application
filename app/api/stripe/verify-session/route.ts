@@ -55,10 +55,18 @@ export async function GET(req: NextRequest) {
           : clientReferenceId.startsWith("pfdas_")
           ? "das_results"
           : "sat_results";
-        await dbPatch(table, { result_ref: clientReferenceId }, {
+        const ok = await dbPatch(table, { result_ref: clientReferenceId }, {
           paid: true,
           stripe_session_id: sessionId,
         });
+        if (!ok) {
+          // User paid but the unlock wasn't persisted — surface it so the
+          // client can retry rather than showing a paid-but-locked result.
+          return NextResponse.json(
+            { paid, error: "Payment received but unlock failed — please retry" },
+            { status: 500 },
+          );
+        }
       }
     }
 

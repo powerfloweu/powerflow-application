@@ -108,7 +108,8 @@ export async function POST(req: NextRequest) {
 
   let feedbackId: string;
   if (existing.length > 0) {
-    await dbPatch("checkin_feedback", { id: existing[0].id }, data);
+    const ok = await dbPatch("checkin_feedback", { id: existing[0].id }, data);
+    if (!ok) return NextResponse.json({ error: "Save failed" }, { status: 500 });
     feedbackId = existing[0].id;
   } else {
     const inserted = await dbInsert<typeof data>("checkin_feedback", {

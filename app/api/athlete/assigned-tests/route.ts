@@ -79,11 +79,12 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true, notFound: true });
   }
 
-  await dbPatch(
+  const ok = await dbPatch(
     "assigned_tests",
     { id: rows[0].id },
     { completed_at: new Date().toISOString() },
   );
+  if (!ok) return NextResponse.json({ error: "Could not mark test complete" }, { status: 500 });
 
   const testName = TEST_NAMES[test_slug] ?? test_slug.toUpperCase();
 

@@ -80,12 +80,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid round" }, { status: 400 });
   }
 
-  await dbInsert("survey_responses", {
+  const inserted = await dbInsert("survey_responses", {
     user_id:  user.id,
     round,
     role:     profile.role,
     answers:  answers ?? {},
   });
+  if (!inserted) return NextResponse.json({ error: "Save failed" }, { status: 500 });
 
   return NextResponse.json({ ok: true });
 }

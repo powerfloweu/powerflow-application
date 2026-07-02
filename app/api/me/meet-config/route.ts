@@ -42,6 +42,7 @@ export async function PATCH(req: NextRequest) {
   const rows = await dbSelect<{ meet_config: MeetConfig | null }>("profiles", { id: `eq.${userId}`, select: "meet_config" });
   const current = rows[0]?.meet_config ?? {};
   const merged = { ...current, ...body };
-  await dbPatch("profiles", { id: userId }, { meet_config: merged });
+  const ok = await dbPatch("profiles", { id: userId }, { meet_config: merged });
+  if (!ok) return NextResponse.json({ error: "Save failed" }, { status: 500 });
   return NextResponse.json(merged);
 }

@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
     ? (table as AllowedTable)
     : "sat_results";
 
-  await dbPatch(targetTable, { id: resultId }, { paid: true });
+  const ok = await dbPatch(targetTable, { id: resultId }, { paid: true });
+  if (!ok) return NextResponse.json({ error: "Unlock failed — result not found" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

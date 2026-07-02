@@ -48,6 +48,7 @@ export async function PATCH(req: NextRequest) {
   const { id } = await req.json().catch(() => ({})) as { id?: string };
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  await dbPatch("tool_suggestions", { id, athlete_id: user.id }, { seen_at: new Date().toISOString() });
+  const ok = await dbPatch("tool_suggestions", { id, athlete_id: user.id }, { seen_at: new Date().toISOString() });
+  if (!ok) return NextResponse.json({ error: "Update failed" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

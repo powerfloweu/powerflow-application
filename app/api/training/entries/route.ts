@@ -104,13 +104,15 @@ export async function POST(req: NextRequest) {
   });
 
   if (existing.length > 0) {
-    await dbPatch("training_entries", { user_id: user.id, entry_date }, payload);
+    const ok = await dbPatch("training_entries", { user_id: user.id, entry_date }, payload);
+    if (!ok) return NextResponse.json({ error: "Save failed" }, { status: 500 });
   } else {
-    await dbInsert("training_entries", {
+    const inserted = await dbInsert("training_entries", {
       user_id: user.id,
       entry_date,
       ...payload,
     });
+    if (!inserted) return NextResponse.json({ error: "Save failed" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

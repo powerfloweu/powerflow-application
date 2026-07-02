@@ -94,14 +94,16 @@ export async function POST(req: NextRequest) {
 
   if (existing.length > 0) {
     const merged = { ...existing[0].answers, ...answers };
-    await dbPatch(
+    const ok = await dbPatch(
       "meet_reflections",
       { id: existing[0].id },
       { answers: merged, updated_at: new Date().toISOString() },
     );
+    if (!ok) return NextResponse.json({ error: "Save failed" }, { status: 500 });
     return NextResponse.json({ ok: true, merged: true });
   }
 
-  await dbInsert("meet_reflections", { athlete_id: athleteId, meet_date, answers });
+  const inserted = await dbInsert("meet_reflections", { athlete_id: athleteId, meet_date, answers });
+  if (!inserted) return NextResponse.json({ error: "Save failed" }, { status: 500 });
   return NextResponse.json({ ok: true, merged: false }, { status: 201 });
 }

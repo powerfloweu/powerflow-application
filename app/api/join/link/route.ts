@@ -41,14 +41,16 @@ export async function POST(request: NextRequest) {
 
   if (existing.length > 0) {
     // Update coach_id on existing profile
-    await dbPatch("profiles", { id: userId }, { coach_id: coachId });
+    const ok = await dbPatch("profiles", { id: userId }, { coach_id: coachId });
+    if (!ok) return NextResponse.json({ error: "Linking failed" }, { status: 500 });
   } else {
     // Create athlete profile linked to coach
-    await dbInsert("profiles", {
+    const inserted = await dbInsert("profiles", {
       id: userId,
       role: "athlete",
       coach_id: coachId,
     });
+    if (!inserted) return NextResponse.json({ error: "Linking failed" }, { status: 500 });
   }
 
   // Sync coach subscription quantity (fire-and-forget)

@@ -35,12 +35,15 @@ async function userForCustomer(customerId: string): Promise<string | null> {
 
 // ─── athlete tier handlers ───────────────────────────────────────────────────
 
+// All handlers throw on a failed profile patch so the outer catch returns
+// HTTP 500 and Stripe retries the event instead of silently dropping it.
+
 async function activateTier(userId: string, subscriptionId: string, priceId: string) {
   const tier = tierForPrice(priceId);
   if (!tier) { console.error(`[webhook] Unknown price: ${priceId}`); return; }
   const isCourse = tier === "pr";
   const isTools  = tier === "second" || tier === "pr";
-  await dbPatch("profiles", { id: userId }, {
+  const ok = await dbPatch("profiles", { id: userId }, {
     plan_tier: tier,
     stripe_subscription_id: subscriptionId,
     stripe_price_id: priceId,
@@ -48,11 +51,12 @@ async function activateTier(userId: string, subscriptionId: string, priceId: str
     course_access: isCourse,
     test_access: isTools,
   });
+  if (!ok) throw new Error(`activateTier patch failed for ${userId}`);
   console.log(`[webhook] ✅ Athlete ${userId} → tier=${tier}`);
 }
 
 async function deactivateTier(userId: string, subscriptionId: string) {
-  await dbPatch("profiles", { id: userId }, {
+  const ok = await dbPatch("profiles", { id: userId }, {
     plan_tier: "opener",
     stripe_subscription_id: null,
     stripe_price_id: null,
@@ -60,22 +64,25 @@ async function deactivateTier(userId: string, subscriptionId: string) {
     course_access: false,
     test_access: false,
   });
+  if (!ok) throw new Error(`deactivateTier patch failed for ${userId}`);
   console.log(`[webhook] ⬇️  Athlete ${userId} downgraded (sub: ${subscriptionId})`);
 }
 
 // ─── coach plan handlers ─────────────────────────────────────────────────────
 
 async function activateCoachSub(userId: string, subscriptionId: string) {
-  await dbPatch("profiles", { id: userId }, {
+  const ok = await dbPatch("profiles", { id: userId }, {
     stripe_coach_sub_id: subscriptionId,
   });
+  if (!ok) throw new Error(`activateCoachSub patch failed for ${userId}`);
   console.log(`[webhook] ✅ Coach ${userId} → coach plan active`);
 }
 
 async function deactivateCoachSub(userId: string) {
-  await dbPatch("profiles", { id: userId }, {
+  const ok = await dbPatch("profiles", { id: userId }, {
     stripe_coach_sub_id: null,
   });
+  if (!ok) throw new Error(`deactivateCoachSub patch failed for ${userId}`);
   console.log(`[webhook] ⬇️  Coach ${userId} → coach plan cancelled`);
 }
 

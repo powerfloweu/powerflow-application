@@ -137,15 +137,17 @@ export async function POST(req: NextRequest) {
   });
 
   if (existing.length > 0) {
-    await dbPatch("weekly_checkins", { id: existing[0].id }, data);
+    const ok = await dbPatch("weekly_checkins", { id: existing[0].id }, data);
+    if (!ok) return NextResponse.json({ error: "Save failed" }, { status: 500 });
   } else {
-    await dbInsert("weekly_checkins", {
+    const inserted = await dbInsert("weekly_checkins", {
       ...data,
       user_id:     user.id,
       week_number: target.week,
       year:        target.year,
       week_start:  target.weekStart,
     } as Record<string, unknown>);
+    if (!inserted) return NextResponse.json({ error: "Save failed" }, { status: 500 });
   }
 
   // Fire-and-forget: notify the athlete's coach

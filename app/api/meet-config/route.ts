@@ -80,6 +80,7 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  await dbPatch("profiles", { id: athleteId }, { meet_config: merged });
+  const ok = await dbPatch("profiles", { id: athleteId }, { meet_config: merged });
+  if (!ok) return NextResponse.json({ error: "Save failed" }, { status: 500 });
   return NextResponse.json({ ok: true, meet_config: merged });
 }

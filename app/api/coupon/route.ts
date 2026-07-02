@@ -20,12 +20,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ valid: false, error: "Invalid code" }, { status: 400 });
   }
 
-  // Mark the result as paid in the database (best-effort, non-blocking)
+  // Mark the result as paid — if this fails the unlock would be lost on
+  // reload, so surface the error instead of pretending it worked.
   if (resultRef) {
-    try {
-      await dbPatch("sat_results", { result_ref: resultRef }, { paid: true });
-    } catch {
-      // Non-fatal — the client still gets unlocked locally
+    const ok = await dbPatch("sat_results", { result_ref: resultRef }, { paid: true });
+    if (!ok) {
+      return NextResponse.json(
+        { valid: false, error: "Could not apply coupon — please try again" },
+        { status: 500 },
+      );
     }
   }
 

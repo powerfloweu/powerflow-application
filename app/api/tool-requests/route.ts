@@ -22,7 +22,8 @@ export async function POST(req: NextRequest) {
   if (!text)         return NextResponse.json({ error: "Text is required" }, { status: 400 });
   if (text.length > 500) return NextResponse.json({ error: "Max 500 characters" }, { status: 400 });
 
-  await dbInsert("tool_requests", { user_id: user.id, text });
+  const inserted = await dbInsert("tool_requests", { user_id: user.id, text });
+  if (!inserted) return NextResponse.json({ error: "Save failed" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
 

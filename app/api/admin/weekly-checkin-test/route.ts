@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
 
   // If forceModal requested, set the flag on the target user's profile
   if (body.forceModal) {
-    await dbPatch("profiles", { id: targetUserId }, { force_checkin: true });
+    const ok = await dbPatch("profiles", { id: targetUserId }, { force_checkin: true });
+    if (!ok) return NextResponse.json({ error: "Could not set force flag — user not found?" }, { status: 500 });
     return NextResponse.json({ forced: true, targetUserId });
   }
 

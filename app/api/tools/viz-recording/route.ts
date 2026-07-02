@@ -163,7 +163,8 @@ export async function DELETE(req: NextRequest) {
 
   const next = { ...recordings };
   delete next[toolId];
-  await dbPatch("profiles", { id: user.id }, { viz_recordings: next });
+  const ok = await dbPatch("profiles", { id: user.id }, { viz_recordings: next });
+  if (!ok) return NextResponse.json({ error: "Delete failed" }, { status: 500 });
 
   return NextResponse.json({ ok: true });
 }

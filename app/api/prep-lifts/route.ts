@@ -61,7 +61,8 @@ export async function POST(req: NextRequest) {
     lift_date:       body.lift_date || null,
     athlete_notes:   body.athlete_notes?.trim() || null,
   });
-  return NextResponse.json({ ok: true, id: inserted?.id });
+  if (!inserted) return NextResponse.json({ error: "Save failed" }, { status: 500 });
+  return NextResponse.json({ ok: true, id: inserted.id });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -91,7 +92,8 @@ export async function PATCH(req: NextRequest) {
   }
   if (isCoach && body.coach_notes !== undefined) data.coach_notes = body.coach_notes?.trim() || null;
 
-  await dbPatch("prep_lifts", { id: body.id }, data);
+  const ok = await dbPatch("prep_lifts", { id: body.id }, data);
+  if (!ok) return NextResponse.json({ error: "Save failed" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
 

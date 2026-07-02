@@ -73,11 +73,13 @@ export async function PATCH(req: NextRequest) {
   });
   const data: Record<string, unknown> = { planned_kg, updated_at: new Date().toISOString() };
   if (existing.length > 0) {
-    await dbPatch("meet_attempts", { id: existing[0].id }, data);
+    const ok = await dbPatch("meet_attempts", { id: existing[0].id }, data);
+    if (!ok) return NextResponse.json({ error: "Save failed" }, { status: 500 });
     return NextResponse.json({ ok: true, id: existing[0].id });
   } else {
     const inserted = await dbInsert("meet_attempts", { ...data, athlete_id, meet_date, lift, attempt_num });
-    return NextResponse.json({ ok: true, id: inserted?.id });
+    if (!inserted) return NextResponse.json({ error: "Save failed" }, { status: 500 });
+    return NextResponse.json({ ok: true, id: inserted.id });
   }
 }
 
@@ -100,10 +102,12 @@ export async function POST(req: NextRequest) {
   if (notes      !== undefined) data.notes      = notes;
 
   if (existing.length > 0) {
-    await dbPatch("meet_attempts", { id: existing[0].id }, data);
+    const ok = await dbPatch("meet_attempts", { id: existing[0].id }, data);
+    if (!ok) return NextResponse.json({ error: "Save failed" }, { status: 500 });
     return NextResponse.json({ ok: true, id: existing[0].id });
   } else {
     const inserted = await dbInsert("meet_attempts", { ...data, athlete_id: userId, meet_date, lift, attempt_num });
-    return NextResponse.json({ ok: true, id: inserted?.id });
+    if (!inserted) return NextResponse.json({ error: "Save failed" }, { status: 500 });
+    return NextResponse.json({ ok: true, id: inserted.id });
   }
 }
