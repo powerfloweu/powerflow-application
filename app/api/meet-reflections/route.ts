@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
+import { notifyCoachOfActivity } from "@/lib/coachNotify";
 
 async function getUserId(): Promise<string | null> {
   const supabase = await createClient();
@@ -105,5 +106,14 @@ export async function POST(req: NextRequest) {
 
   const inserted = await dbInsert("meet_reflections", { athlete_id: athleteId, meet_date, answers });
   if (!inserted) return NextResponse.json({ error: "Save failed" }, { status: 500 });
+
+  // Notify the coach once, on the first save only (this route is called on
+  // every textarea blur as answers auto-save; the merge-patch path above does
+  // not notify, so the coach gets exactly one ping per reflection). Skip when a
+  // coach is filling it in on the athlete's behalf.
+  if (athleteId === userId) {
+    await notifyCoachOfActivity(athleteId, { kind: "reflection" });
+  }
+
   return NextResponse.json({ ok: true, merged: false }, { status: 201 });
 }
