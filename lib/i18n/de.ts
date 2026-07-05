@@ -592,6 +592,8 @@ export const de: Dict = {
     body: "Erhalte um 19 Uhr eine Erinnerung, wenn du dein Check-in noch nicht eingetragen hast.",
     enable: "Aktivieren",
     later: "Jetzt nicht",
+    coachTitle: "Bleib mit deinen Athlet:innen in Verbindung",
+    coachBody: "Aktiviere Benachrichtigungen, um sofort informiert zu werden, wenn eine Athletin oder ein Athlet ein Check-in macht, einen Tagebucheintrag schreibt oder eine Wettkampf-Reflexion teilt — so kannst du reagieren, wenn es zählt.",
   },
 
   notifications: {

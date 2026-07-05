@@ -3,8 +3,10 @@
 /**
  * NotificationPermissionBanner
  *
- * A subtle, dismissible banner shown to athletes who haven't yet
- * granted or denied browser notification permission.
+ * A subtle, dismissible banner shown to users who haven't yet granted or
+ * denied browser notification permission. Copy adapts to the viewer:
+ *  - athlete → daily check-in reminder
+ *  - coach   → get alerted when athletes check in, journal, or reflect
  *
  * Rules:
  * - Only renders if Notification API is available AND permission === "default"
@@ -19,8 +21,14 @@ import { useT } from "@/lib/i18n";
 const DISMISSED_KEY = "pf-notif-dismissed";
 const SUPPRESS_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-export default function NotificationPermissionBanner() {
+interface Props {
+  /** Which copy + follow-up actions to use. Defaults to athlete. */
+  variant?: "athlete" | "coach";
+}
+
+export default function NotificationPermissionBanner({ variant = "athlete" }: Props) {
   const { t } = useT();
+  const isCoach = variant === "coach";
 
   // Three-state machine: null = loading (don't flash), false = hidden, true = visible
   const [visible, setVisible] = React.useState<boolean | null>(null);
@@ -54,13 +62,17 @@ export default function NotificationPermissionBanner() {
     // Whether granted or denied, hide the banner — no point showing again
     dismiss();
     if (permission === "granted") {
-      // Trigger the scheduler so the first notification is set up right away
-      // (CheckinReminderScheduler already ran on mount and no-opped because
-      //  permission was "default" at that point.)
-      const { scheduleCheckinNotification } = await import("@/lib/checkinReminder");
-      scheduleCheckinNotification(19);
+      // The daily 7pm check-in reminder is athlete-only.
+      if (!isCoach) {
+        // Trigger the scheduler so the first notification is set up right away
+        // (CheckinReminderScheduler already ran on mount and no-opped because
+        //  permission was "default" at that point.)
+        const { scheduleCheckinNotification } = await import("@/lib/checkinReminder");
+        scheduleCheckinNotification(19);
+      }
 
-      // Also subscribe to server-sent push (works when the tab is closed).
+      // Subscribe to server-sent push (works when the tab is closed). This is
+      // what delivers the coach's athlete-activity notifications.
       const { subscribeToPush } = await import("@/lib/pushClient");
       const result = await subscribeToPush();
       if (!result.ok) {
@@ -105,10 +117,10 @@ export default function NotificationPermissionBanner() {
         {/* Text */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-zinc-100 leading-tight">
-            {t("notifBanner.title")}
+            {t(isCoach ? "notifBanner.coachTitle" : "notifBanner.title")}
           </p>
           <p className="mt-0.5 text-xs text-zinc-400 leading-snug">
-            {t("notifBanner.body")}
+            {t(isCoach ? "notifBanner.coachBody" : "notifBanner.body")}
           </p>
 
           {/* Action buttons */}

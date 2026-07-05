@@ -398,8 +398,11 @@ export default function AppShell({ children }: Props) {
           role is still null — prevents athlete UI flashing on coach sessions */}
       {role === "athlete" && <CheckinReminderScheduler />}
 
-      {/* ── Push notification permission banner (athletes only) ───── */}
-      {role === "athlete" && <NotificationPermissionBanner />}
+      {/* ── Push notification permission banner ─────────────────────── */}
+      {/* Athletes: daily check-in reminder. Coaches: get alerted when their
+          athletes check in, journal, or share a competition reflection. */}
+      {role === "athlete" && <NotificationPermissionBanner variant="athlete" />}
+      {role === "coach" && <NotificationPermissionBanner variant="coach" />}
 
       {/* ── In-app broadcast + devlog modal ────────────────────────── */}
       {notifications && (

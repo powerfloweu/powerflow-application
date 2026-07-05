@@ -614,6 +614,8 @@ export const en = {
     body: "Get a nudge at 7 pm if you haven't logged your check-in.",
     enable: "Enable",
     later: "Not now",
+    coachTitle: "Stay in the loop with your athletes",
+    coachBody: "Turn on notifications to be alerted the moment an athlete checks in, writes a journal entry, or shares a post-competition reflection — so you can respond while it matters.",
   },
 
   // Notifications modal

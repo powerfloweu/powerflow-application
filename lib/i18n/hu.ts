@@ -590,6 +590,8 @@ export const hu: Dict = {
     body: "Ha még nem töltötted ki a check-int, 19 órakor értesítünk.",
     enable: "Bekapcsolás",
     later: "Most nem",
+    coachTitle: "Maradj kapcsolatban a sportolóiddal",
+    coachBody: "Kapcsold be az értesítéseket, hogy azonnal értesülj, amikor egy sportoló check-int csinál, naplóbejegyzést ír, vagy verseny utáni reflexiót oszt meg — így akkor reagálhatsz, amikor számít.",
   },
 
   notifications: {
