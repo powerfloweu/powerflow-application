@@ -104,6 +104,14 @@ These are the next meaningful features after quick wins are done.
 
 ## Session log
 
+### 2026-07-06 — main (lifestyle guide beta)
+- **/life section (beta)** — Dávid's personal operating system prototype, gated by `profiles.lifestyle_beta` (true only for his two accounts). Tabs: Today (values strip, due check-in quick-taps, workout logger, weight + one-tap meal macros), Plan (week stepper, structure editor, history), Check-in, Trends, Setup.
+- **Adaptive check-in cadence** (`lib/life.ts`, 14 tests): daily items daily; weekly items every 7d, but two consecutive below-threshold scores → focus mode (every 3d) until one good score recovers it.
+- **Data**: `lifestyle_config/plans/workouts/checkins/body_log` tables (migration 20260706, applied + seeded — his 3-week 7/5/3 wave block loaded). Owner-only RLS.
+- **API**: `/api/life/{config,plan,workouts,checkins,body}`, all flag-gated and write-checked. `lifestyle_beta` exposed via /api/me; Life card on You page links to /life.
+- Earlier same session: coach notified of journal entries + post-comp reflections (`notifyCoachOfActivity`); coach variant of the notification-permission banner.
+- Next: Dávid fills in values + meals in Setup, uses it for a week; then consider a push reminder for due check-in items and a "kcal vs target" trend.
+
 ### 2026-07-02 — main (professionalism hardening)
 - **Data layer honesty**: `dbPatch` now uses `return=representation` and returns false on zero-row matches; `dbPatch`/`dbDelete` strip a redundant `eq.` prefix and log loudly (root cause of the meet-reflections silent data loss — `id=eq.eq.<uuid>`). ~20 API routes now check write results and return HTTP 500 instead of a fake `{ ok: true }`. Stripe webhook handlers throw on failed patches so Stripe retries.
 - **No more silent failures**: replaced all 68 empty `.catch(() => {})` with logged catches (per-file context label); awaited previously fire-and-forget `sendEmail`/`sendPushToUser` calls in serverless routes; PostCompReflection shows "Save failed — tap to retry".
