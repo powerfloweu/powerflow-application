@@ -191,6 +191,26 @@ export default function YouPage() {
         </div>
       )}
 
+      {/* ── Lifestyle guide (beta) shortcut ─────────────────── */}
+      {profile?.lifestyle_beta && (
+        <Link
+          href="/life"
+          className="block rounded-2xl border border-sky-500/25 bg-sky-500/[0.06] p-4 mb-6 hover:border-sky-400/40 transition"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-sky-300 mb-0.5">
+                Life · Beta
+              </p>
+              <p className="font-saira text-sm font-semibold text-zinc-100">
+                Lifestyle Guide — values, training, body, check-in
+              </p>
+            </div>
+            <span className="text-sky-300 text-lg">→</span>
+          </div>
+        </Link>
+      )}
+
       {/* ── Identity card ───────────────────────────────────── */}
       {profile && (
         <div className="rounded-2xl border border-white/5 bg-surface-card p-5 mb-6">

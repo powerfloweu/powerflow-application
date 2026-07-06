@@ -166,6 +166,9 @@ export type AthleteProfile = {
    * Coach's cloned voice (coach_tts_voice_id) still takes priority over this.
    */
   preferred_voice_id: string | null;
+
+  /** Lifestyle guide beta flag — gates the /life section. */
+  lifestyle_beta?: boolean;
 };
 
 /** Compute current total from profile fields. Returns null if no lifts set. */

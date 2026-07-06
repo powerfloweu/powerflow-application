@@ -41,6 +41,8 @@ const SELECT_COLS = [
   "stripe_subscription_id",
   // v12 — AI Coach voice preference
   "preferred_voice_id",
+  // v13 — lifestyle guide beta flag
+  "lifestyle_beta",
 ].join(",");
 
 export async function GET() {
