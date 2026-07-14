@@ -91,11 +91,11 @@ export default function LifePage() {
     return true;
   };
 
-  const saveBody = async (patch: { weight_kg?: number | null; meal_ids?: string[] }): Promise<boolean> => {
+  const saveBody = async (patch: { weight_kg?: number | null; meal_ids?: string[] }, date = todayYmd()): Promise<boolean> => {
     const res = await fetch("/api/life/body", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ log_date: todayYmd(), ...patch }),
+      body: JSON.stringify({ log_date: date, ...patch }),
     }).catch(() => null);
     if (!res?.ok) { showError("Body log save failed — try again."); return false; }
     const rows = await fetch("/api/life/body").then((r) => r.ok ? r.json() : null).catch(() => null);

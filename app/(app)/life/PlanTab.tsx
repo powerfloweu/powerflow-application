@@ -94,8 +94,28 @@ export default function PlanTab({ plan, workouts, patchPlan, createPlan }: Props
     );
   }
 
+  // All days completed this week → offer to advance.
+  const planDayKeys = (structure?.days ?? []).map((d) => d.key);
+  const doneDayKeys = new Set(
+    workouts.filter((w) => w.completed && w.week_number === plan.current_week).map((w) => w.day_key),
+  );
+  const allDaysDone = planDayKeys.length > 0 && planDayKeys.every((k) => doneDayKeys.has(k));
+  const canAdvance = allDaysDone && plan.current_week < (structure?.weeks ?? 1);
+
   return (
     <div className="space-y-4">
+      {/* Advance-week prompt */}
+      {canAdvance && (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.08] p-4 flex items-center justify-between gap-3">
+          <p className="font-saira text-sm text-emerald-200">
+            All {planDayKeys.length} sessions done for week {plan.current_week} 🎉
+          </p>
+          <PrimaryButton onClick={() => setWeek(plan.current_week + 1)} className="flex-shrink-0">
+            Advance to week {plan.current_week + 1}
+          </PrimaryButton>
+        </div>
+      )}
+
       {/* Week + adherence */}
       <Card title={plan.name}>
         <div className="flex items-center justify-between">

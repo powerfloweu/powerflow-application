@@ -2,7 +2,7 @@
 
 import React from "react";
 import {
-  computeDimStatuses, schemeForWeek, sumMealMacros, todayYmd,
+  computeDimStatuses, schemeForWeek, sumMealMacros, todayYmd, detectPRs,
   type LifeConfig, type LifePlan, type CheckinRow, type BodyLogRow,
   type WorkoutRow, type WorkoutEntry, type SetEntry,
 } from "@/lib/life";
@@ -15,7 +15,7 @@ interface Props {
   body: BodyLogRow[];
   workouts: WorkoutRow[];
   saveCheckin: (scores: Record<string, number>) => Promise<boolean>;
-  saveBody: (patch: { weight_kg?: number | null; meal_ids?: string[] }) => Promise<boolean>;
+  saveBody: (patch: { weight_kg?: number | null; meal_ids?: string[] }, date?: string) => Promise<boolean>;
   saveWorkout: (w: {
     log_date: string; day_key: string; week_number: number | null;
     entries: WorkoutEntry[]; completed: boolean; note?: string; plan_id: string | null;
@@ -42,6 +42,10 @@ export default function TodayTab({
   config, plan, checkins, body, workouts, saveCheckin, saveBody, saveWorkout,
 }: Props) {
   const today = todayYmd();
+  // Workout + body can be backfilled to an earlier day; the check-in below
+  // always reflects real "today" (it's about how you are right now).
+  const [logDate, setLogDate] = React.useState(today);
+  const isBackfill = logDate !== today;
 
   // ── Check-in quick log ────────────────────────────────────────────────────
   const statuses = computeDimStatuses(config.dimensions, checkins, today);
@@ -70,7 +74,7 @@ export default function TodayTab({
   const activeDay = dayKey ?? defaultDay;
   const week = plan?.current_week ?? 1;
 
-  const existing = workouts.find((w) => w.log_date === today && w.day_key === activeDay);
+  const existing = workouts.find((w) => w.log_date === logDate && w.day_key === activeDay);
   const [entries, setEntries] = React.useState<WorkoutEntry[]>([]);
   const [note, setNote] = React.useState("");
   const [savingWorkout, setSavingWorkout] = React.useState(false);
@@ -85,7 +89,7 @@ export default function TodayTab({
       setNote("");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan?.id, activeDay, week, existing?.id]);
+  }, [plan?.id, activeDay, week, existing?.id, logDate]);
 
   const updateSet = (ei: number, si: number, field: keyof SetEntry, v: number | null) => {
     setEntries((prev) => prev.map((e, i) => i !== ei ? e : {
@@ -93,18 +97,22 @@ export default function TodayTab({
     }));
   };
 
+  // Live PR detection — exercises whose best set beats their previous best.
+  const prHits = activeDay ? detectPRs(entries, workouts, logDate, activeDay) : [];
+  const prById = new Map(prHits.map((h) => [h.exercise_id, h]));
+
   const submitWorkout = async (completed: boolean) => {
     if (!activeDay) return;
     setSavingWorkout(true);
     await saveWorkout({
-      log_date: today, day_key: activeDay, week_number: week,
+      log_date: logDate, day_key: activeDay, week_number: week,
       entries, completed, note: note || undefined, plan_id: plan?.id ?? null,
     });
     setSavingWorkout(false);
   };
 
   // ── Body: weight + meals ─────────────────────────────────────────────────
-  const todayBody = body.find((b) => b.log_date === today) ?? null;
+  const todayBody = body.find((b) => b.log_date === logDate) ?? null;
   const [weight, setWeight] = React.useState<number | null>(todayBody?.weight_kg ?? null);
   const [mealIds, setMealIds] = React.useState<string[]>(todayBody?.meal_ids ?? []);
   const [savingBody, setSavingBody] = React.useState(false);
@@ -118,13 +126,19 @@ export default function TodayTab({
   const macros = sumMealMacros(mealIds, config.meals);
   const targets = config.macro_targets;
 
-  const toggleMeal = (id: string) => {
-    setMealIds((prev) => prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]);
-  };
+  // Meal quantity: a meal can appear multiple times in mealIds; sumMealMacros
+  // counts duplicates, so "eat it twice" is just two entries.
+  const mealCount = (id: string) => mealIds.filter((m) => m === id).length;
+  const addMeal = (id: string) => setMealIds((prev) => [...prev, id]);
+  const removeMeal = (id: string) => setMealIds((prev) => {
+    const i = prev.indexOf(id);
+    if (i === -1) return prev;
+    return [...prev.slice(0, i), ...prev.slice(i + 1)];
+  });
 
   const submitBody = async () => {
     setSavingBody(true);
-    await saveBody({ weight_kg: weight, meal_ids: mealIds });
+    await saveBody({ weight_kg: weight, meal_ids: mealIds }, logDate);
     setSavingBody(false);
   };
 
@@ -169,10 +183,27 @@ export default function TodayTab({
       {/* Workout */}
       <Card
         title={`Workout — week ${week}`}
-        action={existing?.completed ? (
-          <span className="font-saira text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-400">Completed ✓</span>
-        ) : undefined}
+        action={
+          <div className="flex items-center gap-2">
+            {existing?.completed && (
+              <span className="font-saira text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-400">Completed ✓</span>
+            )}
+            <input
+              type="date"
+              value={logDate}
+              max={today}
+              onChange={(e) => setLogDate(e.target.value || today)}
+              className="rounded-lg border border-zinc-700/60 bg-surface-input px-2 py-1 font-saira text-[11px] text-zinc-300 outline-none focus:border-sky-500/60"
+              aria-label="Log date"
+            />
+          </div>
+        }
       >
+        {isBackfill && (
+          <p className="mb-3 font-saira text-[11px] text-amber-300">
+            Logging for {logDate} (not today)
+          </p>
+        )}
         {!plan ? (
           <p className="font-saira text-sm text-zinc-400">No active plan — create one in the Plan tab.</p>
         ) : (
@@ -199,7 +230,19 @@ export default function TodayTab({
                 <div key={e.exercise_id} className={`rounded-xl border p-3 ${e.done ? "border-emerald-500/30 bg-emerald-500/[0.05]" : "border-white/8"}`}>
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="min-w-0">
-                      <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{e.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{e.name}</p>
+                        {prById.has(e.exercise_id) && (
+                          <span
+                            title={prById.get(e.exercise_id)!.prevBest
+                              ? `est. 1RM ${prById.get(e.exercise_id)!.e1rm} — beats ${prById.get(e.exercise_id)!.prevBest}`
+                              : `est. 1RM ${prById.get(e.exercise_id)!.e1rm} — first logged`}
+                            className="flex-shrink-0 rounded-full border border-amber-400/40 bg-amber-400/15 px-2 py-0.5 font-saira text-[9px] font-bold uppercase tracking-[0.14em] text-amber-300"
+                          >
+                            PR ★
+                          </span>
+                        )}
+                      </div>
                       {e.prescription && (
                         <p className="font-saira text-[11px] text-sky-300/90">{e.prescription}</p>
                       )}
@@ -270,7 +313,7 @@ export default function TodayTab({
       </Card>
 
       {/* Body: weight + meals */}
-      <Card title="Body — today">
+      <Card title={isBackfill ? `Body — ${logDate}` : "Body — today"}>
         <div className="flex items-center gap-3 mb-4">
           <p className="font-saira text-sm text-zinc-300 w-16">Weight</p>
           <NumInput value={weight} onChange={setWeight} placeholder="kg" className="w-24" step="0.1" />
@@ -286,21 +329,48 @@ export default function TodayTab({
             <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400 mb-2">Meals eaten</p>
             <div className="flex flex-wrap gap-2 mb-3">
               {config.meals.map((m) => {
-                const on = mealIds.includes(m.id);
+                const count = mealCount(m.id);
+                const on = count > 0;
                 return (
-                  <button
+                  <div
                     key={m.id}
-                    type="button"
-                    onClick={() => toggleMeal(m.id)}
-                    className={`rounded-xl border px-3 py-1.5 font-saira text-xs transition ${
+                    className={`flex items-center rounded-xl border font-saira text-xs transition ${
                       on
                         ? "border-sky-500/50 bg-sky-500/15 text-sky-200"
-                        : "border-white/10 text-zinc-400 hover:border-white/25"
+                        : "border-white/10 text-zinc-400"
                     }`}
                   >
-                    {m.name}
-                    <span className="ml-1.5 text-[10px] text-zinc-500">{m.kcal} kcal</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => addMeal(m.id)}
+                      className="pl-3 pr-2 py-1.5 hover:text-sky-100"
+                      title="Add one"
+                    >
+                      {m.name}
+                      <span className="ml-1.5 text-[10px] text-zinc-500">{m.kcal} kcal</span>
+                    </button>
+                    {on && (
+                      <span className="flex items-center gap-1 pr-1.5">
+                        <button
+                          type="button"
+                          onClick={() => removeMeal(m.id)}
+                          className="w-5 h-5 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400"
+                          aria-label={`Remove one ${m.name}`}
+                        >
+                          −
+                        </button>
+                        <span className="w-4 text-center font-bold tabular-nums text-sky-200">×{count}</span>
+                        <button
+                          type="button"
+                          onClick={() => addMeal(m.id)}
+                          className="w-5 h-5 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400"
+                          aria-label={`Add one ${m.name}`}
+                        >
+                          +
+                        </button>
+                      </span>
+                    )}
+                  </div>
                 );
               })}
             </div>
