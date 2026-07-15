@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import type { Sentiment } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
+import CoachDigests from "../CoachDigests";
 
 type EntryRow = {
   id: string;
@@ -123,6 +124,9 @@ export default function CoachActivityPage() {
             <p className="font-saira text-[10px] text-zinc-500">past 7 days</p>
           </div>
         </div>
+
+        {/* AI drafts from recent journal activity */}
+        <CoachDigests />
 
         {/* Empty state */}
         {feed.length === 0 && (
