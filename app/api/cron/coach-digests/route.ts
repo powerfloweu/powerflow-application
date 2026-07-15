@@ -23,7 +23,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const WINDOW_DAYS = 5;
+const WINDOW_DAYS = 7;
 const MIN_ENTRIES = 2;
 const MAX_ATHLETES_PER_RUN = 40; // cost/time guard; logged if exceeded
 
