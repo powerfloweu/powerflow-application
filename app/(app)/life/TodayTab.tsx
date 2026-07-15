@@ -2,9 +2,9 @@
 
 import React from "react";
 import {
-  computeDimStatuses, schemeForWeek, sumMealMacros, todayYmd, detectPRs,
+  computeDimStatuses, schemeForWeek, sumMealMacros, todayYmd, detectPRs, loggedExercises,
   type LifeConfig, type LifePlan, type CheckinRow, type BodyLogRow,
-  type WorkoutRow, type WorkoutEntry, type SetEntry,
+  type WorkoutRow, type WorkoutEntry, type SetEntry, type PlanStructure,
 } from "@/lib/life";
 import { Card, RatingSlider, NumInput, PrimaryButton, GhostButton, ModeBadge } from "./shared";
 
@@ -20,6 +20,11 @@ interface Props {
     log_date: string; day_key: string; week_number: number | null;
     entries: WorkoutEntry[]; completed: boolean; note?: string; plan_id: string | null;
   }) => Promise<boolean>;
+  patchPlan: (patch: { id: string; structure?: PlanStructure; current_week?: number; name?: string }) => Promise<boolean>;
+}
+
+function slugifyExercise(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `ex-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 function emptySet(): SetEntry {
@@ -39,7 +44,7 @@ function buildEntries(plan: LifePlan, dayKey: string, week: number): WorkoutEntr
 }
 
 export default function TodayTab({
-  config, plan, checkins, body, workouts, saveCheckin, saveBody, saveWorkout,
+  config, plan, checkins, body, workouts, saveCheckin, saveBody, saveWorkout, patchPlan,
 }: Props) {
   const today = todayYmd();
   // Workout + body can be backfilled to an earlier day; the check-in below
@@ -100,6 +105,51 @@ export default function TodayTab({
   // Live PR detection — exercises whose best set beats their previous best.
   const prHits = activeDay ? detectPRs(entries, workouts, logDate, activeDay) : [];
   const prById = new Map(prHits.map((h) => [h.exercise_id, h]));
+
+  // ── Add exercise (ad-hoc, or push into the plan) ──────────────────────────
+  // Suggestions: everything in the plan + everything ever logged, so picking a
+  // known exercise reuses its id and keeps progression continuous.
+  const exerciseSuggestions = React.useMemo(() => {
+    const map = new Map<string, string>();
+    plan?.structure.days.forEach((d) => d.exercises.forEach((ex) => map.set(ex.id, ex.name)));
+    loggedExercises(workouts).forEach((e) => { if (!map.has(e.id)) map.set(e.id, e.name); });
+    return [...map.entries()].map(([id, name]) => ({ id, name }));
+  }, [plan, workouts]);
+
+  const [showAdd, setShowAdd] = React.useState(false);
+  const [newName, setNewName] = React.useState("");
+  const [newScheme, setNewScheme] = React.useState("");
+  const [alsoToPlan, setAlsoToPlan] = React.useState(false);
+  const [addingPlan, setAddingPlan] = React.useState(false);
+
+  const addExercise = async () => {
+    const name = newName.trim();
+    if (!name) return;
+    const match = exerciseSuggestions.find((s) => s.name.toLowerCase() === name.toLowerCase());
+    const id = match?.id ?? slugifyExercise(name);
+    const prescription = newScheme.trim();
+
+    // Don't duplicate an exercise already in today's session.
+    if (!entries.some((e) => e.exercise_id === id)) {
+      setEntries((prev) => [...prev, { exercise_id: id, name, prescription, sets: [emptySet()], done: false }]);
+    }
+
+    // Optionally persist to the plan for this day, going forward.
+    if (alsoToPlan && plan && activeDay) {
+      const day = plan.structure.days.find((d) => d.key === activeDay);
+      if (day && !day.exercises.some((e) => e.id === id)) {
+        setAddingPlan(true);
+        const structure = structuredClone(plan.structure) as PlanStructure;
+        structure.days.find((d) => d.key === activeDay)!.exercises.push({
+          id, name, type: "accessory", scheme: prescription,
+        });
+        await patchPlan({ id: plan.id, structure });
+        setAddingPlan(false);
+      }
+    }
+
+    setNewName(""); setNewScheme(""); setAlsoToPlan(false); setShowAdd(false);
+  };
 
   const submitWorkout = async (completed: boolean) => {
     if (!activeDay) return;
@@ -291,6 +341,53 @@ export default function TodayTab({
                 </div>
               ))}
             </div>
+
+            {/* Add exercise (ad-hoc / modify program) */}
+            <datalist id="life-exercise-suggestions">
+              {exerciseSuggestions.map((s) => <option key={s.id} value={s.name} />)}
+            </datalist>
+            {showAdd ? (
+              <div className="mt-3 rounded-xl border border-sky-500/25 bg-sky-500/[0.05] p-3 space-y-2">
+                <input
+                  type="text"
+                  list="life-exercise-suggestions"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Exercise — pick one or type a new name"
+                  autoFocus
+                  className="w-full rounded-lg border border-zinc-700/60 bg-surface-input px-3 py-2 font-saira text-sm text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-sky-500/60"
+                />
+                <input
+                  type="text"
+                  value={newScheme}
+                  onChange={(e) => setNewScheme(e.target.value)}
+                  placeholder="Set/rep scheme (optional) — e.g. 3 x 10 @ RPE 8"
+                  className="w-full rounded-lg border border-zinc-700/60 bg-surface-input px-3 py-2 font-saira text-sm text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-sky-500/60"
+                />
+                {plan && activeDay && (
+                  <label className="flex items-center gap-2 font-saira text-[11px] text-zinc-400 cursor-pointer">
+                    <input type="checkbox" checked={alsoToPlan} onChange={(e) => setAlsoToPlan(e.target.checked)} className="accent-sky-400" />
+                    Also add to {plan.structure.days.find((d) => d.key === activeDay)?.name ?? `Day ${activeDay}`} in my plan
+                  </label>
+                )}
+                <div className="flex gap-2 pt-0.5">
+                  <PrimaryButton onClick={addExercise} disabled={!newName.trim() || addingPlan}>
+                    {addingPlan ? "Adding…" : "Add exercise"}
+                  </PrimaryButton>
+                  <GhostButton onClick={() => { setShowAdd(false); setNewName(""); setNewScheme(""); setAlsoToPlan(false); }}>
+                    Cancel
+                  </GhostButton>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowAdd(true)}
+                className="mt-3 w-full rounded-xl border border-dashed border-white/15 py-2.5 font-saira text-xs font-semibold text-sky-300 hover:border-sky-500/40 hover:text-sky-200 transition"
+              >
+                + Add exercise
+              </button>
+            )}
 
             <input
               type="text"

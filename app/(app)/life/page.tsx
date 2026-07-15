@@ -204,7 +204,7 @@ export default function LifePage() {
       {tab === "today" && (
         <TodayTab
           config={config} plan={plan} checkins={checkins} body={body} workouts={workouts}
-          saveCheckin={saveCheckin} saveBody={saveBody} saveWorkout={saveWorkout}
+          saveCheckin={saveCheckin} saveBody={saveBody} saveWorkout={saveWorkout} patchPlan={patchPlan}
         />
       )}
       {tab === "plan" && (
