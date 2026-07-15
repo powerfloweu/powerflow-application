@@ -119,8 +119,14 @@ export default function TodayTab({
   const [showAdd, setShowAdd] = React.useState(false);
   const [newName, setNewName] = React.useState("");
   const [newScheme, setNewScheme] = React.useState("");
-  const [alsoToPlan, setAlsoToPlan] = React.useState(false);
+  // "today" = one-off for this session; "program" = add to the plan day so it
+  // recurs for the remainder of the program.
+  const [scope, setScope] = React.useState<"today" | "program">("today");
   const [addingPlan, setAddingPlan] = React.useState(false);
+
+  const resetAdd = () => {
+    setNewName(""); setNewScheme(""); setScope("today"); setShowAdd(false);
+  };
 
   const addExercise = async () => {
     const name = newName.trim();
@@ -129,13 +135,13 @@ export default function TodayTab({
     const id = match?.id ?? slugifyExercise(name);
     const prescription = newScheme.trim();
 
-    // Don't duplicate an exercise already in today's session.
+    // Always add to today's session (unless it's already there).
     if (!entries.some((e) => e.exercise_id === id)) {
       setEntries((prev) => [...prev, { exercise_id: id, name, prescription, sets: [emptySet()], done: false }]);
     }
 
-    // Optionally persist to the plan for this day, going forward.
-    if (alsoToPlan && plan && activeDay) {
+    // "Rest of the program" → persist to the plan day so future sessions include it.
+    if (scope === "program" && plan && activeDay) {
       const day = plan.structure.days.find((d) => d.key === activeDay);
       if (day && !day.exercises.some((e) => e.id === id)) {
         setAddingPlan(true);
@@ -148,7 +154,7 @@ export default function TodayTab({
       }
     }
 
-    setNewName(""); setNewScheme(""); setAlsoToPlan(false); setShowAdd(false);
+    resetAdd();
   };
 
   const submitWorkout = async (completed: boolean) => {
@@ -365,16 +371,37 @@ export default function TodayTab({
                   className="w-full rounded-lg border border-zinc-700/60 bg-surface-input px-3 py-2 font-saira text-sm text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-sky-500/60"
                 />
                 {plan && activeDay && (
-                  <label className="flex items-center gap-2 font-saira text-[11px] text-zinc-400 cursor-pointer">
-                    <input type="checkbox" checked={alsoToPlan} onChange={(e) => setAlsoToPlan(e.target.checked)} className="accent-sky-400" />
-                    Also add to {plan.structure.days.find((d) => d.key === activeDay)?.name ?? `Day ${activeDay}`} in my plan
-                  </label>
+                  <div>
+                    <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 mb-1.5">Add for</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        { key: "today", label: "Just today", hint: "One-off this session" },
+                        { key: "program", label: "Rest of the program", hint: `Recurs on ${plan.structure.days.find((d) => d.key === activeDay)?.name ?? `Day ${activeDay}`}` },
+                      ] as const).map((opt) => (
+                        <button
+                          key={opt.key}
+                          type="button"
+                          onClick={() => setScope(opt.key)}
+                          className={`rounded-lg border px-3 py-2 text-left transition ${
+                            scope === opt.key
+                              ? "border-sky-500/50 bg-sky-500/15"
+                              : "border-white/10 hover:border-white/25"
+                          }`}
+                        >
+                          <span className={`block font-saira text-xs font-semibold ${scope === opt.key ? "text-sky-200" : "text-zinc-300"}`}>
+                            {opt.label}
+                          </span>
+                          <span className="block font-saira text-[10px] text-zinc-500">{opt.hint}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
                 <div className="flex gap-2 pt-0.5">
                   <PrimaryButton onClick={addExercise} disabled={!newName.trim() || addingPlan}>
-                    {addingPlan ? "Adding…" : "Add exercise"}
+                    {addingPlan ? "Adding…" : scope === "program" ? "Add to program" : "Add for today"}
                   </PrimaryButton>
-                  <GhostButton onClick={() => { setShowAdd(false); setNewName(""); setNewScheme(""); setAlsoToPlan(false); }}>
+                  <GhostButton onClick={resetAdd}>
                     Cancel
                   </GhostButton>
                 </div>
