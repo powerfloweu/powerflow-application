@@ -15,7 +15,7 @@ import { dbSelect, dbInsert } from "@/lib/supabaseAdmin";
 import { sendPushToUser } from "@/lib/push";
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  DIGEST_MODEL, DIGEST_SYSTEM, buildDigestUserPrompt, parseDigest,
+  DIGEST_MODEL, DIGEST_SYSTEM, buildDigestUserPrompt, parseDigest, trainingLogText,
   type DigestEntry,
 } from "@/lib/coachDigest";
 
@@ -41,6 +41,14 @@ function ymd(d: Date): string {
 
 type Athlete = { id: string; display_name: string; coach_id: string | null };
 type EntryRow = { content: string; sentiment: string | null; created_at: string };
+type TrainingRow = {
+  created_at: string;
+  thoughts_before: string | null;
+  thoughts_after: string | null;
+  what_went_well: string | null;
+  frustrations: string | null;
+  next_session: string | null;
+};
 
 export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) {
@@ -67,13 +75,33 @@ export async function GET(req: NextRequest) {
   for (const a of athletes) {
     if (!a.coach_id) continue;
 
-    const entries = await dbSelect<EntryRow>("journal_entries", {
-      user_id: `eq.${a.id}`,
-      created_at: `gte.${windowStartIso}`,
-      order: "created_at.asc",
-      select: "content,sentiment,created_at",
-      limit: "50",
-    }).catch(() => [] as EntryRow[]);
+    // Athletes reflect through free-form journals AND/OR structured training
+    // logs — read both so nobody's writing surface is invisible to the loop.
+    const [journal, training] = await Promise.all([
+      dbSelect<EntryRow>("journal_entries", {
+        user_id: `eq.${a.id}`,
+        created_at: `gte.${windowStartIso}`,
+        order: "created_at.asc",
+        select: "content,sentiment,created_at",
+        limit: "50",
+      }).catch(() => [] as EntryRow[]),
+      dbSelect<TrainingRow>("training_entries", {
+        user_id: `eq.${a.id}`,
+        created_at: `gte.${windowStartIso}`,
+        order: "created_at.asc",
+        select: "created_at,thoughts_before,thoughts_after,what_went_well,frustrations,next_session",
+        limit: "50",
+      }).catch(() => [] as TrainingRow[]),
+    ]);
+
+    const entries: DigestEntry[] = [
+      ...journal.map((e) => ({
+        created_at: e.created_at, content: e.content, sentiment: e.sentiment, kind: "journal" as const,
+      })),
+      ...training
+        .map((t) => ({ created_at: t.created_at, content: trainingLogText(t), kind: "training" as const }))
+        .filter((t) => t.content.length > 0),
+    ].sort((x, y) => x.created_at.localeCompare(y.created_at));
 
     if (entries.length < MIN_ENTRIES) continue;
     considered++;
@@ -91,17 +119,13 @@ export async function GET(req: NextRequest) {
     }).catch(() => []);
     if (existing.length) { skipped++; continue; }
 
-    const digestEntries: DigestEntry[] = entries.map((e) => ({
-      created_at: e.created_at, content: e.content, sentiment: e.sentiment,
-    }));
-
     let out;
     try {
       const resp = await anthropic.messages.create({
         model: DIGEST_MODEL,
         max_tokens: 1024,
         system: DIGEST_SYSTEM,
-        messages: [{ role: "user", content: buildDigestUserPrompt(a.display_name, digestEntries) }],
+        messages: [{ role: "user", content: buildDigestUserPrompt(a.display_name, entries) }],
       });
       const text = resp.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("");
       out = parseDigest(text);

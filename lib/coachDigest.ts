@@ -12,6 +12,25 @@ export interface DigestEntry {
   created_at: string;
   content: string;
   sentiment?: string | null;
+  /** "journal" (free-form) or "training" (structured training-day log). */
+  kind?: "journal" | "training";
+}
+
+/** Flatten a training-day log's filled fields into one reflective block. */
+export function trainingLogText(fields: {
+  thoughts_before?: string | null;
+  thoughts_after?: string | null;
+  what_went_well?: string | null;
+  frustrations?: string | null;
+  next_session?: string | null;
+}): string {
+  const parts: string[] = [];
+  if (fields.thoughts_before?.trim()) parts.push(`Before top sets: ${fields.thoughts_before.trim()}`);
+  if (fields.thoughts_after?.trim())  parts.push(`After top sets: ${fields.thoughts_after.trim()}`);
+  if (fields.what_went_well?.trim())  parts.push(`Went well: ${fields.what_went_well.trim()}`);
+  if (fields.frustrations?.trim())    parts.push(`Frustrated by: ${fields.frustrations.trim()}`);
+  if (fields.next_session?.trim())    parts.push(`Next session focus: ${fields.next_session.trim()}`);
+  return parts.join("\n");
 }
 
 export interface DigestOutput {
@@ -23,7 +42,7 @@ export const DIGEST_MODEL = "claude-sonnet-4-5";
 
 export const DIGEST_SYSTEM = `You are the PowerFlow coaching AI, drafting on behalf of a human sports-psychology coach who works with competitive powerlifters. You think and write the way this coach does: inquiry-driven, body-aware, choice-honouring, long-game oriented, warm but never saccharine. You never go clinical — if serious mental-health signals appear (persistent hopelessness, disordered eating patterns, self-harm), you gently flag that it may need a therapist rather than a sports coach.
 
-You are given several recent journal entries from ONE athlete, oldest first. Your job has two parts:
+You are given an athlete's recent reflections, oldest first. These may be free-form journal entries and/or structured training-day logs (before/after top sets, what went well, frustrations, next-session focus). Read them as one picture. Your job has two parts:
 
 1. "summary" — 2-4 sentences for the COACH's eyes only. Name the actual trend across the entries, not a restatement of each one. What's the throughline? What's shifting? What's the athlete circling but not quite naming? Be specific and honest; this is a briefing, not a pep talk.
 
@@ -35,11 +54,12 @@ export function buildDigestUserPrompt(athleteName: string, entries: DigestEntry[
   const body = entries
     .map((e, i) => {
       const date = e.created_at.slice(0, 10);
+      const label = e.kind === "training" ? "Training-day log" : "Journal entry";
       const sent = e.sentiment ? ` [${e.sentiment}]` : "";
-      return `Entry ${i + 1} — ${date}${sent}:\n${e.content.trim()}`;
+      return `${label} ${i + 1} — ${date}${sent}:\n${e.content.trim()}`;
     })
     .join("\n\n");
-  return `Athlete: ${athleteName}\nRecent journal entries (${entries.length}), oldest first:\n\n${body}`;
+  return `Athlete: ${athleteName}\nRecent reflections (${entries.length}), oldest first:\n\n${body}`;
 }
 
 /** Best-effort parse of the model's JSON (tolerates stray code fences). */

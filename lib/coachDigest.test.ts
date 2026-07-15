@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseDigest, buildDigestUserPrompt } from "./coachDigest";
+import { parseDigest, buildDigestUserPrompt, trainingLogText } from "./coachDigest";
 
 describe("parseDigest", () => {
   it("parses clean JSON", () => {
@@ -26,14 +26,30 @@ describe("parseDigest", () => {
 });
 
 describe("buildDigestUserPrompt", () => {
-  it("numbers entries oldest-first with dates and sentiment", () => {
+  it("labels entries by kind, oldest-first, with dates and sentiment", () => {
     const prompt = buildDigestUserPrompt("Marthe", [
-      { created_at: "2026-07-01T09:00:00Z", content: "felt strong", sentiment: "positive" },
-      { created_at: "2026-07-03T18:00:00Z", content: "rough day", sentiment: "negative" },
+      { created_at: "2026-07-01T09:00:00Z", content: "felt strong", sentiment: "positive", kind: "journal" },
+      { created_at: "2026-07-03T18:00:00Z", content: "squat felt off", kind: "training" },
     ]);
     expect(prompt).toContain("Athlete: Marthe");
-    expect(prompt).toContain("Entry 1 — 2026-07-01 [positive]:");
-    expect(prompt).toContain("Entry 2 — 2026-07-03 [negative]:");
-    expect(prompt.indexOf("felt strong")).toBeLessThan(prompt.indexOf("rough day"));
+    expect(prompt).toContain("Journal entry 1 — 2026-07-01 [positive]:");
+    expect(prompt).toContain("Training-day log 2 — 2026-07-03:");
+    expect(prompt.indexOf("felt strong")).toBeLessThan(prompt.indexOf("squat felt off"));
+  });
+});
+
+describe("trainingLogText", () => {
+  it("flattens only the filled fields, labelled", () => {
+    const text = trainingLogText({
+      thoughts_before: "expecting more today",
+      thoughts_after: null,
+      what_went_well: "nothing really",
+      frustrations: "  ",
+      next_session: "get confidence back",
+    });
+    expect(text).toBe("Before top sets: expecting more today\nWent well: nothing really\nNext session focus: get confidence back");
+  });
+  it("returns empty string when nothing is filled", () => {
+    expect(trainingLogText({ thoughts_before: null, what_went_well: "   " })).toBe("");
   });
 });
