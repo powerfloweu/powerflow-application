@@ -14,6 +14,18 @@ function SignInContent() {
   const [loading, setLoading] = React.useState<"athlete" | "coach" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Surface failures the auth callback redirected back with. Without this a
+  // failed sign-in silently looked like "it just bounced me back to the site".
+  const urlError = searchParams.get("error");
+  React.useEffect(() => {
+    if (!urlError) return;
+    setError(
+      urlError === "auth_failed"
+        ? "Sign-in couldn't be completed. Please try again — if it keeps happening, clear this site's cookies and retry."
+        : `Sign-in failed: ${urlError}`,
+    );
+  }, [urlError]);
+
   async function signInWith(chosenRole: "athlete" | "coach") {
     setLoading(chosenRole);
     setError(null);

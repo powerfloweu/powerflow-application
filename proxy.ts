@@ -61,6 +61,16 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Excludes static assets AND the two routes that manage auth cookies
+    // themselves (auth/callback, auth/sign-out).
+    //
+    // Why the auth exclusions matter: this proxy calls supabase.auth.getUser()
+    // on every matched request. On /auth/callback a stale-but-expired session
+    // cookie makes that call attempt a refresh, fail, and emit cookie-clearing
+    // Set-Cookie headers. Those then race the fresh session cookies the
+    // callback sets — and can win, wiping the session the user just created and
+    // bouncing them straight back to sign-in. Letting the callback own its
+    // cookie writes exclusively fixes that.
+    "/((?!_next/static|_next/image|favicon.ico|auth/callback|auth/sign-out|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

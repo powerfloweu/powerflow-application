@@ -44,6 +44,15 @@ export async function GET(request: NextRequest) {
   // Exchange code for session
   const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
   if (sessionError || !data.user) {
+    // Log loudly — this redirect used to be the only symptom of a failed
+    // sign-in, which made it look like an unexplained bounce back to the site.
+    console.error("[auth/callback] exchangeCodeForSession failed", {
+      message: sessionError?.message,
+      status: sessionError?.status,
+      hasUser: !!data?.user,
+      // Did the browser actually send a PKCE verifier cookie?
+      cookieNames: request.cookies.getAll().map((c) => c.name),
+    });
     return NextResponse.redirect(`${origin}/auth/sign-in?error=auth_failed`);
   }
 
