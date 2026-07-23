@@ -23,7 +23,19 @@ export async function GET(request: NextRequest) {
     ? decodeURIComponent(request.cookies.get("pf_join_code")!.value)
     : null;
 
-  const next = nextRaw ? decodeURIComponent(nextRaw) : role === "coach" ? "/coach" : "/today";
+  // Resolve the post-login destination. `next` is honoured (e.g. return an
+  // athlete to a test page) EXCEPT when it points somewhere a signed-in user
+  // should never land: the public marketing/apply page ("/"), a non-internal
+  // URL, or the auth routes themselves (which would loop). The NavBar sets
+  // next=<current path>, so a user who clicked "Sign in" from the homepage
+  // would otherwise be dumped straight back onto "/" after authenticating —
+  // which looked exactly like a failed athlete login.
+  const roleDefault = role === "coach" ? "/coach" : "/today";
+  const decoded = nextRaw ? decodeURIComponent(nextRaw) : "";
+  const next =
+    decoded.startsWith("/") && decoded !== "/" && !decoded.startsWith("/auth")
+      ? decoded
+      : roleDefault;
 
   // Collect cookies that Supabase wants to set so we can attach them to the redirect response.
   const pendingCookies: Array<{ name: string; value: string; options: CookieOptions }> = [];

@@ -8,7 +8,14 @@ import { useT } from "@/lib/i18n";
 function SignInContent() {
   const { t } = useT();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/today";
+  // Never let the public marketing/apply page ("/"), a non-internal URL, or the
+  // auth routes become the post-login destination — those aren't places a
+  // signed-in user should land, and "/" made athlete sign-in look broken.
+  const rawNext = searchParams.get("next") ?? "";
+  const next =
+    rawNext.startsWith("/") && rawNext !== "/" && !rawNext.startsWith("/auth")
+      ? rawNext
+      : "/today";
   const role = searchParams.get("role") ?? (next.startsWith("/coach") ? "coach" : "athlete");
 
   const [loading, setLoading] = React.useState<"athlete" | "coach" | null>(null);
