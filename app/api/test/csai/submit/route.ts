@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isConfigured, dbInsert } from "../../../../../lib/supabaseAdmin";
 import { createClient } from "../../../../../lib/supabase/server";
+import { sendResultEmail } from "@/lib/tests/resultEmail";
 import type { CsaiReport } from "../../../../../lib/tests/csai/scoring";
 
 export const runtime = "nodejs";
@@ -71,6 +72,17 @@ export async function POST(req: NextRequest) {
       { id: null, error: "Database insert failed" },
       { status: 500 },
     );
+  }
+
+  // Email a durable link to the results so they survive across devices.
+  if (respondent.email) {
+    await sendResultEmail({
+      to: respondent.email,
+      firstName: respondent.firstName,
+      type: "csai",
+      resultRef,
+      mode: "submit",
+    }).catch((err) => console.error("[csai/submit] result email failed", err));
   }
 
   return NextResponse.json({ id: inserted.id, stored: true }, { status: 200 });

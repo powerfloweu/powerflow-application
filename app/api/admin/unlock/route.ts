@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
-import { dbPatch } from "../../../../lib/supabaseAdmin";
+import { dbPatch, dbSelect } from "../../../../lib/supabaseAdmin";
+import { sendResultEmail } from "@/lib/tests/resultEmail";
+import type { TestType } from "@/lib/tests/resultPayload";
 
 export const runtime = "nodejs";
 
 const ALLOWED_TABLES = ["sat_results", "acsi_results", "csai_results", "das_results"] as const;
 type AllowedTable = (typeof ALLOWED_TABLES)[number];
+
+const TYPE_FROM_TABLE: Record<AllowedTable, TestType> = {
+  sat_results: "sat", acsi_results: "acsi", csai_results: "csai", das_results: "das",
+};
 
 export async function POST(req: NextRequest) {
   if (!(await requireAdmin())) {
@@ -30,5 +36,18 @@ export async function POST(req: NextRequest) {
 
   const ok = await dbPatch(targetTable, { id: resultId }, { paid: true });
   if (!ok) return NextResponse.json({ error: "Unlock failed — result not found" }, { status: 500 });
-  return NextResponse.json({ ok: true });
+
+  // Email the person their now-unlocked report link.
+  const rows = await dbSelect<{ first_name: string; email: string; result_ref: string }>(
+    targetTable, { id: `eq.${resultId}`, select: "first_name,email,result_ref", limit: "1" },
+  );
+  const r = rows[0];
+  if (r?.email && r.result_ref) {
+    await sendResultEmail({
+      to: r.email, firstName: r.first_name, type: TYPE_FROM_TABLE[targetTable],
+      resultRef: r.result_ref, mode: "unlock",
+    }).catch((err) => console.error("[admin/unlock] unlock email failed", err));
+  }
+
+  return NextResponse.json({ ok: true, emailed: !!r?.email });
 }

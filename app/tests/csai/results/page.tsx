@@ -271,6 +271,25 @@ export default function CsaiResultsPage() {
       return; // skip localStorage flow
     }
 
+    // Owner link (from the results email): load this result from the DB by its
+    // ref token so it works on any device, and respect its paid status.
+    const ownerRef = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("ref")
+      : null;
+    if (ownerRef) {
+      fetch(`/api/test/result?type=csai&ref=${encodeURIComponent(ownerRef)}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data?.report) {
+            setPayload({ report: data.report, respondent: data.respondent });
+            if (data.paid) setUnlocked(true);
+          }
+          setHydrated(true);
+        })
+        .catch(() => { setHydrated(true); });
+      return; // skip localStorage flow
+    }
+
     try {
       const raw = localStorage.getItem(RESULT_KEY);
       if (raw) setPayload(JSON.parse(raw));

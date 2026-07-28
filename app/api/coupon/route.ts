@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dbPatch } from "../../../lib/supabaseAdmin";
+import { dbPatch, dbSelect } from "../../../lib/supabaseAdmin";
+import { sendResultEmail } from "@/lib/tests/resultEmail";
+import type { TestType } from "@/lib/tests/resultPayload";
+
+/** Which result table + test type a result_ref belongs to, by prefix. */
+function refTarget(ref: string): { table: string; type: TestType } {
+  if (ref.startsWith("pfac_"))  return { table: "acsi_results", type: "acsi" };
+  if (ref.startsWith("pfcs_"))  return { table: "csai_results", type: "csai" };
+  if (ref.startsWith("pfdas_")) return { table: "das_results", type: "das" };
+  return { table: "sat_results", type: "sat" };
+}
 
 export async function POST(req: NextRequest) {
   const { code, resultRef } = (await req.json()) as {
@@ -23,12 +33,24 @@ export async function POST(req: NextRequest) {
   // Mark the result as paid — if this fails the unlock would be lost on
   // reload, so surface the error instead of pretending it worked.
   if (resultRef) {
-    const ok = await dbPatch("sat_results", { result_ref: resultRef }, { paid: true });
+    const { table, type } = refTarget(resultRef);
+    const ok = await dbPatch(table, { result_ref: resultRef }, { paid: true });
     if (!ok) {
       return NextResponse.json(
         { valid: false, error: "Could not apply coupon — please try again" },
         { status: 500 },
       );
+    }
+
+    // Email the now-unlocked report link.
+    const rows = await dbSelect<{ first_name: string; email: string }>(
+      table, { result_ref: `eq.${resultRef}`, select: "first_name,email", limit: "1" },
+    );
+    if (rows[0]?.email) {
+      await sendResultEmail({
+        to: rows[0].email, firstName: rows[0].first_name, type,
+        resultRef, mode: "unlock",
+      }).catch((err) => console.error("[coupon] unlock email failed", err));
     }
   }
 

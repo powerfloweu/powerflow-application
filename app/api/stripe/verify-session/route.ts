@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { isConfigured, dbPatch } from "../../../../lib/supabaseAdmin";
+import { isConfigured, dbPatch, dbSelect } from "../../../../lib/supabaseAdmin";
+import { sendResultEmail } from "@/lib/tests/resultEmail";
+import type { TestType } from "@/lib/tests/resultPayload";
 
 // Verifies a Stripe Checkout Session on the server using our secret key.
 // Called by the results page when the browser arrives with ?session_id=cs_...
@@ -66,6 +68,20 @@ export async function GET(req: NextRequest) {
             { paid, error: "Payment received but unlock failed — please retry" },
             { status: 500 },
           );
+        }
+
+        // Email the now-unlocked report link.
+        const type: TestType = table === "acsi_results" ? "acsi"
+          : table === "csai_results" ? "csai"
+          : table === "das_results" ? "das" : "sat";
+        const rows = await dbSelect<{ first_name: string; email: string }>(
+          table, { result_ref: `eq.${clientReferenceId}`, select: "first_name,email", limit: "1" },
+        );
+        if (rows[0]?.email) {
+          await sendResultEmail({
+            to: rows[0].email, firstName: rows[0].first_name, type,
+            resultRef: clientReferenceId, mode: "unlock",
+          }).catch((err) => console.error("[verify-session] unlock email failed", err));
         }
       }
     }
