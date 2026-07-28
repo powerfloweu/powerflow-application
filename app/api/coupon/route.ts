@@ -43,13 +43,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Email the now-unlocked report link.
-    const rows = await dbSelect<{ first_name: string; email: string }>(
-      table, { result_ref: `eq.${resultRef}`, select: "first_name,email", limit: "1" },
+    const rows = await dbSelect<{ first_name: string; email: string; lang: string }>(
+      table, { result_ref: `eq.${resultRef}`, select: "first_name,email,lang", limit: "1" },
     );
     if (rows[0]?.email) {
       await sendResultEmail({
         to: rows[0].email, firstName: rows[0].first_name, type,
-        resultRef, mode: "unlock",
+        resultRef, mode: "unlock", lang: rows[0].lang,
       }).catch((err) => console.error("[coupon] unlock email failed", err));
     }
   }

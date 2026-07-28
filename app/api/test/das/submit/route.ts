@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
       type: "das",
       resultRef,
       mode: "submit",
+      lang: respondent.lang,
     }).catch((err) => console.error("[das/submit] result email failed", err));
   }
 

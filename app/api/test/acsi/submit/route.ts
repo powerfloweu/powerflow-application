@@ -88,6 +88,7 @@ export async function POST(req: NextRequest) {
       type: "acsi",
       resultRef,
       mode: "submit",
+      lang: respondent.lang,
     }).catch((err) => console.error("[acsi/submit] result email failed", err));
   }
 

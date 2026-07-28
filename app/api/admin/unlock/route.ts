@@ -38,14 +38,14 @@ export async function POST(req: NextRequest) {
   if (!ok) return NextResponse.json({ error: "Unlock failed — result not found" }, { status: 500 });
 
   // Email the person their now-unlocked report link.
-  const rows = await dbSelect<{ first_name: string; email: string; result_ref: string }>(
-    targetTable, { id: `eq.${resultId}`, select: "first_name,email,result_ref", limit: "1" },
+  const rows = await dbSelect<{ first_name: string; email: string; result_ref: string; lang: string }>(
+    targetTable, { id: `eq.${resultId}`, select: "first_name,email,result_ref,lang", limit: "1" },
   );
   const r = rows[0];
   if (r?.email && r.result_ref) {
     await sendResultEmail({
       to: r.email, firstName: r.first_name, type: TYPE_FROM_TABLE[targetTable],
-      resultRef: r.result_ref, mode: "unlock",
+      resultRef: r.result_ref, mode: "unlock", lang: r.lang,
     }).catch((err) => console.error("[admin/unlock] unlock email failed", err));
   }
 

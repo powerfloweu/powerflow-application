@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
       type: "csai",
       resultRef,
       mode: "submit",
+      lang: respondent.lang,
     }).catch((err) => console.error("[csai/submit] result email failed", err));
   }
 

@@ -101,6 +101,7 @@ export async function POST(req: NextRequest) {
       type: "sat",
       resultRef,
       mode: "submit",
+      lang: respondent.lang,
     }).catch((err) => console.error("[sat/submit] result email failed", err));
   }
 

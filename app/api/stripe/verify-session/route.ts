@@ -74,13 +74,13 @@ export async function GET(req: NextRequest) {
         const type: TestType = table === "acsi_results" ? "acsi"
           : table === "csai_results" ? "csai"
           : table === "das_results" ? "das" : "sat";
-        const rows = await dbSelect<{ first_name: string; email: string }>(
-          table, { result_ref: `eq.${clientReferenceId}`, select: "first_name,email", limit: "1" },
+        const rows = await dbSelect<{ first_name: string; email: string; lang: string }>(
+          table, { result_ref: `eq.${clientReferenceId}`, select: "first_name,email,lang", limit: "1" },
         );
         if (rows[0]?.email) {
           await sendResultEmail({
             to: rows[0].email, firstName: rows[0].first_name, type,
-            resultRef: clientReferenceId, mode: "unlock",
+            resultRef: clientReferenceId, mode: "unlock", lang: rows[0].lang,
           }).catch((err) => console.error("[verify-session] unlock email failed", err));
         }
       }
