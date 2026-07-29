@@ -786,7 +786,14 @@ function ToolsPageInner() {
         setVizRecordingsMap(p.viz_recordings ?? {});
         setAffirmations(Array.isArray(p.affirmations) ? p.affirmations : []);
         setAiAccess(!!p.ai_access);
-        setPlanTier((p?.plan_tier ?? "opener") as PlanTier);
+        // Per-user access grants (test_access / course_access) can unlock
+        // library sections above the base plan_tier — same OR logic used by
+        // the course page and the nav, so an admin-granted flag isn't
+        // silently ignored here.
+        let tier = (p?.plan_tier ?? "opener") as PlanTier;
+        if (p?.course_access && tier !== "pr") tier = "pr";
+        else if (p?.test_access && tier === "opener") tier = "second";
+        setPlanTier(tier);
         setProfileLoaded(true);
       })
       .catch(() => setProfileLoaded(true));

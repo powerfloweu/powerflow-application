@@ -87,7 +87,17 @@ export default function AppShell({ children }: Props) {
     fetch("/api/me")
       .then((r) => r.ok ? r.json() : null)
       .then((p) => {
-        if (p?.plan_tier) setPlanTier(p.plan_tier as PlanTier);
+        if (p?.plan_tier) {
+          // Per-user access grants (course_access / test_access) can unlock
+          // features above the base plan_tier — mirror the same OR logic the
+          // course page and course APIs already use, so the nav doesn't lock
+          // a tab the user actually has access to (e.g. an admin-granted
+          // course_access on an "opener" tier account).
+          let tier = p.plan_tier as PlanTier;
+          if (p.course_access && tier !== "pr") tier = "pr";
+          else if (p.test_access && tier === "opener") tier = "second";
+          setPlanTier(tier);
+        }
         if (p?.role) setRole(p.role as string);
       })
       .catch((err) => console.error("[AppShell] async operation failed", err));
