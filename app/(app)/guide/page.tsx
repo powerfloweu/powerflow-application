@@ -142,6 +142,13 @@ function AthleteGuide() {
         <Tip text={t(`${a}.s10.t2`)} />
         <Tip text={t(`${a}.s10.t3`)} />
       </GuideSection>
+
+      <GuideSection num="11" title={t(`${a}.s11.title`)}>
+        <Tip text={t(`${a}.s11.t1`)} />
+        <Tip text={t(`${a}.s11.t2`)} />
+        <Tip text={t(`${a}.s11.t3`)} />
+        <Tip text={t(`${a}.s11.t4`)} />
+      </GuideSection>
     </>
   );
 }
@@ -197,6 +204,7 @@ function CoachGuide() {
       <GuideSection num="07" title={t(`${c}.s07.title`)}>
         <Tip text={t(`${c}.s07.t1`)} />
         <Tip text={t(`${c}.s07.t2`)} />
+        <Tip text={t(`${c}.s07.t3`)} />
       </GuideSection>
 
       <GuideSection num="08" title={t(`${c}.s08.title`)}>
@@ -229,6 +237,12 @@ function CoachGuide() {
         <Tip text={t(`${c}.s13.t1`)} />
         <Tip text={t(`${c}.s13.t2`)} />
         <Tip text={t(`${c}.s13.t3`)} />
+      </GuideSection>
+
+      <GuideSection num="14" title={t(`${c}.s14.title`)}>
+        <Tip text={t(`${c}.s14.t1`)} />
+        <Tip text={t(`${c}.s14.t2`)} />
+        <Tip text={t(`${c}.s14.t3`)} />
       </GuideSection>
     </>
   );

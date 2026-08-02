@@ -10,7 +10,7 @@ export const athleteContent = {
       title: ["Athlete", "Guide"],
       sub: "Everything you need to get the most out of the PowerFlow app — from signing in to logging your first training session and connecting with your coach.",
       signIn: "Sign in → app.power-flow.eu",
-      meta: "Version 1.1 · May 2026 · app.power-flow.eu",
+      meta: "Version 1.2 · August 2026 · app.power-flow.eu",
     },
     screens: {
       signIn: "Sign-in screen",
@@ -89,7 +89,7 @@ export const athleteContent = {
         { label: "CSAI-2 — Competitive State Anxiety Inventory", desc: "Differentiates cognitive anxiety (worry) from somatic anxiety (body tension) and self-confidence." },
         { label: "DAS — Depression, Anxiety & Stress Scale", desc: "Screens for depression-prone thinking, general anxiety, and stress levels adapted for athletes." },
       ] as Step[],
-      note: { text: "Some tests require a one-time unlock payment to see your scored results. The test itself is always free to complete — payment is only needed to view the detailed breakdown and share it with your coach." },
+      note: { text: "Some tests require a one-time unlock payment to see your scored results. The test itself is always free to complete — payment is only needed to view the detailed breakdown and share it with your coach. As soon as you submit and whenever results are unlocked, PowerFlow emails you a durable link back to your results — no need to screenshot anything, and it works even if you're signed out." },
     },
     s06: {
       title: "Course",
@@ -171,12 +171,23 @@ export const athleteContent = {
       ] as Step[],
       note: { text: "Tool suggestions are a direct line from your coach's observations to your practice. If one appears, it means your coach has noticed something specific in your recent entries or check-ins and thinks this tool will help address it." },
     },
+    s12: {
+      title: "Post-competition reflection",
+      subtitle: "5 questions · Appears for 7 days after your meet",
+      steps: [
+        { label: "When it appears", desc: "The day after your competition date, a reflection card appears on your Today page. It stays there for 7 days, then disappears — but your answers are saved permanently." },
+        { label: "The five questions", desc: "How you feel about the competition overall, your biggest win on or off the platform, the most valuable thing you learned in this prep, a 1–10 rating of your mental preparation, and one thing you'll do differently next prep." },
+        { label: "Answer at your own pace", desc: "Each question saves the moment you tap out of it — you don't need to finish all five in one sitting. A progress ring on the card shows how many you've answered." },
+        { label: "Your coach sees it", desc: "Your coach can read your reflection in your Profile, alongside every past competition — it becomes a record of how your preparation and mindset evolve meet over meet." },
+      ] as Step[],
+      note: { text: "This is separate from your journal and check-ins — it's a one-time debrief tied specifically to a competition date, meant to capture the meet while it's still fresh." },
+    },
     ref: {
       title: "Quick reference",
       subtitle: "What each tab does at a glance",
       headers: ["Tab", "What it does", "Use it for"] as [string, string, string],
       rows: [
-        ["Today", "Daily check-in, phase countdown, lift goals, course card", "Every single day — start here"],
+        ["Today", "Daily check-in, phase countdown, lift goals, course card, post-meet reflection", "Every single day — start here"],
         ["Journal", "Free-text entries, AI sentiment & theme tagging", "After sessions, competitions, or whenever something is on your mind"],
         ["Tools", "Sport psychology assessments (SAT, ACSI, CSAI-2, DAS)", "At start of programme and periodically to track progress"],
         ["Coach AI", "Sports psychology AI, script generation, ego state mapping", "Before competition, after tough sessions, whenever you need to work something through"],
@@ -193,7 +204,7 @@ export const athleteContent = {
       title: ["Athleten", "Leitfaden"],
       sub: "Alles, was du brauchst, um das Beste aus der PowerFlow-App herauszuholen – vom Anmelden bis zum ersten Training und der Verbindung mit deinem Coach.",
       signIn: "Anmelden → app.power-flow.eu",
-      meta: "Version 1.1 · May 2026 · app.power-flow.eu",
+      meta: "Version 1.2 · August 2026 · app.power-flow.eu",
     },
     screens: {
       signIn: "Anmeldebildschirm",
@@ -272,7 +283,7 @@ export const athleteContent = {
         { label: "CSAI-2 – Competitive State Anxiety Inventory", desc: "Unterscheidet kognitive Angst (Sorgen) von somatischer Angst (Körperspannung) und Selbstvertrauen." },
         { label: "DAS – Depression, Anxiety & Stress Scale", desc: "Screent auf depressives Denken, allgemeine Angst und Stressniveaus – angepasst für Athleten." },
       ] as Step[],
-      note: { text: "Für einige Tests ist eine einmalige Freischaltgebühr erforderlich, um deine Bewertungsergebnisse zu sehen. Der Test selbst ist immer kostenlos – die Zahlung ist nur für die detaillierte Auswertung nötig." },
+      note: { text: "Für einige Tests ist eine einmalige Freischaltgebühr erforderlich, um deine Bewertungsergebnisse zu sehen. Der Test selbst ist immer kostenlos – die Zahlung ist nur für die detaillierte Auswertung nötig. Sobald du absendest und wenn immer Ergebnisse freigeschaltet werden, sendet dir PowerFlow einen dauerhaften Link zu deinen Ergebnissen per E-Mail – kein Screenshot nötig, funktioniert auch wenn du abgemeldet bist." },
     },
     s06: {
       title: "Kurs",
@@ -354,12 +365,23 @@ export const athleteContent = {
       ] as Step[],
       note: { text: "Tool-Empfehlungen sind eine direkte Verbindung von den Beobachtungen deines Coaches zu deiner Praxis. Falls eine erscheint, hat dein Coach etwas Spezifisches in deinen Einträgen bemerkt und denkt, dieses Tool hilft dabei." },
     },
+    s12: {
+      title: "Reflexion nach dem Wettkampf",
+      subtitle: "5 Fragen · Erscheint 7 Tage nach deinem Wettkampf",
+      steps: [
+        { label: "Wann sie erscheint", desc: "Am Tag nach deinem Wettkampftermin erscheint eine Reflexionskarte auf deiner Heute-Seite. Sie bleibt 7 Tage sichtbar und verschwindet dann – deine Antworten bleiben aber dauerhaft gespeichert." },
+        { label: "Die fünf Fragen", desc: "Wie du dich insgesamt zum Wettkampf fühlst, dein größter Erfolg auf oder abseits der Plattform, die wertvollste Erkenntnis aus dieser Vorbereitung, eine 1–10-Bewertung deiner mentalen Vorbereitung, und eine Sache, die du in der nächsten Vorbereitung anders machst." },
+        { label: "In deinem eigenen Tempo antworten", desc: "Jede Frage wird gespeichert, sobald du sie verlässt – du musst nicht alle fünf auf einmal beantworten. Ein Fortschrittsring auf der Karte zeigt, wie viele du schon beantwortet hast." },
+        { label: "Dein Coach sieht sie", desc: "Dein Coach kann deine Reflexion in deinem Profil lesen, zusammen mit allen vergangenen Wettkämpfen – so entsteht ein Bild davon, wie sich deine Vorbereitung und Mentalität von Wettkampf zu Wettkampf entwickelt." },
+      ] as Step[],
+      note: { text: "Das ist getrennt von deinem Journal und deinen Check-ins – eine einmalige Nachbesprechung, gebunden an einen konkreten Wettkampftermin, um den Wettkampf festzuhalten, solange er noch frisch ist." },
+    },
     ref: {
       title: "Kurzreferenz",
       subtitle: "Was jeder Tab auf einen Blick macht",
       headers: ["Tab", "Was er macht", "Wofür nutzen"] as [string, string, string],
       rows: [
-        ["Heute", "Tägliches Check-in, Phasen-Countdown, Lift-Ziele, Kurskarte", "Jeden Tag – hier beginnen"],
+        ["Heute", "Tägliches Check-in, Phasen-Countdown, Lift-Ziele, Kurskarte, Wettkampf-Reflexion", "Jeden Tag – hier beginnen"],
         ["Journal", "Freitext-Einträge, KI-Sentiment und Themen-Tagging", "Nach Einheiten, Wettkämpfen oder wann immer etwas auf dem Herzen liegt"],
         ["Tools", "Sportpsychologische Assessments (SAT, ACSI, CSAI-2, DAS)", "Zu Beginn des Programms und periodisch, um den Fortschritt zu verfolgen"],
         ["Coach AI", "Sport-Psychologie-KI, Skripterstellung, Ego-State-Mapping", "Vor Wettkämpfen, nach schwierigen Einheiten, wann immer du etwas durcharbeiten musst"],
@@ -376,7 +398,7 @@ export const athleteContent = {
       title: ["Atléta", "Kézikönyv"],
       sub: "Minden, ami szükséges a PowerFlow app teljes kihasználásához – a bejelentkezéstől az első edzés naplózásáig és az edződdel való kapcsolódásig.",
       signIn: "Bejelentkezés → app.power-flow.eu",
-      meta: "1.1 verzió · 2026. május · app.power-flow.eu",
+      meta: "1.2 verzió · 2026. augusztus · app.power-flow.eu",
     },
     screens: {
       signIn: "Bejelentkezési képernyő",
@@ -455,7 +477,7 @@ export const athleteContent = {
         { label: "CSAI-2 – Competitive State Anxiety Inventory", desc: "Megkülönbözteti a kognitív szorongást (aggodalom) a szomatikus szorongástól (testi feszültség) és az önbizalomtól." },
         { label: "DAS – Depression, Anxiety & Stress Scale", desc: "Szűri a depresszív gondolkodást, általános szorongást és stressz szinteket – sportolókhoz igazítva." },
       ] as Step[],
-      note: { text: "Egyes tesztek egyszeri feloldási díjat igényelnek a pontszámolt eredmények megtekintéséhez. Maga a teszt mindig ingyenes – a fizetés csak a részletes kiértékeléshez és az edződdel való megosztáshoz szükséges." },
+      note: { text: "Egyes tesztek egyszeri feloldási díjat igényelnek a pontszámolt eredmények megtekintéséhez. Maga a teszt mindig ingyenes – a fizetés csak a részletes kiértékeléshez és az edződdel való megosztáshoz szükséges. Amint beküldöd, illetve amikor az eredmények feloldásra kerülnek, a PowerFlow e-mailben küld egy tartós linket az eredményeidhez – nem kell képernyőképet készítened, és akkor is működik, ha ki vagy jelentkezve." },
     },
     s06: {
       title: "Tanfolyam",
@@ -537,12 +559,23 @@ export const athleteContent = {
       ] as Step[],
       note: { text: "Az eszközajánlások közvetlen kapcsolatot teremtenek az edző megfigyelései és a te gyakorlatod között. Ha megjelenik egy, az edződ konkrét dolgot észlelt a közelmúltbeli bejegyzéseidben vagy bejelentkezéseidben." },
     },
+    s12: {
+      title: "Verseny utáni reflexió",
+      subtitle: "5 kérdés · A versenyed után 7 napig jelenik meg",
+      steps: [
+        { label: "Mikor jelenik meg", desc: "A versenynapod utáni napon egy reflexiós kártya jelenik meg a Ma oldaladon. 7 napig marad látható, utána eltűnik – a válaszaid azonban véglegesen elmentődnek." },
+        { label: "Az öt kérdés", desc: "Hogyan érzed magad összességében a verseny után, mi volt a legnagyobb sikered a dobogón vagy azon kívül, mi volt a legértékesebb, amit ebben a felkészülésben tanultál magadról, 1–10-es értékelés a mentális felkészülésedről, és egy dolog, amit a következő felkészülésben másképp csinálsz." },
+        { label: "Válaszolj a saját tempódban", desc: "Minden kérdés mentődik, amint kilépsz belőle – nem kell mind az ötöt egyszerre megválaszolnod. A kártyán egy haladásjelző gyűrű mutatja, hányra válaszoltál már." },
+        { label: "Az edződ látja", desc: "Az edződ elolvashatja a reflexiódat a Profilodban, minden korábbi versenyeddel együtt – így nyomon követhető, hogyan fejlődik a felkészülésed és a mentalitásod versenyről versenyre." },
+      ] as Step[],
+      note: { text: "Ez elkülönül a naplódtól és a bejelentkezéseidtől – egy egyszeri megbeszélés, ami egy konkrét versenynaphoz kötődik, hogy rögzítse a versenyt, amíg még friss." },
+    },
     ref: {
       title: "Gyors áttekintő",
       subtitle: "Mit csinál minden fül egy pillantásra",
       headers: ["Fül", "Mit csinál", "Mire használd"] as [string, string, string],
       rows: [
-        ["Ma", "Napi bejelentkezés, fázis visszaszámlálás, emelési célok, tanfolyamkártya", "Minden nap – kezdj itt"],
+        ["Ma", "Napi bejelentkezés, fázis visszaszámlálás, emelési célok, tanfolyamkártya, verseny utáni reflexió", "Minden nap – kezdj itt"],
         ["Napló", "Szabad szöveges bejegyzések, AI-hangulat és téma-jelölés", "Edzések, versenyek után vagy amikor valami foglalkoztat"],
         ["Eszközök", "Sportpszichológiai felmérések (SAT, ACSI, CSAI-2, DAS)", "A program elején és rendszeresen a haladás nyomon követésére"],
         ["Coach AI", "Sportpszichológia AI, szkript generálás, ego-state feltérképezés", "Verseny előtt, nehéz edzések után, amikor valamit fel kell dolgoznod"],

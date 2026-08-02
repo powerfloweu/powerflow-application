@@ -718,6 +718,7 @@ export const de: Dict = {
       t4: "[[PR (Progressive Muskelentspannung)]] — eine geführte Ganzkörper-Anspannungs- und Entspannungssession.",
       t5: "[[Affirmationen]] — schreibe 1–3 persönliche Selbstgespräch-Sätze, die dein bestes Mindset aktivieren. Werden in deinem Profil gespeichert und sind für deinen Coach sichtbar.",
       t6: "Der [[Tools]]-Tab gibt dir außerdem Zugang zu vier validierten psychologischen Assessments: SAT, ACSI, CSAI-2 und DAS. Diese fließen in den Test-Ergebnisse-Tab deines Coaches ein.",
+      t7: "Sobald du einen Test absendest, und erneut wenn Ergebnisse freigeschaltet werden, sendet dir PowerFlow einen dauerhaften Link zu deinen Ergebnissen per E-Mail — kein Screenshot nötig, funktioniert auch wenn du abgemeldet bist.",
     },
     s06: {
       title: "Du — Profil & Einstellungen",
@@ -751,6 +752,13 @@ export const de: Dict = {
       t1: "Wenn dein Coach ein bestimmtes mentales Tool für dich für sinnvoll hält, kann er eine Empfehlung direkt auf deine [[Heute]]-Seite senden.",
       t2: "Sie erscheint als violette Karte: [[Coach empfiehlt: [Tool-Name]]]. Tippe auf [[Öffnen →]], um direkt zu diesem Tool in der Bibliothek zu gelangen.",
       t3: "Empfehlungen können PMR, eine Visualisierung, Barrier Breaker, Affirmationen oder jedes andere Tool in der Bibliothek umfassen. Dein Coach kann auch eine kurze persönliche Notiz hinzufügen.",
+    },
+    s11: {
+      title: "Reflexion nach dem Wettkampf",
+      t1: "Am Tag nach deinem Wettkampftermin erscheint eine [[5-Fragen-Reflexionskarte]] auf deiner [[Heute]]-Seite. Sie bleibt 7 Tage sichtbar und verschwindet dann — deine Antworten bleiben aber dauerhaft gespeichert.",
+      t2: "Du wirst gefragt, wie du dich insgesamt zum Wettkampf fühlst, was dein größter Erfolg auf oder abseits der Plattform war, die wertvollste Erkenntnis aus dieser Vorbereitung, eine 1–10-Bewertung deiner mentalen Vorbereitung und eine Sache, die du in der nächsten Vorbereitung anders machst.",
+      t3: "Jede Antwort wird gespeichert, sobald du sie verlässt — du musst nicht alle fünf auf einmal beantworten.",
+      t4: "Dein Coach kann deine Reflexion in deinem Profil lesen, zusammen mit allen vergangenen Wettkämpfen — ein Bild davon, wie sich deine Vorbereitung und Mentalität von Wettkampf zu Wettkampf entwickelt.",
     },
   },
 
@@ -800,6 +808,7 @@ export const de: Dict = {
       title: "Testergebnisse-Tab",
       t1: "Zeigt die aktuellsten Ergebnisse des Athleten für alle vier Assessments: SAT, ACSI, CSAI-2 und DAS. Ergebnisse erscheinen, sobald der Athlet einen Test abschließt und freischaltet.",
       t2: "Vergleiche mit der Tagebuch-Stimmung — niedrige ACSI-Konzentrationswerte kombiniert mit negativen Einträgen rund um den Wettkampf sind ein deutliches Frühwarnsignal.",
+      t3: "Sobald Ergebnisse freigeschaltet sind, sendet PowerFlow dem Athleten automatisch einen dauerhaften Ergebnislink per E-Mail — keine erneute Anmeldung nötig –, du musst also nie einen Screenshot weiterleiten.",
     },
     s08: {
       title: "Profil-Tab",
@@ -833,6 +842,12 @@ export const de: Dict = {
       t1: "Im [[Profil]]-Tab eines Athleten scrolle zum Abschnitt [[Ein Tool empfehlen]]. Wähle ein Tool aus dem Dropdown (PMR, Barrier Breaker, Visualisierung, Affirmationen u. a.) und füge eine optionale persönliche Notiz hinzu.",
       t2: "Der Athlet sieht eine violette Karte auf seiner [[Heute]]-Seite: [[Coach empfiehlt: [Tool-Name]]]. Ein Tippen auf [[Öffnen →]] führt ihn direkt dorthin — keine Suche nötig.",
       t3: "Nutze dies, wenn Tagebucheinträge Angst vor einem Wettkampf zeigen (Barrier oder Visualisierung empfehlen), Schlaf oder Erholung schlecht sind (PMR oder Autogenes Training), oder wenn du zwischen Calls gezielte mentale Arbeit anregen möchtest.",
+    },
+    s14: {
+      title: "Wettkampf-Reflexionen",
+      t1: "In den 7 Tagen nach dem Wettkampftermin eines Athleten fordert PowerFlow ihn mit einer [[5-Fragen-Reflexion]] nach dem Wettkampf auf seiner Heute-Seite auf: Gesamteindruck, größter Erfolg, wichtigste Erkenntnis, eine 1–10-Bewertung der mentalen Vorbereitung und eine Sache, die er in der nächsten Vorbereitung ändert.",
+      t2: "Alle vergangenen Reflexionen findest du in seinem [[Profil]]-Tab unter [[Wettkampf-Reflexionen]] — neueste zuerst, ein Eintrag pro Wettkampf.",
+      t3: "Die Bewertung der mentalen Vorbereitung und die Antwort auf 'was ich in der nächsten Vorbereitung ändere' sind die wertvollsten Felder — sie machen aus einem subjektiven Nachbesprechungsgespräch etwas, worauf du den nächsten Block planen kannst.",
     },
   },
 

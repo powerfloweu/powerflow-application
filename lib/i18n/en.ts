@@ -746,6 +746,7 @@ export const en = {
       t4: "[[PR (Progressive Muscle Relaxation)]] — a guided full-body tension-release session.",
       t5: "[[Affirmations]] — write 1–3 personal self-talk sentences that prime your best mindset. Saved to your profile and visible to your coach.",
       t6: "The [[Tools]] tab also gives access to four validated psychological assessments: SAT, ACSI, CSAI-2, and DAS. These feed into your coach's Test Results tab.",
+      t7: "As soon as you submit a test, and again whenever results are unlocked, PowerFlow emails you a durable link back to your results — no screenshot needed, and it works even when you're signed out.",
     },
     s06: {
       title: "You — profile & settings",
@@ -779,6 +780,13 @@ export const en = {
       t1: "When your coach thinks a specific mental tool would help you, they can send a recommendation directly to your [[Today]] page.",
       t2: "It appears as a violet card: [[Coach recommends: [Tool Name]]]. Tap [[Open →]] to navigate straight to that tool in the library — no searching needed.",
       t3: "Suggestions may include PMR, a visualization, Barrier Breaker, Affirmations, or any other tool in the library. Your coach can also add a short personal note explaining why they're recommending it.",
+    },
+    s11: {
+      title: "Post-competition reflection",
+      t1: "The day after your competition date, a [[5-question reflection card]] appears on your [[Today]] page. It stays for 7 days, then disappears — but your answers are saved permanently.",
+      t2: "You're asked how you feel about the competition overall, your biggest win on or off the platform, the most valuable thing you learned in this prep, a 1–10 rating of your mental preparation, and one thing you'll do differently next prep.",
+      t3: "Each answer saves as soon as you tap out of it — you don't need to finish all five in one sitting.",
+      t4: "Your coach can read your reflection in your Profile, alongside every past competition — a record of how your preparation and mindset evolve meet over meet.",
     },
   },
 
@@ -829,6 +837,7 @@ export const en = {
       title: "Test scores tab",
       t1: "Displays the athlete's most recent scores on all four assessments: SAT, ACSI, CSAI-2, and DAS. Scores appear once the athlete completes and unlocks a test.",
       t2: "Cross-reference with journal sentiment — low ACSI concentration combined with negative entries around competition is a strong early warning signal.",
+      t3: "Once results are unlocked, PowerFlow automatically emails the athlete a durable results link — no login required to view it again — so you never need to forward a screenshot.",
     },
     s08: {
       title: "Profile tab",
@@ -862,6 +871,12 @@ export const en = {
       t1: "In an athlete's [[Profile]] tab, scroll to the [[Suggest a tool]] section. Choose a tool from the dropdown (PMR, Barrier Breaker, Visualization, Affirmations, and more) and add an optional personal note.",
       t2: "The athlete sees a violet card on their [[Today]] page: [[Coach recommends: [Tool Name]]]. Tapping [[Open →]] takes them straight to that tool — no searching required.",
       t3: "Use this when journal entries show anxiety before a meet (suggest Barrier or Visualization), when sleep or recovery is poor (suggest PMR or Autogenic Training), or when you want to prompt specific mental work between calls.",
+    },
+    s14: {
+      title: "Competition reflections",
+      t1: "For 7 days after an athlete's competition date, PowerFlow prompts them with a [[5-question post-meet reflection]] on their Today page: overall feeling, biggest win, key lesson learned, a 1–10 mental-preparation rating, and one thing to change next prep.",
+      t2: "Find every past reflection in their [[Profile]] tab under [[Competition Reflections]] — most recent first, one entry per meet.",
+      t3: "The mental-preparation rating and 'what I'll change next prep' answer are the highest-value fields — they turn a subjective debrief into something you can plan around for the next block.",
     },
   },
 

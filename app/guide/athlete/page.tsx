@@ -912,6 +912,12 @@ export default async function AthleteGuidePage({
 
           {/* ── Quick reference ──────────────────────────────────── */}
           <Page>
+            <SectionHeading num="12" title={c.s12.title} subtitle={c.s12.subtitle} />
+            <Steps items={c.s12.steps} />
+            <Note>{c.s12.note.text}</Note>
+          </Page>
+
+          <Page>
             <SectionHeading num="—" title={c.ref.title} subtitle={c.ref.subtitle} />
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
               <thead>

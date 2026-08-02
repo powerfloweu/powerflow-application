@@ -522,9 +522,19 @@ export default async function CoachGuidePage({
             />
           </Page>
 
-          {/* ── 04 Entries tab ──────────────────────────────────── */}
+          {/* ── 04 Analysis tab ─────────────────────────────────── */}
           <Page>
-            <SectionHeading num="04" title={c.s04.title} subtitle={c.s04.subtitle} />
+            <SectionHeading num="04" title={c.s12.title} subtitle={c.s12.subtitle} />
+            <p style={{ fontSize: 10, color: "#52525b", marginBottom: 12, lineHeight: 1.6 }}>
+              {c.s12.intro}
+            </p>
+            <Steps items={c.s12.steps} />
+            <Note>{c.s12.note.text}</Note>
+          </Page>
+
+          {/* ── 05 Entries tab ──────────────────────────────────── */}
+          <Page>
+            <SectionHeading num="05" title={c.s04.title} subtitle={c.s04.subtitle} />
             <TwoCol
               left={
                 <>
@@ -536,9 +546,9 @@ export default async function CoachGuidePage({
             />
           </Page>
 
-          {/* ── 05 Training log tab ─────────────────────────────── */}
+          {/* ── 06 Training log tab ─────────────────────────────── */}
           <Page>
-            <SectionHeading num="05" title={c.s05.title} subtitle={c.s05.subtitle} />
+            <SectionHeading num="06" title={c.s05.title} subtitle={c.s05.subtitle} />
             <TwoCol
               left={
                 <>
@@ -555,9 +565,9 @@ export default async function CoachGuidePage({
             />
           </Page>
 
-          {/* ── 06 Test results tab ─────────────────────────────── */}
+          {/* ── 07 Test results tab ─────────────────────────────── */}
           <Page>
-            <SectionHeading num="06" title={c.s06.title} subtitle={c.s06.subtitle} />
+            <SectionHeading num="07" title={c.s06.title} subtitle={c.s06.subtitle} />
             <TwoCol
               left={
                 <>
@@ -572,37 +582,53 @@ export default async function CoachGuidePage({
             />
           </Page>
 
-          {/* ── 07 Check-ins tab ────────────────────────────────── */}
+          {/* ── 08 Check-ins tab ────────────────────────────────── */}
           <Page>
-            <SectionHeading num="07" title={c.s07.title} subtitle={c.s07.subtitle} />
+            <SectionHeading num="08" title={c.s07.title} subtitle={c.s07.subtitle} />
             <Steps items={c.s07.steps} />
             <Note>{c.s07.note.text}</Note>
           </Page>
 
-          {/* ── 08 Assigning tests ──────────────────────────────── */}
+          {/* ── 09 Competition reflections ──────────────────────── */}
           <Page>
-            <SectionHeading num="08" title={c.s08.title} subtitle={c.s08.subtitle} />
+            <SectionHeading num="09" title={c.s13.title} subtitle={c.s13.subtitle} />
+            <p style={{ fontSize: 10, color: "#52525b", marginBottom: 12, lineHeight: 1.6 }}>
+              {c.s13.intro}
+            </p>
+            <Steps items={c.s13.steps} />
+            <Note>{c.s13.note.text}</Note>
+          </Page>
+
+          {/* ── 10 Notes & Prompts tabs ──────────────────────────── */}
+          <Page>
+            <SectionHeading num="10" title={c.s14.title} subtitle={c.s14.subtitle} />
+            <Steps items={c.s14.steps} />
+          </Page>
+
+          {/* ── 11 Assigning tests ──────────────────────────────── */}
+          <Page>
+            <SectionHeading num="11" title={c.s08.title} subtitle={c.s08.subtitle} />
             <Steps items={c.s08.steps} />
           </Page>
 
-          {/* ── 09 Ego States (coach view) ──────────────────────── */}
+          {/* ── 12 Ego States (coach view) ──────────────────────── */}
           <Page>
-            <SectionHeading num="09" title={c.s09.title} subtitle={c.s09.subtitle} />
+            <SectionHeading num="12" title={c.s09.title} subtitle={c.s09.subtitle} />
             <Steps items={c.s09.steps} />
           </Page>
 
-          {/* ── 10 Suggest a tool ───────────────────────────────── */}
+          {/* ── 13 Suggest a tool ───────────────────────────────── */}
           <Page>
-            <SectionHeading num="10" title={c.s10.title} subtitle={c.s10.subtitle} />
+            <SectionHeading num="13" title={c.s10.title} subtitle={c.s10.subtitle} />
             <Steps items={c.s10.steps} />
             <Note>
               <strong>{c.s10.note.bold}</strong>{c.s10.note.text}
             </Note>
           </Page>
 
-          {/* ── 11 Quick reference ──────────────────────────────── */}
+          {/* ── 14 Quick reference ──────────────────────────────── */}
           <Page>
-            <SectionHeading num="11" title={c.s11.title} subtitle={c.s11.subtitle} />
+            <SectionHeading num="14" title={c.s11.title} subtitle={c.s11.subtitle} />
 
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, marginBottom: 32 }}>
               <thead>

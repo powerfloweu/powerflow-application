@@ -716,6 +716,7 @@ export const hu: Dict = {
       t4: "[[PR (Progresszív izomrelaxáció)]] — irányított teljes test feszültségoldó foglalkozás.",
       t5: "[[Megerősítések]] — írj 1–3 személyes önbeszéd mondatot, amelyek felkészítenek a legjobb szemléletmódodra. Mentve lesz a profilodba és látható az edződ számára.",
       t6: "Az [[Eszközök]] fül hozzáférést biztosít négy validált pszichológiai értékeléshez is: SAT, ACSI, CSAI-2 és DAS. Ezek az edződ Teszteredmények fülére kerülnek.",
+      t7: "Amint beküldesz egy tesztet, illetve amikor az eredmények feloldásra kerülnek, a PowerFlow e-mailben küld egy tartós linket az eredményeidhez – nem kell képernyőképet készítened, és akkor is működik, ha ki vagy jelentkezve.",
     },
     s06: {
       title: "Te — profil és beállítások",
@@ -749,6 +750,13 @@ export const hu: Dict = {
       t1: "Ha az edződ úgy gondolja, hogy egy adott mentális eszköz segítene neked, ajánlást küldhet közvetlenül a [[Ma]] oldaladra.",
       t2: "Lila kártyaként jelenik meg: [[Az edző ajánlja: [Eszköz neve]]]. Koppints a [[Megnyitás →]] gombra, hogy közvetlenül ahhoz az eszközhöz navigálj a könyvtárban — keresés nélkül.",
       t3: "Az ajánlások tartalmazhatnak PMR-t, vizualizációt, Barrier Breakert, Affirmációkat vagy bármely más eszközt. Az edződ rövid személyes megjegyzést is fűzhet hozzá.",
+    },
+    s11: {
+      title: "Verseny utáni reflexió",
+      t1: "A versenynapod utáni napon egy [[5 kérdéses reflexiós kártya]] jelenik meg a [[Ma]] oldaladon. 7 napig marad látható, utána eltűnik – a válaszaid azonban véglegesen elmentődnek.",
+      t2: "Megkérdezzük, hogyan érzed magad összességében a verseny után, mi volt a legnagyobb sikered a dobogón vagy azon kívül, mi volt a legértékesebb, amit ebben a felkészülésben tanultál magadról, 1–10-es értékelést kérünk a mentális felkészülésedről, és egy dolgot, amit a következő felkészülésben másképp csinálsz.",
+      t3: "Minden válasz mentődik, amint kilépsz belőle – nem kell mind az ötöt egyszerre megválaszolnod.",
+      t4: "Az edződ elolvashatja a reflexiódat a Profilodban, minden korábbi versenyeddel együtt – így nyomon követhető, hogyan fejlődik a felkészülésed és a mentalitásod versenyről versenyre.",
     },
   },
 
@@ -798,6 +806,7 @@ export const hu: Dict = {
       title: "Tesztpontszámok fül",
       t1: "Megjeleníti a sportoló legfrissebb pontszámait mind a négy értékelésen: SAT, ACSI, CSAI-2 és DAS. A pontszámok akkor jelennek meg, miután a sportoló elvégzi és feloldja a tesztet.",
       t2: "Vesd össze a napló hangulatával — az alacsony ACSI koncentrációs pontszám, párosulva a verseny körüli negatív bejegyzésekkel, erős korai figyelmeztető jel.",
+      t3: "Miután az eredmények feloldásra kerülnek, a PowerFlow automatikusan e-mailben küld a sportolónak egy tartós eredménylinket – bejelentkezés nélkül is megtekinthető újra –, így neked soha nem kell képernyőképet továbbítanod.",
     },
     s08: {
       title: "Profil fül",
@@ -831,6 +840,12 @@ export const hu: Dict = {
       t1: "Egy sportoló [[Profil]] fülén görgess az [[Eszköz ajánlása]] részhez. Válassz eszközt a legördülő menüből (PMR, Barrier Breaker, Vizualizáció, Affirmációk stb.) és fűzz hozzá egy opcionális személyes megjegyzést.",
       t2: "A sportoló lila kártyát lát a [[Ma]] oldalán: [[Az edző ajánlja: [Eszköz neve]]]. A [[Megnyitás →]] gombra koppintva közvetlenül oda kerül — keresés nélkül.",
       t3: "Ezt akkor használd, ha a naplóbejegyzések verseny előtti szorongást mutatnak (Barrier vagy Vizualizáció ajánlása), ha alvás vagy regenerálódás gyenge (PMR vagy Autogén tréning), vagy ha alkalmak között célzott mentális munkát szeretnél ösztönözni.",
+    },
+    s14: {
+      title: "Verseny utáni reflexiók",
+      t1: "Az atléta versenynapja után 7 napig a PowerFlow egy [[5 kérdéses verseny utáni reflexióra]] kéri őt a Ma oldalán: összbenyomás, legnagyobb siker, legfontosabb tanulság, 1–10-es mentális felkészülési értékelés, és egy dolog, amit a következő felkészülésben megváltoztat.",
+      t2: "Minden korábbi reflexiót megtalálsz a [[Profil]] fülén a [[Verseny utáni reflexiók]] alatt – legújabb elöl, versenyenként egy bejegyzés.",
+      t3: "A mentális felkészülés értékelése és a 'mit változtatok a következő felkészülésben' válasz a legértékesebb mezők – ezek egy szubjektív megbeszélést valami olyanná alakítanak, amire a következő blokk tervezésekor támaszkodhatsz.",
     },
   },
 
