@@ -64,12 +64,8 @@ function Phone({ children, caption }: { children: React.ReactNode; caption?: str
 // Real product screenshot, framed like a phone.
 function Screenshot({ src, alt, caption }: { src: string; alt: string; caption?: string }) {
   return (
-    <div className="phone-wrap">
-      <div className="phone-frame phone-frame-shot">
-        <div className="phone-notch" />
-        <img src={src} alt={alt} className="phone-shot-img" />
-        <div className="phone-home" />
-      </div>
+    <div className="shot-wrap">
+      <img src={src} alt={alt} className="shot-img" />
       {caption && <p className="phone-caption">{caption}</p>}
     </div>
   );
@@ -232,8 +228,8 @@ export default async function CoachGuidePage({
           .phone-caption { font-size: 9px; color: #71717a; text-align: center; margin-top: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
 
           /* Real screenshots */
-          .phone-frame-shot { min-height: unset; }
-          .phone-shot-img { display: block; width: 100%; height: auto; }
+          .shot-wrap { width: 180px; flex-shrink: 0; }
+          .shot-img { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid #e4e4e7; box-shadow: 0 8px 24px rgba(0,0,0,0.10); }
           .desktop-wrap { margin-bottom: 20px; }
           .desktop-shot-img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid #27272a; }
 
