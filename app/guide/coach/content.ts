@@ -148,16 +148,7 @@ export const coachContent = {
         { label: "Athlete completes it", desc: "The athlete sees the assigned test highlighted in their Tools tab. Once they complete and unlock the results, the assignment is cleared automatically." },
         { label: "View results", desc: "Completed results appear in your Test Scores tab for that athlete. You can cross-reference scores with journal sentiment — low ACSI concentration alongside negative entries near competition is a strong early warning pattern." },
         { label: "When to assign", desc: "Use test assignment to get a structured psychological baseline at the start of coaching. Re-assign when journal patterns suggest a specific area (anxiety, confidence, depression risk) needs formal measurement." },
-      ] as Step[],
-    },
-    s09: {
-      title: "Ego States — coach view",
-      subtitle: "Athlete's psychological personas · Profile tab",
-      steps: [
-        { label: "Where to find them", desc: "Expand an athlete card → Profile tab → scroll to the bottom. If the athlete has mapped ego states through Coach AI, each saved state appears with its name, domain, and activation ritual." },
-        { label: "How athletes map them", desc: "Athletes ask Coach AI to run an ego state mapping session. The AI walks through eight questions (name, colour, posture, body feeling, inner voice, origin, domain, shadow side, activation ritual) and the athlete saves the resulting state card." },
-        { label: "Using them in sessions", desc: "Refer to the athlete's states by name in your check-in calls: 'Which state were you in during that heavy squat session?' Use the shadow side field to identify when a state is bleeding into the wrong context. Use the activation ritual to guide pre-competition preparation." },
-        { label: "State conflicts", desc: "The most common performance issue is the wrong state for the moment — Analyst-mode during execution, Warrior-mode during recovery. When you spot this pattern in journal language ('I kept second-guessing', 'couldn't switch off'), it's an ego state conflict worth naming directly." },
+        { label: "Ego states, if mapped", desc: "If the athlete has mapped psychological personas through Coach AI, they also appear at the bottom of the Profile tab — name, domain, and activation ritual for each. Refer to them by name in check-in calls ('which state were you in during that heavy squat?') — the most common issue is the wrong state for the moment, e.g. analyst-mode during execution." },
       ] as Step[],
     },
     s10: {
@@ -336,16 +327,7 @@ export const coachContent = {
         { label: "Athlet schließt ihn ab", desc: "Der Athlet sieht den zugewiesenen Test hervorgehoben in seinem Tools-Tab. Nach Abschluss und Freischaltung wird die Zuweisung automatisch gelöscht." },
         { label: "Ergebnisse ansehen", desc: "Abgeschlossene Ergebnisse erscheinen in deinem Testergebnis-Tab für diesen Athleten. Du kannst Werte mit Journal-Sentiment vergleichen – niedriger ACSI-Konzentrationswert neben negativen Einträgen vor Wettkämpfen ist ein starkes Frühwarnsignal." },
         { label: "Wann zuweisen", desc: "Nutze die Testzuweisung, um eine strukturierte psychologische Ausgangsbasis zu Beginn des Coachings zu erhalten. Weise erneut zu, wenn Journal-Muster darauf hinweisen, dass ein bestimmter Bereich formale Messung benötigt." },
-      ] as Step[],
-    },
-    s09: {
-      title: "Ego-States – Coach-Ansicht",
-      subtitle: "Psychologische Personas des Athleten · Profil-Tab",
-      steps: [
-        { label: "Wo sie zu finden sind", desc: "Athleten-Karte erweitern → Profil-Tab → nach unten scrollen. Falls der Athlet Ego-States über Coach AI gemappt hat, erscheint jeder gespeicherte State mit Name, Domäne und Aktivierungsritual." },
-        { label: "Wie Athleten sie mappen", desc: "Athleten bitten Coach AI, eine Ego-State-Mapping-Sitzung durchzuführen. Die KI stellt acht Fragen (Name, Farbe, Haltung, Körpergefühl, innere Stimme, Ursprung, Domäne, Schattenseite, Aktivierungsritual) und der Athlet speichert die resultierende State-Karte." },
-        { label: "In Sitzungen nutzen", desc: "Beziehe dich bei Check-in-Gesprächen auf die States des Athleten beim Namen. Nutze das Schattenseite-Feld, um zu identifizieren, wenn ein State in den falschen Kontext übergeht. Nutze das Aktivierungsritual zur Wettkampfvorbereitung." },
-        { label: "State-Konflikte", desc: "Die häufigste Leistungsproblematik ist der falsche State im falschen Moment – Analyse-Modus bei der Ausführung, Krieger-Modus bei der Erholung. Wenn du dieses Muster in Journalsprache erkennst, ist ein Ego-State-Konflikt es wert, direkt benannt zu werden." },
+        { label: "Ego-States, falls gemappt", desc: "Falls der Athlet über Coach AI psychologische Personas gemappt hat, erscheinen sie auch unten im Profil-Tab – Name, Domäne und Aktivierungsritual für jede. Beziehe dich in Check-in-Gesprächen namentlich darauf ('welcher State warst du bei der schweren Kniebeuge?') – das häufigste Problem ist der falsche State im falschen Moment, z. B. Analyse-Modus während der Ausführung." },
       ] as Step[],
     },
     s10: {
@@ -524,16 +506,7 @@ export const coachContent = {
         { label: "Az atléta elvégzi", desc: "Az atléta kiemelve látja a hozzárendelt tesztet az Eszközök fülén. Miután elvégzi és feloldja az eredményeket, a hozzárendelés automatikusan törlődik." },
         { label: "Eredmények megtekintése", desc: "A befejezett eredmények megjelennek az atléta Tesztpontszámok fülén. Az értékeket összevethetsd a napló-hangulattal – alacsony ACSI koncentráció negatív bejegyzések mellett verseny közelében erős korai figyelmeztető minta." },
         { label: "Mikor rendelj hozzá", desc: "Teszthozzárendeléssel strukturált pszichológiai alapvonalat kaphatsz a coaching elején. Rendelj hozzá újra, ha a naplóminták egy adott területet (szorongás, önbizalom, depresszió kockázat) jeleznek formális mérési igényt." },
-      ] as Step[],
-    },
-    s09: {
-      title: "Ego-State-ek – edző nézet",
-      subtitle: "Az atléta pszichológiai személyiségei · Profil fül",
-      steps: [
-        { label: "Hol találhatók", desc: "Bontsd ki az atléta kártyát → Profil fül → görgess le. Ha az atléta feltérképezett ego-state-eket a Coach AI-n keresztül, minden elmentett state megjelenik nevével, területével és aktiválási rituáléjával." },
-        { label: "Hogyan térképezik fel az atlétok", desc: "Az atlétok arra kérik a Coach AI-t, hogy vezessen ego-state feltérképező munkamenetet. Az AI nyolc kérdést tesz fel (név, szín, testtartás, testérzet, belső hang, eredet, terület, árnyékoldal, aktiválási rituálé) és az atléta elmenti a kapott state kártyát." },
-        { label: "Alkalmazás a munkamenetekben", desc: "Hivatkozz az atléta state-jeire névvel a bejelentkezési hívásokban. Használd az árnyékoldal mezőt annak azonosítására, ha egy state rossz kontextusba kerül. Használd az aktiválási rituálét a verseny előtti felkészülés irányításában." },
-        { label: "State konfliktusok", desc: "A leggyakoribb teljesítményprobléma a rossz state a rossz pillanatban – Elemző mód végrehajtás közben, Harcos mód regenerálódás közben. Ha ezt a mintát felismered a napló nyelvézetében, ez egy ego-state konfliktus, amelyet érdemes közvetlenül megnevezni." },
+        { label: "Ego-state-ek, ha fel vannak térképezve", desc: "Ha az atléta a Coach AI-n keresztül pszichológiai személyiségeket térképezett fel, azok is megjelennek a Profil fül alján – név, terület és aktiválási rituálé mindegyikhez. Hivatkozz rájuk névvel a bejelentkezési hívásokban ('melyik state-ben voltál a nehéz guggolásnál?') – a leggyakoribb probléma a rossz state a rossz pillanatban, pl. elemző mód végrehajtás közben." },
       ] as Step[],
     },
     s10: {

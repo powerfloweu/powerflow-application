@@ -84,70 +84,6 @@ function DesktopShot({ src, alt, caption }: { src: string; alt: string; caption?
 // ── Screen mockups ────────────────────────────────────────────────────────────
 
 
-function ScreenTrainingTab({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div style={{ padding: "0 10px" }}>
-        <div className="s-ath-name" style={{ paddingTop: 4, marginBottom: 6 }}>Niina Jarvenkari</div>
-        <div className="s-tabs">
-          <span className="s-tab">Entries</span>
-          <span className="s-tab active">Training</span>
-          <span className="s-tab">Tests</span>
-        </div>
-        <div className="s-training-summary">
-          <span>4/7 training days</span>
-          <span>avg mood <strong style={{ color: "#fff" }}>6.8/10</strong></span>
-        </div>
-        <div className="s-eyebrow" style={{ marginBottom: 4 }}>MOOD SPARKLINE</div>
-        {[
-          { day: "Mon", date: "20", icon: "🏋️", mood: 7, fill: 70 },
-          { day: "Tue", date: "21", icon: "💤", mood: 8, fill: 80 },
-          { day: "Wed", date: "22", icon: "🏋️", mood: 5, fill: 50 },
-          { day: "Thu", date: "23", icon: "🏋️", mood: 6, fill: 60 },
-          { day: "Fri", date: "24", icon: "💤", mood: 7, fill: 70 },
-          { day: "Sat", date: "25", icon: "🏋️", mood: 8, fill: 80 },
-          { day: "Sun", date: "26", icon: null, mood: null, fill: 0 },
-        ].map((d) => (
-          <div key={d.day} className="s-spark-row">
-            <span className="s-spark-day">{d.day}</span>
-            <span className="s-spark-icon">{d.icon ?? "–"}</span>
-            <div className="s-spark-bar-bg">
-              <div className="s-spark-bar" style={{ width: `${d.fill}%` }} />
-            </div>
-            <span className="s-spark-num">{d.mood !== null ? `${d.mood}/10` : "—"}</span>
-          </div>
-        ))}
-      </div>
-    </Phone>
-  );
-}
-
-function ScreenDailyLog({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div style={{ padding: "0 10px" }}>
-        <div className="s-ath-name" style={{ paddingTop: 4, marginBottom: 6 }}>Niina Jarvenkari</div>
-        <div className="s-tabs">
-          <span className="s-tab">Entries</span>
-          <span className="s-tab active">Training</span>
-          <span className="s-tab">Tests</span>
-        </div>
-        <div className="s-log-entry">
-          <div className="s-log-date">Mon 20 · Training · Mood 7/10</div>
-          <div className="s-log-label">BEFORE SESSION</div>
-          <div className="s-log-text">Bench day. Felt more locked in than yesterday.</div>
-          <div className="s-log-label">HOW IT WENT</div>
-          <div className="s-log-text">Hit 110 kg for a double, cleanest reps in weeks.</div>
-          <div className="s-log-label">WHAT WENT WELL</div>
-          <div className="s-log-text">Stayed patient off the chest, no rushing.</div>
-          <div className="s-log-label">NEXT SESSION</div>
-          <div className="s-log-text">Rest tomorrow, then deadlifts. Don&apos;t skip warmup.</div>
-        </div>
-      </div>
-    </Phone>
-  );
-}
-
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export default async function CoachGuidePage({
@@ -221,7 +157,7 @@ export default async function CoachGuidePage({
 
           /* Phone frame */
           .phone-wrap { display: flex; flex-direction: column; align-items: center; }
-          .phone-frame { width: 180px; background: #050608; border-radius: 28px; border: 6px solid #27272a; box-shadow: 0 20px 60px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.05); overflow: hidden; position: relative; display: flex; flex-direction: column; }
+          .phone-frame { width: 180px; background: #050608; border-radius: 28px; border: 6px solid #27272a; overflow: hidden; position: relative; display: flex; flex-direction: column; }
           .phone-notch { width: 60px; height: 14px; background: #27272a; border-radius: 0 0 10px 10px; margin: 0 auto; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; }
           .phone-screen { flex: 1; overflow: hidden; padding-top: 18px; font-family: 'Saira', sans-serif; min-height: 360px; }
           .phone-home { width: 48px; height: 4px; background: #3f3f46; border-radius: 2px; margin: 6px auto 8px; }
@@ -229,7 +165,7 @@ export default async function CoachGuidePage({
 
           /* Real screenshots */
           .shot-wrap { width: 180px; flex-shrink: 0; }
-          .shot-img { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid #e4e4e7; box-shadow: 0 8px 24px rgba(0,0,0,0.10); }
+          .shot-img { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid #d4d4d8; }
           .desktop-wrap { margin-bottom: 20px; }
           .desktop-shot-img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid #27272a; }
 
@@ -444,12 +380,7 @@ export default async function CoachGuidePage({
                   <Note>{c.s05.note.text}</Note>
                 </>
               }
-              right={
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <ScreenTrainingTab caption={c.screens.trainingTab} />
-                  <ScreenDailyLog caption={c.screens.dailyLog} />
-                </div>
-              }
+              right={<Screenshot src="/guide-assets/athlete-training-log.png" alt="Post-set reflection" caption="What the athlete submits" />}
             />
           </Page>
 
@@ -506,15 +437,9 @@ export default async function CoachGuidePage({
             <Steps items={c.s08.steps} />
           </Page>
 
-          {/* ── 12 Ego States (coach view) ──────────────────────── */}
+          {/* ── 12 Suggest a tool ───────────────────────────────── */}
           <Page>
-            <SectionHeading num="12" title={c.s09.title} subtitle={c.s09.subtitle} />
-            <Steps items={c.s09.steps} />
-          </Page>
-
-          {/* ── 13 Suggest a tool ───────────────────────────────── */}
-          <Page>
-            <SectionHeading num="13" title={c.s10.title} subtitle={c.s10.subtitle} />
+            <SectionHeading num="12" title={c.s10.title} subtitle={c.s10.subtitle} />
             <TwoCol
               left={
                 <>
@@ -528,9 +453,9 @@ export default async function CoachGuidePage({
             />
           </Page>
 
-          {/* ── 14 Quick reference ──────────────────────────────── */}
+          {/* ── 13 Quick reference ──────────────────────────────── */}
           <Page>
-            <SectionHeading num="14" title={c.s11.title} subtitle={c.s11.subtitle} />
+            <SectionHeading num="13" title={c.s11.title} subtitle={c.s11.subtitle} />
 
             <DesktopShot src="/guide-assets/coach-dashboard-desktop.png" alt="Coach dashboard, desktop view" caption="The dashboard also works full-size on desktop — same data, sidebar navigation." />
 

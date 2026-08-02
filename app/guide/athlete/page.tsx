@@ -284,7 +284,6 @@ export default async function AthleteGuidePage({
             background: #050608;
             border-radius: 28px;
             border: 6px solid #27272a;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.05);
             overflow: hidden;
             position: relative;
             display: flex; flex-direction: column;
@@ -309,7 +308,7 @@ export default async function AthleteGuidePage({
             margin-top: 8px; letter-spacing: 0.1em; text-transform: uppercase;
           }
           .shot-wrap { width: 180px; flex-shrink: 0; }
-          .shot-img { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid #e4e4e7; box-shadow: 0 8px 24px rgba(0,0,0,0.10); }
+          .shot-img { display: block; width: 100%; height: auto; border-radius: 16px; border: 1px solid #d4d4d8; }
           .tools-table-note {
             background: #f5f3ff; border-left: 3px solid #7c3aed; padding: 10px 14px;
             border-radius: 0 6px 6px 0; font-size: 10px; color: #4c1d95; line-height: 1.5;
@@ -634,7 +633,12 @@ export default async function AthleteGuidePage({
                   </Note>
                 </>
               }
-              right={<Screenshot src="/guide-assets/athlete-today.png" alt="Today screen" caption={c.screens.today} />}
+              right={
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <Screenshot src="/guide-assets/athlete-today.png" alt="Today screen" caption={c.screens.today} />
+                  <Screenshot src="/guide-assets/athlete-training-log.png" alt="Training day reflection" caption="Post-set reflection" />
+                </div>
+              }
             />
           </Page>
 
@@ -648,7 +652,7 @@ export default async function AthleteGuidePage({
                   <Note>{c.s04.note.text}</Note>
                 </>
               }
-              right={<Screenshot src="/guide-assets/athlete-journal.png" alt="Journal entry" caption={c.screens.journal} />}
+              right={<Screenshot src="/guide-assets/athlete-journal.png" alt="Journal history" caption="Your journal, colour-coded" />}
             />
           </Page>
 
@@ -674,7 +678,7 @@ export default async function AthleteGuidePage({
             <div style={{ display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
               <Screenshot src="/guide-assets/athlete-tools.png" alt="Tools library" caption={c.screens.tools} />
               <Screenshot src="/guide-assets/athlete-now-playing.png" alt="Now playing a script" caption="Now playing" />
-              <Screenshot src="/guide-assets/athlete-tools-tests.png" alt="Assessment complete" caption="Assessment complete" />
+              <Screenshot src="/guide-assets/athlete-tools-tests.png" alt="Full assessment results" caption="A fully scored result" />
             </div>
             <Steps items={c.s05.steps} />
             <Note>{c.s05.note.text}</Note>
@@ -724,32 +728,9 @@ export default async function AthleteGuidePage({
             />
           </Page>
 
-          {/* ── 09 Ego States ────────────────────────────────────── */}
+          {/* ── 09 Check-ins ─────────────────────────────────────── */}
           <Page>
-            <SectionHeading num="09" title={c.s09.title} subtitle={c.s09.subtitle} />
-            <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 10, color: "#52525b", lineHeight: 1.6, marginBottom: 12 }}>
-                  {c.s09.intro}
-                </p>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, marginBottom: 16 }}>
-                  <tbody>
-                    {c.s09.table.map(([field, desc], i) => (
-                      <tr key={i} style={{ background: i % 2 === 0 ? "#f5f3ff" : "#fff" }}>
-                        <td style={{ padding: "6px 10px", fontWeight: 700, color: "#7c3aed", whiteSpace: "nowrap" }}>{field}</td>
-                        <td style={{ padding: "6px 10px", color: "#52525b" }}>{desc}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <Steps items={c.s09.steps} />
-              </div>
-            </div>
-          </Page>
-
-          {/* ── 10 Check-ins ─────────────────────────────────────── */}
-          <Page>
-            <SectionHeading num="10" title={c.s10.title} subtitle={c.s10.subtitle} />
+            <SectionHeading num="09" title={c.s10.title} subtitle={c.s10.subtitle} />
             <TwoCol
               left={
                 <>
@@ -761,16 +742,16 @@ export default async function AthleteGuidePage({
             />
           </Page>
 
-          {/* ── 11 Coach tool suggestions ─────────────────────────── */}
+          {/* ── 10 Coach tool suggestions ─────────────────────────── */}
           <Page>
-            <SectionHeading num="11" title={c.s11.title} subtitle={c.s11.subtitle} />
+            <SectionHeading num="10" title={c.s11.title} subtitle={c.s11.subtitle} />
             <Steps items={c.s11.steps} />
             <Note>{c.s11.note.text}</Note>
           </Page>
 
           {/* ── Quick reference ──────────────────────────────────── */}
           <Page>
-            <SectionHeading num="12" title={c.s12.title} subtitle={c.s12.subtitle} />
+            <SectionHeading num="11" title={c.s12.title} subtitle={c.s12.subtitle} />
             <Steps items={c.s12.steps} />
             <Note>{c.s12.note.text}</Note>
           </Page>
