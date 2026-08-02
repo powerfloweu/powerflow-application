@@ -61,110 +61,32 @@ function Phone({ children, caption }: { children: React.ReactNode; caption?: str
   );
 }
 
+// Real product screenshot, framed like a phone.
+function Screenshot({ src, alt, caption }: { src: string; alt: string; caption?: string }) {
+  return (
+    <div className="phone-wrap">
+      <div className="phone-frame phone-frame-shot">
+        <div className="phone-notch" />
+        <img src={src} alt={alt} className="phone-shot-img" />
+        <div className="phone-home" />
+      </div>
+      {caption && <p className="phone-caption">{caption}</p>}
+    </div>
+  );
+}
+
+// Real product screenshot, desktop-shaped (no phone bezel).
+function DesktopShot({ src, alt, caption }: { src: string; alt: string; caption?: string }) {
+  return (
+    <div className="desktop-wrap">
+      <img src={src} alt={alt} className="desktop-shot-img" />
+      {caption && <p className="phone-caption">{caption}</p>}
+    </div>
+  );
+}
+
 // ── Screen mockups ────────────────────────────────────────────────────────────
 
-function ScreenCoachSignIn({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div className="s-center" style={{ padding: "24px 16px" }}>
-        <div className="s-logo">PF</div>
-        <div className="s-tagline">POWERFLOW</div>
-        <div className="s-h1" style={{ marginBottom: 6 }}>Mental Training</div>
-        <div className="s-sub" style={{ marginBottom: 20 }}>for Powerlifters</div>
-        <div className="s-btn-primary">Sign in with Google</div>
-        <div style={{ marginTop: 16 }}>
-          <div className="s-pill" style={{ marginBottom: 8 }}>Athlete</div>
-          <div className="s-pill active">Coach</div>
-        </div>
-      </div>
-    </Phone>
-  );
-}
-
-function ScreenDashboard({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div style={{ padding: "0 10px" }}>
-        <div className="s-eyebrow" style={{ paddingTop: 2 }}>POWERFLOW · COACH</div>
-        <div className="s-h1" style={{ marginBottom: 2 }}>Dashboard</div>
-        <div className="s-coach-code-card">
-          <div className="s-eyebrow">YOUR COACH CODE</div>
-          <div className="s-code">3S1X4W23</div>
-          <div style={{ fontSize: 7, color: "#71717a" }}>Share with athletes to link accounts</div>
-        </div>
-        <div className="s-athlete-card">
-          <div className="s-athlete-header">
-            <div className="s-ath-avatar">NJ</div>
-            <div style={{ flex: 1 }}>
-              <div className="s-ath-name">Niina Jarvenkari</div>
-              <div style={{ display: "flex", gap: 6, marginTop: 3 }}>
-                <span className="s-stat">7 entries</span>
-                <span className="s-stat">29% pos.</span>
-                <span className="s-flag red">🔴 Attention</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="s-athlete-card">
-          <div className="s-athlete-header">
-            <div className="s-ath-avatar">PD</div>
-            <div style={{ flex: 1 }}>
-              <div className="s-ath-name">Prince of Dragons</div>
-              <div style={{ display: "flex", gap: 6, marginTop: 3 }}>
-                <span className="s-stat">0 entries</span>
-                <span className="s-stat">—</span>
-                <span className="s-flag red">🔴 Attention</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="s-athlete-card">
-          <div className="s-athlete-header">
-            <div className="s-ath-avatar">SD</div>
-            <div style={{ flex: 1 }}>
-              <div className="s-ath-name">Sipos Dávid Tamás</div>
-              <div style={{ display: "flex", gap: 6, marginTop: 3 }}>
-                <span className="s-stat">4 entries</span>
-                <span className="s-stat">25% pos.</span>
-                <span className="s-flag yellow">🟡 Monitor</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Phone>
-  );
-}
-
-function ScreenEntriesTab({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div style={{ padding: "0 10px" }}>
-        <div className="s-ath-name" style={{ paddingTop: 4, marginBottom: 6 }}>Niina Jarvenkari</div>
-        <div className="s-tabs">
-          <span className="s-tab active">Entries</span>
-          <span className="s-tab">Training</span>
-          <span className="s-tab">Tests</span>
-        </div>
-        {[
-          { dot: "green", date: "Sat 25", ctx: "Post-comp", text: "Hit a 3-month bench PR today. Big confidence boost…" },
-          { dot: "red",   date: "Fri 24", ctx: "General",   text: "Meet is 6 weeks away and I keep imagining bombing out…" },
-          { dot: "gray",  date: "Thu 23", ctx: "Post-comp", text: "Squat volume day. Stayed present even though I was tired…" },
-          { dot: "red",   date: "Wed 22", ctx: "Session",   text: "Deadlift lockout broke down on top singles. Frustrated…" },
-          { dot: "gray",  date: "Tue 21", ctx: "Rest",      text: "Took a walk. Realising I compare myself too much…" },
-        ].map((e, i) => (
-          <div key={i} className="s-entry-row">
-            <span className={`s-dot ${e.dot}`} style={{ marginTop: 4 }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="s-entry-meta">{e.date} · {e.ctx}</div>
-              <div className="s-entry-preview">{e.text}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </Phone>
-  );
-}
 
 function ScreenTrainingTab({ caption }: { caption: string }) {
   return (
@@ -197,37 +119,6 @@ function ScreenTrainingTab({ caption }: { caption: string }) {
               <div className="s-spark-bar" style={{ width: `${d.fill}%` }} />
             </div>
             <span className="s-spark-num">{d.mood !== null ? `${d.mood}/10` : "—"}</span>
-          </div>
-        ))}
-      </div>
-    </Phone>
-  );
-}
-
-function ScreenTestsTab({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div style={{ padding: "0 10px" }}>
-        <div className="s-ath-name" style={{ paddingTop: 4, marginBottom: 6 }}>Niina Jarvenkari</div>
-        <div className="s-tabs">
-          <span className="s-tab">Entries</span>
-          <span className="s-tab">Training</span>
-          <span className="s-tab active">Tests</span>
-        </div>
-        {[
-          { name: "SAT", label: "Sport Anxiety Test", score: "42 / 100", sub: "Low — stable profile", done: true },
-          { name: "ACSI", label: "Coping Skills", score: "Confidence: 78%", sub: "Goal-setting: 64%", done: true },
-          { name: "CSAI-2", label: "Competitive Anxiety", score: null, sub: "Not completed yet", done: false },
-          { name: "DAS", label: "Depression · Anxiety", score: null, sub: "Not completed yet", done: false },
-        ].map(t => (
-          <div key={t.name} className="s-tool-card" style={{ marginBottom: 6 }}>
-            <div>
-              <div className="s-tool-name">{t.name}</div>
-              <div className="s-tool-desc">{t.label}</div>
-              {t.score && <div style={{ fontSize: 8, color: "#a78bfa", marginTop: 2, fontWeight: 700 }}>{t.score}</div>}
-              <div style={{ fontSize: 7, color: "#71717a" }}>{t.sub}</div>
-            </div>
-            <div className={`s-tool-status ${t.done ? "done" : ""}`}>{t.done ? "✓" : "–"}</div>
           </div>
         ))}
       </div>
@@ -306,12 +197,7 @@ export default async function CoachGuidePage({
             background: #050608; color: #fff; padding: 60px 0;
           }
           @media print { .cover { page-break-after: always; } }
-          .cover-logo {
-            width: 72px; height: 72px; border-radius: 50%;
-            background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 40px;
-          }
+          .cover-logo-img { width: 96px; height: auto; margin-bottom: 40px; display: block; }
           .cover-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.32em; text-transform: uppercase; color: #67e8f9; margin-bottom: 12px; }
           .cover-title { font-size: 48px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; line-height: 1.05; color: #fff; margin-bottom: 16px; }
           .cover-sub { font-size: 13px; color: #a1a1aa; max-width: 400px; line-height: 1.6; margin-bottom: 48px; }
@@ -344,6 +230,12 @@ export default async function CoachGuidePage({
           .phone-screen { flex: 1; overflow: hidden; padding-top: 18px; font-family: 'Saira', sans-serif; min-height: 360px; }
           .phone-home { width: 48px; height: 4px; background: #3f3f46; border-radius: 2px; margin: 6px auto 8px; }
           .phone-caption { font-size: 9px; color: #71717a; text-align: center; margin-top: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+          /* Real screenshots */
+          .phone-frame-shot { min-height: unset; }
+          .phone-shot-img { display: block; width: 100%; height: auto; }
+          .desktop-wrap { margin-bottom: 20px; }
+          .desktop-shot-img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid #27272a; }
 
           /* Screen primitives */
           .s-eyebrow { font-size: 7px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: #67e8f9; }
@@ -442,7 +334,7 @@ export default async function CoachGuidePage({
         {/* ── Cover — outside .doc so it spans full page width ── */}
         <div className="cover">
           <div style={{ maxWidth: 716, padding: "0 48px" }}>
-            <div className="cover-logo">PF</div>
+            <img src="/guide-assets/powerflow-logo.png" alt="PowerFlow" className="cover-logo-img" />
             <div className="cover-eyebrow">{c.cover.eyebrow}</div>
             <h1 className="cover-title">{c.cover.title[0]}<br />{c.cover.title[1]}</h1>
             <div className="cover-divider" />
@@ -482,7 +374,7 @@ export default async function CoachGuidePage({
                   </Note>
                 </>
               }
-              right={<ScreenCoachSignIn caption={c.screens.coachSignIn} />}
+              right={<Screenshot src="/guide-assets/athlete-welcome.png" alt="Sign-in screen" caption={c.screens.coachSignIn} />}
             />
           </Page>
 
@@ -499,7 +391,7 @@ export default async function CoachGuidePage({
                   <Note>{c.s02.note.text}</Note>
                 </>
               }
-              right={<ScreenDashboard caption={c.screens.dashboard} />}
+              right={<Screenshot src="/guide-assets/coach-dashboard.png" alt="Coach dashboard" caption={c.screens.dashboard} />}
             />
           </Page>
 
@@ -518,7 +410,7 @@ export default async function CoachGuidePage({
                   </Note>
                 </>
               }
-              right={<ScreenDashboard caption={c.screens.dashboard} />}
+              right={<Screenshot src="/guide-assets/coach-dashboard.png" alt="Coach dashboard" caption={c.screens.dashboard} />}
             />
           </Page>
 
@@ -542,7 +434,7 @@ export default async function CoachGuidePage({
                   <Note>{c.s04.note.text}</Note>
                 </>
               }
-              right={<ScreenEntriesTab caption={c.screens.entriesTab} />}
+              right={<Screenshot src="/guide-assets/coach-entries.png" alt="Recent entries tab" caption={c.screens.entriesTab} />}
             />
           </Page>
 
@@ -578,15 +470,22 @@ export default async function CoachGuidePage({
                   <Note>{c.s06.note.text}</Note>
                 </>
               }
-              right={<ScreenTestsTab caption={c.screens.testsTab} />}
+              right={<Screenshot src="/guide-assets/coach-tests.png" alt="Test results tab" caption={c.screens.testsTab} />}
             />
           </Page>
 
           {/* ── 08 Check-ins tab ────────────────────────────────── */}
           <Page>
             <SectionHeading num="08" title={c.s07.title} subtitle={c.s07.subtitle} />
-            <Steps items={c.s07.steps} />
-            <Note>{c.s07.note.text}</Note>
+            <TwoCol
+              left={
+                <>
+                  <Steps items={c.s07.steps} />
+                  <Note>{c.s07.note.text}</Note>
+                </>
+              }
+              right={<Screenshot src="/guide-assets/coach-checkins.png" alt="Check-ins tab" caption="Coach view — weekly check-in" />}
+            />
           </Page>
 
           {/* ── 09 Competition reflections ──────────────────────── */}
@@ -620,15 +519,24 @@ export default async function CoachGuidePage({
           {/* ── 13 Suggest a tool ───────────────────────────────── */}
           <Page>
             <SectionHeading num="13" title={c.s10.title} subtitle={c.s10.subtitle} />
-            <Steps items={c.s10.steps} />
-            <Note>
-              <strong>{c.s10.note.bold}</strong>{c.s10.note.text}
-            </Note>
+            <TwoCol
+              left={
+                <>
+                  <Steps items={c.s10.steps} />
+                  <Note>
+                    <strong>{c.s10.note.bold}</strong>{c.s10.note.text}
+                  </Note>
+                </>
+              }
+              right={<Screenshot src="/guide-assets/coach-suggest-tool.png" alt="Suggest a tool" caption="Profile tab — Suggest a tool" />}
+            />
           </Page>
 
           {/* ── 14 Quick reference ──────────────────────────────── */}
           <Page>
             <SectionHeading num="14" title={c.s11.title} subtitle={c.s11.subtitle} />
+
+            <DesktopShot src="/guide-assets/coach-dashboard-desktop.png" alt="Coach dashboard, desktop view" caption="The dashboard also works full-size on desktop — same data, sidebar navigation." />
 
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, marginBottom: 32 }}>
               <thead>

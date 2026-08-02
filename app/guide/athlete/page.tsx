@@ -67,25 +67,22 @@ function Phone({ children, caption }: { children: React.ReactNode; caption?: str
   );
 }
 
-// ── Individual screen mockups ─────────────────────────────────────────────────
-
-function ScreenSignIn({ caption }: { caption: string }) {
+// Real product screenshot, framed like a phone.
+function Screenshot({ src, alt, caption }: { src: string; alt: string; caption?: string }) {
   return (
-    <Phone caption={caption}>
-      <div className="s-center" style={{ padding: "24px 16px" }}>
-        <div className="s-logo">PF</div>
-        <div className="s-tagline">POWERFLOW</div>
-        <div className="s-h1" style={{ marginBottom: 6 }}>Mental Training</div>
-        <div className="s-sub" style={{ marginBottom: 24 }}>for Powerlifters</div>
-        <div className="s-btn-primary">Sign in with Google</div>
-        <div style={{ marginTop: 16 }}>
-          <div className="s-pill active" style={{ marginBottom: 8 }}>Athlete</div>
-          <div className="s-pill">Coach</div>
-        </div>
+    <div className="phone-wrap">
+      <div className="phone-frame phone-frame-shot">
+        <div className="phone-notch" />
+        <img src={src} alt={alt} className="phone-shot-img" />
+        <div className="phone-home" />
       </div>
-    </Phone>
+      {caption && <p className="phone-caption">{caption}</p>}
+    </div>
   );
 }
+
+// ── Individual screen mockups ─────────────────────────────────────────────────
+
 
 function ScreenOnboardingStep1({ caption }: { caption: string }) {
   return (
@@ -143,164 +140,6 @@ function ScreenOnboardingMindset({ caption }: { caption: string }) {
         </div>
       </div>
       <div className="s-footer-btn">Next →</div>
-    </Phone>
-  );
-}
-
-function ScreenToday({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div style={{ padding: "12px 12px 0" }}>
-        <div className="s-eyebrow">POWERFLOW · TODAY</div>
-        <div className="s-h1" style={{ marginBottom: 2 }}>Good morning, Anna</div>
-        <div className="s-sub">Saturday, 25 April</div>
-        <div className="s-card-purple" style={{ marginTop: 12 }}>
-          <div className="s-eyebrow">LOG TODAY</div>
-          <div className="s-body" style={{ margin: "4px 0 8px" }}>Saturday — training day or rest day?</div>
-          <div style={{ display: "flex", gap: 6 }}>
-            <div className="s-btn-sm-purple">🏋️ Training Day</div>
-            <div className="s-btn-sm-dark">😴 Rest Day</div>
-          </div>
-        </div>
-        <div className="s-card-dark" style={{ marginTop: 8 }}>
-          <div className="s-eyebrow">TRAINING PHASE</div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-            <div className="s-badge">Peak</div>
-            <div>
-              <div className="s-num-big">18</div>
-              <div className="s-eyebrow">days to go</div>
-            </div>
-          </div>
-        </div>
-        <div className="s-card-dark" style={{ marginTop: 8 }}>
-          <div className="s-eyebrow">STRENGTH GOALS</div>
-          <div className="s-lift-row"><span>Squat</span><span>200 kg → 215 kg</span></div>
-          <div className="s-lift-row"><span>Bench</span><span>110 kg → 120 kg</span></div>
-          <div className="s-lift-row"><span>Deadlift</span><span>235 kg → 250 kg</span></div>
-        </div>
-      </div>
-    </Phone>
-  );
-}
-
-function ScreenCheckIn({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div style={{ padding: "12px" }}>
-        <div className="s-h2" style={{ marginBottom: 8 }}>Training Day</div>
-        <div className="s-label">RATE YOUR MOOD</div>
-        <div className="s-scale-dots" style={{ flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
-          {[1,2,3,4,5,6,7,8,9,10].map(n => (
-            <div key={n} className={`s-scale-dot${n === 8 ? " active" : ""}`}>{n}</div>
-          ))}
-        </div>
-        <div className="s-label">THOUGHTS BEFORE SESSION</div>
-        <div className="s-textarea" style={{ marginBottom: 8 }}>Feeling sharp today, good warm-up…</div>
-        <div className="s-label">HOW DID IT GO?</div>
-        <div className="s-textarea">Hit every planned set. Deadlifts felt strong…</div>
-        <div className="s-label" style={{ marginTop: 8 }}>WHAT WENT WELL?</div>
-        <div className="s-textarea">Stayed composed on the heavy singles.</div>
-      </div>
-      <div className="s-footer-btn" style={{ margin: "0 12px 12px" }}>Save</div>
-    </Phone>
-  );
-}
-
-function ScreenJournal({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div style={{ padding: "12px" }}>
-        <div className="s-eyebrow">POWERFLOW · JOURNAL</div>
-        <div className="s-h1" style={{ marginBottom: 8 }}>Journal</div>
-        <div className="s-label">CONTEXT</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
-          {["General","Pre-comp","Post-comp","Session","Rest day"].map((t, i) => (
-            <div key={t} className={`s-tag${i === 2 ? " active" : ""}`}>{t}</div>
-          ))}
-        </div>
-        <div className="s-label">YOUR ENTRY</div>
-        <div className="s-textarea" style={{ height: 56 }}>
-          Hit a bench PR today. Hard to believe after last week&apos;s session — I was convinced I was going backwards…
-        </div>
-        <div className="s-btn-primary" style={{ marginTop: 10, textAlign: "center" }}>Save entry</div>
-        <div className="s-divider" />
-        <div className="s-label">RECENT</div>
-        <div className="s-entry-row">
-          <span className="s-dot green" />
-          <div>
-            <div className="s-entry-meta">Thu 23 · Post-comp</div>
-            <div className="s-entry-preview">Met is in 6 weeks and I keep imagining…</div>
-          </div>
-        </div>
-        <div className="s-entry-row">
-          <span className="s-dot red" />
-          <div>
-            <div className="s-entry-meta">Wed 22 · Session</div>
-            <div className="s-entry-preview">Deadlift session was rough. Lockout broke…</div>
-          </div>
-        </div>
-      </div>
-    </Phone>
-  );
-}
-
-function ScreenTools({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div style={{ padding: "12px" }}>
-        <div className="s-eyebrow">POWERFLOW · TOOLS</div>
-        <div className="s-h1" style={{ marginBottom: 10 }}>Tools</div>
-        {[
-          { name: "SAT", desc: "Sport Anxiety Test", done: true },
-          { name: "ACSI", desc: "Coping Skills Inventory", done: true },
-          { name: "CSAI-2", desc: "Competitive Anxiety", done: false },
-          { name: "DAS", desc: "Depression · Anxiety · Stress", done: false },
-        ].map(t => (
-          <div key={t.name} className="s-tool-card">
-            <div>
-              <div className="s-tool-name">{t.name}</div>
-              <div className="s-tool-desc">{t.desc}</div>
-            </div>
-            <div className={`s-tool-status ${t.done ? "done" : ""}`}>
-              {t.done ? "Done ✓" : "Start →"}
-            </div>
-          </div>
-        ))}
-      </div>
-    </Phone>
-  );
-}
-
-function ScreenYou({ caption }: { caption: string }) {
-  return (
-    <Phone caption={caption}>
-      <div style={{ padding: "12px" }}>
-        <div className="s-eyebrow">POWERFLOW · YOU</div>
-        <div className="s-h1" style={{ marginBottom: 10 }}>Profile</div>
-        <div className="s-identity-card">
-          <div className="s-avatar">AK</div>
-          <div>
-            <div className="s-name">Anna Kovács</div>
-            <div className="s-role-badge">athlete</div>
-          </div>
-        </div>
-        <div className="s-section-card">
-          <div className="s-eyebrow">NEXT COMPETITION</div>
-          <div className="s-input-row">2026-09-14<span className="s-save-btn">Save</span></div>
-        </div>
-        <div className="s-section-card">
-          <div className="s-eyebrow">STRENGTH GOALS</div>
-          <div className="s-lift-row"><span>Squat</span><span>200 → 215 kg</span></div>
-          <div className="s-lift-row"><span>Bench</span><span>110 → 120 kg</span></div>
-        </div>
-        <div className="s-section-card">
-          <div className="s-eyebrow">COACH</div>
-          <div className="s-coach-row">
-            <span className="s-dot green" />
-            <span style={{ fontSize: 9, color: "#6ee7b7" }}>Connected to Clarice Tighe</span>
-          </div>
-        </div>
-      </div>
     </Phone>
   );
 }
@@ -373,14 +212,7 @@ export default async function AthleteGuidePage({
           @media print {
             .cover { page-break-after: always; }
           }
-          .cover-logo {
-            width: 72px; height: 72px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px; font-weight: 800; color: #fff;
-            margin-bottom: 40px;
-          }
+          .cover-logo-img { width: 96px; height: auto; margin-bottom: 40px; display: block; }
           .cover-eyebrow {
             font-size: 9px; font-weight: 700;
             letter-spacing: 0.32em; text-transform: uppercase;
@@ -479,6 +311,13 @@ export default async function AthleteGuidePage({
           .phone-caption {
             font-size: 9px; color: #71717a; text-align: center;
             margin-top: 8px; letter-spacing: 0.1em; text-transform: uppercase;
+          }
+          .phone-frame-shot { min-height: unset; }
+          .phone-shot-img { display: block; width: 100%; height: auto; }
+          .tools-table-note {
+            background: #f5f3ff; border-left: 3px solid #7c3aed; padding: 10px 14px;
+            border-radius: 0 6px 6px 0; font-size: 10px; color: #4c1d95; line-height: 1.5;
+            margin: 4px 0 16px; font-style: italic;
           }
 
           /* ── Screen UI primitives ── */
@@ -689,7 +528,7 @@ export default async function AthleteGuidePage({
         {/* ── Cover — outside .doc so it spans full page width ── */}
         <div className="cover">
           <div style={{ maxWidth: 716, padding: "0 48px" }}>
-            <div className="cover-logo">PF</div>
+            <img src="/guide-assets/powerflow-logo.png" alt="PowerFlow" className="cover-logo-img" />
             <div className="cover-eyebrow">{c.cover.eyebrow}</div>
             <h1 className="cover-title">{c.cover.title[0]}<br />{c.cover.title[1]}</h1>
             <div className="cover-divider" />
@@ -762,7 +601,7 @@ export default async function AthleteGuidePage({
                   </Note>
                 </>
               }
-              right={<ScreenSignIn caption={c.screens.signIn} />}
+              right={<Screenshot src="/guide-assets/athlete-welcome.png" alt="Sign-in screen" caption={c.screens.signIn} />}
             />
           </Page>
 
@@ -799,12 +638,7 @@ export default async function AthleteGuidePage({
                   </Note>
                 </>
               }
-              right={
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <ScreenToday caption={c.screens.today} />
-                  <ScreenCheckIn caption={c.screens.checkIn} />
-                </div>
-              }
+              right={<Screenshot src="/guide-assets/athlete-today.png" alt="Today screen" caption={c.screens.today} />}
             />
           </Page>
 
@@ -818,36 +652,50 @@ export default async function AthleteGuidePage({
                   <Note>{c.s04.note.text}</Note>
                 </>
               }
-              right={<ScreenJournal caption={c.screens.journal} />}
+              right={<Screenshot src="/guide-assets/athlete-journal.png" alt="Journal entry" caption={c.screens.journal} />}
             />
           </Page>
 
           {/* ── 05 Tools ────────────────────────────────────────── */}
           <Page>
             <SectionHeading num="05" title={c.s05.title} subtitle={c.s05.subtitle} />
-            <TwoCol
-              left={
-                <>
-                  <p style={{ fontSize: 10, color: "#52525b", marginBottom: 12, lineHeight: 1.6 }}>
-                    {c.s05.intro}
-                  </p>
-                  <Steps items={c.s05.steps} />
-                  <Note>{c.s05.note.text}</Note>
-                </>
-              }
-              right={<ScreenTools caption={c.screens.tools} />}
-            />
+            <p style={{ fontSize: 10, color: "#52525b", marginBottom: 12, lineHeight: 1.6, maxWidth: 560 }}>
+              {c.s05.intro}
+            </p>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10, marginBottom: 4 }}>
+              <tbody>
+                {c.s05.toolsTable.map(([tool, desc], i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? "#f5f3ff" : "#fff" }}>
+                    <td style={{ padding: "7px 10px", fontWeight: 700, color: "#7c3aed", whiteSpace: "nowrap", verticalAlign: "top" }}>{tool}</td>
+                    <td style={{ padding: "7px 10px", color: "#52525b" }}>{desc}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="tools-table-note">
+              <strong style={{ fontStyle: "normal" }}>{c.s05.example.bold}</strong>{c.s05.example.text}
+            </p>
+            <div style={{ display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
+              <Screenshot src="/guide-assets/athlete-tools.png" alt="Tools library" caption={c.screens.tools} />
+              <Screenshot src="/guide-assets/athlete-now-playing.png" alt="Now playing a script" caption="Now playing" />
+              <Screenshot src="/guide-assets/athlete-tools-tests.png" alt="Assessment complete" caption="Assessment complete" />
+            </div>
+            <Steps items={c.s05.steps} />
+            <Note>{c.s05.note.text}</Note>
           </Page>
 
           {/* ── 06 Course ───────────────────────────────────────── */}
           <Page>
             <SectionHeading num="06" title={c.s06.title} subtitle={c.s06.subtitle} />
-            <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
-              <div style={{ flex: 1 }}>
-                <Steps items={c.s06.steps} />
-                <Note>{c.s06.note.text}</Note>
-              </div>
-            </div>
+            <TwoCol
+              left={
+                <>
+                  <Steps items={c.s06.steps} />
+                  <Note>{c.s06.note.text}</Note>
+                </>
+              }
+              right={<Screenshot src="/guide-assets/athlete-course.png" alt="Course" caption="16-week course" />}
+            />
           </Page>
 
           {/* ── 07 You ──────────────────────────────────────────── */}
@@ -862,15 +710,22 @@ export default async function AthleteGuidePage({
                   </Note>
                 </>
               }
-              right={<ScreenYou caption={c.screens.you} />}
+              right={<Screenshot src="/guide-assets/athlete-profile.png" alt="Your profile" caption={c.screens.you} />}
             />
           </Page>
 
           {/* ── 08 Coach AI ─────────────────────────────────────── */}
           <Page>
             <SectionHeading num="08" title={c.s08.title} subtitle={c.s08.subtitle} />
-            <Steps items={c.s08.steps} />
-            <Note>{c.s08.note.text}</Note>
+            <TwoCol
+              left={
+                <>
+                  <Steps items={c.s08.steps} />
+                  <Note>{c.s08.note.text}</Note>
+                </>
+              }
+              right={<Screenshot src="/guide-assets/athlete-coach-ai.png" alt="Coach AI reply" caption="AI response" />}
+            />
           </Page>
 
           {/* ── 09 Ego States ────────────────────────────────────── */}
@@ -899,8 +754,15 @@ export default async function AthleteGuidePage({
           {/* ── 10 Check-ins ─────────────────────────────────────── */}
           <Page>
             <SectionHeading num="10" title={c.s10.title} subtitle={c.s10.subtitle} />
-            <Steps items={c.s10.steps} />
-            <Note>{c.s10.note.text}</Note>
+            <TwoCol
+              left={
+                <>
+                  <Steps items={c.s10.steps} />
+                  <Note>{c.s10.note.text}</Note>
+                </>
+              }
+              right={<Screenshot src="/guide-assets/athlete-checkin.png" alt="Weekly check-in" caption="Weekly check-in" />}
+            />
           </Page>
 
           {/* ── 11 Coach tool suggestions ─────────────────────────── */}
