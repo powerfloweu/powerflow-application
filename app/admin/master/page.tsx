@@ -16,6 +16,7 @@ import React from "react";
 import Link from "next/link";
 import type { SatRow, AcsiRow, CsaiRow, DasRow } from "@/app/api/admin/test-results/route";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
+import { findDuplicateGroups, indexDuplicates } from "@/lib/duplicates";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -159,6 +160,22 @@ function RoleBadge({ role }: { role: "athlete" | "coach" }) {
   ) : (
     <span className="inline-block rounded px-1.5 py-0.5 font-saira text-[9px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-400 border border-purple-500/20">
       Athlete
+    </span>
+  );
+}
+
+function DuplicateBadge({ groupSize, signals }: { groupSize: number; signals: ("name" | "email")[] }) {
+  const label = signals.includes("name") && signals.includes("email")
+    ? "Name + email match"
+    : signals.includes("email")
+    ? "Email match"
+    : "Name match";
+  return (
+    <span
+      title={`${label} — ${groupSize} accounts share this identity. Review manually; nothing is changed automatically.`}
+      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-saira text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/20 whitespace-nowrap"
+    >
+      ⚠ Possible duplicate · {groupSize}
     </span>
   );
 }
@@ -689,6 +706,19 @@ function UsersTab({
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
   const [pushTarget, setPushTarget] = React.useState<UserRow | null>(null);
 
+  // Duplicate-account detection is read-only: it only flags profiles that
+  // look like the same person for manual review. It never merges, edits,
+  // or deletes anything.
+  const duplicateProfiles = React.useMemo(
+    () => users.map((u) => ({ id: u.id, display_name: u.display_name, email: u.email })),
+    [users],
+  );
+  const duplicateGroups = React.useMemo(() => findDuplicateGroups(duplicateProfiles), [duplicateProfiles]);
+  const duplicateIndex = React.useMemo(() => indexDuplicates(duplicateProfiles), [duplicateProfiles]);
+  const nameGroupCount = duplicateGroups.filter((g) => g.signal === "name").length;
+  const emailGroupCount = duplicateGroups.filter((g) => g.signal === "email").length;
+  const totalGroupCount = nameGroupCount + emailGroupCount;
+
   const filtered = users.filter((u) => {
     if (roleFilter !== "all" && u.role !== roleFilter) return false;
     if (search) {
@@ -725,6 +755,22 @@ function UsersTab({
 
   return (
     <div className="space-y-4">
+      {/* Duplicate-account summary — read-only, for manual review */}
+      {totalGroupCount > 0 && (
+        <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-2.5">
+          <span className="text-amber-400 text-sm" aria-hidden>⚠</span>
+          <p className="font-saira text-xs text-amber-300">
+            <span className="font-bold uppercase tracking-wider">
+              {totalGroupCount} possible duplicate {totalGroupCount === 1 ? "group" : "groups"}
+            </span>
+            {" "}
+            <span className="text-amber-400/70">
+              ({nameGroupCount} by name, {emailGroupCount} by email) — review manually, nothing is changed automatically.
+            </span>
+          </p>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex gap-3 flex-wrap items-center">
         <input
@@ -783,9 +829,17 @@ function UsersTab({
                 <div className="flex items-center gap-2.5">
                   <ActivityDot status={user.activity_status} />
                   <div>
-                    <p className="font-saira text-sm font-semibold text-white leading-none">
-                      {user.display_name}
-                    </p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="font-saira text-sm font-semibold text-white leading-none">
+                        {user.display_name}
+                      </p>
+                      {duplicateIndex.has(user.id) && (
+                        <DuplicateBadge
+                          groupSize={duplicateIndex.get(user.id)!.groupSize}
+                          signals={duplicateIndex.get(user.id)!.signals}
+                        />
+                      )}
+                    </div>
                     {user.instagram && (
                       <a
                         href={`https://instagram.com/${user.instagram.replace(/^@/, "")}`}
@@ -948,6 +1002,12 @@ function UsersTab({
               {/* Mobile extras */}
               <div className="sm:hidden flex flex-wrap gap-2 px-5 pb-3 -mt-1">
                 <RoleBadge role={user.role} />
+                {duplicateIndex.has(user.id) && (
+                  <DuplicateBadge
+                    groupSize={duplicateIndex.get(user.id)!.groupSize}
+                    signals={duplicateIndex.get(user.id)!.signals}
+                  />
+                )}
                 {user.email && (
                   <span className="font-saira text-[10px] text-zinc-400">{user.email}</span>
                 )}
