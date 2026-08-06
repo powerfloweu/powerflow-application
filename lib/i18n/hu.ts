@@ -1067,6 +1067,30 @@ export const hu: Dict = {
     tabNotes: "Megjegyzések",
     tabPrompts: "Kérdések",
 
+    // Mobile home summary strip + roster
+    noEntriesThisWeek: "Nincs bejegyzés ezen a héten",
+    statNoCheckin: "Nincs check-in",
+    statSilent7d: "7 napja csendes",
+    manageRoster: "Sportolók kezelése →",
+
+    // Suggest a tool (coach → athlete)
+    suggestToolTitle: "Eszköz ajánlása",
+    suggestToolBody: "Ajánlj egy konkrét eszközt a könyvtárból ennek a sportolónak. Kártyaként fog megjelenni a Ma oldalán.",
+    suggestToolMessagePlaceholder: "Opcionális üzenet a sportolónak… (pl. „Próbáld ki a következő nehéz guggolás edzés előtt”)",
+    suggestToolError: "Nem sikerült elküldeni. Próbáld újra.",
+    suggestToolSent: "✓ Elküldve a sportolónak",
+    suggestToolSending: "Küldés…",
+    suggestToolSend: "Ajánlás küldése →",
+    suggestToolPmr: "Progresszív izomrelaxáció",
+    suggestToolAT: "Autogén tréning",
+    suggestToolVizSquat: "Vizualizáció — Guggolás",
+    suggestToolVizBench: "Vizualizáció — Fekvenyomás",
+    suggestToolVizDeadlift: "Vizualizáció — Felhúzás",
+    suggestToolResourceActivation: "Erőforrás-aktiválás",
+    suggestToolAffirmations: "Affirmációk",
+    suggestToolBarrier: "Figyelemgát",
+    suggestToolCompDayViz: "Versenynapi vizualizáció",
+
     // Journal prompts (per-athlete, set by coach)
     journalPromptsTitle: "Naplókérdések",
     journalPromptsBody: "Állíts be egyéni reflexiós kérdéseket ennek a sportolónak. Felülírja az alapértelmezettet és felváltja a sportoló saját beállításait. Hagyd üresen a kihagyandókat.",

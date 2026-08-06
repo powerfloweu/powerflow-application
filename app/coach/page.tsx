@@ -17,7 +17,7 @@ import { CoachMeetHistory } from "@/app/components/PostCompReflection";
 
 import {
   type Flag, type Trend, type EntryRow, type AthleteRaw, type CoachProfile, type Client,
-  computeClient, weekAgo, FLAG_CONFIG, TREND_ICON, TREND_COLOR,
+  computeClient, FLAG_CONFIG, TREND_ICON, TREND_COLOR,
 } from "./model";
 import { computeSentimentTrajectory, timeSince, extractTopics, sortClients, type TFn, type SortKey } from "./helpers";
 
@@ -66,22 +66,6 @@ function AthleteAvatar({
       onError={() => setErrored(true)}
     />
   );
-}
-
-// Per-day "did anything happen" flags for the 7-day sentiment chart, computed
-// with the exact same day-bucketing as model.ts's sentimentWeek so the two
-// arrays line up index-for-index. sentimentWeek alone can't tell a 0%-positive
-// day apart from a day with zero entries — this can.
-function sentimentWeekHasData(client: Pick<Client, "allEntries" | "allTrainingWithContent">): boolean[] {
-  const now = new Date();
-  return Array.from({ length: 7 }, (_, i) => {
-    const dayStart = weekAgo(6 - i);
-    const dayEnd   = weekAgo(6 - i - 1);
-    const inDay = (d: Date) => d >= dayStart && d < (i === 6 ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) : dayEnd);
-    const dayJ = client.allEntries.some((e) => inDay(new Date(e.created_at)));
-    if (dayJ) return true;
-    return client.allTrainingWithContent.some((e) => inDay(new Date(e.entry_date + "T12:00:00")));
-  });
 }
 
 // ── Sentiment sparkline ────────────────────────────────────────────────────────
@@ -662,19 +646,31 @@ function CheckinsTab({
 }
 
 const SUGGEST_TOOLS = [
-  { id: "pmr",               label: "Progressive Muscle Relaxation" },
-  { id: "autogenic-training",label: "Autogenic Training" },
-  { id: "viz-squat",         label: "Visualization — Squat" },
-  { id: "viz-bench",         label: "Visualization — Bench" },
-  { id: "viz-deadlift",      label: "Visualization — Deadlift" },
-  { id: "resource-activation",label: "Resource Activation" },
-  { id: "affirmations",      label: "Affirmations" },
-  { id: "barrier",           label: "Barrier Breaker" },
-  { id: "comp-day-viz",      label: "Competition Day Visualization" },
-];
+  { id: "pmr",                 labelKey: "coach.suggestToolPmr" },
+  { id: "autogenic-training",  labelKey: "coach.suggestToolAT" },
+  { id: "viz-squat",           labelKey: "coach.suggestToolVizSquat" },
+  { id: "viz-bench",           labelKey: "coach.suggestToolVizBench" },
+  { id: "viz-deadlift",        labelKey: "coach.suggestToolVizDeadlift" },
+  { id: "resource-activation", labelKey: "coach.suggestToolResourceActivation" },
+  { id: "affirmations",        labelKey: "coach.suggestToolAffirmations" },
+  { id: "barrier",             labelKey: "coach.suggestToolBarrier" },
+  { id: "comp-day-viz",        labelKey: "coach.suggestToolCompDayViz" },
+] as const;
 
+// NOTE on tier gating (POWERFLOW-xxxx follow-up): the server now rejects a
+// suggestion for a tool above the athlete's plan with a 409 (see
+// lib/toolTiers.ts's TOOL_MIN_TIER + lib/plan.ts's effectiveTier/hasAccess).
+// This dropdown *should* filter to what the athlete's plan can open, but the
+// athlete's tier (plan_tier / course_access / test_access / ai_access) isn't
+// selected by GET /api/coach/athletes and isn't part of AthleteRaw/Client in
+// app/coach/model.ts, so it doesn't reach `client.profile` here. Wiring the
+// filter correctly needs that API route + model.ts to expose the tier —
+// both out of scope for this component (page.tsx-only change). Do not
+// default to "opener" here: that would silently hide valid tools for every
+// coach until the real fix lands.
 function SuggestToolSection({ athleteId }: { athleteId: string }) {
-  const [toolId, setToolId]       = React.useState(SUGGEST_TOOLS[0].id);
+  const { t } = useT();
+  const [toolId, setToolId]       = React.useState<string>(SUGGEST_TOOLS[0].id);
   const [message, setMessage]     = React.useState("");
   const [sending, setSending]     = React.useState(false);
   const [sent, setSent]           = React.useState(false);
@@ -693,7 +689,7 @@ function SuggestToolSection({ athleteId }: { athleteId: string }) {
       setMessage("");
       setTimeout(() => setSent(false), 3000);
     } catch {
-      setError("Could not send. Please try again.");
+      setError(t("coach.suggestToolError"));
     } finally {
       setSending(false);
     }
@@ -702,24 +698,24 @@ function SuggestToolSection({ athleteId }: { athleteId: string }) {
   return (
     <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.04] p-4">
       <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-400 mb-3">
-        Suggest a tool
+        {t("coach.suggestToolTitle")}
       </p>
       <p className="font-saira text-xs text-zinc-400 mb-3 leading-relaxed">
-        Recommend a specific library tool to this athlete. They&apos;ll see it as a card on their Today page.
+        {t("coach.suggestToolBody")}
       </p>
       <select
         value={toolId}
         onChange={e => setToolId(e.target.value)}
         className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 font-saira text-sm text-zinc-100 mb-3 focus:outline-none focus:border-purple-500/40"
       >
-        {SUGGEST_TOOLS.map(t => (
-          <option key={t.id} value={t.id} className="bg-zinc-900">{t.label}</option>
+        {SUGGEST_TOOLS.map(tool => (
+          <option key={tool.id} value={tool.id} className="bg-zinc-900">{t(tool.labelKey)}</option>
         ))}
       </select>
       <textarea
         value={message}
         onChange={e => setMessage(e.target.value)}
-        placeholder="Optional note to the athlete… (e.g. 'Try this before your next heavy squat session')"
+        placeholder={t("coach.suggestToolMessagePlaceholder")}
         rows={2}
         maxLength={200}
         className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 font-saira text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-purple-500/40 mb-3"
@@ -735,7 +731,7 @@ function SuggestToolSection({ athleteId }: { athleteId: string }) {
             : "bg-purple-600/80 hover:bg-purple-500/80 text-white disabled:opacity-50"
         }`}
       >
-        {sent ? "✓ Sent to athlete" : sending ? "Sending…" : "Send recommendation →"}
+        {sent ? t("coach.suggestToolSent") : sending ? t("coach.suggestToolSending") : t("coach.suggestToolSend")}
       </button>
     </div>
   );
@@ -1377,6 +1373,475 @@ function TrainingFeedbackSection({
   );
 }
 
+// ── Shared tab bodies ────────────────────────────────────────────────────────
+// Extracted out of ClientCard so the mobile athlete sheet can render the exact
+// same tabs (same components, same data, same feedback wiring) instead of a
+// forked, feature-poorer copy. ClientCard and MobileAthleteSheet both call
+// these — keep them free of any desktop/mobile-specific assumptions.
+
+function AnalysisTabBody({
+  client,
+  sentimentWindow,
+  onSentimentWindowChange,
+}: {
+  client: Client;
+  sentimentWindow: 7 | 30 | 60;
+  onSentimentWindowChange: (athleteId: string, w: 7 | 30 | 60) => void;
+}) {
+  const { t } = useT();
+
+  const windowedEntries = React.useMemo(() => {
+    const cut = new Date();
+    cut.setDate(cut.getDate() - sentimentWindow);
+    return client.allEntries.filter((e) => new Date(e.created_at) >= cut);
+  }, [client.allEntries, sentimentWindow]);
+
+  // Training logs within the same window (used for entry count + theme detection)
+  const windowedTrainingLogs = React.useMemo(() => {
+    const cut = new Date();
+    cut.setDate(cut.getDate() - sentimentWindow);
+    return client.allTrainingWithContent.filter(
+      (e) => new Date(e.entry_date + "T12:00:00") >= cut,
+    );
+  }, [client.allTrainingWithContent, sentimentWindow]);
+
+  // Total entries in window = journal + training logs with content
+  const windowedTotalCount = windowedEntries.length + windowedTrainingLogs.length;
+
+  // Sentiment % stays journal-only (training logs don't carry a sentiment field)
+  const windowedPositiveRate = windowedEntries.length
+    ? Math.round((windowedEntries.filter((e) => e.sentiment === "positive").length / windowedEntries.length) * 100)
+    : 0;
+
+  const windowedThemes = React.useMemo(() => {
+    return THEME_DEFS.map((def) => {
+      const journalCount = windowedEntries.filter((e) =>
+        def.keywords.some((kw) => e.content.toLowerCase().includes(kw))
+      ).length;
+      const trainingCount = windowedTrainingLogs.filter((e) => {
+        const text = [e.thoughts_before, e.thoughts_after, e.what_went_well, e.frustrations, e.next_session]
+          .filter(Boolean).join(" ").toLowerCase();
+        return def.keywords.some((kw) => text.includes(kw));
+      }).length;
+      return { label: def.label, count: journalCount + trainingCount, color: def.color };
+    }).filter((th) => th.count > 0).sort((a, b) => b.count - a.count);
+  }, [windowedEntries, windowedTrainingLogs]);
+
+  return (
+    <div className="space-y-5">
+      {/* Sentiment window selector */}
+      <div className="flex items-center gap-2">
+        <span className="font-saira text-[10px] text-zinc-400 uppercase tracking-[0.18em]">{t("coach.windowLabel")}</span>
+        <div className="flex gap-1">
+          {([7, 30, 60] as const).map((w) => (
+            <button
+              key={w}
+              type="button"
+              onClick={() => onSentimentWindowChange(client.id, w)}
+              className={`rounded-full border px-3 py-0.5 font-saira text-[10px] uppercase tracking-[0.12em] transition ${
+                sentimentWindow === w
+                  ? "border-purple-400 bg-purple-500/20 text-white"
+                  : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
+              }`}
+            >
+              {w}{t("coach.sentimentWindowLabel")}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {windowedThemes.length > 0 ? (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
+            {t("coach.detectedThemes").replace("{n}", String(sentimentWindow))}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {windowedThemes.map((th) => (
+              <TagChip
+                key={th.label}
+                label={th.label}
+                color={THEME_DEFS.find((d) => d.label === th.label)?.color ?? "purple"}
+                count={th.count}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="font-saira text-sm text-zinc-400 py-2">
+          {windowedTotalCount === 0
+            ? t("coach.noEntriesInWindow").replace("{n}", String(sentimentWindow))
+            : t("coach.noThemesDetected")}
+        </p>
+      )}
+
+      {/* Stats summary */}
+      {windowedTotalCount > 0 && (
+        <div className="rounded-2xl border border-white/5 bg-surface-input p-5">
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
+            {t("coach.lastNDaysGlance").replace("{n}", String(sentimentWindow))}
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            <MiniStat label={t("coach.statEntries")} value={String(windowedTotalCount)} />
+            <MiniStat
+              label={t("coach.statPositive")}
+              value={`${windowedPositiveRate}%`}
+              color={windowedPositiveRate >= 60 ? "text-emerald-300" : windowedPositiveRate >= 40 ? "text-amber-300" : "text-rose-300"}
+            />
+            <MiniStat
+              label={t("coach.statTrend")}
+              value={TREND_ICON[client.trend]}
+              color={TREND_COLOR[client.trend]}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Pattern analysis */}
+      <PatternAnalysis client={client} />
+    </div>
+  );
+}
+
+function ActivityTabBody({
+  client,
+  feedbackByEntry,
+  onFeedbackSaved,
+  trainingNoteByEntry,
+  onTrainingNoteSaved,
+}: {
+  client: Client;
+  feedbackByEntry: Record<string, { id: string; content: string; created_at: string }>;
+  onFeedbackSaved: (athleteId: string, entryId: string, feedback: { id: string; content: string; created_at: string }) => void;
+  trainingNoteByEntry: Record<string, string>;
+  onTrainingNoteSaved: (athleteId: string, entryId: string, note: string) => void;
+}) {
+  const { t } = useT();
+
+  // Unified activity feed: journal entries + training day logs merged by date
+  type ActivityItem =
+    | { kind: "journal";  entry: EntryRow }
+    | { kind: "training"; entry: TrainingEntry };
+
+  const activityFeed = React.useMemo((): ActivityItem[] => {
+    const items: ActivityItem[] = [
+      ...client.allEntries.map((e) => ({ kind: "journal" as const, entry: e })),
+      ...client.allTrainingEntries
+        .filter((e) =>
+          e.thoughts_before || e.thoughts_after || e.what_went_well || e.frustrations || e.next_session,
+        )
+        .map((e) => ({ kind: "training" as const, entry: e })),
+    ];
+    return items.sort((a, b) => {
+      const aT = a.kind === "journal"
+        ? new Date(a.entry.created_at).getTime()
+        : new Date(a.entry.entry_date + "T12:00:00").getTime();
+      const bT = b.kind === "journal"
+        ? new Date(b.entry.created_at).getTime()
+        : new Date(b.entry.entry_date + "T12:00:00").getTime();
+      return bT - aT;
+    });
+  }, [client.allEntries, client.allTrainingEntries]);
+
+  return (
+    <div className="space-y-3">
+      {activityFeed.length === 0 ? (
+        <p className="font-saira text-sm text-zinc-400 py-4 text-center">{t("coach.noActivityYet")}</p>
+      ) : (
+        activityFeed.map((item) =>
+          item.kind === "training" ? (
+            <div key={`t-${item.entry.id}`}>
+              <CoachTrainingCard entry={item.entry} />
+              <TrainingFeedbackSection
+                trainingEntryId={item.entry.id}
+                athleteId={client.id}
+                existing={trainingNoteByEntry[item.entry.id] ?? (item.entry.coach_note ?? undefined)}
+                onSaved={(note) => onTrainingNoteSaved(client.id, item.entry.id, note)}
+              />
+            </div>
+          ) : (
+            <div key={item.entry.id}>
+              <EntryCard entry={item.entry} />
+              <EntryFeedbackSection
+                entryId={item.entry.id}
+                athleteId={client.id}
+                existing={feedbackByEntry[item.entry.id]}
+                onSaved={(entryId, feedback) => onFeedbackSaved(client.id, entryId, feedback)}
+              />
+            </div>
+          ),
+        )
+      )}
+    </div>
+  );
+}
+
+function ScoresTabBody({ client }: { client: Client }) {
+  const { t } = useT();
+  const [assignedSlugs, setAssignedSlugs] = React.useState<string[]>(() => client.assignedTestSlugs ?? []);
+  const [assignWorking, setAssignWorking] = React.useState<string | null>(null);
+
+  const toggleTestAssignment = async (slug: string) => {
+    if (assignWorking) return;
+    const isAssigned = assignedSlugs.includes(slug);
+    setAssignWorking(slug);
+    try {
+      const res = await fetch("/api/coach/assign-test", {
+        method: isAssigned ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ athlete_id: client.id, test_slug: slug }),
+      });
+      if (res.ok) {
+        setAssignedSlugs((prev) =>
+          isAssigned ? prev.filter((s) => s !== slug) : [...prev, slug]
+        );
+      }
+    } finally {
+      setAssignWorking(null);
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* DAS */}
+      {client.testScores.das.length > 0 && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-300 mb-3">
+            {t("coach.dasHeading")}
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {(() => {
+              const r = client.testScores.das[0];
+              return (
+                <>
+                  <ScoreCard label={t("coach.tsTotal")} value={`${r.total_score > 0 ? "+" : ""}${r.total_score}`} sub="of ±70" flag={r.depression_prone ? "rose" : r.total_score > 18 ? "amber" : "emerald"} />
+                  <ScoreCard label={t("coach.tsDepressionProne")} value={r.depression_prone ? t("coach.tsYes") : t("coach.tsNo")} sub="" flag={r.depression_prone ? "rose" : "emerald"} />
+                  <ScoreCard label={t("coach.tsSubmitted")} value={new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} sub={r.paid ? t("coach.tsPaid") : t("coach.tsFree")} flag="amber" />
+                </>
+              );
+            })()}
+          </div>
+          <a href={`/tests/das/results?coachRef=${client.testScores.das[0].id}`} target="_blank" rel="noopener"
+             className="inline-block mt-2 font-saira text-[10px] text-amber-400 hover:text-amber-300 transition">
+            View full report →
+          </a>
+        </div>
+      )}
+
+      {/* ACSI */}
+      {client.testScores.acsi.length > 0 && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-300 mb-3">
+            {t("coach.acsiHeading")}
+          </p>
+          {(() => {
+            const r = client.testScores.acsi[0];
+            const total = r.total_score ?? (r.score_coping + r.score_concentration + r.score_confidence + r.score_goal_setting);
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <ScoreCard label={t("coach.tsTotal")} value={String(total)} sub="of 196" flag={total >= 130 ? "emerald" : total >= 90 ? "amber" : "rose"} />
+                <ScoreCard label={t("coach.tsCoping")} value={String(r.score_coping)} sub="of 28" flag={r.score_coping >= 18 ? "emerald" : "rose"} />
+                <ScoreCard label={t("coach.tsConcentration")} value={String(r.score_concentration)} sub="of 28" flag={r.score_concentration >= 18 ? "emerald" : "rose"} />
+                <ScoreCard label={t("coach.tsConfidence")} value={String(r.score_confidence)} sub="of 28" flag={r.score_confidence >= 18 ? "emerald" : "rose"} />
+              </div>
+            );
+          })()}
+          <a href={`/tests/acsi/results?coachRef=${client.testScores.acsi[0].id}`} target="_blank" rel="noopener"
+             className="inline-block mt-2 font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
+            View full report →
+          </a>
+        </div>
+      )}
+
+      {/* CSAI */}
+      {client.testScores.csai.length > 0 && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300 mb-3">
+            {t("coach.csaiHeading")}
+          </p>
+          {(() => {
+            const r = client.testScores.csai[0];
+            return (
+              <div className="grid grid-cols-3 gap-3">
+                <ScoreCard label={t("coach.tsCognitive")} value={String(r.score_cognitive)} sub="of 36" flag={r.score_cognitive <= 18 ? "emerald" : "rose"} />
+                <ScoreCard label={t("coach.tsSomatic")}   value={String(r.score_somatic)}   sub="of 36" flag={r.score_somatic <= 18 ? "emerald" : "rose"} />
+                <ScoreCard label={t("coach.tsConfidence")} value={String(r.score_confidence)} sub="of 36" flag={r.score_confidence >= 22 ? "emerald" : "rose"} />
+              </div>
+            );
+          })()}
+          <a href={`/tests/csai/results?coachRef=${client.testScores.csai[0].id}`} target="_blank" rel="noopener"
+             className="inline-block mt-2 font-saira text-[10px] text-sky-400 hover:text-sky-300 transition">
+            View full report →
+          </a>
+        </div>
+      )}
+
+      {/* SAT */}
+      {client.testScores.sat.length > 0 && (
+        <div>
+          <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-fuchsia-300 mb-3">
+            {t("coach.satHeading")}
+          </p>
+          {(() => {
+            const r = client.testScores.sat[0];
+            return (
+              <div className="grid grid-cols-2 gap-3">
+                <ScoreCard label={t("coach.tsTotal")} value={String(r.total_score)} sub="of 165" flag="emerald" />
+                <ScoreCard label={t("coach.tsSubmitted")} value={new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} sub={r.paid ? t("coach.tsPaid") : t("coach.tsFree")} flag="amber" />
+              </div>
+            );
+          })()}
+          <a href={`/tests/self-awareness/results?coachRef=${client.testScores.sat[0].id}`} target="_blank" rel="noopener"
+             className="inline-block mt-2 font-saira text-[10px] text-fuchsia-400 hover:text-fuchsia-300 transition">
+            View full report →
+          </a>
+        </div>
+      )}
+
+      {client.testScores.das.length === 0 &&
+       client.testScores.acsi.length === 0 &&
+       client.testScores.csai.length === 0 &&
+       client.testScores.sat.length === 0 && (
+        <p className="font-saira text-sm text-zinc-400 py-4 text-center">
+          {t("coach.noTestsYet")}
+        </p>
+      )}
+
+      {/* ── Meet day: full game day dashboard ── */}
+      {client.profile.meet_date === new Date().toISOString().slice(0, 10) && (
+        <div className="mt-4 pt-4 border-t border-white/5">
+          <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-rose-400 mb-3">🏆 Meet day</p>
+          <CoachMeetDashboard
+            athleteId={client.profile.athleteId}
+            meetDate={client.profile.meet_date!}
+          />
+        </div>
+      )}
+
+      {/* ── Prep lift gallery ── */}
+      <div className="mt-4 pt-4 border-t border-white/5">
+        <PrepLiftGallery isCoach athleteId={client.profile.athleteId} />
+      </div>
+
+      {/* ── Assign test ── */}
+      <div className="mt-4 pt-4 border-t border-white/5">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
+          {t("coach.tsAssign")} — {client.name.split(" ")[0]}
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { slug: "sat",  labelKey: "coach.tsLabelSAT" },
+            { slug: "acsi", labelKey: "coach.tsLabelACSI" },
+            { slug: "csai", labelKey: "coach.tsLabelCSAI" },
+            { slug: "das",  labelKey: "coach.tsLabelDAS"  },
+          ] as const).map(({ slug, labelKey }) => {
+            const label = t(labelKey);
+            const isAssigned = assignedSlugs.includes(slug);
+            const isWorking  = assignWorking === slug;
+            return (
+              <button
+                key={slug}
+                type="button"
+                onClick={() => toggleTestAssignment(slug)}
+                disabled={!!assignWorking}
+                className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 font-saira text-[11px] transition ${
+                  isAssigned
+                    ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                    : "border-white/10 bg-white/[0.03] text-zinc-300 hover:border-purple-500/30 hover:text-zinc-100"
+                } disabled:opacity-50`}
+              >
+                <span>{label}</span>
+                {isWorking ? (
+                  <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin flex-shrink-0" />
+                ) : isAssigned ? (
+                  <span className="text-amber-300 flex-shrink-0">{t("coach.assignedBadge")}</span>
+                ) : (
+                  <span className="text-zinc-500 flex-shrink-0">{t("coach.assignBtn")}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <p className="font-saira text-[10px] text-zinc-500 mt-2">
+          {t("coach.assignHint")}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function TrainingTabBody({ client }: { client: Client }) {
+  const { t } = useT();
+  const [trainingWeekOffset, setTrainingWeekOffset] = React.useState(0);
+
+  const trainingByWeek = React.useMemo(() => {
+    const weeks: TrainingEntry[][] = [[], [], [], []];
+    const now = new Date();
+    for (const e of client.allTrainingEntries) {
+      const entryDate = new Date(e.entry_date + "T12:00:00");
+      const diffDays = Math.floor((now.getTime() - entryDate.getTime()) / 86400000);
+      const weekIdx = Math.floor(diffDays / 7);
+      if (weekIdx >= 0 && weekIdx < 4) {
+        weeks[weekIdx].push(e);
+      }
+    }
+    return weeks;
+  }, [client.allTrainingEntries]);
+
+  const currentWeekTraining = trainingByWeek[trainingWeekOffset] ?? [];
+
+  const weekLabel = trainingWeekOffset === 0 ? t("coach.trainingWeekThis")
+    : trainingWeekOffset === 1 ? t("coach.trainingWeekLast")
+    : t("coach.trainingWeekNAgo").replace("{n}", String(trainingWeekOffset));
+
+  // Week days for the currently selected offset week
+  const offsetWeekDays = React.useMemo(() => {
+    const days: string[] = [];
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun
+    const mondayOffset = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek) - trainingWeekOffset * 7;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now);
+      d.setDate(now.getDate() + mondayOffset + i);
+      days.push(d.toISOString().slice(0, 10));
+    }
+    return days;
+  }, [trainingWeekOffset]);
+
+  return (
+    <div className="space-y-4">
+      {/* Week navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setTrainingWeekOffset((v) => Math.min(v + 1, 3))}
+          disabled={trainingWeekOffset >= 3}
+          className={`font-saira text-[11px] px-3 py-1 rounded-full border transition ${
+            trainingWeekOffset >= 3
+              ? "border-zinc-800 text-zinc-500 cursor-not-allowed"
+              : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+          }`}
+        >
+          {t("coach.prevWeek")}
+        </button>
+        <span className="font-saira text-[11px] font-semibold text-zinc-300">{weekLabel}</span>
+        <button
+          type="button"
+          onClick={() => setTrainingWeekOffset((v) => Math.max(v - 1, 0))}
+          disabled={trainingWeekOffset <= 0}
+          className={`font-saira text-[11px] px-3 py-1 rounded-full border transition ${
+            trainingWeekOffset <= 0
+              ? "border-zinc-800 text-zinc-500 cursor-not-allowed"
+              : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+          }`}
+        >
+          {t("coach.nextWeek")}
+        </button>
+      </div>
+      <TrainingLogTab trainingThisWeek={currentWeekTraining} weekDays={offsetWeekDays} />
+    </div>
+  );
+}
+
 // ── Client card ────────────────────────────────────────────────────────────────
 
 type ActiveTab = "analysis" | "entries" | "scores" | "training" | "checkins" | "profile" | "notes" | "prompts";
@@ -1412,91 +1877,7 @@ function ClientCard({
   const [expanded, setExpanded] = React.useState(false);
   const isOpen = forceOpen || expanded;
   const [activeTab, setActiveTab] = React.useState<ActiveTab>("analysis");
-  const [trainingWeekOffset, setTrainingWeekOffset] = React.useState(0);
   const flag = FLAG_CONFIG[client.flag];
-
-  // ── Test assignment local state ─────────────────────────────────────────────
-  const [assignedSlugs, setAssignedSlugs] = React.useState<string[]>(() => client.assignedTestSlugs ?? []);
-  const [assignWorking, setAssignWorking] = React.useState<string | null>(null);
-
-  const toggleTestAssignment = async (slug: string) => {
-    if (assignWorking) return;
-    const isAssigned = assignedSlugs.includes(slug);
-    setAssignWorking(slug);
-    try {
-      const res = await fetch("/api/coach/assign-test", {
-        method: isAssigned ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ athlete_id: client.id, test_slug: slug }),
-      });
-      if (res.ok) {
-        setAssignedSlugs((prev) =>
-          isAssigned ? prev.filter((s) => s !== slug) : [...prev, slug]
-        );
-      }
-    } finally {
-      setAssignWorking(null);
-    }
-  };
-
-  // Compute windowed stats for Analysis tab
-  const windowedEntries = React.useMemo(() => {
-    const cut = new Date();
-    cut.setDate(cut.getDate() - sentimentWindow);
-    return client.allEntries.filter((e) => new Date(e.created_at) >= cut);
-  }, [client.allEntries, sentimentWindow]);
-
-  // Training logs within the same window (used for entry count + theme detection)
-  const windowedTrainingLogs = React.useMemo(() => {
-    const cut = new Date();
-    cut.setDate(cut.getDate() - sentimentWindow);
-    return client.allTrainingWithContent.filter(
-      (e) => new Date(e.entry_date + "T12:00:00") >= cut,
-    );
-  }, [client.allTrainingWithContent, sentimentWindow]);
-
-  // Total entries in window = journal + training logs with content
-  const windowedTotalCount = windowedEntries.length + windowedTrainingLogs.length;
-
-  // Sentiment % stays journal-only (training logs don't carry a sentiment field)
-  const windowedPositiveRate = windowedEntries.length
-    ? Math.round((windowedEntries.filter((e) => e.sentiment === "positive").length / windowedEntries.length) * 100)
-    : 0;
-
-  const windowedThemes = React.useMemo(() => {
-    return THEME_DEFS.map((def) => {
-      const journalCount = windowedEntries.filter((e) =>
-        def.keywords.some((kw) => e.content.toLowerCase().includes(kw))
-      ).length;
-      const trainingCount = windowedTrainingLogs.filter((e) => {
-        const text = [e.thoughts_before, e.thoughts_after, e.what_went_well, e.frustrations, e.next_session]
-          .filter(Boolean).join(" ").toLowerCase();
-        return def.keywords.some((kw) => text.includes(kw));
-      }).length;
-      return { label: def.label, count: journalCount + trainingCount, color: def.color };
-    }).filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
-  }, [windowedEntries, windowedTrainingLogs]);
-
-  // Training week navigation
-  const trainingByWeek = React.useMemo(() => {
-    const weeks: TrainingEntry[][] = [[], [], [], []];
-    const now = new Date();
-    for (const e of client.allTrainingEntries) {
-      const entryDate = new Date(e.entry_date + "T12:00:00");
-      const diffDays = Math.floor((now.getTime() - entryDate.getTime()) / 86400000);
-      const weekIdx = Math.floor(diffDays / 7);
-      if (weekIdx >= 0 && weekIdx < 4) {
-        weeks[weekIdx].push(e);
-      }
-    }
-    return weeks;
-  }, [client.allTrainingEntries]);
-
-  const currentWeekTraining = trainingByWeek[trainingWeekOffset] ?? [];
-
-  const weekLabel = trainingWeekOffset === 0 ? t("coach.trainingWeekThis")
-    : trainingWeekOffset === 1 ? t("coach.trainingWeekLast")
-    : t("coach.trainingWeekNAgo").replace("{n}", String(trainingWeekOffset));
 
   // Helper: render lastActive code as translated string
   const renderLastActive = (la: Client["lastActive"]): string => {
@@ -1507,46 +1888,6 @@ function ClientCard({
     if (la.key === "daysAgo") return t("coach.lastActiveDaysAgo").replace("{n}", String(la.d));
     return "";
   };
-
-  // Unified activity feed: journal entries + training day logs merged by date
-  type ActivityItem =
-    | { kind: "journal";  entry: EntryRow }
-    | { kind: "training"; entry: TrainingEntry };
-
-  const activityFeed = React.useMemo((): ActivityItem[] => {
-    const items: ActivityItem[] = [
-      ...client.allEntries.map((e) => ({ kind: "journal" as const, entry: e })),
-      ...client.allTrainingEntries
-        .filter((e) =>
-          e.thoughts_before || e.thoughts_after || e.what_went_well || e.frustrations || e.next_session,
-        )
-        .map((e) => ({ kind: "training" as const, entry: e })),
-    ];
-    return items.sort((a, b) => {
-      const aT = a.kind === "journal"
-        ? new Date(a.entry.created_at).getTime()
-        : new Date(a.entry.entry_date + "T12:00:00").getTime();
-      const bT = b.kind === "journal"
-        ? new Date(b.entry.created_at).getTime()
-        : new Date(b.entry.entry_date + "T12:00:00").getTime();
-      return bT - aT;
-    });
-  }, [client.allEntries, client.allTrainingEntries]);
-
-  // Week days for the currently selected offset week
-  const offsetWeekDays = React.useMemo(() => {
-    const days: string[] = [];
-    const now = new Date();
-    // Find Monday of the offset week
-    const dayOfWeek = now.getDay(); // 0=Sun
-    const mondayOffset = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek) - trainingWeekOffset * 7;
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(now);
-      d.setDate(now.getDate() + mondayOffset + i);
-      days.push(d.toISOString().slice(0, 10));
-    }
-    return days;
-  }, [trainingWeekOffset]);
 
   return (
     <div className={`rounded-3xl border bg-surface-alt overflow-hidden transition ${
@@ -1647,315 +1988,25 @@ function ClientCard({
           <div className="p-5 sm:p-6">
             {/* ── Tab: Analysis ── */}
             {activeTab === "analysis" && (
-              <div className="space-y-5">
-                {/* Sentiment window selector */}
-                <div className="flex items-center gap-2">
-                  <span className="font-saira text-[10px] text-zinc-400 uppercase tracking-[0.18em]">{t("coach.windowLabel")}</span>
-                  <div className="flex gap-1">
-                    {([7, 30, 60] as const).map((w) => (
-                      <button
-                        key={w}
-                        type="button"
-                        onClick={() => onSentimentWindowChange(client.id, w)}
-                        className={`rounded-full border px-3 py-0.5 font-saira text-[10px] uppercase tracking-[0.12em] transition ${
-                          sentimentWindow === w
-                            ? "border-purple-400 bg-purple-500/20 text-white"
-                            : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
-                        }`}
-                      >
-                        {w}{t("coach.sentimentWindowLabel")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {windowedThemes.length > 0 ? (
-                  <div>
-                    <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.24em] text-purple-300 mb-3">
-                      {t("coach.detectedThemes").replace("{n}", String(sentimentWindow))}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {windowedThemes.map((t) => (
-                        <TagChip
-                          key={t.label}
-                          label={t.label}
-                          color={THEME_DEFS.find((d) => d.label === t.label)?.color ?? "purple"}
-                          count={t.count}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="font-saira text-sm text-zinc-400 py-2">
-                    {windowedTotalCount === 0
-                      ? t("coach.noEntriesInWindow").replace("{n}", String(sentimentWindow))
-                      : t("coach.noThemesDetected")}
-                  </p>
-                )}
-
-                {/* Stats summary */}
-                {windowedTotalCount > 0 && (
-                  <div className="rounded-2xl border border-white/5 bg-surface-input p-5">
-                    <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
-                      {t("coach.lastNDaysGlance").replace("{n}", String(sentimentWindow))}
-                    </p>
-                    <div className="grid grid-cols-3 gap-3">
-                      <MiniStat label={t("coach.statEntries")} value={String(windowedTotalCount)} />
-                      <MiniStat
-                        label={t("coach.statPositive")}
-                        value={`${windowedPositiveRate}%`}
-                        color={windowedPositiveRate >= 60 ? "text-emerald-300" : windowedPositiveRate >= 40 ? "text-amber-300" : "text-rose-300"}
-                      />
-                      <MiniStat
-                        label={t("coach.statTrend")}
-                        value={TREND_ICON[client.trend]}
-                        color={TREND_COLOR[client.trend]}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Pattern analysis */}
-                <PatternAnalysis client={client} />
-              </div>
+              <AnalysisTabBody client={client} sentimentWindow={sentimentWindow} onSentimentWindowChange={onSentimentWindowChange} />
             )}
 
             {/* ── Tab: Activity (journal + training logs merged) ── */}
             {activeTab === "entries" && (
-              <div className="space-y-3">
-                {activityFeed.length === 0 ? (
-                  <p className="font-saira text-sm text-zinc-400 py-4 text-center">{t("coach.noActivityYet")}</p>
-                ) : (
-                  activityFeed.map((item) =>
-                    item.kind === "training" ? (
-                      <div key={`t-${item.entry.id}`}>
-                        <CoachTrainingCard entry={item.entry} />
-                        <TrainingFeedbackSection
-                          trainingEntryId={item.entry.id}
-                          athleteId={client.id}
-                          existing={trainingNoteByEntry[item.entry.id] ?? (item.entry.coach_note ?? undefined)}
-                          onSaved={(note) => onTrainingNoteSaved(client.id, item.entry.id, note)}
-                        />
-                      </div>
-                    ) : (
-                      <div key={item.entry.id}>
-                        <EntryCard entry={item.entry} />
-                        <EntryFeedbackSection
-                          entryId={item.entry.id}
-                          athleteId={client.id}
-                          existing={feedbackByEntry[item.entry.id]}
-                          onSaved={(entryId, feedback) => onFeedbackSaved(client.id, entryId, feedback)}
-                        />
-                      </div>
-                    ),
-                  )
-                )}
-              </div>
+              <ActivityTabBody
+                client={client}
+                feedbackByEntry={feedbackByEntry}
+                onFeedbackSaved={onFeedbackSaved}
+                trainingNoteByEntry={trainingNoteByEntry}
+                onTrainingNoteSaved={onTrainingNoteSaved}
+              />
             )}
 
             {/* ── Tab: Test scores ── */}
-            {activeTab === "scores" && (
-              <div className="space-y-5">
-                {/* DAS */}
-                {client.testScores.das.length > 0 && (
-                  <div>
-                    <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-300 mb-3">
-                      {t("coach.dasHeading")}
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {(() => {
-                        const r = client.testScores.das[0];
-                        return (
-                          <>
-                            <ScoreCard label={t("coach.tsTotal")} value={`${r.total_score > 0 ? "+" : ""}${r.total_score}`} sub="of ±70" flag={r.depression_prone ? "rose" : r.total_score > 18 ? "amber" : "emerald"} />
-                            <ScoreCard label={t("coach.tsDepressionProne")} value={r.depression_prone ? t("coach.tsYes") : t("coach.tsNo")} sub="" flag={r.depression_prone ? "rose" : "emerald"} />
-                            <ScoreCard label={t("coach.tsSubmitted")} value={new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} sub={r.paid ? t("coach.tsPaid") : t("coach.tsFree")} flag="amber" />
-                          </>
-                        );
-                      })()}
-                    </div>
-                    <a href={`/tests/das/results?coachRef=${client.testScores.das[0].id}`} target="_blank" rel="noopener"
-                       className="inline-block mt-2 font-saira text-[10px] text-amber-400 hover:text-amber-300 transition">
-                      View full report →
-                    </a>
-                  </div>
-                )}
-
-                {/* ACSI */}
-                {client.testScores.acsi.length > 0 && (
-                  <div>
-                    <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-300 mb-3">
-                      {t("coach.acsiHeading")}
-                    </p>
-                    {(() => {
-                      const r = client.testScores.acsi[0];
-                      const total = r.total_score ?? (r.score_coping + r.score_concentration + r.score_confidence + r.score_goal_setting);
-                      return (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <ScoreCard label={t("coach.tsTotal")} value={String(total)} sub="of 196" flag={total >= 130 ? "emerald" : total >= 90 ? "amber" : "rose"} />
-                          <ScoreCard label={t("coach.tsCoping")} value={String(r.score_coping)} sub="of 28" flag={r.score_coping >= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label={t("coach.tsConcentration")} value={String(r.score_concentration)} sub="of 28" flag={r.score_concentration >= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label={t("coach.tsConfidence")} value={String(r.score_confidence)} sub="of 28" flag={r.score_confidence >= 18 ? "emerald" : "rose"} />
-                        </div>
-                      );
-                    })()}
-                    <a href={`/tests/acsi/results?coachRef=${client.testScores.acsi[0].id}`} target="_blank" rel="noopener"
-                       className="inline-block mt-2 font-saira text-[10px] text-purple-400 hover:text-purple-300 transition">
-                      View full report →
-                    </a>
-                  </div>
-                )}
-
-                {/* CSAI */}
-                {client.testScores.csai.length > 0 && (
-                  <div>
-                    <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300 mb-3">
-                      {t("coach.csaiHeading")}
-                    </p>
-                    {(() => {
-                      const r = client.testScores.csai[0];
-                      return (
-                        <div className="grid grid-cols-3 gap-3">
-                          <ScoreCard label={t("coach.tsCognitive")} value={String(r.score_cognitive)} sub="of 36" flag={r.score_cognitive <= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label={t("coach.tsSomatic")}   value={String(r.score_somatic)}   sub="of 36" flag={r.score_somatic <= 18 ? "emerald" : "rose"} />
-                          <ScoreCard label={t("coach.tsConfidence")} value={String(r.score_confidence)} sub="of 36" flag={r.score_confidence >= 22 ? "emerald" : "rose"} />
-                        </div>
-                      );
-                    })()}
-                    <a href={`/tests/csai/results?coachRef=${client.testScores.csai[0].id}`} target="_blank" rel="noopener"
-                       className="inline-block mt-2 font-saira text-[10px] text-sky-400 hover:text-sky-300 transition">
-                      View full report →
-                    </a>
-                  </div>
-                )}
-
-                {/* SAT */}
-                {client.testScores.sat.length > 0 && (
-                  <div>
-                    <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-fuchsia-300 mb-3">
-                      {t("coach.satHeading")}
-                    </p>
-                    {(() => {
-                      const r = client.testScores.sat[0];
-                      return (
-                        <div className="grid grid-cols-2 gap-3">
-                          <ScoreCard label={t("coach.tsTotal")} value={String(r.total_score)} sub="of 165" flag="emerald" />
-                          <ScoreCard label={t("coach.tsSubmitted")} value={new Date(r.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} sub={r.paid ? t("coach.tsPaid") : t("coach.tsFree")} flag="amber" />
-                        </div>
-                      );
-                    })()}
-                    <a href={`/tests/self-awareness/results?coachRef=${client.testScores.sat[0].id}`} target="_blank" rel="noopener"
-                       className="inline-block mt-2 font-saira text-[10px] text-fuchsia-400 hover:text-fuchsia-300 transition">
-                      View full report →
-                    </a>
-                  </div>
-                )}
-
-                {client.testScores.das.length === 0 &&
-                 client.testScores.acsi.length === 0 &&
-                 client.testScores.csai.length === 0 &&
-                 client.testScores.sat.length === 0 && (
-                  <p className="font-saira text-sm text-zinc-400 py-4 text-center">
-                    {t("coach.noTestsYet")}
-                  </p>
-                )}
-
-                {/* ── Meet day: full game day dashboard ── */}
-                {client.profile.meet_date === new Date().toISOString().slice(0, 10) && (
-                  <div className="mt-4 pt-4 border-t border-white/5">
-                    <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-rose-400 mb-3">🏆 Meet day</p>
-                    <CoachMeetDashboard
-                      athleteId={client.profile.athleteId}
-                      meetDate={client.profile.meet_date!}
-                    />
-                  </div>
-                )}
-
-                {/* ── Prep lift gallery ── */}
-                <div className="mt-4 pt-4 border-t border-white/5">
-                  <PrepLiftGallery isCoach athleteId={client.profile.athleteId} />
-                </div>
-
-                {/* ── Assign test ── */}
-                <div className="mt-4 pt-4 border-t border-white/5">
-                  <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-400 mb-3">
-                    {t("coach.tsAssign")} — {client.name.split(" ")[0]}
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {([
-                      { slug: "sat",  labelKey: "coach.tsLabelSAT" },
-                      { slug: "acsi", labelKey: "coach.tsLabelACSI" },
-                      { slug: "csai", labelKey: "coach.tsLabelCSAI" },
-                      { slug: "das",  labelKey: "coach.tsLabelDAS"  },
-                    ] as const).map(({ slug, labelKey }) => {
-                      const label = t(labelKey);
-                      const isAssigned = assignedSlugs.includes(slug);
-                      const isWorking  = assignWorking === slug;
-                      return (
-                        <button
-                          key={slug}
-                          type="button"
-                          onClick={() => toggleTestAssignment(slug)}
-                          disabled={!!assignWorking}
-                          className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 font-saira text-[11px] transition ${
-                            isAssigned
-                              ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
-                              : "border-white/10 bg-white/[0.03] text-zinc-300 hover:border-purple-500/30 hover:text-zinc-100"
-                          } disabled:opacity-50`}
-                        >
-                          <span>{label}</span>
-                          {isWorking ? (
-                            <span className="w-3 h-3 rounded-full border border-current border-t-transparent animate-spin flex-shrink-0" />
-                          ) : isAssigned ? (
-                            <span className="text-amber-300 flex-shrink-0">{t("coach.assignedBadge")}</span>
-                          ) : (
-                            <span className="text-zinc-500 flex-shrink-0">{t("coach.assignBtn")}</span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="font-saira text-[10px] text-zinc-500 mt-2">
-                    {t("coach.assignHint")}
-                  </p>
-                </div>
-              </div>
-            )}
+            {activeTab === "scores" && <ScoresTabBody client={client} />}
 
             {/* ── Tab: Training Log ── */}
-            {activeTab === "training" && (
-              <div className="space-y-4">
-                {/* Week navigation */}
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setTrainingWeekOffset((v) => Math.min(v + 1, 3))}
-                    disabled={trainingWeekOffset >= 3}
-                    className={`font-saira text-[11px] px-3 py-1 rounded-full border transition ${
-                      trainingWeekOffset >= 3
-                        ? "border-zinc-800 text-zinc-500 cursor-not-allowed"
-                        : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
-                    }`}
-                  >
-                    {t("coach.prevWeek")}
-                  </button>
-                  <span className="font-saira text-[11px] font-semibold text-zinc-300">{weekLabel}</span>
-                  <button
-                    type="button"
-                    onClick={() => setTrainingWeekOffset((v) => Math.max(v - 1, 0))}
-                    disabled={trainingWeekOffset <= 0}
-                    className={`font-saira text-[11px] px-3 py-1 rounded-full border transition ${
-                      trainingWeekOffset <= 0
-                        ? "border-zinc-800 text-zinc-500 cursor-not-allowed"
-                        : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
-                    }`}
-                  >
-                    {t("coach.nextWeek")}
-                  </button>
-                </div>
-                <TrainingLogTab trainingThisWeek={currentWeekTraining} weekDays={offsetWeekDays} />
-              </div>
-            )}
+            {activeTab === "training" && <TrainingTabBody client={client} />}
 
             {/* ── Tab: Check-ins ── */}
             {activeTab === "checkins" && (
@@ -2408,7 +2459,7 @@ function MobileAthleteRow({ client, onClick }: { client: Client; onClick: () => 
         <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{client.name}</p>
         <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
           {client.entriesThisWeek > 0
-            ? `${client.entriesThisWeek} ${client.entriesThisWeek === 1 ? "entry" : "entries"} this week`
+            ? t("coach.entriesThisWeek").replace("{n}", String(client.entriesThisWeek))
             : renderLastActive(client.lastActive)
           }
         </p>
@@ -2425,383 +2476,122 @@ function MobileAthleteRow({ client, onClick }: { client: Client; onClick: () => 
 }
 
 // ── Mobile athlete sheet ───────────────────────────────────────────────────────
+// Mirrors ClientCard's 8 tabs exactly — same components, same feedback wiring
+// (feedbackByEntry / onFeedbackSaved were previously accepted here but never
+// used) — behind a horizontally scrollable tab strip sized for a phone.
 
-type SheetTab = "overview" | "activity" | "profile";
+const MOBILE_SHEET_TABS: { key: ActiveTab; labelKey: string }[] = [
+  { key: "analysis", labelKey: "coach.tabAnalysis" },
+  { key: "entries",  labelKey: "coach.tabActivity" },
+  { key: "scores",   labelKey: "coach.tabScores" },
+  { key: "training", labelKey: "coach.tabTraining" },
+  { key: "checkins", labelKey: "coach.tabCheckins" },
+  { key: "profile",  labelKey: "coach.tabProfile" },
+  { key: "notes",    labelKey: "coach.tabNotes" },
+  { key: "prompts",  labelKey: "coach.tabPrompts" },
+];
 
 function MobileAthleteSheet({
   client,
   coachNote,
   onNoteChange,
+  noteSavedAt,
   noteSaving,
   feedbackByEntry,
   onFeedbackSaved,
+  trainingNoteByEntry,
+  onTrainingNoteSaved,
+  sentimentWindow,
+  onSentimentWindowChange,
 }: {
   client: Client;
   coachNote: string;
   onNoteChange: (id: string, val: string) => void;
+  noteSavedAt: string | null;
   noteSaving: boolean;
   feedbackByEntry: Record<string, { id: string; content: string; created_at: string }>;
   onFeedbackSaved: (athleteId: string, entryId: string, fb: { id: string; content: string; created_at: string }) => void;
+  trainingNoteByEntry: Record<string, string>;
+  onTrainingNoteSaved: (athleteId: string, entryId: string, note: string) => void;
+  sentimentWindow: 7 | 30 | 60;
+  onSentimentWindowChange: (athleteId: string, w: 7 | 30 | 60) => void;
 }) {
   const { t } = useT();
-  const [tab, setTab] = React.useState<SheetTab>("overview");
-  const [showNotes, setShowNotes] = React.useState(false);
-  const [expandedCheckin, setExpandedCheckin] = React.useState<number | null>(null);
+  const [tab, setTab] = React.useState<ActiveTab>("analysis");
   const flag = FLAG_CONFIG[client.flag];
-  const sentimentDayHasData = React.useMemo(() => sentimentWeekHasData(client), [client]);
 
   return (
     <div className="space-y-4">
-      {/* Flag + positive rate row */}
-      <div className="flex items-center gap-3">
+      {/* Flag + sparkline + positive rate row */}
+      <div className="flex items-center gap-3 flex-wrap">
         <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.18em] ${flag.border} ${flag.text} ${flag.bg}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${flag.dot}`} />
           {t(flagLabelKeyFor(client))}
         </span>
+        <SentimentSparkline data={client.sentimentWeek} />
         <span className={`font-saira text-sm font-bold tabular-nums ${positiveRateColor(client)}`}>
-          {client.hasSentimentData ? `${client.positiveRate}% positive` : "— no entries this week"}
+          {client.hasSentimentData
+            ? `${positiveRateLabel(client)} ${t("coach.positiveLabel")}`
+            : `— ${t("coach.noEntriesThisWeek")}`}
         </span>
         <span className={`font-saira text-sm ${TREND_COLOR[client.trend]}`}>
           {TREND_ICON[client.trend]}
         </span>
-        {/* Notes toggle */}
-        <button
-          type="button"
-          onClick={() => setShowNotes((v) => !v)}
-          className={`ml-auto rounded-full w-7 h-7 flex items-center justify-center border transition ${
-            showNotes ? "border-purple-500/50 bg-purple-500/20 text-purple-300" : "border-white/10 text-zinc-400 hover:text-zinc-200"
-          }`}
-          title="Coach notes"
-        >
-          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" aria-hidden>
-            <path d="M2 2h12v9H9.5l-2 3-1-3H2V2z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-            <path d="M5 5.5h6M5 8h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-          </svg>
-        </button>
       </div>
 
-      {/* Notes panel */}
-      {showNotes && (
-        <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 space-y-1.5">
-          <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-purple-300">
-            Coach notes {noteSaving ? "· Saving…" : ""}
-          </p>
-          <textarea
-            value={coachNote}
-            onChange={(e) => onNoteChange(client.id, e.target.value)}
-            rows={4}
-            placeholder="Private notes about this athlete…"
-            className="w-full bg-transparent font-saira text-sm text-zinc-200 placeholder:text-zinc-500 resize-none focus:outline-none"
-          />
+      {/* Tab strip — horizontally scrollable at phone widths, 44px min touch
+          target, edge fade signals more tabs sit off-screen (all 8 tabs never
+          fit one row at 390px, even before DE/HU labels run 20-40% longer). */}
+      <div className="relative -mx-1">
+        <div className="flex gap-1.5 overflow-x-auto px-1 pb-1">
+          {MOBILE_SHEET_TABS.map(({ key, labelKey }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`flex-shrink-0 min-h-[44px] px-3.5 rounded-xl border font-saira text-[11px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap transition ${
+                tab === key
+                  ? "border-purple-400/50 bg-purple-500/20 text-white"
+                  : "border-white/8 text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              {t(labelKey)}
+            </button>
+          ))}
         </div>
-      )}
-
-      {/* Tab segmented control */}
-      <div className="flex rounded-xl border border-white/8 overflow-hidden">
-        {([
-          { key: "overview", label: "Overview" },
-          { key: "activity", label: "Activity" },
-          { key: "profile",  label: "Profile"  },
-        ] as { key: SheetTab; label: string }[]).map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={`flex-1 py-2 font-saira text-[10px] uppercase tracking-[0.16em] transition ${
-              tab === key
-                ? "bg-purple-500/20 text-white"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+        {/* Edge fade — reads as "more tabs to scroll to" rather than a hard cut */}
+        <div aria-hidden className="pointer-events-none absolute top-0 right-0 bottom-1 w-8 bg-gradient-to-l from-surface-alt to-transparent" />
       </div>
 
-      {/* ── Overview tab ── */}
-      {tab === "overview" && (
-        <div className="space-y-4">
-          {/* 7-day sparkline */}
-          <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
-            <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
-              7-day sentiment
-            </p>
-            {/* Fixed-height (h-12 = 48px) row so the bars' percentage-derived
-                pixel heights have something definite to size against — a
-                percentage height inside an indefinite-height flex row
-                resolves to 0, which is why this used to render as flat
-                4px stubs regardless of the underlying value. */}
-            <div className="flex items-end gap-1.5 h-12">
-              {client.sentimentWeek.map((v, i) => {
-                const hasData = sentimentDayHasData[i];
-                const heightPx = hasData ? Math.max(4, Math.round((v / 100) * 48)) : 4;
-                return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <div
-                      className={`w-full rounded-sm ${
-                        !hasData ? "bg-white/8" : v >= 60 ? "bg-emerald-500/60" : v >= 40 ? "bg-amber-500/60" : "bg-rose-500/60"
-                      }`}
-                      style={{ height: `${heightPx}px` }}
-                      title={hasData ? `${v}% positive` : "No entries"}
-                    />
-                    <span className="font-saira text-[8px] text-zinc-500">
-                      {["M","T","W","T","F","S","S"][i]}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Recent check-ins */}
-          {client.weeklyCheckins.length > 0 && (
-            <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
-              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
-                Recent check-ins
-              </p>
-              <div className="space-y-1">
-                {client.weeklyCheckins.slice(0, 4).map((wc, i) => {
-                  const avg = Math.round(
-                    (wc.mood_rating + wc.training_quality + wc.readiness_rating + wc.energy_rating + wc.sleep_rating) / 5
-                  );
-                  const color = avg >= 7 ? "text-emerald-400" : avg >= 5 ? "text-amber-400" : "text-rose-400";
-                  const open  = expandedCheckin === i;
-                  return (
-                    <div key={i}>
-                      <button
-                        type="button"
-                        onClick={() => setExpandedCheckin(open ? null : i)}
-                        className="w-full flex items-center justify-between py-1.5 hover:opacity-80 transition"
-                      >
-                        <span className="font-saira text-xs text-zinc-400">
-                          {new Date(wc.week_start ?? wc.created_at ?? "").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className={`font-saira text-sm font-bold tabular-nums ${color}`}>{avg}/10</span>
-                          <span className={`text-zinc-500 text-xs transition-transform duration-200 ${open ? "rotate-90" : ""}`}>›</span>
-                        </div>
-                      </button>
-                      {open && (
-                        <div className="pt-2 pb-1 space-y-3">
-                          {/* 5 metric scores */}
-                          <div className="grid grid-cols-5 gap-1">
-                            {([
-                              ["Mood",    wc.mood_rating],
-                              ["Quality", wc.training_quality],
-                              ["Ready",   wc.readiness_rating],
-                              ["Energy",  wc.energy_rating],
-                              ["Sleep",   wc.sleep_rating],
-                            ] as [string, number][]).map(([label, val]) => (
-                              <div key={label} className="text-center">
-                                <div className={`font-saira text-base font-bold tabular-nums ${val >= 7 ? "text-emerald-400" : val >= 5 ? "text-amber-400" : "text-rose-400"}`}>{val}</div>
-                                <div className="font-saira text-[8px] text-zinc-500 uppercase tracking-wide">{label}</div>
-                              </div>
-                            ))}
-                          </div>
-                          {/* Text answers */}
-                          {wc.biggest_win && (
-                            <div>
-                              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.18em] text-emerald-400 mb-0.5">Biggest win</p>
-                              <p className="font-saira text-xs text-zinc-300 leading-relaxed">{wc.biggest_win}</p>
-                            </div>
-                          )}
-                          {wc.biggest_challenge && (
-                            <div>
-                              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.18em] text-amber-400 mb-0.5">Main challenge</p>
-                              <p className="font-saira text-xs text-zinc-300 leading-relaxed">{wc.biggest_challenge}</p>
-                            </div>
-                          )}
-                          {wc.focus_next_week && (
-                            <div>
-                              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.18em] text-purple-400 mb-0.5">Focus next week</p>
-                              <p className="font-saira text-xs text-zinc-300 leading-relaxed">{wc.focus_next_week}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Top themes */}
-          {client.themes.length > 0 && (
-            <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
-              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
-                Top themes this week
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {client.themes.slice(0, 5).map((theme) => (
-                  <span
-                    key={theme.label}
-                    className="rounded-full border border-white/10 px-2.5 py-1 font-saira text-[10px] text-zinc-300"
-                  >
-                    {theme.label}
-                    {theme.trend === "up" && <span className="text-emerald-400 ml-1">↑</span>}
-                    {theme.trend === "down" && <span className="text-rose-400 ml-1">↓</span>}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {client.themes.length === 0 && client.entriesThisWeek === 0 && (
-            <p className="font-saira text-sm text-zinc-400 text-center py-4">
-              No entries this week
-            </p>
-          )}
-        </div>
+      {/* Tab bodies — identical components to the desktop ClientCard tabs */}
+      {tab === "analysis" && (
+        <AnalysisTabBody client={client} sentimentWindow={sentimentWindow} onSentimentWindowChange={onSentimentWindowChange} />
       )}
-
-      {/* ── Activity tab ── */}
-      {tab === "activity" && (
-        <div className="space-y-3">
-          {(() => {
-            // Merge journal entries + training logs, sorted newest first
-            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 14);
-            const journalItems = client.allEntries
-              .filter((e) => new Date(e.created_at) >= cutoff)
-              .map((e) => ({
-                id: e.id,
-                type: "journal" as const,
-                date: new Date(e.created_at),
-                preview: e.content.slice(0, 100),
-                sentiment: e.sentiment,
-              }));
-            const trainingItems = client.allTrainingWithContent
-              .filter((e) => new Date(e.entry_date + "T12:00:00") >= cutoff)
-              .map((e) => ({
-                id: e.id,
-                type: "training" as const,
-                date: new Date(e.entry_date + "T12:00:00"),
-                preview: [e.thoughts_after, e.what_went_well, e.frustrations].filter(Boolean).join(" · ").slice(0, 100),
-                sentiment: null,
-              }));
-            const all = [...journalItems, ...trainingItems]
-              .sort((a, b) => b.date.getTime() - a.date.getTime())
-              .slice(0, 20);
-
-            if (all.length === 0) return (
-              <p className="font-saira text-sm text-zinc-400 text-center py-4">
-                No activity in the last 14 days
-              </p>
-            );
-
-            return all.map((item) => (
-              <div
-                key={item.type + item.id}
-                className="rounded-xl border border-white/6 bg-surface-alt p-3 space-y-1.5"
-              >
-                <div className="flex items-center gap-2">
-                  <span className={`rounded-full px-2 py-0.5 font-saira text-[9px] uppercase tracking-[0.16em] ${
-                    item.type === "journal"
-                      ? "bg-purple-500/15 text-purple-300 border border-purple-500/20"
-                      : "bg-blue-500/15 text-blue-300 border border-blue-500/20"
-                  }`}>
-                    {item.type}
-                  </span>
-                  <span className="font-saira text-[10px] text-zinc-400">
-                    {item.date.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                  </span>
-                  {item.sentiment === "positive" && <span className="ml-auto text-emerald-400 text-xs">+</span>}
-                  {item.sentiment === "negative" && <span className="ml-auto text-rose-400 text-xs">–</span>}
-                </div>
-                {item.preview && (
-                  <p className="font-saira text-xs text-zinc-300 leading-relaxed line-clamp-2">
-                    {item.preview}
-                  </p>
-                )}
-              </div>
-            ));
-          })()}
-        </div>
+      {tab === "entries" && (
+        <ActivityTabBody
+          client={client}
+          feedbackByEntry={feedbackByEntry}
+          onFeedbackSaved={onFeedbackSaved}
+          trainingNoteByEntry={trainingNoteByEntry}
+          onTrainingNoteSaved={onTrainingNoteSaved}
+        />
       )}
-
-      {/* ── Profile tab ── */}
-      {tab === "profile" && (
-        <div className="space-y-4">
-          {/* Lifts */}
-          {(client.profile.squat_current_kg || client.profile.bench_current_kg || client.profile.deadlift_current_kg) && (
-            <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
-              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">Current → Goal</p>
-              {[
-                { label: "SQ", cur: client.profile.squat_current_kg, goal: client.profile.squat_goal_kg },
-                { label: "BP", cur: client.profile.bench_current_kg, goal: client.profile.bench_goal_kg },
-                { label: "DL", cur: client.profile.deadlift_current_kg, goal: client.profile.deadlift_goal_kg },
-              ].filter((l) => l.cur).map((l) => (
-                <div key={l.label} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
-                  <span className="font-saira text-[11px] font-bold uppercase tracking-[0.14em] text-zinc-400 w-8">{l.label}</span>
-                  <span className="font-saira text-sm text-zinc-200 tabular-nums">
-                    {l.cur}kg
-                    {l.goal && <span className="text-zinc-400"> → {l.goal}kg</span>}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Test scores */}
-          {(client.testScores.sat.length > 0 || client.testScores.acsi.length > 0 || client.testScores.csai.length > 0 || client.testScores.das.length > 0) && (
-            <div className="rounded-xl border border-white/6 bg-surface-alt p-4">
-              <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">Latest test scores</p>
-              <div className="grid grid-cols-2 gap-2">
-                {client.testScores.sat[0] && (
-                  <div className="rounded-lg border border-white/5 p-2.5 text-center">
-                    <p className="font-saira text-xs font-bold text-purple-300">{client.testScores.sat[0].total_score}</p>
-                    <p className="font-saira text-[9px] text-zinc-400 uppercase tracking-[0.14em]">SAT</p>
-                  </div>
-                )}
-                {client.testScores.acsi[0] && (
-                  <div className="rounded-lg border border-white/5 p-2.5 text-center">
-                    <p className="font-saira text-xs font-bold text-blue-300">{client.testScores.acsi[0].total_score}</p>
-                    <p className="font-saira text-[9px] text-zinc-400 uppercase tracking-[0.14em]">ACSI</p>
-                  </div>
-                )}
-                {client.testScores.csai[0] && (
-                  <div className="rounded-lg border border-white/5 p-2.5 text-center">
-                    <p className="font-saira text-xs font-bold text-amber-300">{client.testScores.csai[0].score_cognitive}</p>
-                    <p className="font-saira text-[9px] text-zinc-400 uppercase tracking-[0.14em]">CSAI-2</p>
-                  </div>
-                )}
-                {client.testScores.das[0] && (
-                  <div className="rounded-lg border border-white/5 p-2.5 text-center">
-                    <p className="font-saira text-xs font-bold text-rose-300">{client.testScores.das[0].total_score}</p>
-                    <p className="font-saira text-[9px] text-zinc-400 uppercase tracking-[0.14em]">DAS</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Meet date + other key fields */}
-          <div className="rounded-xl border border-white/6 bg-surface-alt p-4 space-y-2">
-            <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">Profile</p>
-            {client.profile.meet_date && (
-              <div className="flex justify-between">
-                <span className="font-saira text-xs text-zinc-400">Meet date</span>
-                <span className="font-saira text-xs text-zinc-200">{new Date(client.profile.meet_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
-              </div>
-            )}
-            {client.profile.training_days_per_week && (
-              <div className="flex justify-between">
-                <span className="font-saira text-xs text-zinc-400">Training days/wk</span>
-                <span className="font-saira text-xs text-zinc-200">{client.profile.training_days_per_week}</span>
-              </div>
-            )}
-            {client.profile.weight_category && (
-              <div className="flex justify-between">
-                <span className="font-saira text-xs text-zinc-400">Weight class</span>
-                <span className="font-saira text-xs text-zinc-200">{client.profile.weight_category}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Competition reflections */}
-          <CoachMeetHistory athleteId={client.id} />
-        </div>
+      {tab === "scores" && <ScoresTabBody client={client} />}
+      {tab === "training" && <TrainingTabBody client={client} />}
+      {tab === "checkins" && (
+        <CheckinsTab checkins={client.weeklyCheckins} monthlyCheckins={client.monthlyCheckins} athleteId={client.profile.athleteId} />
       )}
+      {tab === "profile" && <ProfileTab profile={client.profile} />}
+      {tab === "notes" && (
+        <NotesTab
+          athleteId={client.id}
+          note={coachNote}
+          savedAt={noteSavedAt}
+          saving={noteSaving}
+          onChange={onNoteChange}
+        />
+      )}
+      {tab === "prompts" && <PromptsTab athleteId={client.id} />}
     </div>
   );
 }
@@ -3505,7 +3295,7 @@ export default function CoachPage() {
                   {noCheckinThisWeek}
                 </p>
                 <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400 mt-0.5 leading-tight">
-                  No check-in
+                  {t("coach.statNoCheckin")}
                 </p>
               </div>
               {/* Silent this week */}
@@ -3518,7 +3308,7 @@ export default function CoachPage() {
                   {silentThisWeek}
                 </p>
                 <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400 mt-0.5 leading-tight">
-                  Silent 7d
+                  {t("coach.statSilent7d")}
                 </p>
               </div>
             </div>
@@ -3578,7 +3368,7 @@ export default function CoachPage() {
                 href="/coach/athletes"
                 className="font-saira text-[11px] uppercase tracking-[0.18em] text-zinc-400 hover:text-zinc-200 transition"
               >
-                Manage roster →
+                {t("coach.manageRoster")}
               </Link>
             </div>
           )}
@@ -3594,9 +3384,14 @@ export default function CoachPage() {
                 client={mobileSelectedClient}
                 coachNote={coachNotes[mobileSelectedClient.id] ?? ""}
                 onNoteChange={handleNoteChange}
+                noteSavedAt={notesSavedAt[mobileSelectedClient.id] ?? null}
                 noteSaving={notesSaving[mobileSelectedClient.id] ?? false}
                 feedbackByEntry={feedbackByAthlete[mobileSelectedClient.id] ?? {}}
                 onFeedbackSaved={handleFeedbackSaved}
+                trainingNoteByEntry={trainingNoteByAthlete[mobileSelectedClient.id] ?? {}}
+                onTrainingNoteSaved={handleTrainingNoteSaved}
+                sentimentWindow={sentimentWindows[mobileSelectedClient.id] ?? 7}
+                onSentimentWindowChange={handleSentimentWindowChange}
               />
             </BottomSheet>
           )}

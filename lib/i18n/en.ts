@@ -1108,6 +1108,30 @@ export const en = {
     tabNotes: "Notes",
     tabPrompts: "Prompts",
 
+    // Mobile home summary strip + roster
+    noEntriesThisWeek: "No entries this week",
+    statNoCheckin: "No check-in",
+    statSilent7d: "Silent 7d",
+    manageRoster: "Manage roster →",
+
+    // Suggest a tool (coach → athlete)
+    suggestToolTitle: "Suggest a tool",
+    suggestToolBody: "Recommend a specific library tool to this athlete. They'll see it as a card on their Today page.",
+    suggestToolMessagePlaceholder: "Optional note to the athlete… (e.g. 'Try this before your next heavy squat session')",
+    suggestToolError: "Could not send. Please try again.",
+    suggestToolSent: "✓ Sent to athlete",
+    suggestToolSending: "Sending…",
+    suggestToolSend: "Send recommendation →",
+    suggestToolPmr: "Progressive Muscle Relaxation",
+    suggestToolAT: "Autogenic Training",
+    suggestToolVizSquat: "Visualization — Squat",
+    suggestToolVizBench: "Visualization — Bench",
+    suggestToolVizDeadlift: "Visualization — Deadlift",
+    suggestToolResourceActivation: "Resource Activation",
+    suggestToolAffirmations: "Affirmations",
+    suggestToolBarrier: "Barrier Breaker",
+    suggestToolCompDayViz: "Competition Day Visualization",
+
     // Journal prompts (per-athlete, set by coach)
     journalPromptsTitle: "Journal questions",
     journalPromptsBody: "Set custom reflection questions for this athlete. Replaces the defaults and locks their own customization. Leave blank to skip.",

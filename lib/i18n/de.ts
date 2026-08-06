@@ -1069,6 +1069,30 @@ export const de: Dict = {
     tabNotes: "Notizen",
     tabPrompts: "Fragen",
 
+    // Mobile home summary strip + roster
+    noEntriesThisWeek: "Keine Einträge diese Woche",
+    statNoCheckin: "Kein Check-in",
+    statSilent7d: "7 Tage still",
+    manageRoster: "Athleten verwalten →",
+
+    // Suggest a tool (coach → athlete)
+    suggestToolTitle: "Tool vorschlagen",
+    suggestToolBody: "Empfiehl diesem Athleten ein bestimmtes Tool aus der Bibliothek. Es erscheint als Karte auf seiner Heute-Seite.",
+    suggestToolMessagePlaceholder: "Optionale Notiz an den Athleten… (z. B. „Probier das vor deiner nächsten schweren Kniebeugen-Einheit“)",
+    suggestToolError: "Konnte nicht gesendet werden. Bitte erneut versuchen.",
+    suggestToolSent: "✓ An Athlet gesendet",
+    suggestToolSending: "Wird gesendet…",
+    suggestToolSend: "Empfehlung senden →",
+    suggestToolPmr: "Progressive Muskelentspannung",
+    suggestToolAT: "Autogenes Training",
+    suggestToolVizSquat: "Visualisierung — Kniebeuge",
+    suggestToolVizBench: "Visualisierung — Bankdrücken",
+    suggestToolVizDeadlift: "Visualisierung — Kreuzheben",
+    suggestToolResourceActivation: "Ressourcenaktivierung",
+    suggestToolAffirmations: "Affirmationen",
+    suggestToolBarrier: "Ablenkungsschild",
+    suggestToolCompDayViz: "Wettkampftag-Visualisierung",
+
     // Journal prompts (per-athlete, set by coach)
     journalPromptsTitle: "Tagebuchfragen",
     journalPromptsBody: "Lege eigene Reflexionsfragen für diesen Athleten fest. Ersetzt die Standardfragen und sperrt die eigene Anpassung des Athleten. Leer lassen, um eine Frage zu überspringen.",

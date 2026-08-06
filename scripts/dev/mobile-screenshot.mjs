@@ -30,7 +30,8 @@ mkdirSync(outDir, { recursive: true });
 const env = {};
 for (const line of readFileSync(new URL("../../.env.local", import.meta.url), "utf8").split("\n")) {
   const m = line.match(/^([A-Z_0-9]+)=(.*)$/);
-  if (m) env[m[1]] = m[2];
+  // Values may be wrapped in single or double quotes — strip them.
+  if (m) env[m[1]] = m[2].trim().replace(/^(['"])(.*)\1$/, "$2");
 }
 const SB_URL = env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
 const REF = new URL(SB_URL).hostname.split(".")[0];
