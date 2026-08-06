@@ -1049,6 +1049,7 @@ export const hu: Dict = {
     flagAttention: "Beavatkozás szükséges",
     flagMonitor: "Figyelés alatt",
     flagStable: "Jó úton",
+    flagNeverActive: "Még nem kezdte el",
 
     // Last active
     lastActiveNever: "Soha",

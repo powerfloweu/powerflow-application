@@ -7,6 +7,7 @@ import BottomSheet from "@/app/components/BottomSheet";
 import type { Sentiment } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
 import type { WeeklyCheckin } from "@/lib/weeklyCheckin";
+import { ymdLocal } from "@/lib/date";
 
 // ── Test result row types (mirror /api/coach/athletes) ────────────────────────
 type SatRow  = { id: string; total_score: number; validity_reliable: boolean; submitted_at: string; score_performance: number; score_affiliation: number; score_aggression: number; score_defensiveness: number; score_consciousness: number; score_dominance: number; score_exhibition: number; score_autonomy: number; score_caregiving: number; score_order: number; score_helplessness: number; sf_self_confirmation: number; sf_rational_dominance: number; sf_aggressive_nonconformity: number; sf_passive_dependence: number; sf_sociability: number; sf_agreeableness: number; };
@@ -49,14 +50,39 @@ function computeAthleteStats(a: AthleteRow) {
   const weekEntries = a.entries.filter((e) => new Date(e.created_at) >= cutWeek);
   const positiveCount = weekEntries.filter((e) => e.sentiment === "positive").length;
   const positiveRate = weekEntries.length ? Math.round(positiveCount / weekEntries.length * 100) : 0;
-  const flag: FlagLevel = positiveRate < 30 ? "attention" : positiveRate < 55 ? "monitor" : "stable";
+  // positiveRate is 0 both when the week was genuinely all-negative and when
+  // there were no entries at all — hasSentimentData is what tells those apart
+  // for display purposes (never render a bare "0%" for the latter).
+  const hasSentimentData = weekEntries.length > 0;
   const initials = a.display_name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2);
 
-  const lastEntryTime = a.entries[0] ? new Date(a.entries[0].created_at).getTime() : 0;
-  const diffD = Math.floor((Date.now() - lastEntryTime) / 86400000);
-  const lastActive = lastEntryTime === 0 ? "Never" : diffD === 0 ? "Today" : diffD === 1 ? "Yesterday" : `${diffD}d ago`;
+  // Training logs with at least one written field count as activity too, so an
+  // athlete who only fills in training logs (never the free-form journal)
+  // isn't flagged as inactive.
+  const trainingLogsWithContent = a.all_training_entries.filter((e) =>
+    e.thoughts_before || e.thoughts_after || e.what_went_well || e.frustrations || e.next_session,
+  );
+  const lastJournalTime = a.entries[0] ? new Date(a.entries[0].created_at).getTime() : 0;
+  const lastTrainingTime = trainingLogsWithContent.length
+    ? Math.max(...trainingLogsWithContent.map((e) => new Date(e.updated_at).getTime()))
+    : 0;
+  const lastActivityTime = Math.max(lastJournalTime, lastTrainingTime);
+  const neverActive = lastActivityTime === 0;
+  const daysSinceActivity = neverActive ? null : Math.floor((Date.now() - lastActivityTime) / 86400000);
 
-  return { ...a, positiveRate, flag, initials, entriesThisWeek: weekEntries.length, lastActive };
+  // Flag is recency-based, not mood-based — mirrors app/coach/model.ts's
+  // computeClient. An athlete who wrote three honest, downbeat entries this
+  // week is engaged, not a problem; an athlete gone quiet for a week is the
+  // one that actually needs a look. Meet day still overrides.
+  const isMeetDay = a.meet_date === ymdLocal();
+  const flag: FlagLevel = isMeetDay ? "attention"
+    : daysSinceActivity === null || daysSinceActivity >= 7 ? "attention"
+    : daysSinceActivity >= 3 ? "monitor"
+    : "stable";
+
+  const lastActive = neverActive ? "Never" : daysSinceActivity === 0 ? "Today" : daysSinceActivity === 1 ? "Yesterday" : `${daysSinceActivity}d ago`;
+
+  return { ...a, positiveRate, hasSentimentData, flag, neverActive, initials, entriesThisWeek: weekEntries.length, lastActive };
 }
 
 type Athlete = ReturnType<typeof computeAthleteStats>;
@@ -71,6 +97,57 @@ const FLAG_TEXT: Record<FlagLevel, string> = {
   monitor: "text-amber-300",
   stable: "text-emerald-300",
 };
+// This page renders everything in plain English already (no useT() import),
+// so the flag word stays a plain string here for consistency rather than
+// introducing a lone translated string on an otherwise untranslated page.
+const FLAG_LABEL: Record<FlagLevel, string> = {
+  attention: "Needs attention",
+  monitor: "Monitor",
+  stable: "On track",
+};
+// A never-active athlete isn't a behaviour problem, just someone who hasn't
+// begun yet — "Needs attention" reads as a scolding for someone with nothing
+// to review yet, so it gets its own, calmer label.
+function flagLabel(athlete: Pick<Athlete, "flag" | "neverActive">): string {
+  return athlete.neverActive ? "Not started" : FLAG_LABEL[athlete.flag];
+}
+
+// positiveRate is 0 both for "genuinely 0% positive" and "no entries this
+// week" — hasSentimentData disambiguates. Never render a bare 0% for the latter.
+function positiveRateColor(athlete: Pick<Athlete, "positiveRate" | "hasSentimentData">): string {
+  if (!athlete.hasSentimentData) return "text-zinc-500";
+  return athlete.positiveRate >= 60 ? "text-emerald-400" : athlete.positiveRate >= 40 ? "text-amber-400" : "text-rose-400";
+}
+function positiveRateLabel(athlete: Pick<Athlete, "positiveRate" | "hasSentimentData">): string {
+  return athlete.hasSentimentData ? `${athlete.positiveRate}%` : "—";
+}
+
+// Avatar with graceful fallback to the initials treatment on load error —
+// otherwise a stale/404ing avatar_url leaves bare alt text floating over the
+// circular frame while (or if) the image never loads.
+function AthleteAvatar({
+  avatarUrl, name, initials, imgClassName, fallbackClassName,
+}: {
+  avatarUrl: string | null;
+  name: string;
+  initials: string;
+  imgClassName: string;
+  fallbackClassName: string;
+}) {
+  const [errored, setErrored] = React.useState(false);
+  if (!avatarUrl || errored) {
+    return <div className={fallbackClassName}>{initials}</div>;
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={avatarUrl}
+      alt={name}
+      className={`${imgClassName} object-cover`}
+      onError={() => setErrored(true)}
+    />
+  );
+}
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
@@ -79,26 +156,30 @@ function fmtDate(iso: string) {
 // ── Athlete list row ──────────────────────────────────────────────────────────
 
 function AthleteListRow({ athlete, onClick }: { athlete: Athlete; onClick: () => void }) {
+  const label = flagLabel(athlete);
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-label={`${athlete.display_name} — ${label}`}
       className="w-full text-left flex items-center gap-0 hover:bg-white/[0.03] active:bg-white/5 transition"
     >
-      <div className={`flex-shrink-0 w-1 self-stretch ${FLAG_BAR[athlete.flag]} opacity-70`} />
+      {/* Decorative — the flag word to the right and this button's
+          aria-label carry the actual signal for colour-blind and
+          screen-reader users. */}
+      <div aria-hidden className={`flex-shrink-0 w-1 self-stretch ${FLAG_BAR[athlete.flag]} opacity-70`} />
       <div className="flex-shrink-0 ml-3 mr-3">
-        {athlete.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={athlete.avatar_url} alt={athlete.display_name} className="w-9 h-9 rounded-full border border-white/10" />
-        ) : (
-          <div className={`w-9 h-9 rounded-full flex items-center justify-center font-saira text-xs font-bold ${
+        <AthleteAvatar
+          avatarUrl={athlete.avatar_url}
+          name={athlete.display_name}
+          initials={athlete.initials}
+          imgClassName="w-9 h-9 rounded-full border border-white/10"
+          fallbackClassName={`w-9 h-9 rounded-full flex items-center justify-center font-saira text-xs font-bold ${
             athlete.flag === "attention" ? "bg-rose-500/20 text-rose-300" :
             athlete.flag === "monitor" ? "bg-amber-500/20 text-amber-300" :
             "bg-emerald-500/15 text-emerald-300"
-          }`}>
-            {athlete.initials}
-          </div>
-        )}
+          }`}
+        />
       </div>
       <div className="flex-1 min-w-0 py-3.5">
         <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{athlete.display_name}</p>
@@ -107,12 +188,9 @@ function AthleteListRow({ athlete, onClick }: { athlete: Athlete; onClick: () =>
         </p>
       </div>
       <div className="flex-shrink-0 flex flex-col items-end gap-0.5 pr-4 py-3">
-        <span className={`font-saira text-sm font-bold tabular-nums ${
-          athlete.positiveRate >= 60 ? "text-emerald-400" :
-          athlete.positiveRate >= 40 ? "text-amber-400" : "text-rose-400"
-        }`}>{athlete.positiveRate}%</span>
+        <span className={`font-saira text-sm font-bold tabular-nums ${positiveRateColor(athlete)}`}>{positiveRateLabel(athlete)}</span>
         <span className={`font-saira text-[9px] uppercase tracking-[0.14em] ${FLAG_TEXT[athlete.flag]}`}>
-          {athlete.flag}
+          {label}
         </span>
       </div>
     </button>
@@ -170,15 +248,14 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
     <div className="space-y-4">
       {/* Stats row */}
       <div className="flex items-center gap-3 flex-wrap">
-        <span className={`font-saira text-sm font-bold ${
-          athlete.positiveRate >= 60 ? "text-emerald-400" :
-          athlete.positiveRate >= 40 ? "text-amber-400" : "text-rose-400"
-        }`}>{athlete.positiveRate}% positive</span>
+        <span className={`font-saira text-sm font-bold ${positiveRateColor(athlete)}`}>
+          {athlete.hasSentimentData ? `${athlete.positiveRate}% positive` : "— no entries this week"}
+        </span>
         <span className={`rounded-full border px-2.5 py-0.5 font-saira text-[9px] uppercase tracking-[0.16em] ${
           athlete.flag === "attention" ? "border-rose-500/30 text-rose-300 bg-rose-500/10" :
           athlete.flag === "monitor"   ? "border-amber-500/30 text-amber-300 bg-amber-500/10" :
                                          "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
-        }`}>{athlete.flag}</span>
+        }`}>{flagLabel(athlete)}</span>
         <span className="font-saira text-xs text-zinc-400 ml-auto">{athlete.lastActive}</span>
       </div>
 

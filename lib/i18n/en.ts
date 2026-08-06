@@ -1081,10 +1081,16 @@ export const en = {
     onTrack: "On track",
     avgPositive7d: "Avg positive · 7d",
 
-    // Flag labels (also used in roster)
+    // Flag labels (also used in roster). These signal activity recency, not
+    // mood — an athlete can write three honest, downbeat entries and still
+    // read as "On track" because they're engaged.
     flagAttention: "Needs attention",
     flagMonitor: "Monitor",
     flagStable: "On track",
+    // Shown instead of flagAttention when the athlete has never logged
+    // anything at all — that's an onboarding gap, not a behaviour problem,
+    // and shouldn't read as a scolding.
+    flagNeverActive: "Not started",
 
     // Last active
     lastActiveNever: "Never",

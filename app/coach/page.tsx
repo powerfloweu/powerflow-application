@@ -17,9 +17,72 @@ import { CoachMeetHistory } from "@/app/components/PostCompReflection";
 
 import {
   type Flag, type Trend, type EntryRow, type AthleteRaw, type CoachProfile, type Client,
-  computeClient, FLAG_CONFIG, TREND_ICON, TREND_COLOR,
+  computeClient, weekAgo, FLAG_CONFIG, TREND_ICON, TREND_COLOR,
 } from "./model";
 import { computeSentimentTrajectory, timeSince, extractTopics, sortClients, type TFn, type SortKey } from "./helpers";
+
+// ── Flag label / avatar / no-data helpers ───────────────────────────────────────
+// The roster flag now signals activity recency, not mood (see model.ts). A
+// never-active athlete needs a different, non-alarming label than one who has
+// simply gone quiet, so every site that renders FLAG_CONFIG's labelKey should
+// go through this instead of reading client.flag directly.
+function flagLabelKeyFor(client: Pick<Client, "flag" | "neverActive">): string {
+  return client.neverActive ? "coach.flagNeverActive" : FLAG_CONFIG[client.flag].labelKey;
+}
+
+// positiveRate is 0 both for "genuinely 0% positive" and "no entries this
+// week" — hasSentimentData disambiguates. Every render site must check it
+// before colouring or printing a percentage.
+function positiveRateColor(client: Pick<Client, "positiveRate" | "hasSentimentData">, shade: "300" | "400" = "400"): string {
+  if (!client.hasSentimentData) return "text-zinc-500";
+  return client.positiveRate >= 60 ? `text-emerald-${shade}` : client.positiveRate >= 40 ? `text-amber-${shade}` : `text-rose-${shade}`;
+}
+function positiveRateLabel(client: Pick<Client, "positiveRate" | "hasSentimentData">): string {
+  return client.hasSentimentData ? `${client.positiveRate}%` : "—";
+}
+
+// Avatar with graceful fallback to the initials treatment on load error (a
+// stale/404ing avatar_url must never leave bare alt text floating over the
+// circular frame).
+function AthleteAvatar({
+  avatarUrl, name, initials, imgClassName, fallbackClassName,
+}: {
+  avatarUrl: string | null;
+  name: string;
+  initials: string;
+  imgClassName: string;
+  fallbackClassName: string;
+}) {
+  const [errored, setErrored] = React.useState(false);
+  if (!avatarUrl || errored) {
+    return <div className={fallbackClassName}>{initials}</div>;
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={avatarUrl}
+      alt={name}
+      className={`${imgClassName} object-cover`}
+      onError={() => setErrored(true)}
+    />
+  );
+}
+
+// Per-day "did anything happen" flags for the 7-day sentiment chart, computed
+// with the exact same day-bucketing as model.ts's sentimentWeek so the two
+// arrays line up index-for-index. sentimentWeek alone can't tell a 0%-positive
+// day apart from a day with zero entries — this can.
+function sentimentWeekHasData(client: Pick<Client, "allEntries" | "allTrainingWithContent">): boolean[] {
+  const now = new Date();
+  return Array.from({ length: 7 }, (_, i) => {
+    const dayStart = weekAgo(6 - i);
+    const dayEnd   = weekAgo(6 - i - 1);
+    const inDay = (d: Date) => d >= dayStart && d < (i === 6 ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) : dayEnd);
+    const dayJ = client.allEntries.some((e) => inDay(new Date(e.created_at)));
+    if (dayJ) return true;
+    return client.allTrainingWithContent.some((e) => inDay(new Date(e.entry_date + "T12:00:00")));
+  });
+}
 
 // ── Sentiment sparkline ────────────────────────────────────────────────────────
 
@@ -1496,26 +1559,21 @@ function ClientCard({
         onClick={() => setExpanded((v) => !v)}
       >
         {/* Avatar */}
-        {client.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={client.avatarUrl}
-            alt={client.name}
-            className={`flex-shrink-0 w-10 h-10 rounded-full border ${
-              client.flag === "attention" ? "border-rose-500/30" :
-              client.flag === "monitor"   ? "border-amber-500/30" :
-              "border-purple-500/30"
-            }`}
-          />
-        ) : (
-          <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-saira text-sm font-bold ${
+        <AthleteAvatar
+          avatarUrl={client.avatarUrl}
+          name={client.name}
+          initials={client.initials}
+          imgClassName={`flex-shrink-0 w-10 h-10 rounded-full border ${
+            client.flag === "attention" ? "border-rose-500/30" :
+            client.flag === "monitor"   ? "border-amber-500/30" :
+            "border-purple-500/30"
+          }`}
+          fallbackClassName={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-saira text-sm font-bold ${
             client.flag === "attention" ? "bg-rose-500/20 text-rose-200 border border-rose-500/30" :
             client.flag === "monitor"   ? "bg-amber-500/20 text-amber-200 border border-amber-500/30" :
             "bg-purple-500/20 text-purple-200 border border-purple-500/30"
-          }`}>
-            {client.initials}
-          </div>
-        )}
+          }`}
+        />
 
         {/* Name + meta */}
         <div className="flex-1 min-w-0">
@@ -1537,10 +1595,7 @@ function ClientCard({
           </div>
 
           <div className="text-center hidden sm:block">
-            <p className={`font-saira text-base font-bold ${
-              client.positiveRate >= 60 ? "text-emerald-300" :
-              client.positiveRate >= 40 ? "text-amber-300" : "text-rose-300"
-            }`}>{client.positiveRate}%</p>
+            <p className={`font-saira text-base font-bold ${positiveRateColor(client, "300")}`}>{positiveRateLabel(client)}</p>
             <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400">{t("coach.positiveLabel")}</p>
           </div>
 
@@ -1550,7 +1605,7 @@ function ClientCard({
 
           <span className={`rounded-full border px-3 py-0.5 font-saira text-[10px] uppercase tracking-[0.14em] ${flag.border} ${flag.bg} ${flag.text}`}>
             <span className={`mr-1.5 inline-block w-1.5 h-1.5 rounded-full ${flag.dot}`} />
-            {t(flag.labelKey)}
+            {t(flagLabelKeyFor(client))}
           </span>
 
           <span className="font-saira text-[11px] text-zinc-400">{isOpen ? "▲" : "▼"}</span>
@@ -2306,6 +2361,11 @@ function MobileAthleteRow({ client, onClick }: { client: Client; onClick: () => 
     client.flag === "attention" ? "bg-rose-500" :
     client.flag === "monitor"   ? "bg-amber-500" :
     "bg-emerald-500";
+  const flagText =
+    client.flag === "attention" ? "text-rose-300" :
+    client.flag === "monitor"   ? "text-amber-300" :
+    "text-emerald-300";
+  const flagLabel = t(flagLabelKeyFor(client));
 
   const renderLastActive = (la: Client["lastActive"]): string => {
     if (la.key === "never")     return t("coach.lastActiveNever");
@@ -2320,25 +2380,27 @@ function MobileAthleteRow({ client, onClick }: { client: Client; onClick: () => 
     <button
       type="button"
       onClick={onClick}
+      aria-label={`${client.name} — ${flagLabel}`}
       className="w-full text-left flex items-center gap-0 hover:bg-white/[0.03] active:bg-white/5 transition"
     >
-      {/* Colored flag bar */}
-      <div className={`flex-shrink-0 w-1 self-stretch ${flagBar} opacity-70`} />
+      {/* Colored flag bar — decorative; the flag word to the right and the
+          button's aria-label carry the actual signal for colour-blind and
+          screen-reader users. */}
+      <div aria-hidden className={`flex-shrink-0 w-1 self-stretch ${flagBar} opacity-70`} />
 
       {/* Avatar */}
       <div className="flex-shrink-0 ml-3 mr-3">
-        {client.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={client.avatarUrl} alt={client.name} className="w-9 h-9 rounded-full border border-white/10" />
-        ) : (
-          <div className={`w-9 h-9 rounded-full flex items-center justify-center font-saira text-xs font-bold ${
+        <AthleteAvatar
+          avatarUrl={client.avatarUrl}
+          name={client.name}
+          initials={client.initials}
+          imgClassName="w-9 h-9 rounded-full border border-white/10"
+          fallbackClassName={`w-9 h-9 rounded-full flex items-center justify-center font-saira text-xs font-bold ${
             client.flag === "attention" ? "bg-rose-500/20 text-rose-300" :
             client.flag === "monitor"   ? "bg-amber-500/20 text-amber-300" :
             "bg-emerald-500/15 text-emerald-300"
-          }`}>
-            {client.initials}
-          </div>
-        )}
+          }`}
+        />
       </div>
 
       {/* Name + meta */}
@@ -2352,14 +2414,11 @@ function MobileAthleteRow({ client, onClick }: { client: Client; onClick: () => 
         </p>
       </div>
 
-      {/* Right: sparkline + positive % */}
-      <div className="flex-shrink-0 flex flex-col items-end gap-1 pr-4 py-3">
+      {/* Right: sparkline + positive % + flag word */}
+      <div className="flex-shrink-0 flex flex-col items-end gap-0.5 pr-4 py-3">
         <SentimentSparkline data={client.sentimentWeek} />
-        <span className={`font-saira text-xs font-bold tabular-nums ${
-          client.positiveRate >= 60 ? "text-emerald-400" :
-          client.positiveRate >= 40 ? "text-amber-400" :
-          "text-rose-400"
-        }`}>{client.positiveRate}%</span>
+        <span className={`font-saira text-xs font-bold tabular-nums ${positiveRateColor(client)}`}>{positiveRateLabel(client)}</span>
+        <span className={`font-saira text-[9px] uppercase tracking-[0.14em] ${flagText}`}>{flagLabel}</span>
       </div>
     </button>
   );
@@ -2389,6 +2448,7 @@ function MobileAthleteSheet({
   const [showNotes, setShowNotes] = React.useState(false);
   const [expandedCheckin, setExpandedCheckin] = React.useState<number | null>(null);
   const flag = FLAG_CONFIG[client.flag];
+  const sentimentDayHasData = React.useMemo(() => sentimentWeekHasData(client), [client]);
 
   return (
     <div className="space-y-4">
@@ -2396,12 +2456,11 @@ function MobileAthleteSheet({
       <div className="flex items-center gap-3">
         <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-saira text-[10px] uppercase tracking-[0.18em] ${flag.border} ${flag.text} ${flag.bg}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${flag.dot}`} />
-          {t(flag.labelKey)}
+          {t(flagLabelKeyFor(client))}
         </span>
-        <span className={`font-saira text-sm font-bold tabular-nums ${
-          client.positiveRate >= 60 ? "text-emerald-400" :
-          client.positiveRate >= 40 ? "text-amber-400" : "text-rose-400"
-        }`}>{client.positiveRate}% positive</span>
+        <span className={`font-saira text-sm font-bold tabular-nums ${positiveRateColor(client)}`}>
+          {client.hasSentimentData ? `${client.positiveRate}% positive` : "— no entries this week"}
+        </span>
         <span className={`font-saira text-sm ${TREND_COLOR[client.trend]}`}>
           {TREND_ICON[client.trend]}
         </span>
@@ -2467,20 +2526,30 @@ function MobileAthleteSheet({
             <p className="font-saira text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
               7-day sentiment
             </p>
-            <div className="flex items-end gap-1.5">
-              {client.sentimentWeek.map((v, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div
-                    className={`w-full rounded-sm ${
-                      v >= 60 ? "bg-emerald-500/60" : v >= 40 ? "bg-amber-500/60" : v > 0 ? "bg-rose-500/60" : "bg-white/8"
-                    }`}
-                    style={{ height: `${Math.max(v, 4)}%`, maxHeight: "48px", minHeight: "4px" }}
-                  />
-                  <span className="font-saira text-[8px] text-zinc-500">
-                    {["M","T","W","T","F","S","S"][i]}
-                  </span>
-                </div>
-              ))}
+            {/* Fixed-height (h-12 = 48px) row so the bars' percentage-derived
+                pixel heights have something definite to size against — a
+                percentage height inside an indefinite-height flex row
+                resolves to 0, which is why this used to render as flat
+                4px stubs regardless of the underlying value. */}
+            <div className="flex items-end gap-1.5 h-12">
+              {client.sentimentWeek.map((v, i) => {
+                const hasData = sentimentDayHasData[i];
+                const heightPx = hasData ? Math.max(4, Math.round((v / 100) * 48)) : 4;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className={`w-full rounded-sm ${
+                        !hasData ? "bg-white/8" : v >= 60 ? "bg-emerald-500/60" : v >= 40 ? "bg-amber-500/60" : "bg-rose-500/60"
+                      }`}
+                      style={{ height: `${heightPx}px` }}
+                      title={hasData ? `${v}% positive` : "No entries"}
+                    />
+                    <span className="font-saira text-[8px] text-zinc-500">
+                      {["M","T","W","T","F","S","S"][i]}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -2896,14 +2965,21 @@ function CoachHomePanel({
 }) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const firstName = profile?.display_name.split(" ")[0] ?? "";
+  // Full display_name, not just the first "word" — display_name isn't
+  // reliably [given] [family] order (e.g. Hungarian family-name-first names),
+  // so splitting on the first space can greet a coach by their surname.
+  const coachName = profile?.display_name ?? "";
   const todayStr = new Date().toLocaleDateString("en-GB", {
     weekday: "long", day: "numeric", month: "long",
   });
 
-  const avgPositive = clients.length
-    ? Math.round(clients.reduce((s, c) => s + c.positiveRate, 0) / clients.length)
-    : 0;
+  // Only average athletes who actually have sentiment data this week —
+  // mixing in the fabricated 0% of inactive athletes silently drags this
+  // number down and misrepresents the roster.
+  const clientsWithSentiment = clients.filter((c) => c.hasSentimentData);
+  const avgPositive = clientsWithSentiment.length
+    ? Math.round(clientsWithSentiment.reduce((s, c) => s + c.positiveRate, 0) / clientsWithSentiment.length)
+    : null;
 
   const attentionClients = clients.filter((c) => c.flag === "attention");
 
@@ -2954,7 +3030,7 @@ function CoachHomePanel({
       {/* Greeting */}
       <div className="mb-7">
         <h1 className="font-saira text-2xl font-bold text-white">
-          {greeting}{firstName ? `, ${firstName}` : ""} 👋
+          {greeting}{coachName ? `, ${coachName}` : ""} 👋
         </h1>
         <p className="font-saira text-sm text-zinc-400 mt-1">{todayStr}</p>
       </div>
@@ -2973,9 +3049,9 @@ function CoachHomePanel({
           accent={noCheckinCount > 0 ? "amber" : "emerald"}
         />
         <DesktopStatCard
-          value={clients.length > 0 ? `${avgPositive}%` : "—"}
+          value={avgPositive !== null ? `${avgPositive}%` : "—"}
           label="Avg positive"
-          accent={avgPositive >= 60 ? "emerald" : avgPositive >= 40 ? "amber" : "rose"}
+          accent={avgPositive === null ? "zinc" : avgPositive >= 60 ? "emerald" : avgPositive >= 40 ? "amber" : "rose"}
         />
       </div>
 
@@ -3004,17 +3080,16 @@ function CoachHomePanel({
                     className="w-full text-left rounded-xl border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 transition px-3 py-3"
                   >
                     <div className="flex items-center gap-3">
-                      {c.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={c.avatarUrl} alt={c.name} className="w-9 h-9 rounded-full flex-shrink-0 border border-rose-500/20" />
-                      ) : (
-                        <div className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-xs font-bold ${fc.bg} ${fc.text} border ${fc.border}`}>
-                          {c.initials}
-                        </div>
-                      )}
+                      <AthleteAvatar
+                        avatarUrl={c.avatarUrl}
+                        name={c.name}
+                        initials={c.initials}
+                        imgClassName="w-9 h-9 rounded-full flex-shrink-0 border border-rose-500/20"
+                        fallbackClassName={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-xs font-bold ${fc.bg} ${fc.text} border ${fc.border}`}
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-saira text-sm font-semibold text-zinc-100 truncate">{c.name}</p>
-                        <p className="font-saira text-xs text-zinc-400">{c.positiveRate}% positive · {c.entriesThisWeek} entries this week</p>
+                        <p className="font-saira text-xs text-zinc-400">{positiveRateLabel(c)}{c.hasSentimentData ? " positive" : ""} · {c.entriesThisWeek} entries this week</p>
                       </div>
                       <SentimentSparkline data={c.sentimentWeek} />
                     </div>
@@ -3044,14 +3119,13 @@ function CoachHomePanel({
                     className="w-full text-left rounded-xl border border-white/5 bg-surface-alt hover:bg-white/[0.04] transition px-4 py-2.5"
                   >
                     <div className="flex items-center gap-3">
-                      {item.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.avatarUrl} alt={item.clientName} className="w-7 h-7 rounded-full flex-shrink-0 border border-white/10" />
-                      ) : (
-                        <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-[10px] font-bold ${fc.bg} ${fc.text}`}>
-                          {item.clientInitials}
-                        </div>
-                      )}
+                      <AthleteAvatar
+                        avatarUrl={item.avatarUrl}
+                        name={item.clientName}
+                        initials={item.clientInitials}
+                        imgClassName="w-7 h-7 rounded-full flex-shrink-0 border border-white/10"
+                        fallbackClassName={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-[10px] font-bold ${fc.bg} ${fc.text}`}
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <span className="font-saira text-xs font-semibold text-zinc-200">{item.clientName}</span>
@@ -3109,22 +3183,17 @@ function CompactAthleteRow({
       }`}
     >
       {/* Avatar */}
-      {client.avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={client.avatarUrl}
-          alt={client.name}
-          className="flex-shrink-0 w-9 h-9 rounded-full border border-white/10"
-        />
-      ) : (
-        <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-saira text-xs font-bold ${
+      <AthleteAvatar
+        avatarUrl={client.avatarUrl}
+        name={client.name}
+        initials={client.initials}
+        imgClassName="flex-shrink-0 w-9 h-9 rounded-full border border-white/10"
+        fallbackClassName={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-saira text-xs font-bold ${
           client.flag === "attention" ? "bg-rose-500/20 text-rose-300" :
           client.flag === "monitor"   ? "bg-amber-500/20 text-amber-300" :
           "bg-purple-500/20 text-purple-300"
-        }`}>
-          {client.initials}
-        </div>
-      )}
+        }`}
+      />
       {/* Name + meta */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -3142,11 +3211,7 @@ function CompactAthleteRow({
       {/* Sparkline + positive % */}
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
         <SentimentSparkline data={client.sentimentWeek} />
-        <span className={`font-saira text-[10px] font-semibold tabular-nums ${
-          client.positiveRate >= 60 ? "text-emerald-400" :
-          client.positiveRate >= 40 ? "text-amber-400" :
-          "text-rose-400"
-        }`}>{client.positiveRate}%</span>
+        <span className={`font-saira text-[10px] font-semibold tabular-nums ${positiveRateColor(client)}`}>{positiveRateLabel(client)}</span>
       </div>
     </button>
   );
@@ -3403,7 +3468,7 @@ export default function CoachPage() {
               PowerFlow · Coach
             </p>
             <h1 className="mt-1 font-saira text-2xl font-extrabold uppercase tracking-tight text-white">
-              {profile?.display_name ? `Hey, ${profile.display_name.split(" ")[0]}` : t("coach.pageHeading")}
+              {profile?.display_name ? `Hey, ${profile.display_name}` : t("coach.pageHeading")}
             </h1>
           </div>
 
@@ -3562,14 +3627,13 @@ export default function CoachPage() {
           {profile && (
             <div className="flex-shrink-0 px-4 py-3.5 border-b border-white/5 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                {profile.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatar_url} alt={profile.display_name} className="w-8 h-8 flex-shrink-0 rounded-full border border-white/10" />
-                ) : (
-                  <div className="w-8 h-8 flex-shrink-0 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-saira text-xs font-bold text-purple-300">
-                    {profile.display_name.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
+                <AthleteAvatar
+                  avatarUrl={profile.avatar_url}
+                  name={profile.display_name}
+                  initials={profile.display_name.slice(0, 1).toUpperCase()}
+                  imgClassName="w-8 h-8 flex-shrink-0 rounded-full border border-white/10"
+                  fallbackClassName="w-8 h-8 flex-shrink-0 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-saira text-xs font-bold text-purple-300"
+                />
                 <div className="min-w-0">
                   <p className="font-saira text-sm font-semibold text-zinc-200 truncate">{profile.display_name}</p>
                   <p className="font-saira text-xs text-zinc-400">{t("coach.roleCoach")}</p>
@@ -3624,7 +3688,12 @@ export default function CoachPage() {
                 <div className="w-px h-8 bg-white/10" />
                 <div className="text-center">
                   <p className="font-saira text-2xl font-extrabold text-purple-300">
-                    {Math.round(clients.reduce((s, c) => s + c.positiveRate, 0) / clients.length)}%
+                    {(() => {
+                      const withData = clients.filter((c) => c.hasSentimentData);
+                      return withData.length
+                        ? `${Math.round(withData.reduce((s, c) => s + c.positiveRate, 0) / withData.length)}%`
+                        : "—";
+                    })()}
                   </p>
                   <p className="font-saira text-xs uppercase tracking-[0.12em] text-zinc-300 mt-0.5">{t("coach.sidebarAvgPositive")}</p>
                 </div>
@@ -3734,26 +3803,21 @@ export default function CoachPage() {
               <div className="flex-shrink-0 sticky top-0 z-10 bg-surface-base/95 backdrop-blur-sm border-b border-white/6 px-8 py-5">
                 <div className="flex items-center gap-4">
                   {/* Avatar */}
-                  {selectedClient.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={selectedClient.avatarUrl}
-                      alt={selectedClient.name}
-                      className={`w-12 h-12 rounded-full flex-shrink-0 border ${
-                        selectedClient.flag === "attention" ? "border-rose-500/40" :
-                        selectedClient.flag === "monitor"   ? "border-amber-500/40" :
-                        "border-purple-500/30"
-                      }`}
-                    />
-                  ) : (
-                    <div className={`w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-base font-bold border ${
+                  <AthleteAvatar
+                    avatarUrl={selectedClient.avatarUrl}
+                    name={selectedClient.name}
+                    initials={selectedClient.initials}
+                    imgClassName={`w-12 h-12 rounded-full flex-shrink-0 border ${
+                      selectedClient.flag === "attention" ? "border-rose-500/40" :
+                      selectedClient.flag === "monitor"   ? "border-amber-500/40" :
+                      "border-purple-500/30"
+                    }`}
+                    fallbackClassName={`w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center font-saira text-base font-bold border ${
                       selectedClient.flag === "attention" ? "bg-rose-500/20 text-rose-200 border-rose-500/30" :
                       selectedClient.flag === "monitor"   ? "bg-amber-500/20 text-amber-200 border-amber-500/30" :
                       "bg-purple-500/20 text-purple-200 border-purple-500/30"
-                    }`}>
-                      {selectedClient.initials}
-                    </div>
-                  )}
+                    }`}
+                  />
 
                   {/* Name + meta */}
                   <div className="flex-1 min-w-0">
@@ -3770,7 +3834,7 @@ export default function CoachPage() {
                         return (
                           <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-saira text-[9px] uppercase tracking-[0.16em] ${fc.border} ${fc.bg} ${fc.text}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${fc.dot}`} />
-                            {t(fc.labelKey)}
+                            {t(flagLabelKeyFor(selectedClient))}
                           </span>
                         );
                       })()}
@@ -3794,10 +3858,7 @@ export default function CoachPage() {
                       <SentimentSparkline data={selectedClient.sentimentWeek} />
                     </div>
                     <div className="text-right">
-                      <p className={`font-saira text-xl font-extrabold tabular-nums ${
-                        selectedClient.positiveRate >= 60 ? "text-emerald-300" :
-                        selectedClient.positiveRate >= 40 ? "text-amber-300" : "text-rose-300"
-                      }`}>{selectedClient.positiveRate}%</p>
+                      <p className={`font-saira text-xl font-extrabold tabular-nums ${positiveRateColor(selectedClient, "300")}`}>{positiveRateLabel(selectedClient)}</p>
                       <p className="font-saira text-[9px] uppercase tracking-[0.16em] text-zinc-400">positive</p>
                     </div>
                     <span className={`font-saira text-xl font-bold ${TREND_COLOR[selectedClient.trend]}`}>

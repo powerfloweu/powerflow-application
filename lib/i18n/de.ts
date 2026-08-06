@@ -1051,6 +1051,7 @@ export const de: Dict = {
     flagAttention: "Handlungsbedarf",
     flagMonitor: "Beobachten",
     flagStable: "Auf Kurs",
+    flagNeverActive: "Noch nicht gestartet",
 
     // Last active
     lastActiveNever: "Nie",
