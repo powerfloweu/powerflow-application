@@ -256,14 +256,19 @@ export default function SelfAwarenessTestPage() {
           localStorage.removeItem("powerflow.selfAwareness.unlocked.v1");
         }
       } catch { /* ignore */ }
-      // Fire-and-forget: persist to server (test works even if this fails)
+      // Persist to server. This must be awaited and checked: localStorage only
+      // makes the result visible on this device, so a silently-dropped POST
+      // means the coach never sees the result and no results email is sent.
       const resultRef = `pfsa_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       try { localStorage.setItem(RESULT_REF_KEY, resultRef); } catch { /* ignore */ }
-      fetch("/api/test/submit", {
+      const saveRes = await fetch("/api/test/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ respondent, report, resultRef }),
-      }).catch(() => {/* silent */});
+      });
+      if (!saveRes.ok) {
+        throw new Error("We couldn't save your results. Check your connection and try again.");
+      }
       // Mark coach assignment completed (if one exists)
       fetch("/api/athlete/assigned-tests", {
         method: "PATCH",
