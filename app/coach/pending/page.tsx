@@ -66,8 +66,14 @@ export default function CoachPendingPage() {
     }
   };
 
+  // AppShell's <main> already reserves 5rem (mobile header) + 4rem (TabBar)
+  // of padding on mobile, plus env(safe-area-inset-top) at the shell root
+  // ahead of <main> — a bare min-h-screen here doubled that and both
+  // overflowed the viewport (min-h-screen ignores the offset already
+  // applied above it) and mis-centred the card vertically. This sizes the
+  // available space against the actual shell chrome instead.
   const Shell = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-screen bg-surface-base flex flex-col items-center justify-center px-6">
+    <div className="min-h-[calc(100dvh_-_9rem_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))] md:min-h-[calc(100dvh_-_env(safe-area-inset-top))] bg-surface-base flex flex-col items-center justify-center px-6">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(124,58,237,0.09),transparent_60%)]" />
       </div>

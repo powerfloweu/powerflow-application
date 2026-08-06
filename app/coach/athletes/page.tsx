@@ -586,14 +586,19 @@ function CoachAthletesInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-base flex items-center justify-center">
+      <div className="flex items-center justify-center py-24">
         <div className="w-5 h-5 rounded-full border-2 border-emerald-500/40 border-t-emerald-400 animate-spin" />
       </div>
     );
   }
 
+  // AppShell's <main> already applies pt-20 (mobile header) / md:pt-0 and
+  // pb-[calc(4rem+safe-bottom)] (TabBar) / md:pb-0 — re-adding min-h-screen
+  // pb-24 pt-16 here doubled the mobile shell chrome (phantom scroll on
+  // every load) and, since this page has no md: split layout, also added
+  // unnecessary top/bottom whitespace on desktop where AppShell needs none.
   return (
-    <div className="relative bg-surface-base text-white min-h-screen pb-24 pt-16">
+    <div className="relative bg-surface-base text-white">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.07),transparent_55%)]" />
       </div>

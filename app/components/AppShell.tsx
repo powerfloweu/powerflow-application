@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import TabBar from "./TabBar";
 import CheckinReminderScheduler from "./CheckinReminderScheduler";
 import NotificationPermissionBanner from "./NotificationPermissionBanner";
+import { subscribeAnySheetOpen } from "./BottomSheet";
 import NotificationModal, { type NotificationState } from "./NotificationModal";
 import WeeklyCheckinModal from "./WeeklyCheckinModal";
 import MonthlyCheckinModal from "./MonthlyCheckinModal";
@@ -48,6 +49,13 @@ export default function AppShell({ children }: Props) {
   const [checkinIsMonthly, setCheckinIsMonthly] = React.useState(false);
   // true = athlete pressed "Later" — modal hidden but target kept so Today page can offer re-entry
   const [checkinSkipped, setCheckinSkipped] = React.useState(false);
+
+  // Suppress the floating notification-permission banner while any
+  // BottomSheet (broadcast modal, weekly/monthly check-in, an athlete
+  // detail sheet on a coach page, etc.) is open — it's a fixed-position
+  // overlay so it can otherwise render on top of an open sheet's controls.
+  const [anySheetOpen, setAnySheetOpen] = React.useState(false);
+  React.useEffect(() => subscribeAnySheetOpen(setAnySheetOpen), []);
 
   const isCoachPage = pathname === "/coach" || pathname.startsWith("/coach/");
 
@@ -148,7 +156,7 @@ export default function AppShell({ children }: Props) {
 
   return (
     <WeeklyCheckinContext.Provider value={checkinCtxValue}>
-    <div className="min-h-screen bg-surface-base pt-[env(safe-area-inset-top)]">
+    <div className="min-h-dvh bg-surface-base pt-[env(safe-area-inset-top)]">
 
       {/* ── Desktop left sidebar (hidden on mobile) ─────────────── */}
       {/* Outer wrapper keeps the sidebar in the fixed-position flow.
@@ -397,6 +405,16 @@ export default function AppShell({ children }: Props) {
         }`}
       >
         {children}
+
+        {/* ── Push notification permission banner ─────────────────────── */}
+        {/* Athletes: daily check-in reminder. Coaches: get alerted when their
+            athletes check in, journal, or share a competition reflection.
+            Rendered as the last row of page content (not as a fixed overlay)
+            so on mobile it can never cover a control the user is reaching for.
+            Still suppressed while a BottomSheet is open — on desktop it is a
+            floating card and would otherwise sit over the sheet. */}
+        {!anySheetOpen && role === "athlete" && <NotificationPermissionBanner variant="athlete" />}
+        {!anySheetOpen && role === "coach" && <NotificationPermissionBanner variant="coach" />}
       </main>
 
       {/* ── Mobile bottom tab bar ───────────────────────────────── */}
@@ -407,12 +425,6 @@ export default function AppShell({ children }: Props) {
       {/* Use role === "athlete" (not !== "coach") so these never render while
           role is still null — prevents athlete UI flashing on coach sessions */}
       {role === "athlete" && <CheckinReminderScheduler />}
-
-      {/* ── Push notification permission banner ─────────────────────── */}
-      {/* Athletes: daily check-in reminder. Coaches: get alerted when their
-          athletes check in, journal, or share a competition reflection. */}
-      {role === "athlete" && <NotificationPermissionBanner variant="athlete" />}
-      {role === "coach" && <NotificationPermissionBanner variant="coach" />}
 
       {/* ── In-app broadcast + devlog modal ────────────────────────── */}
       {notifications && (

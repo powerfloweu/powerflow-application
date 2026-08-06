@@ -6,21 +6,18 @@ import { useRouter } from "next/navigation";
 import BottomSheet from "@/app/components/BottomSheet";
 import EntryCard from "@/app/components/EntryCard";
 import TagChip from "@/app/components/TagChip";
-import { THEME_DEFS, detectSentiment, type Sentiment, type Context } from "@/lib/journal";
+import { THEME_DEFS, type Sentiment, type Context } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
 import { weekDays as currentWeekDaysLocal } from "@/lib/date";
 import { weekLabel, type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weeklyCheckin";
 import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
-import NotificationModal, { type NotificationState } from "@/app/components/NotificationModal";
-import SurveyModal from "@/app/components/SurveyModal";
 import { PrepLiftGallery, CoachMeetDashboard } from "@/app/components/MeetDayMode";
 import { CoachMeetHistory } from "@/app/components/PostCompReflection";
 
 import {
-  type Flag, type Trend, type EntryRow, type SatRow, type AcsiRow, type CsaiRow,
-  type DasRow, type AthleteRaw, type CoachProfile, type Client,
-  weekAgo, computeClient, FLAG_CONFIG, TREND_ICON, TREND_COLOR,
+  type Flag, type Trend, type EntryRow, type AthleteRaw, type CoachProfile, type Client,
+  computeClient, FLAG_CONFIG, TREND_ICON, TREND_COLOR,
 } from "./model";
 import { computeSentimentTrajectory, timeSince, extractTopics, sortClients, type TFn, type SortKey } from "./helpers";
 
@@ -280,15 +277,41 @@ function CheckinFeedbackPanel({
   const [recording, setRecording] = React.useState(false);
   const [mediaRec, setMediaRec] = React.useState<MediaRecorder | null>(null);
   const chunksRef = React.useRef<Blob[]>([]);
+  const mediaRecRef = React.useRef<MediaRecorder | null>(null);
+  const streamRef = React.useRef<MediaStream | null>(null);
+
+  // Release the mic + recorder on unmount even if the coach closes the
+  // feedback editor (or the athlete card re-renders it away) mid-recording.
+  // Handlers are detached first so a late `onstop` can't fire a network
+  // request / setState against an unmounted component, and stream tracks
+  // are stopped unconditionally rather than relying on `onstop` to do it.
+  React.useEffect(() => {
+    return () => {
+      const mr = mediaRecRef.current;
+      if (mr) {
+        mr.ondataavailable = null;
+        mr.onstop = null;
+        if (mr.state !== "inactive") {
+          try { mr.stop(); } catch { /* already stopped */ }
+        }
+      }
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+      mediaRecRef.current = null;
+    };
+  }, []);
 
   async function startRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       const mr = new MediaRecorder(stream);
+      mediaRecRef.current = mr;
       chunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       mr.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const fd = new FormData();
         fd.append("audio", blob, "voice.webm");
@@ -2714,80 +2737,6 @@ function MobileAthleteSheet({
   );
 }
 
-// ── Roster summary bar ─────────────────────────────────────────────────────────
-
-function RosterSummary({ clients }: { clients: Client[] }) {
-  const { t } = useT();
-  const attention    = clients.filter((c) => c.flag === "attention").length;
-  const monitor      = clients.filter((c) => c.flag === "monitor").length;
-  const stable       = clients.filter((c) => c.flag === "stable").length;
-  const avgPositive  = clients.length
-    ? Math.round(clients.reduce((s, c) => s + c.positiveRate, 0) / clients.length)
-    : 0;
-
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
-      <SummaryTile value={String(clients.length)}  label={t("coach.athletes")}    color="text-zinc-100"     />
-      <SummaryTile value={String(attention)}        label={t("coach.attention")}   color="text-rose-300"    dot="bg-rose-400"    />
-      <SummaryTile value={String(monitor)}          label={t("coach.monitor")}     color="text-amber-300"   dot="bg-amber-400"   />
-      <SummaryTile value={String(stable)}           label={t("coach.onTrack")}     color="text-emerald-300" dot="bg-emerald-400" />
-      <SummaryTile value={`${avgPositive}%`}        label={t("coach.avgPositive7d")} color="text-purple-300"  />
-    </div>
-  );
-}
-
-function SummaryTile({ value, label, color, dot }: { value: string; label: string; color: string; dot?: string }) {
-  return (
-    <div className="rounded-2xl border border-white/6 bg-surface-alt p-4 text-center">
-      <div className="flex items-center justify-center gap-1.5">
-        {dot && <div className={`w-2 h-2 rounded-full ${dot}`} />}
-        <p className={`font-saira text-2xl font-extrabold ${color}`}>{value}</p>
-      </div>
-      <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-400 mt-1">{label}</p>
-    </div>
-  );
-}
-
-// ── Attention alerts banner ────────────────────────────────────────────────────
-
-function AttentionBanner({ attentionAthletes }: { attentionAthletes: Client[] }) {
-  const { t } = useT();
-  if (!attentionAthletes.length) return null;
-  const n = attentionAthletes.length;
-  const bannerLabel = n > 1
-    ? t("coach.athletesNeedAttentionPlural").replace("{n}", String(n))
-    : t("coach.athletesNeedAttention").replace("{n}", String(n));
-  return (
-    <div className="mb-6 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-rose-400">&#9888;</span>
-        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-rose-300">
-          {bannerLabel}
-        </p>
-      </div>
-      <div className="flex flex-col gap-2">
-        {attentionAthletes.map((a) => (
-          <div key={a.id} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center text-[10px] text-rose-300 font-saira font-bold">
-                {a.displayName[0]}
-              </span>
-              <span className="font-saira text-xs text-zinc-300">{a.displayName}</span>
-              <span className="font-saira text-[10px] text-rose-400">{t("coach.athletePositiveEntries").replace("{pct}", String(a.positiveRate)).replace("{n}", String(a.entries7d))}</span>
-            </div>
-            <a
-              href={`mailto:?subject=Checking in — ${a.displayName}&body=Hi ${a.displayName.split(" ")[0]},%0A%0AI noticed you've had a tough week. Wanted to check in — how are you doing?%0A%0ABest`}
-              className="font-saira text-[10px] uppercase tracking-[0.14em] text-rose-400 border border-rose-500/20 rounded-lg px-3 py-1 hover:bg-rose-500/10 transition"
-            >
-              {t("coach.emailBtn")}
-            </a>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ── Coach billing card ─────────────────────────────────────────────────────────
 
 function CoachBillingCard({
@@ -2901,49 +2850,6 @@ function InvitePanel({ coachCode }: { coachCode: string }) {
   );
 }
 
-// ── Coach header ───────────────────────────────────────────────────────────────
-
-function CoachHeader({ profile }: { profile: CoachProfile }) {
-  const { t } = useT();
-  return (
-    <div className="mb-6 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
-        {profile.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={profile.avatar_url}
-            alt={profile.display_name}
-            className="w-8 h-8 rounded-full border border-white/10"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-saira text-xs font-bold text-purple-300">
-            {profile.display_name.slice(0, 1).toUpperCase()}
-          </div>
-        )}
-        <div>
-          <p className="font-saira text-xs font-semibold text-zinc-200">{profile.display_name}</p>
-          <p className="font-saira text-[10px] text-zinc-400">{t("coach.roleCoach")}</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-4">
-        <LanguageSwitcher compact />
-        <Link
-          href="/guide"
-          className="font-saira text-[10px] text-zinc-300 hover:text-purple-300 transition"
-        >
-          {t("coach.guideLink")}
-        </Link>
-        <a
-          href="/auth/sign-out"
-          className="font-saira text-[10px] text-zinc-500 hover:text-zinc-400 transition underline underline-offset-2"
-        >
-          {t("coach.signOut")}
-        </a>
-      </div>
-    </div>
-  );
-}
-
 // ── Sort helpers ───────────────────────────────────────────────────────────────
 
 
@@ -2980,14 +2886,12 @@ function CoachHomePanel({
   profile,
   attentionCount,
   noCheckinCount,
-  silentCount,
   onSelect,
 }: {
   clients: Client[];
   profile: CoachProfile | null;
   attentionCount: number;
   noCheckinCount: number;
-  silentCount: number;
   onSelect: (id: string) => void;
 }) {
   const hour = new Date().getHours();
@@ -3285,33 +3189,38 @@ export default function CoachPage() {
   // Mobile: selected athlete for bottom sheet
   const [mobileSelectedId, setMobileSelectedId] = React.useState<string | null>(null);
 
-  // What's New / broadcast modal
-  const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
+  // Product owner's own coach account — suppresses the billing card (see
+  // CoachBillingCard call site below). /api/me already returns `email`
+  // (not on the CoachProfile type, hence CoachProfileMeta below); comparing
+  // it against NEXT_PUBLIC_ADMIN_EMAIL avoids adding a new endpoint or
+  // touching app/api/**, which are outside this component's ownership.
+  // Requires NEXT_PUBLIC_ADMIN_EMAIL to be set (mirroring the server-only
+  // ADMIN_EMAIL used by lib/adminAuth.ts) — until it is, this simply
+  // stays false and every coach sees the card as before.
+  const [isAdmin, setIsAdmin] = React.useState(false);
 
   React.useEffect(() => {
     (async () => {
       try {
-        const [profileRes, athletesRes, notesRes, notifRes] = await Promise.all([
+        const [profileRes, athletesRes, notesRes] = await Promise.all([
           fetch("/api/me"),
           fetch("/api/coach/athletes"),
           fetch("/api/coach/notes"),
-          fetch("/api/notifications"),
         ]);
-
-        if (notifRes.ok) {
-          const notifData = await notifRes.json();
-          if (notifData?.broadcast || notifData?.devlogNew) {
-            setNotifications(notifData as NotificationState);
-          }
-        }
 
         if (!profileRes.ok || !athletesRes.ok) {
           setError(t("coach.errorLoad"));
           return;
         }
 
-        const prof: CoachProfile = await profileRes.json();
-        if ((prof as any).coach_status === "pending") {
+        // /api/me returns more than the CoachProfile type declares (e.g.
+        // coach_status, email) — a typed extension instead of `as any`.
+        type CoachProfileMeta = CoachProfile & {
+          coach_status?: string | null;
+          email?: string | null;
+        };
+        const prof: CoachProfileMeta = await profileRes.json();
+        if (prof.coach_status === "pending") {
           router.replace("/coach/pending");
           return;
         }
@@ -3319,6 +3228,10 @@ export default function CoachPage() {
           setError(t("coach.errorCoachOnly"));
           return;
         }
+
+        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
+        const coachEmail = prof.email?.toLowerCase().trim();
+        setIsAdmin(!!adminEmail && !!coachEmail && coachEmail === adminEmail);
 
         const athletes: AthleteRaw[] = await athletesRes.json();
         const computed = athletes.map(computeClient);
@@ -3377,6 +3290,18 @@ export default function CoachPage() {
         setNotesSaving((prev) => ({ ...prev, [athleteId]: false }));
       }
     }, 1500);
+  }, []);
+
+  // Clear every pending debounced note-save timer on unmount so leaving the
+  // dashboard with in-flight edits doesn't fire stray PUT requests / setState
+  // calls against an unmounted tree.
+  React.useEffect(() => {
+    return () => {
+      for (const timer of Object.values(noteTimers.current)) {
+        clearTimeout(timer);
+      }
+      noteTimers.current = {};
+    };
   }, []);
 
   const handleFeedbackSaved = React.useCallback((
@@ -3442,7 +3367,7 @@ export default function CoachPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-base flex items-center justify-center">
+      <div className="flex items-center justify-center py-24">
         <div className="w-5 h-5 rounded-full border-2 border-purple-500/40 border-t-purple-400 animate-spin" />
       </div>
     );
@@ -3450,16 +3375,14 @@ export default function CoachPage() {
 
   return (
     <div className="relative bg-surface-base text-white">
-      {/* Periodic feedback survey */}
-      <SurveyModal />
-
-      {/* What's New / broadcast modal */}
-      {notifications && (
-        <NotificationModal
-          state={notifications}
-          onDone={() => setNotifications(null)}
-        />
-      )}
+      {/* NOTE: the periodic feedback survey and What's New / broadcast modal
+          used to be duplicated here (on top of AppShell's own single
+          instances). Two BottomSheet-based modals stacking at the same
+          z-index each ran the position:fixed body-scroll lock, and the
+          second one reading window.scrollY while the body was already
+          frozen (reads 0) is what bounced the coach to the top of the
+          roster whenever either modal closed. Removed — AppShell already
+          renders both for every route. */}
 
       {/* Background gradient */}
       <div className="pointer-events-none fixed inset-0 z-0">
@@ -3467,7 +3390,11 @@ export default function CoachPage() {
       </div>
 
       {/* ══ MOBILE HOME view ══════════════════════════════════════════════════ */}
-      <div className="md:hidden relative z-10 min-h-screen pt-16 pb-24">
+      {/* AppShell's <main> already applies pt-20 (mobile header) and
+          pb-[calc(4rem+safe-bottom)] (TabBar) — re-adding pt-16 pb-24 plus
+          min-h-screen here doubled the shell chrome and forced an extra
+          ~80px of phantom scroll on every page, even when empty. */}
+      <div className="md:hidden relative z-10">
         <div className="mx-auto max-w-lg px-4">
 
           {/* Header */}
@@ -3480,9 +3407,12 @@ export default function CoachPage() {
             </h1>
           </div>
 
-          {/* Invite / billing when no athletes yet */}
+          {/* Invite / billing when no athletes yet — billing is suppressed
+              entirely for the product owner's own admin account. */}
           {profile?.coach_code && clients.length === 0 && <InvitePanel coachCode={profile.coach_code} />}
-          <CoachBillingCard athleteCount={clients.length} hasSubscription={!!profile?.stripe_coach_sub_id} />
+          {!isAdmin && (
+            <CoachBillingCard athleteCount={clients.length} hasSubscription={!!profile?.stripe_coach_sub_id} />
+          )}
 
           {/* ── Summary strip ── */}
           {clients.length > 0 && (
@@ -3610,7 +3540,13 @@ export default function CoachPage() {
       </div>
 
       {/* ══ DESKTOP two-panel layout ════════════════════════════════════════════ */}
-      <div className="hidden md:flex h-screen relative z-10 overflow-hidden">
+      {/* h-screen (100vh) would overflow by the top safe-area inset now that
+          AppShell's root wrapper adds pt-[env(safe-area-inset-top)] ahead of
+          this — the fixed-height split view's bottom edge would sit that
+          many px below the visible viewport. dvh also tracks the real
+          (small) viewport under a visible mobile browser chrome, though this
+          panel itself is desktop-only (hidden below md). */}
+      <div className="hidden md:flex h-[calc(100dvh_-_env(safe-area-inset-top))] relative z-10 overflow-hidden">
 
         {/* ── Left panel: roster sidebar ── */}
         <aside className="w-80 flex-shrink-0 border-r border-white/6 flex flex-col h-full bg-surface-panel/90 overflow-hidden">
@@ -3904,7 +3840,6 @@ export default function CoachPage() {
               profile={profile}
               attentionCount={attentionAthletes.length}
               noCheckinCount={noCheckinThisWeek}
-              silentCount={silentThisWeek}
               onSelect={(id) => setSelectedId(id)}
             />
           )}

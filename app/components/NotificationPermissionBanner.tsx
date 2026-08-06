@@ -88,9 +88,15 @@ export default function NotificationPermissionBanner({ variant = "athlete" }: Pr
       role="alertdialog"
       aria-live="polite"
       className={[
-        // Mobile: fixed above the tab bar; Desktop: floating card bottom-right
-        "fixed z-40",
-        "bottom-[calc(4rem+env(safe-area-inset-bottom)+0.5rem)] inset-x-3",
+        // Mobile: a normal-flow row at the end of the page content. It used to be
+        // `position: fixed` above the tab bar, which painted it on top of whatever
+        // was underneath — the roster, the Rest Day button, an open athlete sheet —
+        // covering controls the user was trying to tap. In flow it can never
+        // occlude anything.
+        // Desktop: still a floating card bottom-right, where there is room for it
+        // and nothing to cover.
+        "relative mx-3 mb-3 mt-4",
+        "md:fixed md:z-40 md:mx-0 md:mb-0 md:mt-0",
         "md:bottom-6 md:inset-x-auto md:right-6 md:left-auto md:w-80",
         // Card styles
         "rounded-2xl border border-purple-500/25 bg-surface-panel/95 backdrop-blur-md",

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Saira } from "next/font/google";
 import "./globals.css";
 import NavBar from "./components/NavBar";
@@ -42,6 +42,16 @@ export const metadata: Metadata = {
   other: {
     "mobile-web-app-capable": "yes",
   },
+};
+
+// viewport-fit=cover is required for env(safe-area-inset-*) to resolve to
+// anything other than 0px on iOS — without it every safe-area padding in
+// AppShell/TabBar/BottomSheet is dead code and the installed PWA draws the
+// header under the notch / TabBar under the home indicator.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
