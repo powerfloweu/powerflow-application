@@ -32,9 +32,17 @@ export default function VideoUpload({
   );
   const inputRef = React.useRef<HTMLInputElement>(null);
   const pollRef = React.useRef<NodeJS.Timeout | null>(null);
+  // Checked after every await in the upload/poll chain so an unmount landing
+  // mid-await doesn't let the async continuation re-arm a new timer or call
+  // setState / onUploadComplete against an unmounted component.
+  const cancelledRef = React.useRef(false);
 
   React.useEffect(() => {
-    return () => { if (pollRef.current) clearTimeout(pollRef.current); };
+    cancelledRef.current = false;
+    return () => {
+      cancelledRef.current = true;
+      if (pollRef.current) { clearTimeout(pollRef.current); pollRef.current = null; }
+    };
   }, []);
 
   async function handleFile(file: File) {
@@ -44,10 +52,14 @@ export default function VideoUpload({
     let uploadUrl: string;
     try {
       const res = await fetch("/api/mux/upload", { method: "POST" });
+      if (cancelledRef.current) return;
       if (!res.ok) throw new Error("Failed to create upload");
       ({ uploadId, uploadUrl } = await res.json());
+      if (cancelledRef.current) return;
     } catch {
-      setState({ status: "error", message: "Could not start upload. Try again." });
+      if (!cancelledRef.current) {
+        setState({ status: "error", message: "Could not start upload. Try again." });
+      }
       return;
     }
 
@@ -55,7 +67,7 @@ export default function VideoUpload({
     const uploadOk = await new Promise<boolean>((resolve) => {
       const xhr = new XMLHttpRequest();
       xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
+        if (e.lengthComputable && !cancelledRef.current) {
           setState({ status: "uploading", progress: Math.round((e.loaded / e.total) * 100) });
         }
       };
@@ -65,29 +77,50 @@ export default function VideoUpload({
       xhr.send(file);
     });
 
+    if (cancelledRef.current) return;
+
     if (!uploadOk) {
       setState({ status: "error", message: "Upload failed. Check your connection and try again." });
       return;
     }
 
-    // Poll until asset is ready
+    // Poll until asset is ready. Capped attempts + gentle backoff so a stuck
+    // Mux asset can't poll forever, and cancelledRef stops the chain dead if
+    // the component unmounts while a poll's fetch is in flight (the async
+    // callback's cleanup would otherwise race an already-fired timer handle
+    // and re-arm a new one after unmount).
     setState({ status: "processing" });
+    const MAX_ATTEMPTS = 40;
+    let attempt = 0;
+
     function poll() {
+      if (cancelledRef.current) return;
+      attempt += 1;
+      const delay = Math.min(2500 + attempt * 250, 8000); // backoff, capped at 8s
       pollRef.current = setTimeout(async () => {
+        if (cancelledRef.current) return;
         try {
           const r = await fetch(`/api/mux/upload?upload_id=${uploadId}`).then(res => res.ok ? res.json() : null);
+          if (cancelledRef.current) return;
           if (r?.playbackId) {
             setState({ status: "ready", playbackId: r.playbackId });
             onUploadComplete(r.playbackId);
           } else if (r?.status === "error") {
             setState({ status: "error", message: "Video processing failed." });
+          } else if (attempt >= MAX_ATTEMPTS) {
+            setState({ status: "error", message: "Video is taking longer than expected to process. Please try again shortly." });
           } else {
             poll();
           }
         } catch {
-          poll();
+          if (cancelledRef.current) return;
+          if (attempt >= MAX_ATTEMPTS) {
+            setState({ status: "error", message: "Video is taking longer than expected to process. Please try again shortly." });
+          } else {
+            poll();
+          }
         }
-      }, 2500);
+      }, delay);
     }
     poll();
   }

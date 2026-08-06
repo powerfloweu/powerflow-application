@@ -64,8 +64,28 @@ export default function VoicePhotoCapture({ mode, onParsed, onProcessingChange }
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
   const finalTextRef   = React.useRef<string>("");
   const fileInputRef   = React.useRef<HTMLInputElement>(null);
+  const mountedRef      = React.useRef(true);
+
+  // Stop any live recognition and prevent post-unmount state updates. This
+  // component is swapped in/out when the athlete changes the journal date
+  // tab, so unmounting mid-recording is a normal-use case, not an edge case.
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      const r = recognitionRef.current;
+      if (r) {
+        r.onresult = null;
+        r.onerror = null;
+        r.onend = null;
+        try { r.stop(); } catch { /* already stopped */ }
+        recognitionRef.current = null;
+      }
+    };
+  }, []);
 
   const setStateAndNotify = React.useCallback((s: State) => {
+    if (!mountedRef.current) return;
     setState(s);
     onProcessingChange?.(s === "processing");
   }, [onProcessingChange]);
@@ -84,9 +104,11 @@ export default function VoicePhotoCapture({ mode, onParsed, onProcessingChange }
       });
       const data = await res.json() as Record<string, unknown>;
       if (!res.ok) throw new Error((data.error as string) ?? "Processing failed");
+      if (!mountedRef.current) return;
       onParsed(data as ParsedResult);
       setStateAndNotify("idle");
     } catch (err) {
+      if (!mountedRef.current) return;
       setError(err instanceof Error ? err.message : "Something went wrong");
       setStateAndNotify("idle");
     }
