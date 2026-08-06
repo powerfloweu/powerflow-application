@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbInsert, dbSelect } from "@/lib/supabaseAdmin";
+import { effectiveTier, hasAccess, type PlanTier } from "@/lib/plan";
+import { TOOL_MIN_TIER } from "@/lib/toolTiers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,15 +51,34 @@ export async function POST(req: NextRequest) {
   }
 
   // Verify the athlete actually belongs to this coach — otherwise a coach could
-  // forge suggestions for athletes they don't manage.
-  const owned = await dbSelect<{ id: string }>("profiles", {
-    select: "id",
+  // forge suggestions for athletes they don't manage. Also pull the tier fields
+  // so we can check the athlete can actually open what is being suggested.
+  const owned = await dbSelect<{
+    id: string;
+    plan_tier: PlanTier | null;
+    course_access: boolean | null;
+    test_access: boolean | null;
+    ai_access: boolean | null;
+  }>("profiles", {
+    select: "id,plan_tier,course_access,test_access,ai_access",
     id: `eq.${athlete_id}`,
     coach_id: `eq.${user.id}`,
     limit: "1",
   });
   if (!owned.length) {
     return NextResponse.json({ error: "athlete not found or not under this coach" }, { status: 404 });
+  }
+
+  // Don't let a coach suggest a tool the athlete cannot open. The suggestion
+  // renders as a card on their Today page linking straight into the library,
+  // so an above-tier suggestion produces a card whose link goes nowhere.
+  const athleteTier = effectiveTier(owned[0]);
+  const requiredTier = TOOL_MIN_TIER[tool_id];
+  if (!hasAccess(athleteTier, requiredTier)) {
+    return NextResponse.json(
+      { error: "athlete's plan does not include this tool", requiredTier },
+      { status: 409 },
+    );
   }
 
   const row = await dbInsert("tool_suggestions", {
