@@ -4,12 +4,14 @@
  * Body: { tool_id: string }
  */
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbInsert } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  if (!isConfigured) return NextResponse.json({ error: "Not configured" }, { status: 503 });
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

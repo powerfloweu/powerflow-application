@@ -37,13 +37,30 @@ export async function POST(req: NextRequest) {
   if (!rawText || typeof rawText !== "string") {
     return NextResponse.json({ error: "text is required" }, { status: 400 });
   }
-  // ElevenLabs streaming endpoint has a ~2500-char limit per request.
-  const text = rawText.slice(0, 2500);
+  // ElevenLabs streaming endpoint has a ~2500-char limit per request. Coach-AI
+  // scripts routinely exceed this — reject explicitly instead of silently
+  // truncating, which used to produce audio that just stopped mid-sentence
+  // with no indication anything was cut.
+  if (rawText.length > 2500) {
+    return NextResponse.json(
+      { error: "This script is too long to read aloud — please shorten it and try again." },
+      { status: 413 },
+    );
+  }
+  const text = rawText;
 
   const voiceId =
     bodyVoiceId ??
     process.env.ELEVENLABS_VOICE_ID ??
     "pMsXgVXv3BLzUgSXRplE"; // Adam (default)
+
+  // ElevenLabs voice IDs are alphanumeric, ~20 chars. bodyVoiceId is
+  // client-supplied (either one of the fixed Coach AI voices or a coach's
+  // cloned voice ID stored in profiles.tts_voice_id) — validate it before
+  // interpolating into the request URL rather than trusting it outright.
+  if (!/^[a-zA-Z0-9]{16,32}$/.test(voiceId)) {
+    return NextResponse.json({ error: "Invalid voice ID" }, { status: 400 });
+  }
 
   const response = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,

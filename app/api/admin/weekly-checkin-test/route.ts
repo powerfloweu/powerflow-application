@@ -12,18 +12,16 @@ import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
 import { isoWeekYear } from "@/lib/weeklyCheckin";
 import { mondayOfWeek } from "@/lib/date";
 import type { WeeklyCheckin } from "@/lib/weeklyCheckin";
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "trainer.pod@gmail.com";
+import { requireAdmin } from "@/lib/adminAuth";
 
 export async function POST(req: NextRequest) {
   if (!isConfigured) return NextResponse.json({ error: "Not configured" }, { status: 503 });
 
+  if (!(await requireAdmin())) return NextResponse.json({ error: "Admin only" }, { status: 403 });
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const isAdmin = (user.email ?? "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
-  if (!isAdmin) return NextResponse.json({ error: "Admin only" }, { status: 403 });
 
   let body: { userId?: string; forceModal?: boolean } = {};
   try { body = await req.json(); } catch { /* no body is fine */ }

@@ -29,6 +29,7 @@ import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
 import Anthropic from "@anthropic-ai/sdk";
 import { COURSE_WEEKS, type CoursePlan } from "@/lib/course";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -241,6 +242,9 @@ export async function POST() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rl = await rateLimit(`course-generate-plan:${user.id}`, { limit: 5, windowSec: 60 });
+  if (!rl.ok) return rateLimitResponse(rl);
 
   // Fetch profile
   const profileRows = await dbSelect<ProfileRow>("profiles", {

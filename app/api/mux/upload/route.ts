@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Mux from "@mux/mux-node";
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 export const runtime = "nodejs";
 
 const mux = new Mux({
@@ -23,6 +24,10 @@ async function getUserId(): Promise<string | null> {
 export async function POST() {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Each call creates a billable Mux direct upload — keep the ceiling low.
+  const rl = await rateLimit(`mux-upload:${userId}`, { limit: 10, windowSec: 600 });
+  if (!rl.ok) return rateLimitResponse(rl);
 
   const upload = await mux.video.uploads.create({
     cors_origin: process.env.NEXT_PUBLIC_APP_URL ?? "*",

@@ -19,10 +19,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient, isConfigured } from "@/lib/supabase/server";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
+
+// Claude Vision rejects images over ~5MB anyway — cap uploads here so we
+// never pay for reading a huge file into memory just to have the model call fail.
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 // ─── Claude Vision OCR ───────────────────────────────────────────────────────
 
@@ -145,6 +150,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // This calls Claude Opus Vision (+ a follow-up Haiku call) per request —
+  // meaningfully more expensive than a chat message, so keep the ceiling low.
+  const rl = await rateLimit(`parse-entry:${user.id}`, { limit: 10, windowSec: 60 });
+  if (!rl.ok) return rateLimitResponse(rl);
+
   const contentType = req.headers.get("content-type") ?? "";
 
   // ── Path A: JSON body (voice transcript from Web Speech API) ────────────────
@@ -174,10 +184,7 @@ export async function POST(req: NextRequest) {
       }
     } catch (err) {
       console.error("[parse-entry] Parse error:", err);
-      return NextResponse.json(
-        { error: err instanceof Error ? err.message : "Parsing failed" },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: "Parsing failed — please try again" }, { status: 500 });
     }
   }
 
@@ -202,16 +209,19 @@ export async function POST(req: NextRequest) {
   if (fileType !== "image") {
     return NextResponse.json({ error: "fileType must be 'image'" }, { status: 400 });
   }
+  if (file.size > MAX_IMAGE_BYTES) {
+    return NextResponse.json(
+      { error: `Image too large — max ${Math.floor(MAX_IMAGE_BYTES / (1024 * 1024))}MB` },
+      { status: 413 },
+    );
+  }
 
   let rawText: string;
   try {
     rawText = await ocrImage(file);
   } catch (err) {
     console.error("[parse-entry] OCR error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "OCR failed" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "OCR failed — please try again" }, { status: 500 });
   }
 
   if (!rawText.trim()) {

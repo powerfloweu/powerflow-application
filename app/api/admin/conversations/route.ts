@@ -5,14 +5,13 @@
  * GET /api/admin/conversations?athlete_id=<uuid>
  *   → full message thread for that athlete
  *
- * Accessible to coaches and the admin email.
+ * Admin only (requireAdmin()).
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, isConfigured } from "@/lib/supabase/server";
+import { isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "trainer.pod@gmail.com";
+import { requireAdmin } from "@/lib/adminAuth";
 
 type MessageRow = { id: string; user_id: string; role: string; content: string; created_at: string };
 type ProfileRow = { id: string; display_name: string; role: string };
@@ -30,19 +29,7 @@ type SummaryRow = {
 export async function GET(req: NextRequest) {
   if (!isConfigured) return NextResponse.json({ error: "Not configured" }, { status: 503 });
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  // Verify coach or admin — email lives in auth.users, not profiles
-  const isAdmin = (user.email ?? "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
-  const me = await dbSelect<ProfileRow>("profiles", {
-    id: `eq.${user.id}`,
-    select: "id,role",
-    limit: "1",
-  });
-  const myProfile = me[0];
-  if (!myProfile || (!isAdmin && myProfile.role !== "coach")) {
+  if (!(await requireAdmin())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -59,7 +59,8 @@ export async function GET() {
 
   if (!mgmtRes.ok) {
     const err = await mgmtRes.text().catch(() => "");
-    return NextResponse.json({ ok: false, error: err }, { status: 500 });
+    console.error("[migrate-checkin-feedback] Management API error", mgmtRes.status, err);
+    return NextResponse.json({ ok: false, error: "Migration failed — see server logs" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, message: "checkin_feedback table created." });

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
-// Make.com webhook that receives coaching applications. Set in env; falls back
-// to the historical URL so existing deployments keep working until the env var
-// is configured (rotate the Make.com scenario and drop the fallback afterwards).
-const WEBHOOK_URL =
-  process.env.APPLY_WEBHOOK_URL ??
-  "https://hook.eu1.make.com/afdi7p5rw9trr6242r4d52cllvzsmksm";
+// Make.com webhook that receives coaching applications. Must be set in env —
+// the literal URL that used to live here as a fallback is in git history and
+// must be treated as compromised: the operator needs to rotate the Make.com
+// scenario (regenerate its webhook URL) and set the new one as
+// APPLY_WEBHOOK_URL before this route will accept submissions again.
+const WEBHOOK_URL = process.env.APPLY_WEBHOOK_URL ?? "";
 const REQUIRED_FIELDS = [
   "fullName",
   "email",
@@ -17,6 +18,16 @@ const REQUIRED_FIELDS = [
 ];
 
 export async function POST(req: NextRequest) {
+  if (!WEBHOOK_URL) {
+    console.error("[apply] APPLY_WEBHOOK_URL is not set — rejecting submission");
+    return NextResponse.json({ error: "Applications are temporarily unavailable." }, { status: 503 });
+  }
+
+  // Public, unauthenticated route — rate limit by IP.
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rl = await rateLimit(`apply:${ip}`, { limit: 5, windowSec: 300 });
+  if (!rl.ok) return rateLimitResponse(rl);
+
   let data;
   try {
     data = await req.json();

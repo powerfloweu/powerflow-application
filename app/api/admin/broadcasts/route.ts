@@ -133,8 +133,11 @@ export async function POST(req: NextRequest) {
   const saved = rows[0] as BroadcastRow;
 
   // ── Send push notification to all matching subscribers ─────────────────────
-  // Fire-and-forget — don't let push failures block the 201 response.
-  sendBroadcastPush(saved).catch((err) =>
+  // Awaited — on Vercel the lambda can freeze the instant the response is
+  // sent, which would truncate the fan-out mid-flight and skip cleanup of
+  // expired subscriptions. A push failure here doesn't fail the request
+  // (broadcast is already saved); it's just no longer fire-and-forget.
+  await sendBroadcastPush(saved).catch((err) =>
     console.error("[broadcasts] push error:", err),
   );
 
