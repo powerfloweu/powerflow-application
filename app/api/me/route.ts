@@ -144,10 +144,19 @@ export async function GET() {
     coach_journal_prompt_labels = settingsRows[0]?.journal_prompt_labels ?? null;
   }
 
+  // Whether this user is the app owner. Computed here rather than shipped to the
+  // client as NEXT_PUBLIC_ADMIN_EMAIL so the admin address stays out of the
+  // browser bundle. Used only for presentation (e.g. the coach dashboard hides
+  // its billing prompt for the owner) — never as an authorisation signal, which
+  // always goes through requireAdmin() server-side.
+  const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
+  const isAdmin = !!adminEmail && (user.email ?? "").toLowerCase().trim() === adminEmail;
+
   // Normalise: mental_goals may come back as null from DB
   return NextResponse.json({
     ...row,
     email: user.email ?? null,
+    is_admin: isAdmin,
     mental_goals: row.mental_goals ?? [],
     plan_tier: planTier,
     coach_tts_voice_id,
