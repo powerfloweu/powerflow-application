@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbPatch, dbInsert } from "@/lib/supabaseAdmin";
 import { syncCoachQuantity } from "@/lib/coachBilling";
+import { effectiveTier, canAccessPR } from "@/lib/plan";
 import type { AthleteProfile } from "@/lib/athlete";
 
 const SELECT_COLS = [
@@ -114,12 +115,11 @@ export async function GET() {
   }
 
   const row = rows[0];
-  // plan_tier may be absent if PostgREST schema cache hasn't picked up the new
-  // column yet. Fall back to inferring from legacy access flags so the UI works
-  // immediately; once the cache refreshes (project pause/resume) the real DB
-  // value takes over automatically.
-  const rawTier = (row as Record<string, unknown>).plan_tier as string | undefined;
-  const planTier: string = rawTier ?? (row.course_access || row.ai_access ? "pr" : "opener");
+  // Always fold admin-granted override flags (course_access / test_access /
+  // ai_access) into the tier we report — this is also a safety net for
+  // plan_tier being absent if PostgREST's schema cache hasn't picked up the
+  // column yet (falls back to "opener" + overrides in that case).
+  const planTier: string = effectiveTier(row);
 
   // If athlete has a coach, look up:
   //   1. The coach's cloned TTS voice ID (cheap indexed PK lookup)
@@ -207,14 +207,22 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  // Guard: journal_prompt_labels only for PR-tier athletes
+  // Guard: journal_prompt_labels only for PR-tier athletes (base tier OR an
+  // admin-granted override flag that folds up to "pr" — same helper GET uses,
+  // so an athlete granted course_access/ai_access can't have their save
+  // silently discarded here while the UI (which reads GET) shows the editor).
   if ("journal_prompt_labels" in patch) {
-    const profileRows = await dbSelect<{ plan_tier: string | null }>("profiles", {
+    const profileRows = await dbSelect<{
+      plan_tier: string | null;
+      course_access: boolean | null;
+      test_access: boolean | null;
+      ai_access: boolean | null;
+    }>("profiles", {
       id: `eq.${user.id}`,
-      select: "plan_tier",
+      select: "plan_tier,course_access,test_access,ai_access",
     });
-    const tier = profileRows[0]?.plan_tier ?? "opener";
-    if (tier !== "pr") {
+    const tier = profileRows[0] ? effectiveTier(profileRows[0]) : "opener";
+    if (!canAccessPR(tier)) {
       delete patch.journal_prompt_labels;
     } else {
       // Sanitise: must be an array, max 5 non-empty strings

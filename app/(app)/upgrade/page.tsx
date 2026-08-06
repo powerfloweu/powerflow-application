@@ -3,7 +3,7 @@
 import React, { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { type PlanTier } from "@/lib/plan";
+import { type PlanTier, effectiveTier } from "@/lib/plan";
 import { type BillingPeriod, TIER_PERIODS, PERIOD_LABELS, PERIOD_SAVINGS, PERIOD_PRICES } from "@/lib/stripePricing";
 import { useT } from "@/lib/i18n";
 
@@ -79,7 +79,10 @@ function UpgradePageInner() {
       .then((r) => r.ok ? r.json() : null)
       .then((p) => {
         if (!p) return;
-        if (p.plan_tier) setCurrent(p.plan_tier as PlanTier);
+        // Fold in admin-granted override flags (course_access / ai_access /
+        // test_access) so an athlete who already has access via a grant isn't
+        // shown as "Opener" and invited to buy a tier they already have.
+        setCurrent(effectiveTier(p));
         // coaches pay like athletes — no automatic tier elevation
         setHasSubscription(!!p.stripe_subscription_id);
       })

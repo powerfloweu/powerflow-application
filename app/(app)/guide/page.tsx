@@ -256,6 +256,8 @@ export default function GuidePage() {
   const [role, setRole] = React.useState<"athlete" | "coach" | null>(null);
   const [name, setName] = React.useState("");
   const [locale, setLocale] = React.useState("en");
+  const [loadError, setLoadError] = React.useState(false);
+  const [reloadKey, setReloadKey] = React.useState(0);
 
   React.useEffect(() => {
     const stored = localStorage.getItem("powerflow.locale");
@@ -263,18 +265,24 @@ export default function GuidePage() {
   }, []);
 
   React.useEffect(() => {
-    fetch("/api/me")
-      .then((r) => {
-        if (r.status === 401) { router.replace("/auth/sign-in"); return null; }
-        return r.json();
-      })
-      .then((p: AthleteProfile | null) => {
-        if (!p) return;
+    let cancelled = false;
+    setLoadError(false);
+    (async () => {
+      try {
+        const r = await fetch("/api/me");
+        if (r.status === 401) { router.replace("/auth/sign-in"); return; }
+        if (!r.ok) throw new Error(`me ${r.status}`);
+        const p: AthleteProfile | null = await r.json();
+        if (cancelled || !p) return;
         setRole(p.role);
         setName(p.display_name?.split(" ")[0] ?? "");
-      })
-      .catch((err) => console.error("[page] async operation failed", err));
-  }, [router]);
+      } catch (err) {
+        console.error("[page] async operation failed", err);
+        if (!cancelled) setLoadError(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [router, reloadKey]);
 
   const base = role === "coach" ? "/guide/coach" : "/guide/athlete";
   const pdfHref = locale !== "en" ? `${base}?lang=${locale}` : base;
@@ -360,7 +368,18 @@ export default function GuidePage() {
       )}
 
       {/* Role-specific guide */}
-      {role === null ? (
+      {loadError ? (
+        <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <p className="font-saira text-xs text-zinc-400">Could not load the guide.</p>
+          <button
+            type="button"
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="rounded-full bg-purple-500 hover:bg-purple-400 px-5 py-2 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition"
+          >
+            {t("common.retry")}
+          </button>
+        </div>
+      ) : role === null ? (
         <div className="flex justify-center py-16">
           <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
         </div>

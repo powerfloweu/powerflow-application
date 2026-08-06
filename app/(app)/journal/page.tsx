@@ -21,9 +21,10 @@ import {
 import { ymdLocal } from "@/lib/date";
 import { DateTabs, offsetDate } from "@/app/components/DateTabs";
 import { useT } from "@/lib/i18n";
-import WeeklyCheckinModal from "@/app/components/WeeklyCheckinModal";
 import { weekLabel, type WeeklyCheckin } from "@/lib/weeklyCheckin";
 import VoicePhotoCapture, { type ParsedResult } from "@/app/components/VoicePhotoCapture";
+import { useWeeklyCheckin } from "@/app/components/WeeklyCheckinContext";
+import { effectiveTier, canAccessPR } from "@/lib/plan";
 
 /** Map TRAINING_QUESTIONS keys to journal-dict translation keys */
 const TRAINING_QKEY: Record<string, string> = {
@@ -50,6 +51,8 @@ type UserProfile = {
   ai_access?: boolean;
   self_talk_mode?: string;
   plan_tier?: string;
+  course_access?: boolean;
+  test_access?: boolean;
   journal_prompt_labels?: string[] | null;
   coach_journal_prompt_labels?: string[] | null;
   coach_display_name?: string | null;
@@ -911,23 +914,29 @@ function UserHeader({ profile }: { profile: UserProfile }) {
 
 export default function JournalPage() {
   const { t, locale } = useT();
+  const { pendingCheckin, isMonthly: checkinIsMonthly, reopenCheckin } = useWeeklyCheckin();
   const [entries, setEntries]             = React.useState<JournalEntry[]>([]);
   const [allTraining, setAllTraining]     = React.useState<TrainingEntry[]>([]);
   const [profile, setProfile]             = React.useState<UserProfile | null>(null);
   const [todayTraining, setTodayTraining] = React.useState<TrainingEntry | null | undefined>(undefined);
   const [ready, setReady]                 = React.useState(false);
+  const [loadError, setLoadError]         = React.useState(false);
+  const [reloadKey, setReloadKey]         = React.useState(0);
   const [coachPromptDismissed, setCoachPromptDismissed] = React.useState(false);
   const [coachFeedback, setCoachFeedback] = React.useState<Record<string, CoachFeedbackItem>>({});
   // Custom journal prompt labels — updated locally after PromptCustomizer saves
   const [customPromptLabels, setCustomPromptLabels] = React.useState<string[] | null>(null);
 
   // ── Weekly check-ins ────────────────────────────────────────────────────────
+  // The modal itself is NOT owned here — AppShell already renders the correct
+  // one (Weekly or Monthly) globally via WeeklyCheckinContext. This page only
+  // needs its own list of past check-ins + whether the window is open, and a
+  // CTA that re-opens AppShell's modal (see B2 note below).
   const [weeklyCheckins,    setWeeklyCheckins]    = React.useState<WeeklyCheckin[]>([]);
   const [checkinWindowOpen, setCheckinWindowOpen] = React.useState(false);
-  const [checkinSubmitted,  setCheckinSubmitted]  = React.useState(false);
-  const [checkinTarget,     setCheckinTarget]     = React.useState<{ week: number; year: number; weekStart: string } | null>(null);
-  const [showCheckinModal,  setShowCheckinModal]  = React.useState(false);
   const [expandedWeeks,     setExpandedWeeks]     = React.useState<Set<string>>(new Set());
+  const [pastDayError,      setPastDayError]      = React.useState<string | null>(null);
+  const [deleteError,       setDeleteError]       = React.useState<string | null>(null);
 
   // ── Date navigation ─────────────────────────────────────────────────────────
   const todayStr = React.useMemo(() => ymdLocal(), []);
@@ -957,12 +966,14 @@ export default function JournalPage() {
   const markPastDay = async (date: string, mode: "training" | "rest") => {
     if (pastDayMarking) return;
     setPastDayMarking(true);
+    setPastDayError(null);
     try {
-      await fetch("/api/training/entries", {
+      const res = await fetch("/api/training/entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ entry_date: date, is_training_day: mode === "training" }),
       });
+      if (!res.ok) throw new Error("Save failed");
       const newEntry: TrainingEntry = {
         id: `past-${date}`,
         user_id: "",
@@ -981,53 +992,69 @@ export default function JournalPage() {
         ...prev.filter((e) => e.entry_date !== date),
         newEntry,
       ]);
+    } catch {
+      setPastDayError(t("journal.saveFailed"));
     } finally {
       setPastDayMarking(false);
     }
   };
 
   React.useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const [profileRes, entriesRes, trainingRes, feedbackRes, checkinRes] = await Promise.all([
-        fetch("/api/me"),
-        fetch("/api/journal/entries"),
-        fetch("/api/training/entries?all=true"),
-        fetch("/api/journal/entry-feedback"),
-        fetch("/api/weekly-checkin"),
-      ]);
-      if (profileRes.ok) {
-        const p = await profileRes.json();
-        setProfile(p);
-        setCustomPromptLabels(p.journal_prompt_labels ?? null);
+      setLoadError(false);
+      try {
+        const [profileRes, entriesRes, trainingRes, feedbackRes, checkinRes] = await Promise.all([
+          fetch("/api/me"),
+          fetch("/api/journal/entries"),
+          fetch("/api/training/entries?all=true"),
+          fetch("/api/journal/entry-feedback"),
+          fetch("/api/weekly-checkin"),
+        ]);
+        if (cancelled) return;
+        if (profileRes.ok) {
+          const p = await profileRes.json();
+          setProfile(p);
+          setCustomPromptLabels(p.journal_prompt_labels ?? null);
+        }
+        if (entriesRes.ok) setEntries(await entriesRes.json());
+        if (trainingRes.ok) {
+          const all = (await trainingRes.json()) as TrainingEntry[];
+          setAllTraining(Array.isArray(all) ? all : []);
+          const today = ymdLocal();
+          const todayT = Array.isArray(all) ? all.find((e) => e.entry_date === today) : undefined;
+          setTodayTraining(todayT ?? null);
+        } else {
+          setTodayTraining(null);
+        }
+        if (feedbackRes.ok) {
+          setCoachFeedback(await feedbackRes.json());
+        }
+        if (checkinRes.ok) {
+          const data = await checkinRes.json();
+          setWeeklyCheckins(data.checkins ?? []);
+          setCheckinWindowOpen(data.windowOpen ?? false);
+        }
+      } catch (err) {
+        console.error("[journal] failed to load page data", err);
+        if (!cancelled) setLoadError(true);
+      } finally {
+        if (!cancelled) setReady(true);
       }
-      if (entriesRes.ok) setEntries(await entriesRes.json());
-      if (trainingRes.ok) {
-        const all = (await trainingRes.json()) as TrainingEntry[];
-        setAllTraining(Array.isArray(all) ? all : []);
-        const today = ymdLocal();
-        const todayT = Array.isArray(all) ? all.find((e) => e.entry_date === today) : undefined;
-        setTodayTraining(todayT ?? null);
-      } else {
-        setTodayTraining(null);
-      }
-      if (feedbackRes.ok) {
-        setCoachFeedback(await feedbackRes.json());
-      }
-      if (checkinRes.ok) {
-        const data = await checkinRes.json();
-        setWeeklyCheckins(data.checkins ?? []);
-        setCheckinWindowOpen(data.windowOpen ?? false);
-        setCheckinSubmitted(data.currentSubmitted ?? false);
-        setCheckinTarget(data.targetWeek ?? null);
-      }
-      setReady(true);
     })();
-  }, []);
+    return () => { cancelled = true; };
+  }, [reloadKey]);
 
   const handleAdd = (entry: JournalEntry) => setEntries((prev) => [entry, ...prev]);
   const handleDelete = async (id: string) => {
-    await fetch(`/api/journal/entries?id=${id}`, { method: "DELETE" });
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/journal/entries?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+    } catch {
+      setDeleteError(t("journal.saveFailed"));
+    }
   };
 
   // Merge journal entries + training logs into one unified feed
@@ -1059,7 +1086,25 @@ export default function JournalPage() {
     [profile?.coach_journal_prompt_labels, customPromptLabels],
   );
   const hasCoachPromptOverride = !!profile?.coach_journal_prompt_labels?.filter(Boolean).length;
-  const isPrTier = profile?.plan_tier === "pr";
+  const isPrTier = canAccessPR(effectiveTier(profile ?? {}));
+
+  if (ready && loadError) {
+    return (
+      <div className="min-h-screen bg-surface-base px-4 pt-10 pb-8 sm:px-6 flex items-center justify-center">
+        <div className="max-w-sm w-full rounded-3xl border border-white/8 bg-surface-alt p-6 text-center">
+          <p className="font-saira text-sm font-semibold text-white mb-2">Could not load your journal</p>
+          <p className="font-saira text-xs text-zinc-400 mb-5">Check your connection and try again.</p>
+          <button
+            type="button"
+            onClick={() => { setReady(false); setReloadKey((k) => k + 1); }}
+            className="rounded-full bg-purple-500 hover:bg-purple-400 px-5 py-2 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition"
+          >
+            {t("common.retry")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!ready) {
     return (
@@ -1198,6 +1243,10 @@ export default function JournalPage() {
               />
             )}
 
+            {pastDayError && (
+              <p className="font-saira text-[11px] text-red-400">{pastDayError}</p>
+            )}
+
             {/* ── Weekly Check-ins section (athletes only) ────────── */}
             {profile?.role !== "coach" && (weeklyCheckins.length > 0 || checkinWindowOpen) && (
               <div>
@@ -1208,25 +1257,42 @@ export default function JournalPage() {
                   <div className="flex-1 h-px bg-white/5" />
                 </div>
 
-                {/* CTA when window is open and not yet submitted */}
-                {checkinWindowOpen && !checkinSubmitted && checkinTarget && (
+                {/*
+                  CTA — only rendered once the athlete has pressed "Later" on
+                  AppShell's own check-in popup (pendingCheckin from
+                  WeeklyCheckinContext). AppShell already renders the correct
+                  modal (Weekly vs Monthly, see MonthlyCheckinModal for the
+                  4th/8th/... week) automatically on every app page as soon as
+                  the window opens — this page must NOT own a second modal
+                  instance, since a plain WeeklyCheckinModal on a monthly week
+                  would write to the wrong table (weekly_checkins instead of
+                  monthly_checkins) and the "currentSubmitted" check would
+                  never flip true, re-prompting forever. Re-opening through
+                  reopenCheckin() guarantees the same (correct) modal AppShell
+                  would have shown.
+                */}
+                {pendingCheckin && (
                   <button
                     type="button"
-                    onClick={() => setShowCheckinModal(true)}
-                    className="w-full mb-3 flex items-center justify-between rounded-2xl border border-purple-500/30 bg-purple-500/8 px-4 py-3.5 hover:border-purple-400/50 hover:bg-purple-500/12 transition group"
+                    onClick={reopenCheckin}
+                    className={`w-full mb-3 flex items-center justify-between rounded-2xl border px-4 py-3.5 transition group ${
+                      checkinIsMonthly
+                        ? "border-amber-500/30 bg-amber-500/8 hover:border-amber-400/50 hover:bg-amber-500/12"
+                        : "border-purple-500/30 bg-purple-500/8 hover:border-purple-400/50 hover:bg-purple-500/12"
+                    }`}
                   >
                     <div className="text-left">
-                      <p className="font-saira text-[10px] font-bold uppercase tracking-[0.22em] text-purple-400 mb-0.5">
-                        {weekLabel(checkinTarget.week, checkinTarget.weekStart)} · Due {
-                          new Date(new Date(checkinTarget.weekStart + "T12:00:00").getTime() + 7 * 86400000)
+                      <p className={`font-saira text-[10px] font-bold uppercase tracking-[0.22em] mb-0.5 ${checkinIsMonthly ? "text-amber-400" : "text-purple-400"}`}>
+                        {weekLabel(pendingCheckin.week, pendingCheckin.weekStart)} · Due {
+                          new Date(new Date(pendingCheckin.weekStart + "T12:00:00").getTime() + 7 * 86400000)
                             .toLocaleDateString(localeForDate(locale), { weekday: "short", day: "numeric", month: "short" })
                         }
                       </p>
                       <p className="font-saira text-xs text-zinc-400">
-                        Take 2 minutes to reflect on your week
+                        {checkinIsMonthly ? "Take a few minutes for your monthly review" : "Take 2 minutes to reflect on your week"}
                       </p>
                     </div>
-                    <span className="font-saira text-xs text-purple-400 group-hover:text-purple-300 transition">
+                    <span className={`font-saira text-xs transition ${checkinIsMonthly ? "text-amber-400 group-hover:text-amber-300" : "text-purple-400 group-hover:text-purple-300"}`}>
                       Start →
                     </span>
                   </button>
@@ -1306,22 +1372,8 @@ export default function JournalPage() {
               </div>
             )}
 
-            {/* ── Modal (athletes only, also triggered from AppShell) ── */}
-            {profile?.role !== "coach" && showCheckinModal && checkinTarget && (
-              <WeeklyCheckinModal
-                targetWeek={checkinTarget}
-                onDone={async () => {
-                  setShowCheckinModal(false);
-                  setCheckinSubmitted(true);
-                  // Refresh the list
-                  const res = await fetch("/api/weekly-checkin");
-                  if (res.ok) {
-                    const data = await res.json();
-                    setWeeklyCheckins(data.checkins ?? []);
-                  }
-                }}
-                onSkip={() => setShowCheckinModal(false)}
-              />
+            {deleteError && (
+              <p className="font-saira text-[11px] text-red-400">{deleteError}</p>
             )}
 
             {grouped.length === 0 ? (

@@ -84,21 +84,47 @@ export default function TodayPage() {
   const [loading, setLoading]           = React.useState(true);
 
   // ── Assigned tests from coach ───────────────────────────────────────────────
+  // NOTE on the PATCH endpoint: PATCH /api/athlete/assigned-tests marks a test
+  // *completed* (sets completed_at, pushes to athlete + coach) — the four
+  // test-taking pages (app/tests/{acsi,csai,das,self-awareness}/page.tsx)
+  // already call it on real submission. Dismissing the nudge here is a
+  // different action and must NOT reuse that endpoint (that was the original
+  // bug: dismiss told the coach a test was completed that never happened).
+  // The assigned_tests table has no dismissal column and we're not adding a
+  // migration, so dismissal is local-only (localStorage), scoped by
+  // assignment id. A `dismissed_at` column would be the better long-term fix
+  // (server-authoritative, syncs across devices) — flagging for follow-up.
+  const DISMISSED_TESTS_KEY = "pf-dismissed-assigned-tests";
+  const loadDismissedTestIds = (): Set<string> => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = window.localStorage.getItem(DISMISSED_TESTS_KEY);
+      return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+    } catch {
+      return new Set();
+    }
+  };
+  const persistDismissedTestIds = (ids: Set<string>) => {
+    try { window.localStorage.setItem(DISMISSED_TESTS_KEY, JSON.stringify([...ids])); } catch { /* ignore */ }
+  };
+
   const [assignedTests, setAssignedTests] = React.useState<Array<{ id: string; test_slug: string }>>([]);
   React.useEffect(() => {
     fetch("/api/athlete/assigned-tests")
       .then((r) => r.ok ? r.json() : [])
-      .then((rows) => { if (Array.isArray(rows)) setAssignedTests(rows); })
+      .then((rows) => {
+        if (!Array.isArray(rows)) return;
+        const dismissed = loadDismissedTestIds();
+        setAssignedTests(rows.filter((a) => !dismissed.has(a.id)));
+      })
       .catch((err) => console.error("[page] async operation failed", err));
   }, []);
 
-  const dismissAssignment = (slug: string) => {
-    setAssignedTests((prev) => prev.filter((a) => a.test_slug !== slug));
-    fetch("/api/athlete/assigned-tests", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ test_slug: slug }),
-    }).catch((err) => console.error("[page] async operation failed", err));
+  const dismissAssignment = (id: string) => {
+    const dismissed = loadDismissedTestIds();
+    dismissed.add(id);
+    persistDismissedTestIds(dismissed);
+    setAssignedTests((prev) => prev.filter((a) => a.id !== id));
   };
 
   // ── Tool suggestions from coach ─────────────────────────────────────────────
@@ -113,12 +139,21 @@ export default function TodayPage() {
   }, []);
 
   const dismissSuggestion = (id: string) => {
+    const previous = toolSuggestions;
     setToolSuggestions((prev) => prev.filter((s) => s.id !== id));
     fetch("/api/me/tool-suggestions", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
-    }).catch((err) => console.error("[page] async operation failed", err));
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`dismiss failed: ${res.status}`);
+      })
+      .catch((err) => {
+        console.error("[page] async operation failed", err);
+        // Roll back so the UI doesn't drift from the server on a failed dismiss.
+        setToolSuggestions(previous);
+      });
   };
 
   // ── Selected date (today by default) ───────────────────────────────────────
@@ -126,6 +161,7 @@ export default function TodayPage() {
   /** "loading" = fetching, null = no entry for this date, TrainingEntry = found */
   const [entry, setEntry]               = React.useState<TrainingEntry | null | "loading">("loading");
   const [dayTypeSaving, setDayTypeSaving] = React.useState(false);
+  const [dayTypeError, setDayTypeError]   = React.useState(false);
   const [confirmingChange, setConfirmingChange] = React.useState(false);
   const isFirstMount = React.useRef(true);
 
@@ -173,6 +209,7 @@ export default function TodayPage() {
   const selectDayType = async (mode: "training" | "rest") => {
     if (dayTypeSaving) return;
     setDayTypeSaving(true);
+    setDayTypeError(false);
     try {
       const res = await fetch("/api/training/entries", {
         method: "POST",
@@ -183,7 +220,14 @@ export default function TodayPage() {
           mood_rating: null,
         }),
       });
-      const saved = res.ok ? await res.json() : {};
+      if (!res.ok) {
+        // Failed save: do NOT render "Training ✓" and do NOT mark the
+        // check-in done — the athlete would otherwise only discover the
+        // loss on refresh.
+        setDayTypeError(true);
+        return;
+      }
+      const saved = await res.json();
       setEntry({
         id: saved.id ?? "",
         user_id: "",
@@ -199,6 +243,9 @@ export default function TodayPage() {
         updated_at: new Date().toISOString(),
       });
       if (selectedDate === todayKey()) markCheckinDone();
+    } catch (err) {
+      console.error("[page] async operation failed", err);
+      setDayTypeError(true);
     } finally {
       setDayTypeSaving(false);
     }
@@ -215,28 +262,41 @@ export default function TodayPage() {
   // Date-tab derived values
   const isToday = selectedDate === todayKey();
 
-  // Post-comp reflection: check meet_reflections for any incomplete entry from
-  // the past 7 days. This is independent of profile.meet_date so the coach can
-  // trigger it without touching the athlete's training-phase date.
+  // Post-comp reflection: derive visibility from the athlete's own meet_date
+  // (1–7 days in the past = the intended reflection window), not from a
+  // meet_reflections row existing — nothing ever seeded that row automatically,
+  // so gating on it meant the card never appeared for anyone. The row itself is
+  // created lazily by PostCompReflection's first save (POST upserts).
   const [pendingReflectionDate, setPendingReflectionDate] = React.useState<string | null>(null);
   React.useEffect(() => {
-    if (!profile) return;
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const cutoff = sevenDaysAgo.toISOString().slice(0, 10);
-    fetch("/api/meet-reflections")
-      .then(r => r.ok ? r.json() : [])
-      .then((rows: Array<{ meet_date: string; answers: Record<string, string> }>) => {
-        if (!Array.isArray(rows)) return;
-        const QUESTION_IDS = ["post-meet-overall","post-meet-win","post-meet-lesson","post-meet-mental","post-meet-next"];
-        const pending = rows.find(row => {
-          if (row.meet_date < cutoff) return false;
+    const meetDate = profile?.meet_date;
+    if (!meetDate) { setPendingReflectionDate(null); return; }
+
+    const meet = new Date(meetDate + "T12:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    meet.setHours(0, 0, 0, 0);
+    const daysSinceMeet = Math.round((today.getTime() - meet.getTime()) / 86_400_000);
+
+    if (daysSinceMeet < 1 || daysSinceMeet > 7) { setPendingReflectionDate(null); return; }
+
+    // Meet was 1–7 days ago — still confirm the reflection isn't already
+    // complete (a row may or may not exist yet; either way is fine here).
+    const QUESTION_IDS = ["post-meet-overall","post-meet-win","post-meet-lesson","post-meet-mental","post-meet-next"];
+    fetch(`/api/meet-reflections?meet_date=${meetDate}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((row: { answers: Record<string, string> } | null) => {
+        if (row) {
           const answered = QUESTION_IDS.filter(id => (row.answers[id] ?? "").trim().length > 0).length;
-          return answered < QUESTION_IDS.length;
-        });
-        setPendingReflectionDate(pending?.meet_date ?? null);
+          if (answered >= QUESTION_IDS.length) { setPendingReflectionDate(null); return; }
+        }
+        setPendingReflectionDate(meetDate);
       })
-      .catch((err) => console.error("[page] async operation failed", err));
+      .catch((err) => {
+        console.error("[page] async operation failed", err);
+        // Fail open — still show the prompt rather than silently hiding it.
+        setPendingReflectionDate(meetDate);
+      });
   }, [profile]);
 
   const showPostCompReflection = isToday && pendingReflectionDate !== null;
@@ -307,6 +367,7 @@ export default function TodayPage() {
           <DayPickerScreen
             onSelect={selectDayType}
             saving={dayTypeSaving}
+            error={dayTypeError}
             dateLabel={dateLabel}
             isToday={isToday}
             locale={locale}
@@ -350,7 +411,7 @@ export default function TodayPage() {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => dismissAssignment(a.test_slug)}
+                    onClick={() => dismissAssignment(a.id)}
                     className="p-1 text-zinc-500 hover:text-zinc-300 transition"
                     aria-label="Dismiss"
                   >
@@ -636,12 +697,14 @@ export default function TodayPage() {
 function DayPickerScreen({
   onSelect,
   saving,
+  error,
   dateLabel,
   isToday,
   locale,
 }: {
   onSelect: (mode: "training" | "rest") => void;
   saving: boolean;
+  error?: boolean;
   dateLabel: string;
   isToday: boolean;
   locale: string;
@@ -678,6 +741,11 @@ function DayPickerScreen({
           >
             {saving ? t("common.saving") : t("today.restDayBtn")}
           </button>
+          {error && (
+            <p className="text-center font-saira text-xs text-red-400">
+              Save failed — tap a button to retry
+            </p>
+          )}
         </div>
       </div>
     </div>

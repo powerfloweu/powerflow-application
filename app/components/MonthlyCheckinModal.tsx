@@ -286,14 +286,18 @@ export default function MonthlyCheckinModal({ targetWeek, onDone, onSkip }: Prop
                 </div>
               )}
 
+              {overallProgress === null && (
+                <p className="font-saira text-[10px] text-zinc-500 text-center">{t("checkin.rateAllToSubmit")}</p>
+              )}
+
               {/* Actions */}
               <div className="flex gap-3 pb-2">
                 <button type="button" onClick={() => setStep(1)} className="rounded-xl border border-white/10 px-4 py-3 font-saira text-[11px] text-zinc-400 hover:text-zinc-300 hover:border-white/20 transition">← {t("common.back")}</button>
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={saving}
-                  className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
+                  disabled={saving || overallProgress === null}
+                  className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-40 px-5 py-3 font-saira text-[11px] font-bold uppercase tracking-[0.2em] text-white transition"
                 >
                   {saving ? t("common.saving") : t("checkin.submitCheckin")}
                 </button>

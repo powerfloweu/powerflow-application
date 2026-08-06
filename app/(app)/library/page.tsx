@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { hasAccess, type PlanTier } from "@/lib/plan";
+import { hasAccess, effectiveTier, type PlanTier } from "@/lib/plan";
 import { useT, type Locale } from "@/lib/i18n";
 import VizLiveSession from "@/app/components/VizLiveSession";
 import VizUpload from "@/app/components/VizUpload";
@@ -307,6 +307,7 @@ function VizKeywords({
   const [editing, setEditing] = React.useState(false);
   const [drafts, setDrafts]   = React.useState(["", "", ""]);
   const [saving, setSaving]   = React.useState(false);
+  const [error, setError]     = React.useState<string | null>(null);
 
   const openEdit = () => {
     setDrafts([keywords[0] ?? "", keywords[1] ?? "", keywords[2] ?? ""]);
@@ -315,10 +316,16 @@ function VizKeywords({
 
   const save = async () => {
     setSaving(true);
+    setError(null);
     const filtered = drafts.map((s) => s.trim()).filter(Boolean).slice(0, 3);
-    await onSave(filtered);
-    setSaving(false);
-    setEditing(false);
+    try {
+      await onSave(filtered);
+      setEditing(false);
+    } catch {
+      setError(t("you.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const placeholders =
@@ -369,6 +376,7 @@ function VizKeywords({
               {t("common.cancel")}
             </button>
           )}
+          {error && <p className="font-saira text-[10px] text-red-400">{error}</p>}
         </div>
       </div>
     );
@@ -786,14 +794,11 @@ function ToolsPageInner() {
         setVizRecordingsMap(p.viz_recordings ?? {});
         setAffirmations(Array.isArray(p.affirmations) ? p.affirmations : []);
         setAiAccess(!!p.ai_access);
-        // Per-user access grants (test_access / course_access) can unlock
-        // library sections above the base plan_tier — same OR logic used by
-        // the course page and the nav, so an admin-granted flag isn't
-        // silently ignored here.
-        let tier = (p?.plan_tier ?? "opener") as PlanTier;
-        if (p?.course_access && tier !== "pr") tier = "pr";
-        else if (p?.test_access && tier === "opener") tier = "second";
-        setPlanTier(tier);
+        // Per-user access grants (test_access / course_access / ai_access)
+        // can unlock library sections above the base plan_tier — canonical
+        // helper shared with the nav, course page, and API gates so an
+        // admin-granted flag isn't silently ignored here.
+        setPlanTier(effectiveTier(p ?? {}));
         setProfileLoaded(true);
       })
       .catch(() => setProfileLoaded(true));
@@ -822,22 +827,32 @@ function ToolsPageInner() {
   };
 
   const saveVizKeywords = async (toolId: string, kws: string[]) => {
+    const prev = vizKeywordsMap;
     const next = { ...vizKeywordsMap, [toolId]: kws };
     setVizKeywordsMap(next);
-    await fetch("/api/me", {
+    const res = await fetch("/api/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ viz_keywords: next }),
     });
+    if (!res.ok) {
+      setVizKeywordsMap(prev); // roll back the optimistic update
+      throw new Error("Save failed");
+    }
   };
 
   const saveAffirmations = async (a: string[]) => {
+    const prev = affirmations;
     setAffirmations(a);
-    await fetch("/api/me", {
+    const res = await fetch("/api/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ affirmations: a }),
     });
+    if (!res.ok) {
+      setAffirmations(prev); // roll back the optimistic update
+      throw new Error("Save failed");
+    }
   };
 
   const submitRequest = async () => {
@@ -912,7 +927,10 @@ function ToolsPageInner() {
               </div>
             </>
           ) : (
-            /* ── Locked teaser (Second tier) ──────────────────── */
+            /* ── Locked teaser — Second tier (needs upgrade) or PR without
+                 ai_access yet (already paid — needs the flag flipped, not a
+                 repurchase). ai_access is granted per-user by an admin, so a
+                 PR athlete can legitimately be waiting on that. ─────────── */
             <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.04] p-5">
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div className="min-w-0 flex-1">
@@ -926,15 +944,26 @@ function ToolsPageInner() {
                     </span>
                   </div>
                   <p className="font-saira text-xs text-zinc-400 leading-snug">
-                    {t("library.aiCoachDesc")}
+                    {planTier === "pr"
+                      ? "You are on PR — your AI Coach is still being activated on our end."
+                      : t("library.aiCoachDesc")}
                   </p>
                 </div>
-                <Link
-                  href="/upgrade"
-                  className="flex-shrink-0 rounded-xl bg-purple-600 hover:bg-purple-500 px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition whitespace-nowrap"
-                >
-                  Upgrade →
-                </Link>
+                {planTier === "pr" ? (
+                  <a
+                    href="mailto:david@power-flow.eu?subject=AI%20Coach%20access"
+                    className="flex-shrink-0 rounded-xl border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-purple-300 transition whitespace-nowrap"
+                  >
+                    Contact us
+                  </a>
+                ) : (
+                  <Link
+                    href="/upgrade"
+                    className="flex-shrink-0 rounded-xl bg-purple-600 hover:bg-purple-500 px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] text-white transition whitespace-nowrap"
+                  >
+                    Upgrade →
+                  </Link>
+                )}
               </div>
               {/* Blurred chat preview */}
               <div className="select-none pointer-events-none opacity-[0.22] space-y-2">

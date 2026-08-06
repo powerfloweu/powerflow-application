@@ -8,6 +8,7 @@ import type { AthleteProfile } from "@/lib/athlete";
 import type { Voice } from "@/lib/voices";
 import { DISTANCE_LABELS } from "@/lib/voices";
 import { useT } from "@/lib/i18n";
+import { effectiveTier, canAccessTools } from "@/lib/plan";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -54,9 +55,9 @@ export default function VoicesCastPage() {
 
       if (meRes.ok) {
         const p: AthleteProfile = await meRes.json();
-        // Gate: require Second tier (or above) + beta_voice_work mode enabled
-        const tier = p?.plan_tier ?? "opener";
-        const tierOk = tier === "second" || tier === "pr";
+        // Gate: require Second tier (or above, incl. admin-granted overrides)
+        // + beta_voice_work mode enabled
+        const tierOk = canAccessTools(effectiveTier(p ?? {}));
         if (!tierOk || p.self_talk_mode !== "beta_voice_work") {
           router.replace(!tierOk ? "/upgrade" : "/you");
           return;

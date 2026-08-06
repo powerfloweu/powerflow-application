@@ -1,7 +1,13 @@
 /**
  * GET   /api/athlete/assigned-tests  — Returns pending (not completed) test assignments for the
  *                                      current athlete.
- * PATCH /api/athlete/assigned-tests  — Marks a specific assignment as completed.
+ * PATCH /api/athlete/assigned-tests  — Marks a specific assignment as completed. This is a real
+ *                                      completion signal (sets completed_at, pushes to athlete +
+ *                                      coach) — called by the four test-taking pages
+ *                                      (app/tests/{acsi,csai,das,self-awareness}/page.tsx) right
+ *                                      after a real submission. Do NOT wire this up to a "dismiss
+ *                                      the nudge" action — dismissing without completing must not
+ *                                      call this endpoint (see today/page.tsx's local-only dismiss).
  *
  * PATCH body: { test_slug: "sat"|"acsi"|"csai"|"das" }
  */
@@ -94,17 +100,17 @@ export async function PATCH(req: NextRequest) {
     title: "Test complete ✓",
     body: `Your ${testName} results have been saved`,
     tag: `test-assigned-${test_slug}`,
-    url: "/tools",
+    url: "/library",
   }).catch((err) => console.error("[api/athlete/assigned-tests] async operation failed", err));
 
   // 2. Notify the coach
   const coachId = rows[0].coach_id;
   if (coachId) {
-    const athleteRows = await dbSelect<{ full_name: string }>("profiles", {
+    const athleteRows = await dbSelect<{ display_name: string }>("profiles", {
       id: `eq.${user.id}`,
-      select: "full_name",
+      select: "display_name",
     });
-    const name = athleteRows[0]?.full_name || "An athlete";
+    const name = athleteRows[0]?.display_name || "An athlete";
 
     await sendPushToUser(coachId, {
       title: `${name} completed a test 📊`,

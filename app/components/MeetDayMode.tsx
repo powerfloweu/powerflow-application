@@ -2,6 +2,7 @@
 import React from "react";
 import MuxPlayer from "@mux/mux-player-react";
 import VideoUpload from "@/app/components/VideoUpload";
+import { ymdLocal } from "@/lib/date";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -1320,7 +1321,7 @@ export function CoachAttemptViewer({ athleteId, meetDate }: { athleteId: string;
 // ── Main MeetDayMode (athlete) ────────────────────────────────────────────────
 
 export default function MeetDayMode({ profile }: { profile: Profile }) {
-  const meetDate = profile.meet_date ?? new Date().toISOString().slice(0, 10);
+  const meetDate = profile.meet_date ?? ymdLocal();
   const cfg: MeetConfig = profile.meet_config ?? {};
   const liftConfigs: Partial<Record<Lift, LiftMeetConfig>> = cfg.lifts ?? {};
   const affirmations = cfg.affirmations ?? profile.affirmations ?? [];

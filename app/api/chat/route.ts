@@ -566,15 +566,26 @@ export async function POST(req: NextRequest) {
   return new Response(
     new ReadableStream({
       async start(controller) {
-        for await (const chunk of stream) {
-          if (
-            chunk.type === "content_block_delta" &&
-            chunk.delta.type === "text_delta"
-          ) {
-            controller.enqueue(new TextEncoder().encode(chunk.delta.text));
+        try {
+          for await (const chunk of stream) {
+            if (
+              chunk.type === "content_block_delta" &&
+              chunk.delta.type === "text_delta"
+            ) {
+              controller.enqueue(new TextEncoder().encode(chunk.delta.text));
+            }
           }
+          controller.close();
+        } catch (err) {
+          // Anthropic stream errored mid-response (rate limit, network drop,
+          // etc). Without this, the controller was left neither closed nor
+          // errored — the client's reader.read() could resolve as if the
+          // response ended normally, and a truncated reply would get
+          // persisted as if it were complete. Erroring the controller makes
+          // the client's fetch/reader reject instead.
+          console.error("[api/chat] stream failed mid-response", err);
+          controller.error(err instanceof Error ? err : new Error(String(err)));
         }
-        controller.close();
       },
     }),
     { headers: { "Content-Type": "text/plain; charset=utf-8" } }

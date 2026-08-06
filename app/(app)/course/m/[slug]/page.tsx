@@ -15,6 +15,7 @@ import {
   type CourseAnswerRow,
 } from "@/lib/course";
 import { useT } from "@/lib/i18n";
+import { effectiveTier, canAccessPR } from "@/lib/plan";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -39,19 +40,23 @@ export default function ModuleDetailPage() {
 
   const [exerciseText, setExerciseText]     = React.useState("");
   const [exerciseSaving, setExerciseSaving] = React.useState(false);
+  const [progressError, setProgressError]   = React.useState<string | null>(null);
   const exerciseTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks the latest typed value so the unmount-flush below can read it
+  // without depending on `exerciseText` (which would re-run the effect).
+  const exerciseTextRef = React.useRef("");
+  const mountedRef = React.useRef(true);
 
   // ── Load data ──────────────────────────────────────────────────────────────
   React.useEffect(() => {
     if (!slug) return;
     Promise.all([
-      fetch("/api/me").then((r) => r.json()),
-      fetch("/api/course/progress").then((r) => r.json()),
-      fetch(`/api/course/answers?slug=${encodeURIComponent(slug)}`).then((r) => r.json()),
+      fetch("/api/me").then((r) => { if (!r.ok) throw new Error(`me ${r.status}`); return r.json(); }),
+      fetch("/api/course/progress").then((r) => { if (!r.ok) throw new Error(`progress ${r.status}`); return r.json(); }),
+      fetch(`/api/course/answers?slug=${encodeURIComponent(slug)}`).then((r) => { if (!r.ok) throw new Error(`answers ${r.status}`); return r.json(); }),
     ])
-      .then(([profile, prog, ans]: [{ course_access?: boolean; plan_tier?: string }, CourseProgressRow[], CourseAnswerRow[]]) => {
-        const tier = profile?.plan_tier ?? "opener";
-        const hasAccess = profile?.course_access || tier === "pr";
+      .then(([profile, prog, ans]: [{ course_access?: boolean; test_access?: boolean; ai_access?: boolean; plan_tier?: string }, CourseProgressRow[], CourseAnswerRow[]]) => {
+        const hasAccess = canAccessPR(effectiveTier(profile ?? {}));
         if (!hasAccess) { router.replace("/course"); return; }
         const row = Array.isArray(prog)
           ? prog.find((p) => p.module_slug === slug) ?? null
@@ -66,51 +71,96 @@ export default function ModuleDetailPage() {
       .finally(() => setLoading(false));
   }, [slug, router]);
 
+  // Keep the ref in sync so the unmount cleanup below can read the latest
+  // typed value without re-subscribing on every keystroke.
+  React.useEffect(() => {
+    exerciseTextRef.current = exerciseText;
+  }, [exerciseText]);
+
+  // On unmount: stop treating the component as mounted (guards setState-
+  // after-unmount in the async handlers below) and flush any exercise edit
+  // that was still sitting in the 800ms debounce window — otherwise
+  // navigating away right after typing silently drops the last edit.
+  React.useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      if (exerciseTimer.current) {
+        clearTimeout(exerciseTimer.current);
+        exerciseTimer.current = null;
+        const v = exerciseTextRef.current;
+        if (v.trim()) {
+          fetch("/api/course/answers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slug, question_id: "exercise", text: v }),
+          }).catch((err) => console.error("[course/module] failed to flush exercise autosave", err));
+        }
+      }
+    };
+  }, [slug]);
+
   // ── Helpers ────────────────────────────────────────────────────────────────
   const postProgress = async (step: string) => {
-    await fetch("/api/course/progress", {
+    const res = await fetch("/api/course/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slug, step }),
     });
+    if (!res.ok) throw new Error(`postProgress(${step}) failed`);
   };
 
   const refreshProgress = async () => {
     const rows: CourseProgressRow[] = await fetch("/api/course/progress")
       .then((r) => r.json()).catch(() => []);
     const row = Array.isArray(rows) ? rows.find((p) => p.module_slug === slug) ?? null : null;
-    setProgress(row);
+    if (mountedRef.current) setProgress(row);
   };
 
   // ── Mark video done ────────────────────────────────────────────────────────
   const markVideoDone = async () => {
     if (progress?.video_done_at) return;
-    await postProgress("video");
-    setProgress((p) => ({
-      ...(p ?? emptyRow(slug, mod?.weekNumber ?? 0)),
-      video_done_at: new Date().toISOString(),
-    }));
+    try {
+      await postProgress("video");
+      if (mountedRef.current) {
+        setProgress((p) => ({
+          ...(p ?? emptyRow(slug, mod?.weekNumber ?? 0)),
+          video_done_at: new Date().toISOString(),
+        }));
+      }
+    } catch (err) {
+      console.error("[course/module] failed to mark video done", err);
+    }
   };
 
   // ── Exercise autosave ──────────────────────────────────────────────────────
   const handleExerciseChange = (v: string) => {
     setExerciseText(v);
+    setProgressError(null);
     if (exerciseTimer.current) clearTimeout(exerciseTimer.current);
     exerciseTimer.current = setTimeout(async () => {
       if (!v.trim()) return;
-      setExerciseSaving(true);
-      await fetch("/api/course/answers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, question_id: "exercise", text: v }),
-      });
-      setExerciseSaving(false);
-      if (!progress?.exercise_done_at) {
-        await postProgress("exercise");
-        setProgress((p) => ({
-          ...(p ?? emptyRow(slug, mod?.weekNumber ?? 0)),
-          exercise_done_at: new Date().toISOString(),
-        }));
+      if (mountedRef.current) setExerciseSaving(true);
+      try {
+        const res = await fetch("/api/course/answers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, question_id: "exercise", text: v }),
+        });
+        if (!res.ok) throw new Error("Save failed");
+        if (!progress?.exercise_done_at) {
+          await postProgress("exercise");
+          if (mountedRef.current) {
+            setProgress((p) => ({
+              ...(p ?? emptyRow(slug, mod?.weekNumber ?? 0)),
+              exercise_done_at: new Date().toISOString(),
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("[course/module] exercise autosave failed", err);
+        if (mountedRef.current) setProgressError("Couldn't save your answer — please try again.");
+      } finally {
+        if (mountedRef.current) setExerciseSaving(false);
       }
     }, 800);
   };
@@ -139,25 +189,43 @@ export default function ModuleDetailPage() {
   // ── Log practice session ───────────────────────────────────────────────────
   const logPractice = async () => {
     setPracticeLogging(true);
-    await postProgress("practice");
-    setProgress((p) => ({
-      ...(p ?? emptyRow(slug, mod?.weekNumber ?? 0)),
-      practice_count: (p?.practice_count ?? 0) + 1,
-    }));
-    setPracticeLogging(false);
-    setPracticeJustLogged(true);
-    setTimeout(() => setPracticeJustLogged(false), 2000);
+    setProgressError(null);
+    try {
+      await postProgress("practice");
+      if (mountedRef.current) {
+        setProgress((p) => ({
+          ...(p ?? emptyRow(slug, mod?.weekNumber ?? 0)),
+          practice_count: (p?.practice_count ?? 0) + 1,
+        }));
+        setPracticeJustLogged(true);
+        setTimeout(() => setPracticeJustLogged(false), 2000);
+      }
+    } catch (err) {
+      console.error("[course/module] failed to log practice", err);
+      if (mountedRef.current) setProgressError("Couldn't log that session — please try again.");
+    } finally {
+      if (mountedRef.current) setPracticeLogging(false);
+    }
   };
 
   // ── Mark complete ──────────────────────────────────────────────────────────
   const markComplete = async () => {
     setCompleting(true);
-    await postProgress("complete");
-    setProgress((p) => ({
-      ...(p ?? emptyRow(slug, mod?.weekNumber ?? 0)),
-      completed_at: new Date().toISOString(),
-    }));
-    setCompleting(false);
+    setProgressError(null);
+    try {
+      await postProgress("complete");
+      if (mountedRef.current) {
+        setProgress((p) => ({
+          ...(p ?? emptyRow(slug, mod?.weekNumber ?? 0)),
+          completed_at: new Date().toISOString(),
+        }));
+      }
+    } catch (err) {
+      console.error("[course/module] failed to mark complete", err);
+      if (mountedRef.current) setProgressError("Couldn't mark this complete — please try again.");
+    } finally {
+      if (mountedRef.current) setCompleting(false);
+    }
   };
 
   // ── Computed ───────────────────────────────────────────────────────────────
@@ -420,6 +488,10 @@ export default function ModuleDetailPage() {
               </button>
             </div>
           </section>
+        )}
+
+        {progressError && (
+          <p className="font-saira text-xs text-red-400 text-center mb-3">{progressError}</p>
         )}
 
         {/* ── Complete / status ──────────────────────────────────────────────── */}

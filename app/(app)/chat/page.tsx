@@ -12,6 +12,10 @@ function useSpeechRecognition(onTranscript: (text: string, isFinal: boolean) => 
   const [supported, setSupported] = React.useState(false);
   const recogRef = React.useRef<SpeechRecognition | null>(null);
 
+  // Keep the callback fresh without recreating the recognition instance.
+  const onTranscriptRef = React.useRef(onTranscript);
+  React.useLayoutEffect(() => { onTranscriptRef.current = onTranscript; });
+
   React.useEffect(() => {
     const SR = (window as Window & typeof globalThis & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition
       ?? (window as Window & typeof globalThis & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
@@ -28,18 +32,27 @@ function useSpeechRecognition(onTranscript: (text: string, isFinal: boolean) => 
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
         if (res.isFinal) {
-          onTranscript(res[0].transcript, true);
+          onTranscriptRef.current(res[0].transcript, true);
         } else {
           interim += res[0].transcript;
         }
       }
-      if (interim) onTranscript(interim, false);
+      if (interim) onTranscriptRef.current(interim, false);
     };
 
     r.onend = () => setListening(false);
     r.onerror = () => setListening(false);
     recogRef.current = r;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    // Stop recognition and detach handlers on unmount (e.g. navigating away
+    // from /chat) so the mic doesn't stay live and no stray events fire.
+    return () => {
+      try { r.stop(); } catch { /* already stopped */ }
+      r.onresult = null;
+      r.onend = null;
+      r.onerror = null;
+      recogRef.current = null;
+    };
   }, []);
 
   const toggle = React.useCallback(() => {
@@ -385,6 +398,7 @@ function EgoStateBlock({ raw }: { raw: string }) {
 
 function renderContent(
   text: string,
+  messageId: string,
   scriptProps: {
     playingId: string | null;
     loadingId: string | null;
@@ -417,7 +431,7 @@ function renderContent(
           <ScriptBlock
             key={i}
             content={body.trim()}
-            blockId={`script-${i}`}
+            blockId={`${messageId}-script-${i}`}
             playingId={scriptProps.playingId}
             loadingId={scriptProps.loadingId}
             errorId={scriptProps.errorId}
@@ -818,7 +832,14 @@ export default function ChatPage() {
         body: JSON.stringify({ text: content, voiceId: coachVoiceId ?? preferredVoiceId ?? undefined }),
         signal: controller.signal,
       });
-      if (!res.ok) throw new Error(`TTS ${res.status}`);
+      if (!res.ok) {
+        let msg = `TTS ${res.status}`;
+        try {
+          const errBody = await res.json();
+          if (errBody?.error) msg = errBody.error;
+        } catch { /* keep default msg */ }
+        throw new Error(msg);
+      }
 
       const blob = await res.blob();
       if (abortRef.current !== controller) return; // stopped or superseded
@@ -999,16 +1020,26 @@ export default function ChatPage() {
           if (row?.id) setMessages((prev) => prev.map((m) => m.id === assistantMsg.id ? { ...m, dbId: row.id } : m));
         })
         .catch((err) => console.error("[page] async operation failed", err));
-    } catch {
+    } catch (err) {
+      console.error("[chat] send failed", err);
+      const errorContent = t("chat.errorMsg");
       setMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: t("chat.errorMsg"),
+          content: errorContent,
         },
       ]);
       setStreamingContent("");
+      // Persist the failure too — the user's message was already saved above,
+      // and without this a reload shows their message with no reply at all
+      // (looks like the AI silently never responded, no explanation why).
+      fetch("/api/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "assistant", content: errorContent }),
+      }).catch((persistErr) => console.error("[chat] failed to persist error message", persistErr));
     } finally {
       setStreaming(false);
     }
@@ -1188,7 +1219,7 @@ export default function ChatPage() {
                     }`}
                   >
                     {msg.role === "assistant"
-                      ? renderContent(msg.content, scriptRenderProps)
+                      ? renderContent(msg.content, msg.id, scriptRenderProps)
                       : msg.content}
                   </div>
                   {/* Rating buttons — only for persisted AI messages */}
@@ -1225,7 +1256,7 @@ export default function ChatPage() {
               (streamingContent ? (
                 <div className="flex justify-start mb-4">
                   <div className="bg-surface-card border border-white/8 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] font-saira text-sm text-zinc-200">
-                    {renderContent(streamingContent, scriptRenderProps)}
+                    {renderContent(streamingContent, "streaming", scriptRenderProps)}
                   </div>
                 </div>
               ) : (

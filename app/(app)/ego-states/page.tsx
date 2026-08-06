@@ -87,17 +87,24 @@ function EgoStateCard({
   const [deleting, setDeleting] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [savedFlash, setSavedFlash] = React.useState(false);
+  const [patchError, setPatchError] = React.useState(false);
 
   const patch = async (fields: Partial<EgoState>) => {
-    const res = await fetch(`/api/ego-states/${state.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(fields),
-    });
-    if (res.ok) {
+    setPatchError(false);
+    try {
+      const res = await fetch(`/api/ego-states/${state.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fields),
+      });
+      if (!res.ok) throw new Error("Save failed");
       onUpdate(state.id, fields);
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 1500);
+    } catch (err) {
+      console.error("[ego-states] failed to save field", err);
+      setPatchError(true);
+      setTimeout(() => setPatchError(false), 3000);
     }
   };
 
@@ -145,6 +152,11 @@ function EgoStateCard({
         {savedFlash && (
           <span className="font-saira text-[10px] text-emerald-400 flex-shrink-0">
             {t("egoStates.saveChanges")}
+          </span>
+        )}
+        {patchError && (
+          <span className="font-saira text-[10px] text-red-400 flex-shrink-0">
+            {t("journal.saveFailed")}
           </span>
         )}
 

@@ -119,6 +119,7 @@ export default function SurveyModal() {
   const [wtp, setWtp]                   = React.useState<string | null>(null);
   const [nps, setNps]                   = React.useState<number | null>(null);
   const [submitting, setSubmitting]   = React.useState(false);
+  const [submitError, setSubmitError] = React.useState(false);
 
   React.useEffect(() => {
     // Respect a temporary dismissal (48 h)
@@ -142,21 +143,28 @@ export default function SurveyModal() {
   const submit = async () => {
     if (state.status !== "due") return;
     setSubmitting(true);
+    setSubmitError(false);
 
     const answers =
       state.role === "coach"
         ? { dashboard_change: dashboardQ, profile_parts: profileParts, athletes_mentioned: athleteMentioned, what_would_help: missing, wtp, nps }
         : { tools_used: toolsUsed, mental_shift: mentalShift, surprised, fix_or_add: missing, wtp, nps };
 
-    await fetch("/api/survey", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ round: state.round, answers }),
-    }).catch((err) => console.error("[SurveyModal] async operation failed", err));
-
-    localStorage.removeItem(DISMISS_KEY);
-    setSubmitting(false);
-    setState({ status: "done" });
+    try {
+      const res = await fetch("/api/survey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ round: state.round, answers }),
+      });
+      if (!res.ok) throw new Error("Survey submit failed");
+      localStorage.removeItem(DISMISS_KEY);
+      setState({ status: "done" });
+    } catch (err) {
+      console.error("[SurveyModal] async operation failed", err);
+      setSubmitError(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (state.status !== "due") return null;
@@ -311,7 +319,13 @@ export default function SurveyModal() {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-white/[0.06] flex gap-3">
+        <div className="px-6 py-4 border-t border-white/[0.06]">
+          {submitError && (
+            <p className="mb-2 font-saira text-[11px] text-red-400 text-center">
+              Could not send — please try again.
+            </p>
+          )}
+          <div className="flex gap-3">
           <button
             type="button"
             onClick={dismiss}
@@ -325,8 +339,9 @@ export default function SurveyModal() {
             disabled={submitting}
             className="flex-1 rounded-xl bg-purple-600 hover:bg-purple-500 py-2.5 font-saira text-xs font-bold text-white transition disabled:opacity-50"
           >
-            {submitting ? "Sending…" : "Send feedback →"}
+            {submitting ? "Sending…" : submitError ? "Retry →" : "Send feedback →"}
           </button>
+          </div>
         </div>
       </div>
     </div>

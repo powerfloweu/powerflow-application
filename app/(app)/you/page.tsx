@@ -253,7 +253,7 @@ export default function YouPage() {
       {/* ── Meet date ───────────────────────────────────────── */}
       <Section
         label={t("you.sectionNextCompetition")}
-        summary={meetDate ? new Date(meetDate).toLocaleDateString(localeForDate(locale), { day: "numeric", month: "short", year: "numeric" }) : t("you.notSet")}
+        summary={meetDate ? new Date(meetDate + "T12:00:00").toLocaleDateString(localeForDate(locale), { day: "numeric", month: "short", year: "numeric" }) : t("you.notSet")}
       >
         {phase && <p className="font-saira text-xs text-purple-300 mb-3">{phase.label}</p>}
         <div className="flex items-center gap-3">
@@ -724,6 +724,32 @@ function AiVoiceRow({
 }) {
   const [previewing, setPreviewing] = React.useState<string | null>(null);
 
+  // Ref-held element + blob URL so a stacked click or an unmount mid-preview
+  // can always find and tear down the currently playing audio, instead of
+  // relying solely on the "ended" event (which never fires on unmount).
+  const audioElRef = React.useRef<HTMLAudioElement | null>(null);
+  const blobUrlRef = React.useRef<string | null>(null);
+
+  const stopPreview = React.useCallback(() => {
+    if (audioElRef.current) {
+      audioElRef.current.pause();
+      audioElRef.current.onended = null;
+      audioElRef.current.onerror = null;
+      audioElRef.current.src = "";
+      audioElRef.current = null;
+    }
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+  }, []);
+
+  // Stop + revoke on unmount so navigating away mid-preview doesn't leave
+  // the blob alive / audio audibly playing for the document's lifetime.
+  React.useEffect(() => {
+    return () => { stopPreview(); };
+  }, [stopPreview]);
+
   const playPreview = async (voiceId: string) => {
     if (previewing) return;
     setPreviewing(voiceId);
@@ -735,13 +761,20 @@ function AiVoiceRow({
       });
       if (!res.ok) throw new Error("TTS failed");
       const blob = await res.blob();
+      stopPreview(); // tear down any previous preview before starting a new one
       const url = URL.createObjectURL(blob);
+      blobUrlRef.current = url;
       const audio = new Audio(url);
-      audio.addEventListener("ended", () => URL.revokeObjectURL(url));
+      audioElRef.current = audio;
+      // previewing is cleared here (not in `finally`) so the re-entrancy
+      // guard above stays in effect for the full duration of playback,
+      // not just until play() starts.
+      audio.onended = () => { stopPreview(); setPreviewing(null); };
+      audio.onerror = () => { stopPreview(); setPreviewing(null); };
       await audio.play();
     } catch {
       // silently ignore preview errors
-    } finally {
+      stopPreview();
       setPreviewing(null);
     }
   };

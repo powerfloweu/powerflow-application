@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { COURSE_MODULES, PLAN_MODULES, weeksByTheme, stepsComplete, type CoursePlan, type CourseModule, type CourseProgressRow } from "@/lib/course";
 import { useT } from "@/lib/i18n";
+import { effectiveTier, canAccessPR } from "@/lib/plan";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ type Profile = {
 /** All UI states for the page */
 type PageStage =
   | { stage: "loading" }
+  | { stage: "error" }
   | { stage: "locked" }
   | { stage: "no-plan" }
   | { stage: "generating" }
@@ -44,21 +46,24 @@ export default function CourseIndexPage() {
   const [profile, setProfile]   = React.useState<Profile | null>(null);
   const [progress, setProgress] = React.useState<CourseProgressRow[]>([]);
   const [uiStage, setUiStage]   = React.useState<PageStage>({ stage: "loading" });
+  const [reloadKey, setReloadKey] = React.useState(0);
 
   // ── Load profile + progress ──────────────────────────────────────────────
   React.useEffect(() => {
+    let cancelled = false;
+    setUiStage({ stage: "loading" });
     Promise.all([
-      fetch("/api/me").then((r) => r.json()),
-      fetch("/api/course/progress").then((r) => r.json()),
+      fetch("/api/me").then((r) => { if (!r.ok) throw new Error(`me ${r.status}`); return r.json(); }),
+      fetch("/api/course/progress").then((r) => { if (!r.ok) throw new Error(`progress ${r.status}`); return r.json(); }),
     ])
       .then(([prof, prog]) => {
-        if (!prof?.id) return;
+        if (cancelled) return;
+        if (!prof?.id) throw new Error("No profile returned");
         const p = prof as Profile;
         setProfile(p);
         setProgress(Array.isArray(prog) ? prog : []);
 
-        const tier = p.plan_tier ?? "opener";
-        const hasAccess = p.course_access || tier === "pr";
+        const hasAccess = canAccessPR(effectiveTier(p));
         if (!hasAccess) {
           setUiStage({ stage: "locked" });
         } else if (p.course_plan?.slugs?.length) {
@@ -67,8 +72,12 @@ export default function CourseIndexPage() {
           setUiStage({ stage: "no-plan" });
         }
       })
-      .catch(() => setUiStage({ stage: "no-plan" }));
-  }, []);
+      .catch((err) => {
+        console.error("[course] failed to load profile/progress", err);
+        if (!cancelled) setUiStage({ stage: "error" });
+      });
+    return () => { cancelled = true; };
+  }, [reloadKey]);
 
   // ── Progress index ────────────────────────────────────────────────────────
   const progressMap = React.useMemo(() => {
@@ -99,10 +108,9 @@ export default function CourseIndexPage() {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ plan }),
     });
-    if (res.ok) {
-      setProfile((prev) => prev ? { ...prev, course_plan: plan } : prev);
-      setUiStage({ stage: "plan", plan });
-    }
+    if (!res.ok) throw new Error("Save failed");
+    setProfile((prev) => prev ? { ...prev, course_plan: plan } : prev);
+    setUiStage({ stage: "plan", plan });
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -125,6 +133,24 @@ export default function CourseIndexPage() {
             </div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (uiStage.stage === "error") {
+    return (
+      <div className="min-h-screen bg-surface-base px-4 pt-10 pb-10 sm:px-6 max-w-lg mx-auto md:max-w-2xl flex items-center justify-center">
+        <div className="max-w-sm w-full rounded-2xl border border-white/5 bg-surface-card p-6 text-center">
+          <p className="font-saira text-sm font-semibold text-white mb-2">Could not load your course</p>
+          <p className="font-saira text-xs text-zinc-400 mb-5">Check your connection and try again.</p>
+          <button
+            type="button"
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="rounded-full bg-purple-500 hover:bg-purple-400 px-5 py-2 font-saira text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition"
+          >
+            {t("common.retry")}
+          </button>
+        </div>
       </div>
     );
   }
@@ -538,9 +564,11 @@ function PlanEditor({
   onSave: (plan: CoursePlan) => Promise<void>;
   onRegenerate: () => void;
 }) {
+  const { t } = useT();
   const [slugs, setSlugs]           = React.useState<string[]>(plan.slugs);
   const highlightSet = React.useMemo(() => new Set(plan.highlights ?? []), [plan.highlights]);
   const [saving, setSaving]         = React.useState(false);
+  const [saveError, setSaveError]   = React.useState<string | null>(null);
   const [addOpen, setAddOpen]       = React.useState(false);
   const [confirmRegen, setConfirmRegen] = React.useState(false);
 
@@ -584,8 +612,14 @@ function PlanEditor({
 
   async function handleSave() {
     setSaving(true);
-    await onSave({ ...plan, slugs });
-    setSaving(false);
+    setSaveError(null);
+    try {
+      await onSave({ ...plan, slugs });
+    } catch {
+      setSaveError(t("course.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
   }
 
   const tooShort = slugs.length < 8;
@@ -784,6 +818,11 @@ function PlanEditor({
       {tooShort && (
         <p className="font-saira text-xs text-amber-400 text-center mt-3">
           Add more modules — minimum 8 required to save.
+        </p>
+      )}
+      {saveError && (
+        <p className="font-saira text-xs text-red-400 text-center mt-3">
+          {saveError}
         </p>
       )}
     </div>

@@ -4,16 +4,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-/** Routes that render the app shell — suppress the marketing NavBar on these. */
-const APP_ROUTES = [
-  "/today", "/journal", "/library", "/course", "/you", "/coach",
-  "/auth", "/join", "/admin", "/voices", "/demo",
-  "/onboarding", "/guide", "/chat", "/scripts", "/tiers", "/translate",
-];
+/**
+ * Public marketing/pre-auth pages that should show this NavBar. Every other
+ * route is suppressed by default — inverted on purpose so a new page added
+ * anywhere (in particular under `app/(app)/`, which already gets AppShell's
+ * own fixed header + sidebar) can never end up with duplicate fixed chrome
+ * just because someone forgot to list it here. Only add a route to this
+ * allowlist if it's a genuinely public, unauthenticated-friendly page.
+ */
+const MARKETING_ROUTES = ["/", "/tests", "/coaches"];
 
 export default function NavBar() {
   const pathname = usePathname();
-  if (APP_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
+  const isMarketing = MARKETING_ROUTES.some(
+    (r) => pathname === r || (r !== "/" && pathname.startsWith(r + "/")),
+  );
+  if (!isMarketing) {
     return null;
   }
 

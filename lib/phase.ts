@@ -38,7 +38,10 @@ export function computeCourseWeek(meetDate: string | null | undefined): number |
 export function computePhase(meetDateStr: string | null | undefined): PhaseInfo | null {
   if (!meetDateStr) return null;
 
-  const meet = new Date(meetDateStr);
+  // Parse at local noon (not UTC midnight) so the date doesn't shift by a day
+  // for users west of UTC — see lib/date.ts header comment for the same fix
+  // applied elsewhere.
+  const meet = new Date(meetDateStr + "T12:00:00");
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   meet.setHours(0, 0, 0, 0);

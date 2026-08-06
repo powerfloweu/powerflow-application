@@ -706,6 +706,7 @@ function OnboardingInner() {
   const [profileCoachId, setProfileCoachId] = React.useState<string | null>(null);
 
   const [submitting, setSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState(false);
 
   // ── Auth check + pre-fill ────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -783,6 +784,7 @@ function OnboardingInner() {
   const handleSubmit = async () => {
     if (submitting) return;
     setSubmitting(true);
+    setSubmitError(false);
 
     const toNum = (s: string): number | null => {
       const n = parseFloat(s);
@@ -835,7 +837,9 @@ function OnboardingInner() {
       });
       if (!res.ok) throw new Error("Failed");
       router.push("/today");
-    } catch {
+    } catch (err) {
+      console.error("[onboarding] submit failed", err);
+      setSubmitError(true);
       setSubmitting(false);
     }
   };
@@ -956,7 +960,13 @@ function OnboardingInner() {
           paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
         }}
       >
-        <div className="max-w-lg mx-auto w-full flex gap-3">
+        <div className="max-w-lg mx-auto w-full">
+        {submitError && (
+          <p className="mb-2 font-saira text-xs text-red-400 text-center">
+            Could not complete setup — please try again.
+          </p>
+        )}
+        <div className="flex gap-3">
           {step > 1 && (
             <button
               type="button"
@@ -992,6 +1002,7 @@ function OnboardingInner() {
               )}
             </button>
           )}
+        </div>
         </div>
       </div>
     </div>

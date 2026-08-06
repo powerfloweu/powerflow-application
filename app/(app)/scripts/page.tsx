@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
+import { effectiveTier, canAccessTools } from "@/lib/plan";
 
 type SavedScript = {
   id: string;
@@ -55,8 +56,7 @@ export default function ScriptsPage() {
       fetch("/api/scripts").then((r) => r.json()),
     ])
       .then(([profile, data]) => {
-        const tier = profile?.plan_tier ?? "opener";
-        const tierOk = tier === "second" || tier === "pr";
+        const tierOk = canAccessTools(effectiveTier(profile ?? {}));
         if (!tierOk) {
           router.replace("/upgrade");
           return;
@@ -134,7 +134,14 @@ export default function ScriptsPage() {
         body: JSON.stringify({ text: script.content }),
         signal: controller.signal,
       });
-      if (!res.ok) throw new Error(`TTS ${res.status}`);
+      if (!res.ok) {
+        let msg = `TTS ${res.status}`;
+        try {
+          const errBody = await res.json();
+          if (errBody?.error) msg = errBody.error;
+        } catch { /* keep default msg */ }
+        throw new Error(msg);
+      }
 
       const blob = await res.blob();
       if (abortRef.current !== controller) return; // stopped while loading
