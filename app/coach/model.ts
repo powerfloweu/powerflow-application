@@ -7,6 +7,7 @@ import { THEME_DEFS, detectSentiment, type Sentiment, type Context } from "@/lib
 import type { TrainingEntry } from "@/lib/training";
 import { type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weeklyCheckin";
 import { ymdLocal } from "@/lib/date";
+import { effectiveTier, type PlanTier } from "@/lib/plan";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -64,6 +65,13 @@ export type AthleteRaw = {
   anything_else: string | null;
   affirmations: string[] | null;
   viz_keywords: Record<string, string[]> | null;
+  // Plan tier + admin-granted override flags. Used to work out which library
+  // tools this athlete can open, so the coach is not offered ones the server
+  // will reject.
+  plan_tier: PlanTier | null;
+  course_access: boolean | null;
+  test_access: boolean | null;
+  ai_access: boolean | null;
   // activity data
   entries: EntryRow[];
   sat: SatRow[];
@@ -265,6 +273,14 @@ export function computeClient(a: AthleteRaw) {
     monthlyCheckins: a.monthly_checkins ?? [],
     assignedTestSlugs: (a.assigned_tests ?? []).map((t) => t.test_slug),
     isCoach: a.role === "coach",
+    // Folded tier (plan + admin override flags) so the view can gate tool
+    // suggestions without repeating the override logic.
+    effectiveTier: effectiveTier({
+      plan_tier: a.plan_tier,
+      course_access: a.course_access,
+      test_access: a.test_access,
+      ai_access: a.ai_access,
+    }),
     // full onboarding profile — passed through for Profile tab
     profile: {
       meet_date: a.meet_date,
@@ -297,6 +313,14 @@ export function computeClient(a: AthleteRaw) {
       affirmations: a.affirmations ?? [],
       viz_keywords: a.viz_keywords ?? {},
       athleteId: a.id,
+      // Folded tier (plan + admin override flags), so the Profile tab can offer
+      // only the library tools this athlete is actually able to open.
+      effectiveTier: effectiveTier({
+        plan_tier: a.plan_tier,
+        course_access: a.course_access,
+        test_access: a.test_access,
+        ai_access: a.ai_access,
+      }),
     },
   };
 }

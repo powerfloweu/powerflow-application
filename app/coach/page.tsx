@@ -10,6 +10,8 @@ import { THEME_DEFS, type Sentiment, type Context } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
 import { weekDays as currentWeekDaysLocal } from "@/lib/date";
 import { weekLabel, type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weeklyCheckin";
+import { hasAccess, type PlanTier } from "@/lib/plan";
+import { TOOL_MIN_TIER } from "@/lib/toolTiers";
 import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { PrepLiftGallery, CoachMeetDashboard } from "@/app/components/MeetDayMode";
@@ -657,20 +659,17 @@ const SUGGEST_TOOLS = [
   { id: "comp-day-viz",        labelKey: "coach.suggestToolCompDayViz" },
 ] as const;
 
-// NOTE on tier gating (POWERFLOW-xxxx follow-up): the server now rejects a
-// suggestion for a tool above the athlete's plan with a 409 (see
-// lib/toolTiers.ts's TOOL_MIN_TIER + lib/plan.ts's effectiveTier/hasAccess).
-// This dropdown *should* filter to what the athlete's plan can open, but the
-// athlete's tier (plan_tier / course_access / test_access / ai_access) isn't
-// selected by GET /api/coach/athletes and isn't part of AthleteRaw/Client in
-// app/coach/model.ts, so it doesn't reach `client.profile` here. Wiring the
-// filter correctly needs that API route + model.ts to expose the tier —
-// both out of scope for this component (page.tsx-only change). Do not
-// default to "opener" here: that would silently hide valid tools for every
-// coach until the real fix lands.
-function SuggestToolSection({ athleteId }: { athleteId: string }) {
+// The server rejects a suggestion for a tool above the athlete's plan with a
+// 409 (lib/toolTiers.ts TOOL_MIN_TIER + lib/plan.ts hasAccess), so the dropdown
+// offers only what this athlete can actually open — otherwise the coach picks
+// blind and gets an error after writing a note.
+function SuggestToolSection({ athleteId, athleteTier }: { athleteId: string; athleteTier: PlanTier }) {
   const { t } = useT();
-  const [toolId, setToolId]       = React.useState<string>(SUGGEST_TOOLS[0].id);
+  const availableTools = React.useMemo(
+    () => SUGGEST_TOOLS.filter((tool) => hasAccess(athleteTier, TOOL_MIN_TIER[tool.id] ?? "opener")),
+    [athleteTier],
+  );
+  const [toolId, setToolId]       = React.useState<string>(availableTools[0]?.id ?? SUGGEST_TOOLS[0].id);
   const [message, setMessage]     = React.useState("");
   const [sending, setSending]     = React.useState(false);
   const [sent, setSent]           = React.useState(false);
@@ -708,7 +707,7 @@ function SuggestToolSection({ athleteId }: { athleteId: string }) {
         onChange={e => setToolId(e.target.value)}
         className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2.5 font-saira text-sm text-zinc-100 mb-3 focus:outline-none focus:border-purple-500/40"
       >
-        {SUGGEST_TOOLS.map(tool => (
+        {availableTools.map(tool => (
           <option key={tool.id} value={tool.id} className="bg-zinc-900">{t(tool.labelKey)}</option>
         ))}
       </select>
@@ -767,7 +766,7 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
     <div className="space-y-6">
 
       {/* Suggest a tool */}
-      <SuggestToolSection athleteId={profile.athleteId} />
+      <SuggestToolSection athleteId={profile.athleteId} athleteTier={profile.effectiveTier} />
 
       {/* Mental tools */}
       <div>

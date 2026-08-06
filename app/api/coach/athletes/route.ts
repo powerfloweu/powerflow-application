@@ -121,6 +121,10 @@ export async function GET() {
       "self_confidence_reg,self_focus_fatigue,self_handling_pressure,self_competition_anxiety,self_emotional_recovery",
       "expectations,previous_tools,anything_else",
       "affirmations,viz_keywords",
+      // Tier + override flags so the coach UI can offer only the tools this
+      // athlete can actually open (see lib/toolTiers.ts). The server rejects
+      // above-tier suggestions, so without these the coach picks blind.
+      "plan_tier,course_access,test_access,ai_access",
     ].join(","),
     order: "created_at.asc",
   });
