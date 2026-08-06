@@ -6,6 +6,7 @@
 import { THEME_DEFS, detectSentiment, type Sentiment, type Context } from "@/lib/journal";
 import type { TrainingEntry } from "@/lib/training";
 import { type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weeklyCheckin";
+import { ymdLocal } from "@/lib/date";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -142,10 +143,34 @@ export function computeClient(a: AthleteRaw) {
     : positiveRate < prevPositiveRate - 10 ? "down"
     : "stable";
 
-  // Meet day flag overrides everything
-  const todayYmd = new Date().toISOString().slice(0, 10);
-  const isMeetDay = a.meet_date === todayYmd;
-  const flag: Flag = isMeetDay ? "attention" : positiveRate < 30 ? "attention" : positiveRate < 55 ? "monitor" : "stable";
+  // ── Activity recency ────────────────────────────────────────────────────────
+  // Computed before the flag because the flag is driven by recency, not sentiment.
+  const lastJournalTime  = a.entries[0] ? new Date(a.entries[0].created_at).getTime() : 0;
+  const lastTrainingTime = trainingLogsWithContent.length
+    ? Math.max(...trainingLogsWithContent.map((e) => new Date(e.updated_at).getTime()))
+    : 0;
+  const lastActivityTime = Math.max(lastJournalTime, lastTrainingTime);
+  const neverActive = lastActivityTime === 0;
+  const daysSinceActivity: number | null = neverActive
+    ? null
+    : Math.floor((now.getTime() - lastActivityTime) / 86400000);
+
+  // Whether there is any sentiment to report at all. Without this the UI cannot
+  // distinguish "0% positive" (real, and bad) from "no entries yet" (no signal),
+  // and every inactive athlete renders as an alarming red 0%.
+  const hasSentimentData = weekAllSentiments.length > 0;
+
+  // ── Flag ────────────────────────────────────────────────────────────────────
+  // Driven purely by how recently the athlete engaged. Sentiment is shown as
+  // information but never colours the roster: an athlete writing honestly about
+  // a hard week is engaged, not a problem, and an athlete with no entries has
+  // no sentiment to judge. Meet day still overrides — that is a "look at this
+  // athlete today" signal rather than a health judgement.
+  const isMeetDay = a.meet_date === ymdLocal();
+  const flag: Flag = isMeetDay ? "attention"
+    : daysSinceActivity === null || daysSinceActivity >= 7 ? "attention"
+    : daysSinceActivity >= 3 ? "monitor"
+    : "stable";
 
   // 7-day daily positive % — journal entries + training logs combined
   const sentimentWeek = Array.from({ length: 7 }, (_, i) => {
@@ -194,12 +219,7 @@ export function computeClient(a: AthleteRaw) {
     return { label: def.label, count };
   }).filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
 
-  // Last active — whichever is more recent: journal entry or training log
-  const lastJournalTime  = a.entries[0] ? new Date(a.entries[0].created_at).getTime() : 0;
-  const lastTrainingTime = trainingLogsWithContent.length
-    ? Math.max(...trainingLogsWithContent.map((e) => new Date(e.updated_at).getTime()))
-    : 0;
-  const lastActivityTime = Math.max(lastJournalTime, lastTrainingTime);
+  // Last active — formatted from the recency computed above.
   // Return a structured code instead of a hardcoded English string so it can be translated in JSX
   let lastActive: { key: "never" } | { key: "justNow" } | { key: "hoursAgo"; h: number } | { key: "yesterday" } | { key: "daysAgo"; d: number } = { key: "never" };
   if (lastActivityTime > 0) {
@@ -220,6 +240,11 @@ export function computeClient(a: AthleteRaw) {
     avatarUrl: a.avatar_url,
     flag,
     positiveRate,
+    // True only when the athlete actually produced entries this week. The UI must
+    // render "—" rather than "0%" when this is false.
+    hasSentimentData,
+    neverActive,
+    daysSinceActivity,
     trend,
     entriesThisWeek: weekEntries.length + weekTrainingLogs.length,
     entries7d: weekEntries.length + weekTrainingLogs.length,
