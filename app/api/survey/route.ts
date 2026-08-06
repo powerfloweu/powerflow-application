@@ -39,13 +39,19 @@ export async function GET() {
   });
   const byRound = new Map(completed.map((r) => [r.round, r.submitted_at]));
 
-  // Round 1: always due on next login if not yet done.
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+  // Round 1: due once the account is 30 days old. It used to fire on the next
+  // login for anyone who had not answered it, which meant a brand-new signup
+  // was immediately asked a survey the modal itself titles "30-day check-in"
+  // and which asks how the app has changed the way they work.
   // Round 2: due 30 days after round 1 was submitted.
   // Round 3: due 30 days after round 2 was submitted.
   let nextRound: 1 | 2 | 3 | null = null;
 
   if (!byRound.has(1)) {
-    nextRound = 1;
+    const accountAgeMs = Date.now() - new Date(profile.created_at).getTime();
+    if (accountAgeMs >= THIRTY_DAYS_MS) nextRound = 1;
   } else if (!byRound.has(2)) {
     const r1 = new Date(byRound.get(1)!).getTime();
     if (Date.now() >= r1 + 30 * 24 * 60 * 60 * 1000) nextRound = 2;

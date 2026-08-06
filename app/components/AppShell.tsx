@@ -40,7 +40,10 @@ export default function AppShell({ children }: Props) {
   const pathname = usePathname();
   const { t } = useT();
   const [notifications, setNotifications] = React.useState<NotificationState | null>(null);
-  const [planTier, setPlanTier] = React.useState<PlanTier>("pr");
+  // Default to the most-locked tier, not the least. Defaulting to "pr" made every
+  // gated tab flash unlocked until /api/me resolved, and a tap landing in that
+  // window went to the page's own gate instead of /upgrade.
+  const [planTier, setPlanTier] = React.useState<PlanTier>("opener");
   const [role, setRole] = React.useState<string | null>(null);
   // Weekly / monthly check-in popup
   const [weeklyCheckinTarget, setWeeklyCheckinTarget] = React.useState<{

@@ -28,7 +28,9 @@ interface Props {
   role?: string;
 }
 
-export default function TabBar({ planTier = "pr", role }: Props) {
+// Default to the most-locked tier so gated tabs never flash unlocked before the
+// caller's profile fetch resolves.
+export default function TabBar({ planTier = "opener", role }: Props) {
   const pathname = usePathname();
   const { t } = useT();
   const [checkinDone, setCheckinDone] = React.useState(true); // optimistic: no badge flash on load

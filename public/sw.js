@@ -39,9 +39,15 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientsArr) => {
-      // Focus an existing tab if one is already on the target URL
+      // Focus an existing tab if one is already on the target URL.
+      // Compare parsed pathnames rather than using endsWith: a tab sitting on
+      // "/today?foo=1" or "/library#pmr" never matched, so every notification
+      // opened a duplicate tab.
+      const targetPath = new URL(target, self.location.origin).pathname;
       for (const client of clientsArr) {
-        if (client.url.endsWith(target) && "focus" in client) return client.focus();
+        let clientPath;
+        try { clientPath = new URL(client.url).pathname; } catch { continue; }
+        if (clientPath === targetPath && "focus" in client) return client.focus();
       }
       // Otherwise open a new tab
       if (self.clients.openWindow) return self.clients.openWindow(target);
