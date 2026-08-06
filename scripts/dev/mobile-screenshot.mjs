@@ -77,10 +77,36 @@ const failures = [];
 page.on("response", r => { if (r.status() >= 400) failures.push(`${r.status()} ${r.request().method()} ${r.url().replace("http://localhost:3000", "")}`); });
 page.on("pageerror", e => failures.push("PAGEERROR: " + String(e).slice(0, 250)));
 
+/**
+ * Dismiss anything modal that auto-opens (survey prompt, notification permission
+ * ask). Without this a screenshot run mostly captures overlays rather than the
+ * page under test. Returns how many it closed, which is itself a useful signal —
+ * needing two dismissals meant the same modal was mounted twice.
+ */
+async function dismissOverlays(p) {
+  let closed = 0;
+  for (let i = 0; i < 4; i++) {
+    const didClose = await p.evaluate(() => {
+      const btn = Array.from(document.querySelectorAll("button")).find((b) =>
+        /maybe later|not now|dismiss/i.test(b.textContent || ""),
+      );
+      if (btn) { btn.click(); return true; }
+      return false;
+    });
+    if (!didClose) break;
+    closed++;
+    await p.waitForTimeout(1000);
+  }
+  return closed;
+}
+
 for (const route of routes) {
   const name = route.replace(/\W+/g, "-").replace(/^-|-$/g, "") || "root";
   await page.goto(`http://localhost:3000${route}`, { waitUntil: "networkidle", timeout: 60000 });
   await page.waitForTimeout(3000);
+  const dismissed = await dismissOverlays(page);
+  if (dismissed) console.log(`  (dismissed ${dismissed} overlay${dismissed > 1 ? "s" : ""})`);
+  await page.waitForTimeout(500);
   await page.screenshot({ path: `${outDir}/${name}.png` });
   await page.screenshot({ path: `${outDir}/${name}-full.png`, fullPage: true });
   const ov = await page.evaluate(() => ({ scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth }));

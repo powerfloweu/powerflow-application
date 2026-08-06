@@ -3044,14 +3044,10 @@ export default function CoachPage() {
   // Mobile: selected athlete for bottom sheet
   const [mobileSelectedId, setMobileSelectedId] = React.useState<string | null>(null);
 
-  // Product owner's own coach account — suppresses the billing card (see
-  // CoachBillingCard call site below). /api/me already returns `email`
-  // (not on the CoachProfile type, hence CoachProfileMeta below); comparing
-  // it against NEXT_PUBLIC_ADMIN_EMAIL avoids adding a new endpoint or
-  // touching app/api/**, which are outside this component's ownership.
-  // Requires NEXT_PUBLIC_ADMIN_EMAIL to be set (mirroring the server-only
-  // ADMIN_EMAIL used by lib/adminAuth.ts) — until it is, this simply
-  // stays false and every coach sees the card as before.
+  // Product owner's own coach account — suppresses the billing card (see the
+  // CoachBillingCard call site below). /api/me computes this server-side and
+  // returns `is_admin`, so the admin address never reaches the client bundle.
+  // Presentation only: real authorisation goes through requireAdmin().
   const [isAdmin, setIsAdmin] = React.useState(false);
 
   React.useEffect(() => {
@@ -3069,10 +3065,11 @@ export default function CoachPage() {
         }
 
         // /api/me returns more than the CoachProfile type declares (e.g.
-        // coach_status, email) — a typed extension instead of `as any`.
+        // coach_status, is_admin) — a typed extension instead of `as any`.
         type CoachProfileMeta = CoachProfile & {
           coach_status?: string | null;
           email?: string | null;
+          is_admin?: boolean;
         };
         const prof: CoachProfileMeta = await profileRes.json();
         if (prof.coach_status === "pending") {
@@ -3084,9 +3081,7 @@ export default function CoachPage() {
           return;
         }
 
-        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
-        const coachEmail = prof.email?.toLowerCase().trim();
-        setIsAdmin(!!adminEmail && !!coachEmail && coachEmail === adminEmail);
+        setIsAdmin(prof.is_admin === true);
 
         const athletes: AthleteRaw[] = await athletesRes.json();
         const computed = athletes.map(computeClient);
