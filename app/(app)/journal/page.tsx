@@ -1074,8 +1074,16 @@ export default function JournalPage() {
   const grouped = React.useMemo(() => groupByDay(feedItems), [feedItems]);
   const showCoachPrompt = !coachPromptDismissed && shouldPromptCoach(entries, profile);
 
-  // Resolve the effective prompt labels for the training form
-  const defaultPromptLabels = TRAINING_QUESTIONS.map((q) => q.label);
+  // Resolve the effective prompt labels for the training form.
+  // Translate via TRAINING_QKEY rather than using TRAINING_QUESTIONS[].label,
+  // which is hardcoded English in lib/training.ts. The de/hu translations for
+  // these five questions already existed but nothing referenced them, so
+  // German and Hungarian athletes were shown English training prompts.
+  const defaultPromptLabels = React.useMemo(
+    () => TRAINING_QUESTIONS.map((q) => t(TRAINING_QKEY[q.key] ?? "") || q.label),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locale],
+  );
   const effectivePromptLabels = React.useMemo(
     () => resolvePromptLabels(
       profile?.coach_journal_prompt_labels,
