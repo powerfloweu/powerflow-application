@@ -177,7 +177,7 @@ export default function CoachPendingPage() {
                   placeholder={placeholder}
                   value={form[key]}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                  className="w-full rounded-xl border border-white/10 bg-surface-base px-3 py-2.5 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
+                  className="w-full rounded-xl border border-white/10 bg-surface-base px-3 py-2.5 font-saira text-base md:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50 resize-none"
                 />
               ) : (
                 <input
@@ -187,7 +187,7 @@ export default function CoachPendingPage() {
                   placeholder={placeholder}
                   value={form[key]}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                  className="w-full rounded-xl border border-white/10 bg-surface-base px-3 py-2.5 font-saira text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
+                  className="w-full rounded-xl border border-white/10 bg-surface-base px-3 py-2.5 font-saira text-base md:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500/50"
                 />
               )}
             </div>

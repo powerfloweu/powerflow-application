@@ -162,7 +162,7 @@ function AthleteListRow({ athlete, onClick }: { athlete: Athlete; onClick: () =>
       type="button"
       onClick={onClick}
       aria-label={`${athlete.display_name} — ${label}`}
-      className="w-full text-left flex items-center gap-0 hover:bg-white/[0.03] active:bg-white/5 transition"
+      className="w-full text-left flex items-center gap-0 hover:bg-white/[0.03] active:bg-white/5 transition lg:rounded-2xl lg:border lg:border-white/6 lg:bg-surface-alt lg:overflow-hidden"
     >
       {/* Decorative — the flag word to the right and this button's
           aria-label carry the actual signal for colour-blind and
@@ -263,7 +263,7 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
       <div className="flex rounded-xl border border-white/8 overflow-hidden">
         {(["overview", "activity", "tests"] as const).map((k) => (
           <button key={k} type="button" onClick={() => setTab(k)}
-            className={`flex-1 py-2 font-saira text-[10px] uppercase tracking-[0.14em] transition ${
+            className={`flex-1 min-h-[44px] flex items-center justify-center py-2 font-saira text-[10px] uppercase tracking-[0.14em] transition ${
               tab === k ? "bg-purple-500/20 text-white" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >{k}</button>
@@ -331,7 +331,7 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                   {fmtDate(latestCheckin.week_start)}
                 </span>
               </div>
-              <div className="grid grid-cols-5 gap-1 text-center">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-1 text-center">
                 {[
                   { label: "Mood",     v: latestCheckin.mood_rating },
                   { label: "Train",    v: latestCheckin.training_quality },
@@ -343,7 +343,7 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                     <p className={`font-saira text-base font-extrabold tabular-nums ${
                       v >= 8 ? "text-emerald-400" : v >= 5 ? "text-purple-300" : "text-rose-400"
                     }`}>{v}</p>
-                    <p className="font-saira text-[8px] uppercase tracking-[0.12em] text-zinc-500 leading-tight">{label}</p>
+                    <p className="font-saira text-[10px] uppercase tracking-[0.1em] text-zinc-500 leading-tight">{label}</p>
                   </div>
                 ))}
               </div>
@@ -393,7 +393,7 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                   {item.entry.sentiment === "positive" && <span className="ml-auto text-emerald-400 text-xs">+</span>}
                   {item.entry.sentiment === "negative" && <span className="ml-auto text-rose-400 text-xs">–</span>}
                 </div>
-                <p className="font-saira text-xs text-zinc-300 line-clamp-3 leading-relaxed">{item.entry.content.slice(0, 160)}</p>
+                <p className="font-saira text-xs text-zinc-300 line-clamp-3 leading-relaxed break-words">{item.entry.content.slice(0, 160)}</p>
               </div>
             ) : (
               <div key={"t" + item.entry.id} className="rounded-xl border border-sky-500/20 bg-sky-500/[0.05] p-3">
@@ -413,7 +413,7 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                 ].filter((f) => f.value).slice(0, 2).map((f) => (
                   <div key={f.label} className="mb-1 last:mb-0">
                     <span className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-500">{f.label}: </span>
-                    <span className="font-saira text-xs text-zinc-300 leading-relaxed line-clamp-2">{f.value}</span>
+                    <span className="font-saira text-xs text-zinc-300 leading-relaxed line-clamp-2 break-words">{f.value}</span>
                   </div>
                 ))}
               </div>
@@ -446,7 +446,7 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                     </span>
                   </div>
                   {d.score_external_approval !== undefined && (
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5 pt-1">
                       {[
                         ["Ext. Approval",  d.score_external_approval],
                         ["Lovability",     d.score_lovability],
@@ -456,9 +456,9 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                         ["Omnipotence",    d.score_omnipotence],
                         ["Ext. Control",   d.score_external_control],
                       ].map(([l, v]) => (
-                        <div key={l as string} className="flex justify-between">
-                          <span className="font-saira text-[10px] text-zinc-500">{l as string}</span>
-                          <span className={`font-saira text-[10px] tabular-nums ${Math.abs(v as number) > 5 ? "text-rose-400" : "text-zinc-300"}`}>
+                        <div key={l as string} className="flex justify-between gap-2">
+                          <span className="font-saira text-[10px] text-zinc-500 truncate min-w-0">{l as string}</span>
+                          <span className={`font-saira text-[10px] tabular-nums flex-shrink-0 ${Math.abs(v as number) > 5 ? "text-rose-400" : "text-zinc-300"}`}>
                             {(v as number) > 0 ? "+" : ""}{v as number}
                           </span>
                         </div>
@@ -528,7 +528,7 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                   ].map(({ l, v, good, sub }) => (
                     <div key={l} className="rounded-lg bg-white/[0.03] p-2">
                       <p className={`font-saira text-sm font-bold tabular-nums ${good ? "text-emerald-400" : "text-rose-400"}`}>{v}<span className="text-[9px] text-zinc-500">{sub}</span></p>
-                      <p className="font-saira text-[8px] uppercase tracking-[0.1em] text-zinc-500 mt-0.5">{l}</p>
+                      <p className="font-saira text-[10px] uppercase tracking-[0.08em] text-zinc-500 mt-0.5">{l}</p>
                     </div>
                   ))}
                 </div>
@@ -560,7 +560,7 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                     </span>
                   </div>
                   {s.score_performance !== undefined && (
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5 pt-1">
                       {[
                         ["Performance",   s.score_performance],
                         ["Affiliation",   s.score_affiliation],
@@ -574,9 +574,9 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                         ["Order",         s.score_order],
                         ["Helplessness",  s.score_helplessness],
                       ].map(([l, v]) => (
-                        <div key={l as string} className="flex justify-between">
-                          <span className="font-saira text-[10px] text-zinc-500">{l as string}</span>
-                          <span className="font-saira text-[10px] tabular-nums text-zinc-300">{v as number}/15</span>
+                        <div key={l as string} className="flex justify-between gap-2">
+                          <span className="font-saira text-[10px] text-zinc-500 truncate min-w-0">{l as string}</span>
+                          <span className="font-saira text-[10px] tabular-nums text-zinc-300 flex-shrink-0">{v as number}/15</span>
                         </div>
                       ))}
                     </div>
@@ -680,7 +680,7 @@ function CoachAthletesInner() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.07),transparent_55%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-lg px-4">
+      <div className="relative z-10 mx-auto max-w-lg lg:max-w-6xl px-4">
         {/* Header */}
         <div className="mb-5 pt-4 flex items-center justify-between">
           <div>
@@ -702,7 +702,7 @@ function CoachAthletesInner() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search athletes…"
-              className="w-full rounded-xl border border-white/10 bg-surface-alt px-4 py-2.5 font-saira text-sm text-white placeholder:text-zinc-400 focus:outline-none focus:border-emerald-500/40"
+              className="w-full rounded-xl border border-white/10 bg-surface-alt px-4 py-2.5 font-saira text-base md:text-sm text-white placeholder:text-zinc-400 focus:outline-none focus:border-emerald-500/40"
             />
             <div className="flex gap-1.5">
               {([
@@ -714,7 +714,7 @@ function CoachAthletesInner() {
                 <button
                   key={s.key}
                   onClick={() => setSort(s.key)}
-                  className={`rounded-full border px-3 py-1 font-saira text-[9px] uppercase tracking-[0.14em] transition ${
+                  className={`min-h-[44px] inline-flex items-center justify-center rounded-full border px-3 py-1 font-saira text-[9px] uppercase tracking-[0.14em] transition ${
                     sort === s.key
                       ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-300"
                       : "border-white/10 text-zinc-400 hover:border-white/20"
@@ -725,9 +725,11 @@ function CoachAthletesInner() {
           </div>
         )}
 
-        {/* Athlete list */}
+        {/* Athlete list — a plain divided list on phones; at lg+ (where the
+            mx-auto max-w-lg column would otherwise leave most of a desktop
+            viewport empty) it reflows into a card grid instead. */}
         {filtered.length > 0 ? (
-          <div className="rounded-2xl border border-white/6 overflow-hidden divide-y divide-white/5">
+          <div className="rounded-2xl border border-white/6 divide-y divide-white/5 overflow-hidden lg:rounded-none lg:border-0 lg:divide-y-0 lg:overflow-visible lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3">
             {filtered.map((a) => (
               <AthleteListRow key={a.id} athlete={a} onClick={() => setSelectedId(a.id)} />
             ))}

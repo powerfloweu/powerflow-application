@@ -86,7 +86,7 @@ export default function CoachDigests() {
                     <span className="font-saira text-sm font-semibold text-zinc-100 truncate">{d.athlete_name}</span>
                     <span className="font-saira text-[10px] text-zinc-500 flex-shrink-0">{d.entry_count} entries</span>
                   </div>
-                  <p className={`font-saira text-xs text-zinc-400 mt-0.5 ${open ? "" : "line-clamp-2"}`}>
+                  <p className={`font-saira text-xs text-zinc-400 mt-0.5 break-words ${open ? "" : "line-clamp-2"}`}>
                     {d.summary}
                   </p>
                 </div>
@@ -102,7 +102,7 @@ export default function CoachDigests() {
                     value={draft}
                     onChange={(e) => setDrafts((p) => ({ ...p, [d.id]: e.target.value }))}
                     rows={7}
-                    className="w-full rounded-xl border border-zinc-700/60 bg-surface-input px-3 py-2.5 font-saira text-sm text-zinc-100 outline-none focus:border-emerald-500/50 resize-y leading-relaxed"
+                    className="w-full rounded-xl border border-zinc-700/60 bg-surface-input px-3 py-2.5 font-saira text-base md:text-sm text-zinc-100 outline-none focus:border-emerald-500/50 resize-y leading-relaxed"
                   />
                   <div className="mt-2.5 flex flex-wrap items-center gap-2">
                     <button

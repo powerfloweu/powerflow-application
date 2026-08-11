@@ -208,7 +208,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
                 value={affDrafts[i]}
                 onChange={(e) => { const d = [...affDrafts] as [string,string,string]; d[i] = e.target.value; setAffDrafts(d); }}
                 placeholder={t("coach.affirmationPlaceholder").replace("{n}", String(i + 1))}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-purple-400/50"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-base lg:text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-purple-400/50"
               />
             ))}
             <div className="flex gap-2 pt-1">
@@ -253,7 +253,7 @@ function MentalToolsEditor({ profile }: { profile: ReturnType<typeof computeClie
                   value={kwDrafts[lift]}
                   onChange={(e) => setKwDrafts((p) => ({ ...p, [lift]: e.target.value }))}
                   placeholder={t("coach.cueWordsPlaceholder")}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-purple-400/50"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-saira text-base lg:text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-purple-400/50"
                 />
               </div>
             ))}
@@ -414,7 +414,7 @@ function CheckinFeedbackPanel({
         onChange={(e) => setText(e.target.value)}
         placeholder="Leave a written note for this athlete…"
         rows={3}
-        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-saira text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-400/40 transition resize-none"
+        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-saira text-base lg:text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-400/40 transition resize-none"
       />
 
       {/* Audio recording */}
@@ -533,11 +533,11 @@ function CheckinsTab({
                 isExpanded ? next.delete(key) : next.add(key);
                 return next;
               })}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/3 transition"
+              className="w-full min-h-[44px] flex items-center justify-between px-4 py-3 hover:bg-white/3 transition"
             >
               <div className="flex items-center gap-2 min-w-0">
                 {isMonthly && (
-                  <span className="flex-shrink-0 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-saira text-[8px] font-bold uppercase tracking-[0.18em] text-amber-400">
+                  <span className="flex-shrink-0 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-saira text-[10px] font-bold uppercase tracking-[0.14em] text-amber-400">
                     {t("coach.monthlyBadge")}
                   </span>
                 )}
@@ -557,7 +557,7 @@ function CheckinsTab({
             {isExpanded && (
               <div className="px-4 pb-4 border-t border-white/5 pt-3 space-y-3">
                 {/* Weekly ratings (both types) */}
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                   {[
                     { label: t("coach.ciMood"),      v: ci.mood_rating },
                     { label: t("coach.ciTraining"),  v: ci.training_quality },
@@ -567,7 +567,7 @@ function CheckinsTab({
                   ].map(({ label: rl, v }) => (
                     <div key={rl} className="text-center">
                       <p className={`font-saira text-lg font-extrabold tabular-nums ${ratingColor(v)}`}>{v}</p>
-                      <p className="font-saira text-[9px] uppercase tracking-[0.12em] text-zinc-400 leading-tight">{rl}</p>
+                      <p className="font-saira text-[10px] uppercase tracking-[0.1em] text-zinc-400 leading-tight">{rl}</p>
                     </div>
                   ))}
                 </div>
@@ -599,7 +599,7 @@ function CheckinsTab({
                     <>
                       <div className="flex items-center gap-2 pt-1">
                         <div className="flex-1 h-px bg-amber-500/20" />
-                        <span className="font-saira text-[8px] font-bold uppercase tracking-[0.2em] text-amber-400/60">{t("coach.monthlyDivider")}</span>
+                        <span className="font-saira text-[10px] font-bold uppercase tracking-[0.14em] text-amber-400/60">{t("coach.monthlyDivider")}</span>
                         <div className="flex-1 h-px bg-amber-500/20" />
                       </div>
                       <div className="flex items-center gap-3">
@@ -717,7 +717,7 @@ function SuggestToolSection({ athleteId, athleteTier }: { athleteId: string; ath
         placeholder={t("coach.suggestToolMessagePlaceholder")}
         rows={2}
         maxLength={200}
-        className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 font-saira text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-purple-500/40 mb-3"
+        className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 font-saira text-base lg:text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-purple-500/40 mb-3"
       />
       {error && <p className="font-saira text-xs text-rose-400 mb-2">{error}</p>}
       <button
@@ -1016,7 +1016,7 @@ function PatternAnalysis({ client }: { client: Client }) {
           <div className="space-y-1.5">
             <div className="flex items-start gap-2">
               <span className="font-saira text-[10px] text-purple-400 font-semibold w-14 flex-shrink-0 pt-0.5">{t("coach.profilePrimary")}</span>
-              <div>
+              <div className="min-w-0 break-words">
                 <span className="font-saira text-xs text-zinc-200 font-semibold">{primaryTheme.label}</span>
                 {THEME_DESC_KEYS[primaryTheme.label] && (
                   <span className="font-saira text-[10px] text-zinc-300 ml-2">— {t(THEME_DESC_KEYS[primaryTheme.label])}</span>
@@ -1027,7 +1027,7 @@ function PatternAnalysis({ client }: { client: Client }) {
             {secondaryTheme && (
               <div className="flex items-start gap-2">
                 <span className="font-saira text-[10px] text-zinc-300 w-14 flex-shrink-0 pt-0.5">{t("coach.profileSecondary")}</span>
-                <div>
+                <div className="min-w-0 break-words">
                   <span className="font-saira text-xs text-zinc-400">{secondaryTheme.label}</span>
                   {THEME_DESC_KEYS[secondaryTheme.label] && (
                     <span className="font-saira text-[10px] text-zinc-400 ml-2">— {t(THEME_DESC_KEYS[secondaryTheme.label])}</span>
@@ -1107,7 +1107,7 @@ function NotesTab({
         onChange={(e) => onChange(athleteId, e.target.value)}
         placeholder={t("coach.notesPlaceholder")}
         rows={6}
-        className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
+        className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-saira text-base lg:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
       />
       <div className="flex items-center gap-2 font-saira text-[10px] text-zinc-400">
         {saving ? (
@@ -1241,7 +1241,7 @@ function EntryFeedbackSection({
         onChange={(e) => setDraft(e.target.value)}
         rows={2}
         placeholder={t("coach.entryNotePlaceholder")}
-        className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 font-saira text-xs text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50"
+        className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 font-saira text-base lg:text-xs text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50"
       />
       <div className="flex gap-2">
         <button
@@ -1345,7 +1345,7 @@ function TrainingFeedbackSection({
         onChange={(e) => setDraft(e.target.value)}
         rows={2}
         placeholder={t("coach.sessionNotePlaceholder")}
-        className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 font-saira text-xs text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50"
+        className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 font-saira text-base lg:text-xs text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50"
       />
       <div className="flex gap-2">
         <button
@@ -1437,7 +1437,7 @@ function AnalysisTabBody({
               key={w}
               type="button"
               onClick={() => onSentimentWindowChange(client.id, w)}
-              className={`rounded-full border px-3 py-0.5 font-saira text-[10px] uppercase tracking-[0.12em] transition ${
+              className={`min-h-[44px] inline-flex items-center justify-center rounded-full border px-3 py-0.5 font-saira text-[10px] uppercase tracking-[0.12em] transition ${
                 sentimentWindow === w
                   ? "border-purple-400 bg-purple-500/20 text-white"
                   : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
@@ -1920,7 +1920,7 @@ function ClientCard({
           <div className="flex items-center gap-2">
             <p className="font-saira text-sm font-semibold text-zinc-100">{client.name}</p>
             {client.profile.meet_date === new Date().toISOString().slice(0, 10) && (
-              <span className="rounded-full border border-rose-500/40 bg-rose-500/10 px-1.5 py-0.5 font-saira text-[8px] font-bold uppercase tracking-[0.18em] text-rose-400">🏆 Meet day</span>
+              <span className="rounded-full border border-rose-500/40 bg-rose-500/10 px-1.5 py-0.5 font-saira text-[10px] font-bold uppercase tracking-[0.14em] text-rose-400">🏆 Meet day</span>
             )}
           </div>
           <p className="font-saira text-[11px] text-zinc-400 mt-0.5">
@@ -2137,7 +2137,7 @@ function PromptsTab({ athleteId }: { athleteId: string }) {
                 return next;
               })}
               placeholder={t("coach.journalPromptsPlaceholder").replace("{n}", String(i + 1)) || DEFAULT_LABELS[i]}
-              className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-saira text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
+              className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-saira text-base lg:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-purple-400/50 focus:ring-1 focus:ring-purple-500/30"
             />
           </div>
         ))}
@@ -2198,7 +2198,7 @@ function MoodSparkline({ entries, weekDays }: { entries: TrainingEntry[]; weekDa
               style={{ height: `${height}px` }}
               title={`${DAY_LABELS[i]}: ${mood !== null ? `${mood}/10` : "no entry"}`}
             />
-            <span className="font-saira text-[8px] text-zinc-400">{DAY_LABELS[i]}</span>
+            <span className="font-saira text-[10px] text-zinc-400">{DAY_LABELS[i]}</span>
           </div>
         );
       })}
@@ -2305,7 +2305,7 @@ function TrainingLogTab({ trainingThisWeek, weekDays: propWeekDays }: { training
                             <span className="font-saira text-[10px] uppercase tracking-[0.12em] text-zinc-400 w-20 flex-shrink-0 pt-0.5">
                               {label}
                             </span>
-                            <span className="font-saira text-xs text-zinc-300 leading-snug">
+                            <span className="font-saira text-xs text-zinc-300 leading-snug min-w-0 break-words">
                               {val}
                             </span>
                           </div>
@@ -2815,17 +2815,31 @@ function CoachHomePanel({
   }
 
   return (
-    <div className="p-8 overflow-y-auto h-full">
+    <div className="p-6 xl:p-8 overflow-y-auto h-full">
       {/* Greeting */}
-      <div className="mb-7">
-        <h1 className="font-saira text-2xl font-bold text-white">
-          {greeting}{coachName ? `, ${coachName}` : ""} 👋
-        </h1>
-        <p className="font-saira text-sm text-zinc-400 mt-1">{todayStr}</p>
+      <div className="mb-7 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-saira text-2xl font-bold text-white">
+            {greeting}{coachName ? `, ${coachName}` : ""} 👋
+          </h1>
+          <p className="font-saira text-sm text-zinc-400 mt-1">{todayStr}</p>
+        </div>
+        {/* Quick links — desktop has no sidebar nav entry for these routes
+            (AppShell's coach icon only links to /coach itself), so give
+            desktop users a way to reach them without falling back to the
+            mobile-only TabBar. */}
+        <div className="flex items-center gap-3">
+          <Link href="/coach/athletes" className="font-saira text-[11px] uppercase tracking-[0.14em] text-zinc-400 hover:text-purple-300 transition">
+            Athletes →
+          </Link>
+          <Link href="/coach/activity" className="font-saira text-[11px] uppercase tracking-[0.14em] text-zinc-400 hover:text-purple-300 transition">
+            Activity →
+          </Link>
+        </div>
       </div>
 
       {/* Stats strip */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         <DesktopStatCard value={String(clients.length)} label="Athletes" accent="purple" />
         <DesktopStatCard
           value={String(attentionCount)}
@@ -2845,7 +2859,7 @@ function CoachHomePanel({
       </div>
 
       {/* Two-column body */}
-      <div className="grid grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
         {/* Left 2 cols: Attention athletes */}
         <div className="col-span-2">
           <p className="font-saira text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-400 mb-3">
@@ -2922,7 +2936,7 @@ function CoachHomePanel({
                             {item.type}
                           </span>
                         </div>
-                        <p className="font-saira text-xs text-zinc-400 truncate">{item.content.slice(0, 100)}</p>
+                        <p className="font-saira text-xs text-zinc-400 truncate break-words">{item.content.slice(0, 100)}</p>
                       </div>
                       <span className="font-saira text-[10px] text-zinc-500 flex-shrink-0 whitespace-nowrap">
                         {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
@@ -3243,7 +3257,7 @@ export default function CoachPage() {
           pb-[calc(4rem+safe-bottom)] (TabBar) — re-adding pt-16 pb-24 plus
           min-h-screen here doubled the shell chrome and forced an extra
           ~80px of phantom scroll on every page, even when empty. */}
-      <div className="md:hidden relative z-10">
+      <div className="lg:hidden relative z-10">
         <div className="mx-auto max-w-lg px-4">
 
           {/* Header */}
@@ -3256,9 +3270,12 @@ export default function CoachPage() {
             </h1>
           </div>
 
-          {/* Invite / billing when no athletes yet — billing is suppressed
-              entirely for the product owner's own admin account. */}
-          {profile?.coach_code && clients.length === 0 && <InvitePanel coachCode={profile.coach_code} />}
+          {/* Invite / billing — the invite link must stay reachable even once
+              the roster isn't empty (mobile has no other way to copy the
+              join link to add another athlete; desktop keeps it permanently
+              in the sidebar). Billing is suppressed entirely for the product
+              owner's own admin account. */}
+          {profile?.coach_code && <InvitePanel coachCode={profile.coach_code} />}
           {!isAdmin && (
             <CoachBillingCard athleteCount={clients.length} hasSubscription={!!profile?.stripe_coach_sub_id} />
           )}
@@ -3400,10 +3417,10 @@ export default function CoachPage() {
           many px below the visible viewport. dvh also tracks the real
           (small) viewport under a visible mobile browser chrome, though this
           panel itself is desktop-only (hidden below md). */}
-      <div className="hidden md:flex h-[calc(100dvh_-_env(safe-area-inset-top))] relative z-10 overflow-hidden">
+      <div className="hidden lg:flex h-[calc(100dvh_-_env(safe-area-inset-top))] relative z-10 overflow-hidden">
 
         {/* ── Left panel: roster sidebar ── */}
-        <aside className="w-80 flex-shrink-0 border-r border-white/6 flex flex-col h-full bg-surface-panel/90 overflow-hidden">
+        <aside className="w-72 xl:w-80 flex-shrink-0 border-r border-white/6 flex flex-col h-full bg-surface-panel/90 overflow-hidden">
 
           {/* Brand */}
           <div className="flex-shrink-0 px-5 py-4 border-b border-white/5">
@@ -3505,7 +3522,7 @@ export default function CoachPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("coach.searchPlaceholder")}
-                className="w-full rounded-xl border border-zinc-700/70 bg-surface-section px-3 py-2 font-saira text-sm text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30"
+                className="w-full rounded-xl border border-zinc-700/70 bg-surface-section px-3 py-2 font-saira text-base text-zinc-100 outline-none transition focus:border-purple-400 focus:ring-1 focus:ring-purple-500/30"
               />
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-saira text-xs text-zinc-400 mr-0.5 uppercase tracking-[0.1em]">{t("coach.sortLabel")}</span>
@@ -3589,7 +3606,7 @@ export default function CoachPage() {
           {selectedClient ? (
             <>
               {/* Sticky athlete header */}
-              <div className="flex-shrink-0 sticky top-0 z-10 bg-surface-base/95 backdrop-blur-sm border-b border-white/6 px-8 py-5">
+              <div className="flex-shrink-0 sticky top-0 z-10 bg-surface-base/95 backdrop-blur-sm border-b border-white/6 px-6 xl:px-8 py-5">
                 <div className="flex items-center gap-4">
                   {/* Avatar */}
                   <AthleteAvatar
@@ -3666,7 +3683,7 @@ export default function CoachPage() {
               </div>
 
               {/* Scrollable detail body */}
-              <div className="flex-1 overflow-y-auto p-8">
+              <div className="flex-1 overflow-y-auto p-6 xl:p-8">
                 <ClientCard
                   key={selectedClient.id}
                   client={selectedClient}

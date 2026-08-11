@@ -113,7 +113,7 @@ export default function CoachActivityPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.07),transparent_55%)]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-lg px-4">
+      <div className="relative z-10 mx-auto max-w-lg lg:max-w-6xl px-4">
         {/* Header */}
         <div className="mb-5 pt-4 flex items-center justify-between">
           <div>
@@ -148,9 +148,10 @@ export default function CoachActivityPage() {
           </div>
         )}
 
-        {/* Feed */}
+        {/* Feed — single column on phones; reflows into a card grid at lg+
+            so a wide desktop viewport isn't left mostly empty. */}
         {feed.length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3">
             {feed.map((item) => (
               <Link
                 key={item.type + item.id}
@@ -178,7 +179,7 @@ export default function CoachActivityPage() {
                 </div>
 
                 {/* Content preview */}
-                <p className="font-saira text-sm text-zinc-300 leading-relaxed line-clamp-3">
+                <p className="font-saira text-sm text-zinc-300 leading-relaxed line-clamp-3 break-words">
                   {item.preview}
                   {item.preview.length === 120 && "…"}
                 </p>
