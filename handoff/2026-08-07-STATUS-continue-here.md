@@ -46,21 +46,21 @@ node scripts/dev/mobile-screenshot.mjs demo.athlete@powerflow.training /tmp/shot
 
 ---
 
-## In flight when the session ended
-
-**P2 pass 5 — ergonomics sweep** was dispatched to a subagent and may not have
-finished. **Check `git status` first.** If `app/coach/*.tsx` are dirty, review the
-diff, run the gates, and commit; if clean, the work never landed and needs redoing.
-Scope (from the plan): 44px tap targets, `text-base` inputs to stop iOS zoom,
-`break-words` on previews, move the desktop split `md:` → `lg:` with responsive
-`CoachHomePanel` grids, 3-col check-in grids on mobile, 10px type floor, invite link
-reachable on mobile, desktop treatment for `/coach/athletes` + `/coach/activity`.
+**P2 pass 5 (ergonomics) is also DONE** — landed in `f852268`, gates green. 44px tap
+targets, 16px inputs (iOS zoom), `break-words` on previews, desktop split moved
+`md:` → `lg:` with responsive grids, collapsing check-in grids, 10px type floor,
+invite link always reachable on mobile, and desktop layouts for
+`/coach/athletes` + `/coach/activity`.
 
 ---
 
 ## Remaining
 
-1. **Finish/verify P2 pass 5** (above).
+1. **Desktop sidebar links.** `app/components/AppShell.tsx` has one coach nav entry
+   pointing at `/coach`. Now that `/coach/athletes` and `/coach/activity` have real
+   desktop layouts, they are still only reachable by typing the URL — the TabBar
+   that links them is `md:hidden`. Add sidebar entries. (A stopgap exists: quick
+   links in `CoachHomePanel`'s greeting row.)
 2. **P5 polish** — the plan's last section. Mostly i18n: hardcoded English in
    `today/page.tsx` (coach-suggestion card, `TOOL_DISPLAY_NAMES`), `you/page.tsx`,
    `PostCompReflection.tsx` (entirely English), the course editor pages, and
