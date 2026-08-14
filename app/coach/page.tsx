@@ -16,6 +16,12 @@ import { useT } from "@/lib/i18n";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { PrepLiftGallery, CoachMeetDashboard } from "@/app/components/MeetDayMode";
 import { CoachMeetHistory } from "@/app/components/PostCompReflection";
+import ReflectionNoteThread from "@/app/components/ReflectionNoteThread";
+import {
+  MAX_QUESTIONS,
+  type ReflectionQuestion, type QuestionKind,
+  type ReflectionSetRow as ReflectionSet, type ReflectionSetStatus,
+} from "@/lib/reflections";
 
 import {
   type Flag, type Trend, type EntryRow, type AthleteRaw, type CoachProfile, type Client,
@@ -736,7 +742,502 @@ function SuggestToolSection({ athleteId, athleteTier }: { athleteId: string; ath
   );
 }
 
-function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["profile"] }) {
+// ── Coach-authored reflection sets ──────────────────────────────────────────
+// New section for the athlete Profile tab, beside SuggestToolSection — the
+// established home for coach→athlete actions (rendered on both mobile and
+// desktop, see the two ProfileTab call sites below). Lets a coach write a
+// bespoke set of open-ended questions, save it as a draft, send it, then
+// read the athlete's answers and add notes as they arrive.
+
+const REFLECTION_STATUS_LABEL_KEY: Record<ReflectionSetStatus, string> = {
+  draft: "coach.reflectionStatusDraft",
+  sent: "coach.reflectionStatusSent",
+  archived: "coach.reflectionStatusArchived",
+};
+const REFLECTION_STATUS_BADGE_CLASS: Record<ReflectionSetStatus, string> = {
+  draft: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+  sent: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+  archived: "border-zinc-600/40 bg-zinc-600/10 text-zinc-400",
+};
+
+function ReflectionQuestionRow({
+  q, index, total, onChange, onRemove, onMove,
+}: {
+  q: ReflectionQuestion;
+  index: number;
+  total: number;
+  onChange: (q: ReflectionQuestion) => void;
+  onRemove: () => void;
+  onMove: (dir: -1 | 1) => void;
+}) {
+  const { t } = useT();
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="font-saira text-[10px] text-zinc-500 flex-shrink-0 w-4">{index + 1}.</span>
+        <input
+          value={q.prompt}
+          onChange={(e) => onChange({ ...q, prompt: e.target.value })}
+          placeholder={t("coach.reflectionPromptPlaceholder")}
+          className="flex-1 min-w-0 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-saira text-base lg:text-sm text-white placeholder-zinc-600 outline-none focus:border-purple-400/40"
+        />
+      </div>
+      <input
+        value={q.helper ?? ""}
+        onChange={(e) => onChange({ ...q, helper: e.target.value })}
+        placeholder={t("coach.reflectionHelperPlaceholder")}
+        className="w-full rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-saira text-sm lg:text-xs text-zinc-300 placeholder-zinc-600 outline-none focus:border-purple-400/40"
+      />
+      <div className="flex items-center justify-between gap-2">
+        <select
+          value={q.kind}
+          onChange={(e) => onChange({ ...q, kind: e.target.value as QuestionKind })}
+          className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-saira text-[11px] text-zinc-300 outline-none focus:border-purple-400/40"
+        >
+          <option value="text" className="bg-zinc-900">{t("coach.reflectionKindText")}</option>
+          <option value="commitment" className="bg-zinc-900">{t("coach.reflectionKindCommitment")}</option>
+        </select>
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={() => onMove(-1)} disabled={index === 0} aria-label={t("coach.reflectionMoveUp")}
+            className="p-1.5 text-zinc-400 hover:text-white disabled:opacity-30 transition">↑</button>
+          <button type="button" onClick={() => onMove(1)} disabled={index === total - 1} aria-label={t("coach.reflectionMoveDown")}
+            className="p-1.5 text-zinc-400 hover:text-white disabled:opacity-30 transition">↓</button>
+          <button type="button" onClick={onRemove} aria-label={t("coach.reflectionRemoveQuestion")}
+            className="p-1.5 text-rose-400 hover:text-rose-300 transition">
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none">
+              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReflectionSetEditor({
+  initialTitle = "", initialIntro = "", initialQuestions = [],
+  onSave, onCancel, saveLabel, saving, error,
+}: {
+  initialTitle?: string;
+  initialIntro?: string;
+  initialQuestions?: ReflectionQuestion[];
+  onSave: (v: { title: string; intro: string; questions: ReflectionQuestion[] }) => void;
+  onCancel?: () => void;
+  saveLabel: string;
+  saving: boolean;
+  error: string | null;
+}) {
+  const { t } = useT();
+  const [title, setTitle] = React.useState(initialTitle);
+  const [intro, setIntro] = React.useState(initialIntro);
+  const [questions, setQuestions] = React.useState<ReflectionQuestion[]>(initialQuestions);
+
+  function addQuestion() {
+    if (questions.length >= MAX_QUESTIONS) return;
+    const id = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `q_${Date.now()}_${questions.length}`;
+    setQuestions((prev) => [...prev, { id, prompt: "", kind: "text" }]);
+  }
+  function updateQuestion(i: number, q: ReflectionQuestion) {
+    setQuestions((prev) => prev.map((p, idx) => (idx === i ? q : p)));
+  }
+  function removeQuestion(i: number) {
+    setQuestions((prev) => prev.filter((_, idx) => idx !== i));
+  }
+  function moveQuestion(i: number, dir: -1 | 1) {
+    setQuestions((prev) => {
+      const j = i + dir;
+      if (j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
+      <div>
+        <label className="font-saira text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-1 block">
+          {t("coach.reflectionTitleLabel")}
+        </label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={t("coach.reflectionTitlePlaceholder")}
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-saira text-base lg:text-sm text-white placeholder-zinc-600 outline-none focus:border-purple-400/40"
+        />
+      </div>
+      <div>
+        <label className="font-saira text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-1 block">
+          {t("coach.reflectionIntroLabel")}
+        </label>
+        <textarea
+          value={intro}
+          onChange={(e) => setIntro(e.target.value)}
+          placeholder={t("coach.reflectionIntroPlaceholder")}
+          rows={2}
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-saira text-base lg:text-sm text-white placeholder-zinc-600 outline-none focus:border-purple-400/40 resize-none"
+        />
+      </div>
+      <div>
+        <label className="font-saira text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-2 block">
+          {t("coach.reflectionQuestionsLabel")}
+        </label>
+        <div className="space-y-2">
+          {questions.map((q, i) => (
+            <ReflectionQuestionRow
+              key={q.id}
+              q={q}
+              index={i}
+              total={questions.length}
+              onChange={(nq) => updateQuestion(i, nq)}
+              onRemove={() => removeQuestion(i)}
+              onMove={(dir) => moveQuestion(i, dir)}
+            />
+          ))}
+        </div>
+        {questions.length < MAX_QUESTIONS && (
+          <button
+            type="button"
+            onClick={addQuestion}
+            className="mt-2 font-saira text-[11px] text-purple-300 hover:text-purple-200 transition"
+          >
+            {t("coach.reflectionAddQuestion")}
+          </button>
+        )}
+      </div>
+
+      {error && <p className="font-saira text-xs text-rose-400">{error}</p>}
+
+      <div className="flex items-center justify-end gap-2 pt-1">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-white/10 px-3 py-1.5 font-saira text-[11px] text-zinc-400 hover:text-white transition"
+          >
+            {t("coach.reflectionCancel")}
+          </button>
+        )}
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => onSave({ title: title.trim(), intro: intro.trim(), questions })}
+          className="rounded-lg border border-purple-400/30 bg-purple-500/15 px-4 py-1.5 font-saira text-[11px] font-bold text-purple-300 hover:bg-purple-500/25 transition disabled:opacity-50"
+        >
+          {saving ? t("common.saving") : saveLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ReflectionSetItem({
+  set, athleteName, coachId, isOpen, onToggle, onUpdated,
+}: {
+  set: ReflectionSet;
+  athleteName: string;
+  coachId: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  onUpdated: (updated: ReflectionSet) => void;
+}) {
+  const { t } = useT();
+  const [editing, setEditing] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [detail, setDetail] = React.useState<{ answers: Record<string, string> | null; notes: import("@/lib/reflections").ReflectionNoteRow[] } | null>(null);
+  const [detailLoaded, setDetailLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isOpen || detailLoaded) return;
+    fetch(`/api/coach/reflections/${set.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setDetail({ answers: d.answers, notes: d.notes });
+        setDetailLoaded(true);
+      })
+      .catch((err) => {
+        console.error("[ReflectionSetItem] detail load failed", err);
+        setDetailLoaded(true);
+      });
+  }, [isOpen, detailLoaded, set.id]);
+
+  async function patchSet(body: Record<string, unknown>, errorKey: string): Promise<boolean> {
+    setSaving(true); setError(null);
+    try {
+      const res = await fetch(`/api/coach/reflections/${set.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const { set: updated } = await res.json() as { set: ReflectionSet };
+      onUpdated(updated);
+      return true;
+    } catch (err) {
+      console.error("[ReflectionSetItem] patch failed", err);
+      setError(t(errorKey));
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveEdits(v: { title: string; intro: string; questions: ReflectionQuestion[] }) {
+    if (!v.title) { setError(t("coach.reflectionNeedsTitle")); return; }
+    const ok = await patchSet({ title: v.title, intro: v.intro || null, questions: v.questions }, "coach.reflectionError");
+    if (ok) setEditing(false);
+  }
+
+  async function handleSend() {
+    if (!set.questions.length) { setError(t("coach.reflectionNeedsQuestion")); return; }
+    if (typeof window !== "undefined" && !window.confirm(t("coach.reflectionSendConfirm"))) return;
+    await patchSet({ status: "sent" }, "coach.reflectionSendError");
+  }
+
+  async function handleArchive() {
+    await patchSet({ status: "archived" }, "coach.reflectionError");
+  }
+  async function handleRestore() {
+    await patchSet({ status: "sent" }, "coach.reflectionError");
+  }
+
+  return (
+    <div className="rounded-xl border border-white/8 bg-surface-section overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full min-h-[44px] flex items-center justify-between px-4 py-3 hover:bg-white/3 transition text-left"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`flex-shrink-0 rounded-full border px-1.5 py-0.5 font-saira text-[9px] font-bold uppercase tracking-[0.12em] ${REFLECTION_STATUS_BADGE_CLASS[set.status]}`}>
+            {t(REFLECTION_STATUS_LABEL_KEY[set.status])}
+          </span>
+          <span className="font-saira text-sm font-semibold text-zinc-200 truncate">{set.title}</span>
+        </div>
+        <svg viewBox="0 0 16 16" className={`w-3 h-3 text-zinc-400 flex-shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} fill="none">
+          <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="px-4 pb-4 border-t border-white/5 pt-3 space-y-4">
+          {editing ? (
+            <ReflectionSetEditor
+              initialTitle={set.title}
+              initialIntro={set.intro ?? ""}
+              initialQuestions={set.questions}
+              onSave={handleSaveEdits}
+              onCancel={() => { setEditing(false); setError(null); }}
+              saveLabel={t("coach.reflectionSaveChanges")}
+              saving={saving}
+              error={error}
+            />
+          ) : (
+            <>
+              {set.intro && <p className="font-saira text-xs text-zinc-400 leading-relaxed">{set.intro}</p>}
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => { setError(null); setEditing(true); }}
+                  className="rounded-lg border border-white/10 px-3 py-1.5 font-saira text-[11px] text-zinc-300 hover:text-white transition"
+                >
+                  {t("coach.reflectionEditBtn")}
+                </button>
+                {set.status === "draft" && (
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={saving}
+                    className="rounded-lg border border-emerald-400/30 bg-emerald-500/15 px-3 py-1.5 font-saira text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/25 transition disabled:opacity-50"
+                  >
+                    {t("coach.reflectionSend")}
+                  </button>
+                )}
+                {set.status === "sent" && (
+                  <button
+                    type="button"
+                    onClick={handleArchive}
+                    disabled={saving}
+                    className="rounded-lg border border-white/10 px-3 py-1.5 font-saira text-[11px] text-zinc-400 hover:text-white transition"
+                  >
+                    {t("coach.reflectionArchiveBtn")}
+                  </button>
+                )}
+                {set.status === "archived" && (
+                  <button
+                    type="button"
+                    onClick={handleRestore}
+                    disabled={saving}
+                    className="rounded-lg border border-white/10 px-3 py-1.5 font-saira text-[11px] text-zinc-400 hover:text-white transition"
+                  >
+                    {t("coach.reflectionRestoreBtn")}
+                  </button>
+                )}
+              </div>
+              {error && <p className="font-saira text-xs text-rose-400">{error}</p>}
+
+              {/* Athlete's answers — only meaningful once the set has been sent */}
+              {set.status !== "draft" && (
+                <div>
+                  <p className="font-saira text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-400 mb-2">
+                    {t("coach.reflectionAnswersHeading")}
+                  </p>
+                  {!detailLoaded ? (
+                    <div className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+                  ) : (
+                    <div className="space-y-3">
+                      {set.questions.map((q) => {
+                        const ans = (detail?.answers?.[q.id] ?? "").trim();
+                        return (
+                          <div key={q.id}>
+                            <p className="font-saira text-xs font-semibold text-zinc-300 mb-1">{q.prompt}</p>
+                            <p className="font-saira text-sm text-zinc-400 leading-relaxed whitespace-pre-wrap">
+                              {ans || <span className="italic text-zinc-600">{t("coach.reflectionNoAnswer")}</span>}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Note thread — reuses the same recorder pattern as CheckinFeedbackPanel above */}
+              {set.status !== "draft" && detailLoaded && (
+                <div className="pt-2 border-t border-white/5">
+                  <ReflectionNoteThread
+                    setId={set.id}
+                    initialNotes={detail?.notes ?? []}
+                    currentUserId={coachId}
+                    otherPartyLabel={athleteName}
+                    postNoteUrl={`/api/coach/reflections/${set.id}/notes`}
+                    audioUploadUrl={`/api/reflections/${set.id}/audio`}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReflectionSetsSection({ athleteId, athleteName }: { athleteId: string; athleteName: string }) {
+  const { t } = useT();
+  const [sets, setSets] = React.useState<ReflectionSet[] | null>(null);
+  const [openId, setOpenId] = React.useState<string | null>(null);
+  const [creating, setCreating] = React.useState(false);
+  const [createSaving, setCreateSaving] = React.useState(false);
+  const [createError, setCreateError] = React.useState<string | null>(null);
+  const [coachId, setCoachId] = React.useState<string>("");
+
+  React.useEffect(() => {
+    fetch("/api/me").then((r) => (r.ok ? r.json() : null)).then((me) => { if (me?.id) setCoachId(me.id); })
+      .catch((err) => console.error("[ReflectionSetsSection] /api/me failed", err));
+  }, []);
+
+  const loadSets = React.useCallback(() => {
+    fetch(`/api/coach/reflections?athlete_id=${encodeURIComponent(athleteId)}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows) => setSets(Array.isArray(rows) ? rows : []))
+      .catch((err) => {
+        console.error("[ReflectionSetsSection] load failed", err);
+        setSets([]);
+      });
+  }, [athleteId]);
+
+  React.useEffect(() => {
+    setSets(null);
+    setOpenId(null);
+    setCreating(false);
+    loadSets();
+  }, [loadSets]);
+
+  async function handleCreate(v: { title: string; intro: string; questions: ReflectionQuestion[] }) {
+    if (!v.title) { setCreateError(t("coach.reflectionNeedsTitle")); return; }
+    setCreateSaving(true); setCreateError(null);
+    try {
+      const res = await fetch("/api/coach/reflections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ athlete_id: athleteId, title: v.title, intro: v.intro || undefined, questions: v.questions }),
+      });
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      setCreating(false);
+      loadSets();
+    } catch (err) {
+      console.error("[ReflectionSetsSection] create failed", err);
+      setCreateError(t("coach.reflectionError"));
+    } finally {
+      setCreateSaving(false);
+    }
+  }
+
+  function handleUpdated(updated: ReflectionSet) {
+    setSets((prev) => (prev ? prev.map((s) => (s.id === updated.id ? updated : s)) : prev));
+  }
+
+  return (
+    <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.04] p-4">
+      <div className="flex items-center justify-between gap-3 mb-1">
+        <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-400">
+          {t("coach.reflectionSetsTitle")}
+        </p>
+        {!creating && (
+          <button
+            type="button"
+            onClick={() => { setCreating(true); setCreateError(null); }}
+            className="font-saira text-[11px] font-semibold text-purple-300 hover:text-purple-200 transition flex-shrink-0"
+          >
+            {t("coach.reflectionNewBtn")}
+          </button>
+        )}
+      </div>
+      <p className="font-saira text-xs text-zinc-400 mb-3 leading-relaxed">
+        {t("coach.reflectionSetsBody")}
+      </p>
+
+      {creating && (
+        <div className="mb-3">
+          <ReflectionSetEditor
+            onSave={handleCreate}
+            onCancel={() => { setCreating(false); setCreateError(null); }}
+            saveLabel={t("coach.reflectionSaveDraft")}
+            saving={createSaving}
+            error={createError}
+          />
+        </div>
+      )}
+
+      {sets === null && (
+        <div className="w-4 h-4 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+      )}
+      {sets !== null && sets.length === 0 && !creating && (
+        <p className="font-saira text-xs text-zinc-500">{t("coach.reflectionNoSetsYet")}</p>
+      )}
+      {sets !== null && sets.length > 0 && (
+        <div className="space-y-2">
+          {sets.map((s) => (
+            <ReflectionSetItem
+              key={s.id}
+              set={s}
+              athleteName={athleteName}
+              coachId={coachId}
+              isOpen={openId === s.id}
+              onToggle={() => setOpenId((cur) => (cur === s.id ? null : s.id))}
+              onUpdated={handleUpdated}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProfileTab({ profile, athleteName }: { profile: ReturnType<typeof computeClient>["profile"]; athleteName: string }) {
   const { t } = useT();
   const goals = profile.mental_goals.filter(Boolean);
   const hasLifts =
@@ -767,6 +1268,9 @@ function ProfileTab({ profile }: { profile: ReturnType<typeof computeClient>["pr
 
       {/* Suggest a tool */}
       <SuggestToolSection athleteId={profile.athleteId} athleteTier={profile.effectiveTier} />
+
+      {/* Coach-authored reflection sets */}
+      <ReflectionSetsSection athleteId={profile.athleteId} athleteName={athleteName} />
 
       {/* Mental tools */}
       <div>
@@ -2014,7 +2518,7 @@ function ClientCard({
 
             {/* ── Tab: Profile ── */}
             {activeTab === "profile" && (
-              <ProfileTab profile={client.profile} />
+              <ProfileTab profile={client.profile} athleteName={client.name} />
             )}
 
             {/* ── Tab: Notes ── */}
@@ -2580,7 +3084,7 @@ function MobileAthleteSheet({
       {tab === "checkins" && (
         <CheckinsTab checkins={client.weeklyCheckins} monthlyCheckins={client.monthlyCheckins} athleteId={client.profile.athleteId} />
       )}
-      {tab === "profile" && <ProfileTab profile={client.profile} />}
+      {tab === "profile" && <ProfileTab profile={client.profile} athleteName={client.name} />}
       {tab === "notes" && (
         <NotesTab
           athleteId={client.id}

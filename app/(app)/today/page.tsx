@@ -156,6 +156,34 @@ export default function TodayPage() {
       });
   };
 
+  // ── Coach-authored reflection sets ──────────────────────────────────────────
+  // A single gentle card, shown only while at least one sent set has never
+  // been opened/answered at all — never badged as overdue, never renewed once
+  // the athlete has engaged with it once (see handoff spec: "no aggressive
+  // prompting"). The list endpoint doesn't carry answers, so unanswered-ness
+  // is resolved with one detail fetch per set — the count per athlete is small.
+  const [unansweredReflections, setUnansweredReflections] = React.useState<Array<{ id: string; title: string }>>([]);
+  React.useEffect(() => {
+    fetch("/api/reflections")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(async (rows: Array<{ id: string; title: string; questions: { id: string }[] }>) => {
+        if (!Array.isArray(rows) || rows.length === 0) return;
+        const checked = await Promise.all(rows.map(async (row) => {
+          try {
+            const res = await fetch(`/api/reflections/${row.id}`);
+            if (!res.ok) return null;
+            const detail = await res.json() as { answers: Record<string, string> | null };
+            const hasAnyAnswer = !!detail.answers && Object.values(detail.answers).some((v) => v.trim().length > 0);
+            return hasAnyAnswer ? null : { id: row.id, title: row.title };
+          } catch {
+            return null;
+          }
+        }));
+        setUnansweredReflections(checked.filter((r): r is { id: string; title: string } => r !== null));
+      })
+      .catch((err) => console.error("[page] async operation failed", err));
+  }, []);
+
   // ── Selected date (today by default) ───────────────────────────────────────
   const [selectedDate, setSelectedDate] = React.useState<string>(() => todayKey());
   /** "loading" = fetching, null = no entry for this date, TrainingEntry = found */
@@ -464,6 +492,28 @@ export default function TodayPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* ── Coach-authored reflection sets — one gentle card, never a nag ── */}
+      {unansweredReflections.length > 0 && (
+        <Link
+          href={unansweredReflections.length === 1 ? `/reflections/${unansweredReflections[0].id}` : "/reflections"}
+          className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-purple-500/25 bg-purple-500/[0.08] px-4 py-3 hover:border-purple-400/40 hover:bg-purple-500/[0.12] transition"
+        >
+          <div className="min-w-0">
+            <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.22em] text-purple-400 mb-0.5">
+              {t("today.reflectionCardLabel")}
+            </p>
+            <p className="font-saira text-sm font-semibold text-zinc-100 truncate">
+              {unansweredReflections.length === 1
+                ? unansweredReflections[0].title
+                : t("today.reflectionCardBodyMany", { n: unansweredReflections.length })}
+            </p>
+          </div>
+          <span className="font-saira text-[11px] font-semibold uppercase tracking-[0.14em] text-purple-300 flex-shrink-0">
+            {unansweredReflections.length === 1 ? t("common.openArrow") : t("today.reflectionCardViewAll")}
+          </span>
+        </Link>
       )}
 
       {/* ── Weekly / monthly check-in nudge (athlete pressed "Later") ── */}
