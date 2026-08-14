@@ -88,6 +88,34 @@ thread. Coach adds text or a voice note; athlete can reply in the same thread.
 
 ---
 
+## Routing — must be deep-linkable (the coach will push-notify these)
+
+Build real routes, **not** a modal or bottom sheet hanging off Today. The coach sends
+an in-app push and the athlete must land directly on the questions.
+
+- `/reflections` — index of the sets this athlete has been sent. Use this when a coach
+  sends several at once (Marthe is getting three).
+- `/reflections/[setId]` — a single set, the answering view. Use this for "I've sent
+  you one specific thing".
+
+The Today card links to these rather than owning the UI, so there is exactly one
+implementation and one URL per set.
+
+Two existing behaviours make this work — do not regress them:
+- `public/sw.js` opens `event.notification.data.url` and focuses an already-open tab by
+  comparing **pathnames** (fixed 2026-08-06; it previously used `endsWith`, so any URL
+  with a query string or hash opened a duplicate tab).
+- The sign-in flow honours `?next=` and returns the athlete to the original path after
+  Google OAuth (the sanitisation added 2026-08-06 rejects `/`, non-internal, and
+  `/auth*` destinations but passes normal app paths through). So a push arriving while
+  she is signed out still lands her on the right set after login. **Verify this** with
+  a signed-out browser as part of the acceptance check.
+
+Sending: `POST /api/push/send` is admin-only and accepts `userIds`, so the owner can
+already target one athlete. If coaches are to send these themselves, that needs a new
+coach-scoped endpoint with the usual own-athlete ownership check — out of scope here,
+but note it rather than widening `/api/push/send`'s auth.
+
 ## Handle with care
 
 The content is genuinely personal — imposter feelings, rejection, self-worth. Three
