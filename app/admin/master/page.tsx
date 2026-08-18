@@ -17,6 +17,7 @@ import Link from "next/link";
 import type { SatRow, AcsiRow, CsaiRow, DasRow } from "@/app/api/admin/test-results/route";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { findDuplicateGroups, indexDuplicates } from "@/lib/duplicates";
+import { contextLabel, formatLabel, topicLabel } from "@/lib/seminar";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -3619,6 +3620,225 @@ const COACH_Q_LABELS: Record<string, string> = {
   nps:                 "How likely to keep using (1–10)",
 };
 
+function SeminarTab() {
+  type Row = {
+    id: string; full_name: string; email: string; country: string | null;
+    context: string | null; topics: string[]; format_pref: string | null;
+    materials: string[]; question: string | null;
+    status: "registered" | "waitlist" | "cancelled"; created_at: string;
+  };
+  type Payload = {
+    signups: Row[];
+    seminar: { title: string; startsAt: string; hostTime: string; min: number; max: number };
+    stats: { registered: number; waitlist: number; cancelled: number; spotsLeft: number; meetsMinimum: boolean };
+    topics: { id: string; label: string; count: number }[];
+  };
+
+  const [data, setData]         = React.useState<Payload | null>(null);
+  const [loading, setLoading]   = React.useState(true);
+  const [expanded, setExpanded] = React.useState<string | null>(null);
+  const [busy, setBusy]         = React.useState<string | null>(null);
+
+  const load = React.useCallback(() => {
+    return fetch("/api/admin/seminar")
+      .then((r) => r.json())
+      .then((d: Payload) => setData(d))
+      .catch((err) => console.error("[page] seminar fetch failed", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  async function setStatus(id: string, status: Row["status"]) {
+    setBusy(id);
+    try {
+      const res = await fetch("/api/admin/seminar", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) { alert("Couldn't update that sign-up."); return; }
+      await load();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+    </div>
+  );
+  if (!data) return null;
+
+  const { signups, seminar, stats, topics } = data;
+  const maxCount = Math.max(1, ...topics.map((t) => t.count));
+  const dateLabel = new Date(seminar.startsAt).toLocaleDateString("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Budapest",
+  });
+
+  const STATUS_STYLE: Record<Row["status"], string> = {
+    registered: "border-emerald-500/25 bg-emerald-500/10 text-emerald-300",
+    waitlist:   "border-amber-500/25 bg-amber-500/10 text-amber-300",
+    cancelled:  "border-white/10 bg-white/5 text-zinc-500",
+  };
+
+  return (
+    <div className="p-6 max-w-4xl space-y-6">
+      <div>
+        <h2 className="font-saira text-lg font-extrabold uppercase tracking-tight text-white mb-1">
+          {seminar.title}
+        </h2>
+        <p className="font-saira text-xs text-zinc-400">
+          {dateLabel} · {seminar.hostTime} · sign-ups at{" "}
+          <a href="/seminar" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300">
+            /seminar
+          </a>
+        </p>
+      </div>
+
+      {/* Go/no-go — the min is owner-facing only, it never appears on the public page. */}
+      <div className={`rounded-2xl border p-4 ${stats.meetsMinimum
+        ? "border-emerald-500/25 bg-emerald-500/[0.06]"
+        : "border-amber-500/25 bg-amber-500/[0.06]"}`}>
+        <p className="font-saira text-sm font-bold text-white">
+          {stats.meetsMinimum
+            ? `Minimum reached — ${stats.registered} of ${seminar.min} needed.`
+            : `${seminar.min - stats.registered} more needed to run (${stats.registered}/${seminar.min}).`}
+        </p>
+        <div className="mt-2.5 h-1.5 rounded-full bg-white/8 overflow-hidden">
+          <div
+            className={`h-full rounded-full ${stats.meetsMinimum ? "bg-emerald-400" : "bg-amber-400"}`}
+            style={{ width: `${Math.min(100, (stats.registered / seminar.min) * 100)}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Registered", value: `${stats.registered}/${seminar.max}`, sub: `${stats.spotsLeft} spots left` },
+          { label: "Waitlist",   value: stats.waitlist,  sub: stats.waitlist > 0 ? "promote below" : "nobody waiting" },
+          { label: "Cancelled",  value: stats.cancelled, sub: "not counted" },
+          { label: "Total",      value: signups.length,  sub: "all sign-ups" },
+        ].map(({ label, value, sub }) => (
+          <div key={label} className="rounded-2xl border border-white/8 bg-surface-panel p-4">
+            <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1">{label}</p>
+            <p className="font-saira text-xl font-extrabold text-white tabular-nums">{value}</p>
+            <p className="font-saira text-[10px] text-zinc-500 mt-0.5">{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Topic demand — what to actually build the session around */}
+      <div className="rounded-2xl border border-white/8 bg-surface-panel p-5">
+        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-4">
+          Topic demand — registered attendees only
+        </p>
+        <div className="space-y-2.5">
+          {topics.map((t) => (
+            <div key={t.id} className="flex items-center gap-3">
+              <p className="font-saira text-xs text-zinc-300 flex-1 min-w-0 truncate">{t.label}</p>
+              <div className="w-32 h-1.5 rounded-full bg-white/8 overflow-hidden flex-shrink-0">
+                <div className="h-full rounded-full bg-purple-400" style={{ width: `${(t.count / maxCount) * 100}%` }} />
+              </div>
+              <p className="font-saira text-xs font-bold text-white tabular-nums w-6 text-right flex-shrink-0">{t.count}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Sign-up list */}
+      {signups.length === 0 ? (
+        <div className="rounded-2xl border border-white/8 bg-surface-panel p-10 text-center">
+          <p className="font-saira text-sm text-zinc-400">No sign-ups yet.</p>
+          <p className="font-saira text-xs text-zinc-600 mt-1">They&rsquo;ll appear here as people register.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {signups.map((s) => {
+            const isOpen = expanded === s.id;
+            const date = new Date(s.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" });
+            return (
+              <div key={s.id} className="rounded-2xl border border-white/8 bg-surface-panel overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setExpanded(isOpen ? null : s.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-saira text-sm font-bold text-white truncate">{s.full_name}</p>
+                    <p className="font-saira text-[11px] text-zinc-500 truncate">{s.email}</p>
+                  </div>
+                  <span className={`font-saira text-[9px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 border flex-shrink-0 ${STATUS_STYLE[s.status]}`}>
+                    {s.status}
+                  </span>
+                  <span className="font-saira text-[10px] text-zinc-600 tabular-nums flex-shrink-0">{date}</span>
+                  <span className="text-zinc-600 text-xs flex-shrink-0">{isOpen ? "▲" : "▼"}</span>
+                </button>
+
+                {isOpen && (
+                  <div className="px-4 pb-4 pt-1 border-t border-white/5 space-y-3">
+                    <dl className="font-saira text-xs space-y-1.5">
+                      {s.country && (
+                        <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Country</dt><dd className="text-zinc-300">{s.country}</dd></div>
+                      )}
+                      <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Coaches</dt><dd className="text-zinc-300">{contextLabel(s.context)}</dd></div>
+                      <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Format</dt><dd className="text-zinc-300">{formatLabel(s.format_pref)}</dd></div>
+                      <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Wants</dt><dd className="text-zinc-300">{s.materials?.length ? s.materials.join(", ") : "—"}</dd></div>
+                      <div className="flex gap-2">
+                        <dt className="text-zinc-500 w-20 flex-shrink-0">Topics</dt>
+                        <dd className="text-zinc-300 flex flex-wrap gap-1">
+                          {s.topics?.length
+                            ? s.topics.map((t) => (
+                                <span key={t} className="rounded-full border border-white/8 bg-white/[0.04] px-2 py-0.5 text-[10px]">
+                                  {topicLabel(t)}
+                                </span>
+                              ))
+                            : "—"}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    {s.question && (
+                      <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+                        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5">Their question</p>
+                        <p className="font-saira text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap break-words">{s.question}</p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      {(["registered", "waitlist", "cancelled"] as const)
+                        .filter((st) => st !== s.status)
+                        .map((st) => (
+                          <button
+                            key={st}
+                            type="button"
+                            disabled={busy === s.id}
+                            onClick={() => setStatus(s.id, st)}
+                            className="font-saira text-[10px] font-bold uppercase tracking-wider rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-zinc-300 hover:bg-white/[0.08] transition disabled:opacity-40"
+                          >
+                            {busy === s.id ? "…" : `Move to ${st}`}
+                          </button>
+                        ))}
+                      <a
+                        href={`mailto:${s.email}?subject=${encodeURIComponent(seminar.title)}`}
+                        className="font-saira text-[10px] font-bold uppercase tracking-wider rounded-lg border border-purple-500/25 bg-purple-500/10 px-3 py-2 text-purple-300 hover:bg-purple-500/20 transition"
+                      >
+                        Email
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SurveysTab() {
   const [responses, setResponses] = React.useState<SurveyResponse[]>([]);
   const [profiles, setProfiles]   = React.useState<Record<string, { display_name: string | null; email: string | null }>>({});
@@ -3768,7 +3988,7 @@ function SurveysTab() {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "tools" | "surveys" | "roadmap" | "devtools" | "demo";
+type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "tools" | "surveys" | "seminar" | "roadmap" | "devtools" | "demo";
 
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -3942,6 +4162,7 @@ export default function MasterAdminPage() {
     ["ai-insights",    "AI Insights",     "✦"],
     ["tools",          "Tool Usage",      "◈"],
     ["surveys",        "Surveys",         "◉"],
+    ["seminar",        "Seminar",         "◐"],
     ["roadmap",        "Roadmap",         "▸"],
     ["devtools",       "Dev Tools",       "⚙"],
     ["demo",           "Demo Setup",      "▶"],
@@ -4042,6 +4263,7 @@ export default function MasterAdminPage() {
               {activeTab === "ai-insights" && <AiInsightsTab users={users} />}
               {activeTab === "tools" && <ToolsTab />}
               {activeTab === "surveys" && <SurveysTab />}
+              {activeTab === "seminar" && <SeminarTab />}
               {activeTab === "roadmap" && <RoadmapTab />}
               {activeTab === "devtools" && <DevToolsTab users={users} />}
               {activeTab === "demo" && <DemoTab />}
