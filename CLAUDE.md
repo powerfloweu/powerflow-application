@@ -46,6 +46,7 @@ heading structure without updating the parser.
 - [x] Onboarding `?coach=` URL param survives Google OAuth and pre-selects the right coach
 - [x] Demo pages — guided auto-play presentations for athlete and coach demos
 - [x] Coach demo — callout arrows, phone glow, interactive pricing calculator
+- [x] Seminar sign-up form (`/seminar`) — public, topic picks, 20-person cap + waitlist, admin Seminar tab (◐)
 
 ### Localization
 - [x] Hide languages that are not translated yet (ES, FR hidden until complete — use READY_LOCALES)
@@ -103,6 +104,25 @@ These are the next meaningful features after quick wins are done.
 - **Hungarian translation** — find someone to translate remaining i18n keys
 
 ## Session log
+
+### 2026-08-18 — main (seminar sign-up)
+- **`/seminar`** — public, unauthenticated sign-up for "Mental Performance for Coaches",
+  3 Oct 2026 10:00 CEST, 60–90 min. Collects name/email/country/context plus the seven
+  topics; also polls workshop-vs-seminar format and written-vs-video follow-up, both of
+  which are still undecided. Cap 20 → waitlist; min 10 is an owner-only go/no-go gauge.
+- **Public-route defences**: per-IP rate limit (5/5min), off-screen honeypot (200 + no
+  write), whitelist validation dropping unknown ids, unique index on (slug, lower(email)).
+  A repeat sign-up returns the existing status instead of an error.
+- **`seminar_signups`** has RLS on with **no policies** — service-role only, so a leaked
+  anon key yields nothing. Migration applied to prod and verified end-to-end.
+- `lib/seminar.ts` is the single source of truth (config, topics, capacity, validator),
+  19 tests. Admin **Seminar tab (◐)** shows go/no-go, counts, topic-demand chart and
+  per-person detail with status moves.
+- Open with Dávid: it's a **Saturday at 10:00**, not the "Wed evening ≤6pm" in his notes;
+  and "App / upgraded coach's guide / testimonials" from the brief are not on the page yet
+  — unclear whether they're attendee perks, agenda items or separate marketing work.
+- Not built: no confirmation email to the registrant (he chose owner-email + admin tab);
+  page is English-only.
 
 ### 2026-07-06 — main (lifestyle guide beta)
 - **/life section (beta)** — Dávid's personal operating system prototype, gated by `profiles.lifestyle_beta` (true only for his two accounts). Tabs: Today (values strip, due check-in quick-taps, workout logger, weight + one-tap meal macros), Plan (week stepper, structure editor, history), Check-in, Trends, Setup.
