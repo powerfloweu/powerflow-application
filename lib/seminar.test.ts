@@ -11,6 +11,12 @@ import {
   contextLabel,
   formatLabel,
 } from "./seminar";
+import {
+  confirmationHtml,
+  confirmationText,
+  confirmationSubject,
+  ownerNotificationHtml,
+} from "./seminarEmails";
 
 /** A submission that passes, so each test can vary one field at a time. */
 function valid(over: Record<string, unknown> = {}) {
@@ -166,5 +172,92 @@ describe("labels", () => {
 
   it("falls back to the raw id for an unknown value", () => {
     expect(contextLabel("legacy-value")).toBe("legacy-value");
+  });
+});
+
+// ── Email bodies ─────────────────────────────────────────────────────────────
+
+describe("seminar emails", () => {
+  const signup = {
+    fullName: "Marthe Henry",
+    email: "marthe@example.com",
+    country: "Ireland",
+    context: "powerlifting",
+    topics: ["arousal", "burnout"],
+    formatPref: "workshop",
+    materials: ["video"],
+    question: "How do I stay calm when my athlete isn't?",
+  };
+
+  it("greets by first name only", () => {
+    expect(confirmationHtml(signup, "registered")).toContain("Hi Marthe,");
+    expect(confirmationText(signup, "registered")).toContain("Hi Marthe,");
+  });
+
+  it("echoes back every topic they picked, by label", () => {
+    const html = confirmationHtml(signup, "registered");
+    expect(html).toContain("Managing arousal");
+    expect(html).toContain("burnout prevention");
+    // A topic they did not pick must not appear.
+    expect(html).not.toContain("Empathy vs. objectivity");
+  });
+
+  it("states the date and timezone", () => {
+    const html = confirmationHtml(signup, "registered");
+    expect(html).toContain("Saturday, 3 October 2026");
+    expect(html).toContain("10:00 CEST");
+    expect(html).toContain("Central European Summer Time");
+  });
+
+  it("says something different on the waitlist", () => {
+    const reg  = confirmationHtml(signup, "registered");
+    const wait = confirmationHtml(signup, "waitlist");
+    expect(reg).toContain("Your spot is saved");
+    expect(wait).toContain("first in line");
+    expect(wait).not.toContain("Your spot is saved");
+    expect(confirmationSubject("registered")).toContain("You're in");
+    expect(confirmationSubject("waitlist")).toContain("waitlist");
+  });
+
+  it("tells them how to cancel or be forgotten", () => {
+    expect(confirmationHtml(signup, "registered")).toContain("removed");
+    expect(confirmationText(signup, "registered")).toContain("removed");
+  });
+
+  it("escapes free text from the public form", () => {
+    const nasty = { ...signup, fullName: '<script>alert(1)</script>', question: 'a & b < c' };
+    const owner = ownerNotificationHtml(nasty, "registered");
+    expect(owner).not.toContain("<script>");
+    expect(owner).toContain("&lt;script&gt;");
+    expect(owner).toContain("a &amp; b &lt; c");
+    // The confirmation interpolates the name too.
+    expect(confirmationHtml(nasty, "registered")).not.toContain("<script>");
+  });
+
+  it("omits optional rows the owner didn't get", () => {
+    const bare = { ...signup, country: null, materials: [], question: null };
+    const html = ownerNotificationHtml(bare, "registered");
+    expect(html).not.toContain("Country");
+    expect(html).not.toContain("Their question");
+    expect(html).not.toContain("Wants");
+  });
+});
+
+describe("sign-off", () => {
+  const signup = {
+    fullName: "Marthe Henry", email: "m@example.com", country: null,
+    context: null, topics: ["arousal"], formatPref: null, materials: [], question: null,
+  };
+
+  it("names the day rather than a bare number", () => {
+    // Regression: this used to render "See you on the 3."
+    expect(confirmationHtml(signup, "registered")).toContain("See you on 3 October.");
+    expect(confirmationText(signup, "registered")).toContain("See you on 3 October.");
+  });
+
+  it("doesn't promise a waitlisted person they'll be there", () => {
+    const wait = confirmationHtml(signup, "waitlist");
+    expect(wait).toContain("Hoping to see you on 3 October.");
+    expect(wait).not.toContain("See you on 3 October.");
   });
 });

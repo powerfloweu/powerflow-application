@@ -5,6 +5,7 @@
  * POST /api/seminar — public, unauthenticated sign-up.
  *   Body:     SeminarSignup fields + `consent: true` + honeypot `website`
  *   Response: { ok: true, status: "registered" | "waitlist", already?: true }
+ *   Side effects: confirmation email to the registrant, notification to the owner.
  *
  * Anyone with the link can post here, so this route carries the usual public
  * defences: per-IP rate limit, a honeypot field, strict whitelist validation in
@@ -14,17 +15,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { dbSelect, dbInsert } from "@/lib/supabaseAdmin";
-import { sendEmail } from "@/lib/email";
+import { notifyOwner, sendConfirmation } from "@/lib/seminarEmails";
 import {
   SEMINAR,
   validateSignup,
   spotsLeft,
   statusForNextSignup,
-  topicLabel,
-  contextLabel,
-  formatLabel,
   type SignupStatus,
-  type SeminarSignup,
 } from "@/lib/seminar";
 
 export const runtime = "nodejs";
@@ -123,53 +120,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  await notifyOwner(signup, status);
+  // Both are best-effort and log their own failures — the row is already
+  // written, so a mail outage must not turn a successful sign-up into an error.
+  await Promise.all([
+    sendConfirmation(signup, status),
+    notifyOwner(signup, status),
+  ]);
 
   return NextResponse.json({ ok: true, status });
-}
-
-/** Fire the owner a summary. Never blocks the response on a mail failure. */
-async function notifyOwner(
-  signup: SeminarSignup,
-  status: SignupStatus,
-): Promise<void> {
-  const to = (process.env.SEMINAR_NOTIFY_EMAIL || process.env.ADMIN_EMAIL || "").trim();
-  if (!to) {
-    console.warn("[seminar] no SEMINAR_NOTIFY_EMAIL or ADMIN_EMAIL set — skipping notification");
-    return;
-  }
-
-  const row = (label: string, value: string) =>
-    `<tr><td style="padding:4px 12px 4px 0;color:#71717a;vertical-align:top;white-space:nowrap">${label}</td>` +
-    `<td style="padding:4px 0;color:#18181b">${value}</td></tr>`;
-
-  const esc = (s: string) =>
-    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-  const html = `
-    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px">
-      <p style="font-size:13px;color:#71717a;text-transform:uppercase;letter-spacing:.12em;margin:0 0 4px">
-        ${status === "waitlist" ? "Seminar waitlist" : "Seminar sign-up"}
-      </p>
-      <h2 style="margin:0 0 16px;font-size:20px">${esc(signup.fullName)}</h2>
-      <table style="font-size:14px;border-collapse:collapse">
-        ${row("Email", esc(signup.email))}
-        ${signup.country ? row("Country", esc(signup.country)) : ""}
-        ${row("Coaches", esc(contextLabel(signup.context)))}
-        ${row("Topics", signup.topics.map((t) => esc(topicLabel(t))).join("<br>"))}
-        ${row("Format", esc(formatLabel(signup.formatPref)))}
-        ${signup.materials.length ? row("Wants", esc(signup.materials.join(", "))) : ""}
-      </table>
-      ${signup.question ? `<p style="font-size:14px;margin:16px 0 0"><strong>Their question:</strong><br>${esc(signup.question)}</p>` : ""}
-      <p style="font-size:12px;color:#a1a1aa;margin:20px 0 0">
-        Full list and topic tally in the admin dashboard → Seminar tab.
-      </p>
-    </div>`;
-
-  const ok = await sendEmail({
-    to,
-    subject: `${status === "waitlist" ? "[Waitlist] " : ""}Seminar sign-up — ${signup.fullName}`,
-    html,
-  });
-  if (!ok) console.error("[seminar] owner notification failed for", signup.email);
 }
