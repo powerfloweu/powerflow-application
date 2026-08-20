@@ -9,9 +9,13 @@ import {
   validateSignup,
   tallyTopics,
   SEMINAR_HOSTS,
+  COUNTRIES,
   hostNamesSentence,
   contextLabel,
-  formatLabel,
+  countryLabel,
+  countryForZone,
+  zoneForCountry,
+  startTimeIn,
 } from "./seminar";
 import {
   confirmationHtml,
@@ -83,7 +87,7 @@ describe("validateSignup", () => {
       expect(res.value.topics).toEqual(["arousal"]);
       // Optional fields collapse to null rather than "".
       expect(res.value.country).toBeNull();
-      expect(res.value.formatPref).toBeNull();
+      expect(res.value.context).toBeNull();
     }
   });
 
@@ -116,16 +120,14 @@ describe("validateSignup", () => {
       valid({
         topics: ["arousal", "not-a-topic", 42],
         context: "hacker",
-        formatPref: "telepathy",
-        materials: ["video", "hologram"],
+        country: "Atlantis",
       }),
     );
     expect(res.ok).toBe(true);
     if (res.ok) {
       expect(res.value.topics).toEqual(["arousal"]);
       expect(res.value.context).toBeNull();
-      expect(res.value.formatPref).toBeNull();
-      expect(res.value.materials).toEqual(["video"]);
+      expect(res.value.country).toBeNull();
     }
   });
 
@@ -170,7 +172,7 @@ describe("tallyTopics", () => {
 describe("labels", () => {
   it("renders an em dash for nothing selected", () => {
     expect(contextLabel(null)).toBe("—");
-    expect(formatLabel(null)).toBe("—");
+    expect(countryLabel(null)).toBe("—");
   });
 
   it("falls back to the raw id for an unknown value", () => {
@@ -190,8 +192,6 @@ describe("seminar emails", () => {
     country: "Ireland",
     context: "powerlifting",
     topics: ["arousal", "burnout"],
-    formatPref: "workshop",
-    materials: ["video"],
     question: "How do I stay calm when my athlete isn't?",
   };
 
@@ -246,11 +246,10 @@ describe("seminar emails", () => {
   });
 
   it("omits optional rows the owner didn't get", () => {
-    const bare = { ...signup, country: null, materials: [], question: null };
+    const bare = { ...signup, country: null, question: null };
     const html = ownerNotificationHtml(bare, "registered");
     expect(html).not.toContain("Country");
     expect(html).not.toContain("Their question");
-    expect(html).not.toContain("Wants");
   });
 });
 
@@ -352,5 +351,50 @@ describe("reply-to safety", () => {
       expect(body.toLowerCase()).not.toContain("reply to this email");
       expect(body).toContain("david@power-flow.eu");
     }
+  });
+});
+
+describe("country → local start time", () => {
+  it("tells a Dublin coach it starts at 09:00", () => {
+    // 10:00 CEST is 09:00 IST — the whole point of the country field.
+    expect(startTimeIn(zoneForCountry("IE"))).toBe("09:00");
+  });
+
+  it("agrees with the host clock in Hungary", () => {
+    expect(startTimeIn(zoneForCountry("HU"))).toBe("10:00");
+  });
+
+  it("handles the far side of the world", () => {
+    // Sydney is +10h on that date: an evening start, still 3 October.
+    expect(startTimeIn(zoneForCountry("AU-NS"))).toBe("18:00");
+    // US Pacific is -9h: an early morning.
+    expect(startTimeIn(zoneForCountry("US-PT"))).toBe("01:00");
+  });
+
+  it("maps a browser zone back to a country so the field can prefill", () => {
+    expect(countryForZone("Europe/Dublin")).toBe("IE");
+    expect(countryForZone("America/New_York")).toBe("US-ET");
+    // An unlisted zone yields nothing rather than a wrong guess.
+    expect(countryForZone("Antarctica/Troll")).toBeNull();
+    expect(countryForZone(undefined)).toBeNull();
+  });
+
+  it("returns null rather than falling back to the host's time", () => {
+    expect(startTimeIn(null)).toBeNull();
+    expect(startTimeIn("Not/AZone")).toBeNull();
+    expect(zoneForCountry("Atlantis")).toBeNull();
+  });
+
+  it("gives every country a distinct, resolvable zone", () => {
+    for (const c of COUNTRIES) {
+      expect(startTimeIn(c.tz), c.label).toMatch(/^\d{2}:\d{2}$/);
+    }
+    expect(new Set(COUNTRIES.map((c) => c.id)).size).toBe(COUNTRIES.length);
+  });
+});
+
+describe("format", () => {
+  it("is settled, not a question", () => {
+    expect(SEMINAR.format).toBe("Seminar with Q&A");
   });
 });

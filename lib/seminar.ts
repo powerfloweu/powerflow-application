@@ -1,10 +1,10 @@
 /**
  * Single source of truth for the "Mental Performance for Coaches" seminar.
  *
- * The public page (`app/seminar/page.tsx`), the sign-up API
- * (`app/api/seminar/route.ts`) and the admin tab all read the config, the
- * topic list and the validator from here, so the form, the stored rows and the
- * admin summary can never drift apart.
+ * The public page (`app/seminar/page.tsx`), the manage page, the sign-up API
+ * and the admin tab all read the config, the topics, the host list and the
+ * validator from here, so the form, the stored rows and the admin summary can
+ * never drift apart.
  */
 
 // ── Config ───────────────────────────────────────────────────────────────────
@@ -14,13 +14,16 @@ export const SEMINAR = {
   title: "Mental Performance for Coaches",
   /**
    * 3 October 2026, 10:00 Europe/Budapest. Budapest is on CEST (UTC+2) on that
-   * date, so 08:00Z. Stored as an absolute instant so the page can render it in
-   * the visitor's own timezone — most registrants will not be in Hungary.
+   * date, so 08:00Z. Stored as an absolute instant so every surface can render
+   * it in the reader's own timezone — most registrants are not in Hungary.
    */
   startsAt: "2026-10-03T08:00:00.000Z",
-  /** What the host sees on their own wall clock. */
+  /** What the hosts see on their own wall clock. */
   hostTimeLabel: "10:00 CEST · Budapest",
   durationLabel: "60–90 minutes",
+  /** Settled: it is a seminar with a Q&A, not a workshop. */
+  format: "Seminar with Q&A",
+  formatNote: "A session from the three of us, then open questions.",
   /** Below this the seminar does not run. Owner-facing only — never shown publicly. */
   minParticipants: 10,
   /** Sign-ups past this land on the waitlist. */
@@ -132,7 +135,7 @@ export function hostNamesSentence(): string {
   return `${firsts.slice(0, -1).join(", ")} and ${firsts[firsts.length - 1]}`;
 }
 
-// ── Other form options ───────────────────────────────────────────────────────
+// ── Coaching context ─────────────────────────────────────────────────────────
 
 export const COACHING_CONTEXTS = [
   { id: "powerlifting",  label: "Powerlifting / strength coach" },
@@ -144,20 +147,154 @@ export const COACHING_CONTEXTS = [
   { id: "other",         label: "Something else" },
 ] as const;
 
-export const FORMAT_OPTIONS = [
-  { id: "workshop",      label: "Workshop",           hint: "Hands-on, we work through cases together" },
-  { id: "seminar_qa",    label: "Seminar with Q&A",   hint: "Presentation first, questions at the end" },
-  { id: "no_preference", label: "No preference",      hint: "Happy either way" },
+const CONTEXT_IDS = COACHING_CONTEXTS.map((c) => c.id) as readonly string[];
+
+// ── Countries → timezone ─────────────────────────────────────────────────────
+
+/**
+ * The country field exists to tell people what time the seminar starts where
+ * they are, so every entry carries an IANA zone. Countries spanning several
+ * zones are split by region rather than given one wrong answer.
+ */
+export interface SeminarCountry {
+  id: string;
+  label: string;
+  tz: string;
+}
+
+export const COUNTRIES: readonly SeminarCountry[] = [
+  // Europe
+  { id: "AL", label: "Albania",            tz: "Europe/Tirane" },
+  { id: "AT", label: "Austria",            tz: "Europe/Vienna" },
+  { id: "BE", label: "Belgium",            tz: "Europe/Brussels" },
+  { id: "BA", label: "Bosnia & Herzegovina", tz: "Europe/Sarajevo" },
+  { id: "BG", label: "Bulgaria",           tz: "Europe/Sofia" },
+  { id: "HR", label: "Croatia",            tz: "Europe/Zagreb" },
+  { id: "CY", label: "Cyprus",             tz: "Asia/Nicosia" },
+  { id: "CZ", label: "Czechia",            tz: "Europe/Prague" },
+  { id: "DK", label: "Denmark",            tz: "Europe/Copenhagen" },
+  { id: "EE", label: "Estonia",            tz: "Europe/Tallinn" },
+  { id: "FI", label: "Finland",            tz: "Europe/Helsinki" },
+  { id: "FR", label: "France",             tz: "Europe/Paris" },
+  { id: "DE", label: "Germany",            tz: "Europe/Berlin" },
+  { id: "GR", label: "Greece",             tz: "Europe/Athens" },
+  { id: "HU", label: "Hungary",            tz: "Europe/Budapest" },
+  { id: "IS", label: "Iceland",            tz: "Atlantic/Reykjavik" },
+  { id: "IE", label: "Ireland",            tz: "Europe/Dublin" },
+  { id: "IT", label: "Italy",              tz: "Europe/Rome" },
+  { id: "LV", label: "Latvia",             tz: "Europe/Riga" },
+  { id: "LT", label: "Lithuania",          tz: "Europe/Vilnius" },
+  { id: "LU", label: "Luxembourg",         tz: "Europe/Luxembourg" },
+  { id: "MT", label: "Malta",              tz: "Europe/Malta" },
+  { id: "MD", label: "Moldova",            tz: "Europe/Chisinau" },
+  { id: "ME", label: "Montenegro",         tz: "Europe/Podgorica" },
+  { id: "NL", label: "Netherlands",        tz: "Europe/Amsterdam" },
+  { id: "MK", label: "North Macedonia",    tz: "Europe/Skopje" },
+  { id: "NO", label: "Norway",             tz: "Europe/Oslo" },
+  { id: "PL", label: "Poland",             tz: "Europe/Warsaw" },
+  { id: "PT", label: "Portugal",           tz: "Europe/Lisbon" },
+  { id: "RO", label: "Romania",            tz: "Europe/Bucharest" },
+  { id: "RS", label: "Serbia",             tz: "Europe/Belgrade" },
+  { id: "SK", label: "Slovakia",           tz: "Europe/Bratislava" },
+  { id: "SI", label: "Slovenia",           tz: "Europe/Ljubljana" },
+  { id: "ES", label: "Spain",              tz: "Europe/Madrid" },
+  { id: "SE", label: "Sweden",             tz: "Europe/Stockholm" },
+  { id: "CH", label: "Switzerland",        tz: "Europe/Zurich" },
+  { id: "TR", label: "Türkiye",            tz: "Europe/Istanbul" },
+  { id: "UA", label: "Ukraine",            tz: "Europe/Kyiv" },
+  { id: "GB", label: "United Kingdom",     tz: "Europe/London" },
+  { id: "RU", label: "Russia — Moscow",    tz: "Europe/Moscow" },
+  // Americas
+  { id: "CA-PT", label: "Canada — Pacific",  tz: "America/Vancouver" },
+  { id: "CA-MT", label: "Canada — Mountain", tz: "America/Edmonton" },
+  { id: "CA-CT", label: "Canada — Central",  tz: "America/Winnipeg" },
+  { id: "CA-ET", label: "Canada — Eastern",  tz: "America/Toronto" },
+  { id: "CA-AT", label: "Canada — Atlantic", tz: "America/Halifax" },
+  { id: "US-PT", label: "United States — Pacific",  tz: "America/Los_Angeles" },
+  { id: "US-MT", label: "United States — Mountain", tz: "America/Denver" },
+  { id: "US-CT", label: "United States — Central",  tz: "America/Chicago" },
+  { id: "US-ET", label: "United States — Eastern",  tz: "America/New_York" },
+  { id: "MX", label: "Mexico",             tz: "America/Mexico_City" },
+  { id: "BR", label: "Brazil",             tz: "America/Sao_Paulo" },
+  { id: "AR", label: "Argentina",          tz: "America/Argentina/Buenos_Aires" },
+  { id: "CL", label: "Chile",              tz: "America/Santiago" },
+  { id: "CO", label: "Colombia",           tz: "America/Bogota" },
+  // Africa & Middle East
+  { id: "EG", label: "Egypt",              tz: "Africa/Cairo" },
+  { id: "IL", label: "Israel",             tz: "Asia/Jerusalem" },
+  { id: "KE", label: "Kenya",              tz: "Africa/Nairobi" },
+  { id: "MA", label: "Morocco",            tz: "Africa/Casablanca" },
+  { id: "NG", label: "Nigeria",            tz: "Africa/Lagos" },
+  { id: "SA", label: "Saudi Arabia",       tz: "Asia/Riyadh" },
+  { id: "ZA", label: "South Africa",       tz: "Africa/Johannesburg" },
+  { id: "AE", label: "United Arab Emirates", tz: "Asia/Dubai" },
+  // Asia & Pacific
+  { id: "AU-WA", label: "Australia — Perth",    tz: "Australia/Perth" },
+  { id: "AU-SA", label: "Australia — Adelaide", tz: "Australia/Adelaide" },
+  { id: "AU-QL", label: "Australia — Brisbane", tz: "Australia/Brisbane" },
+  { id: "AU-NS", label: "Australia — Sydney / Melbourne", tz: "Australia/Sydney" },
+  { id: "CN", label: "China",              tz: "Asia/Shanghai" },
+  { id: "HK", label: "Hong Kong",          tz: "Asia/Hong_Kong" },
+  { id: "IN", label: "India",              tz: "Asia/Kolkata" },
+  { id: "ID", label: "Indonesia",          tz: "Asia/Jakarta" },
+  { id: "JP", label: "Japan",              tz: "Asia/Tokyo" },
+  { id: "KZ", label: "Kazakhstan",         tz: "Asia/Almaty" },
+  { id: "NZ", label: "New Zealand",        tz: "Pacific/Auckland" },
+  { id: "PH", label: "Philippines",        tz: "Asia/Manila" },
+  { id: "SG", label: "Singapore",          tz: "Asia/Singapore" },
+  { id: "KR", label: "South Korea",        tz: "Asia/Seoul" },
+  { id: "TH", label: "Thailand",           tz: "Asia/Bangkok" },
 ] as const;
 
-export const MATERIAL_OPTIONS = [
-  { id: "written", label: "A written summary" },
-  { id: "video",   label: "A video recording" },
-] as const;
+const COUNTRY_IDS = COUNTRIES.map((c) => c.id) as readonly string[];
 
-const CONTEXT_IDS  = COACHING_CONTEXTS.map((c) => c.id) as readonly string[];
-const FORMAT_IDS   = FORMAT_OPTIONS.map((f) => f.id) as readonly string[];
-const MATERIAL_IDS = MATERIAL_OPTIONS.map((m) => m.id) as readonly string[];
+export function countryLabel(id: string | null): string {
+  if (!id) return "—";
+  return COUNTRIES.find((c) => c.id === id)?.label ?? id;
+}
+
+export function zoneForCountry(id: string | null): string | null {
+  if (!id) return null;
+  return COUNTRIES.find((c) => c.id === id)?.tz ?? null;
+}
+
+/**
+ * Best country match for a browser-reported IANA zone, so the field can be
+ * pre-filled instead of asking someone to hunt for their own country.
+ * Returns null when the zone is not one we list — never a wrong guess.
+ */
+export function countryForZone(tz: string | null | undefined): string | null {
+  if (!tz) return null;
+  return COUNTRIES.find((c) => c.tz === tz)?.id ?? null;
+}
+
+/**
+ * The seminar's start time on `tz`'s wall clock, e.g. "09:00". Returns null for
+ * an unknown zone rather than silently falling back to the host's time, which
+ * would be worse than showing nothing.
+ */
+export function startTimeIn(tz: string | null): string | null {
+  if (!tz) return null;
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+    }).format(new Date(SEMINAR.startsAt));
+  } catch {
+    return null;
+  }
+}
+
+/** Same instant, same zone — but the date, which can differ across the line. */
+export function startDateIn(tz: string | null): string | null {
+  if (!tz) return null;
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: tz, weekday: "long", day: "numeric", month: "long",
+    }).format(new Date(SEMINAR.startsAt));
+  } catch {
+    return null;
+  }
+}
 
 // ── Capacity ─────────────────────────────────────────────────────────────────
 
@@ -186,8 +323,6 @@ export interface SeminarSignup {
   country: string | null;
   context: string | null;
   topics: string[];
-  formatPref: string | null;
-  materials: string[];
   question: string | null;
 }
 
@@ -202,7 +337,7 @@ export type ValidationResult =
  */
 const EMAIL_RE = /^[^\s@]+@[^\s@.]+\.[^\s@]+$/;
 
-const MAX = { name: 120, email: 200, country: 80, question: 2000 };
+const MAX = { name: 120, email: 200, question: 2000 };
 
 function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
@@ -220,13 +355,13 @@ export function validateSignup(raw: unknown): ValidationResult {
   const r = raw as Record<string, unknown>;
 
   const fullName = str(r.fullName);
-  if (!fullName)                 return { ok: false, error: "Please enter your name." };
+  if (!fullName)                  return { ok: false, error: "Please enter your name." };
   if (fullName.length > MAX.name) return { ok: false, error: "That name is too long." };
 
   const email = str(r.email).toLowerCase();
-  if (!email)                      return { ok: false, error: "Please enter your email address." };
-  if (email.length > MAX.email)    return { ok: false, error: "That email address is too long." };
-  if (!EMAIL_RE.test(email))       return { ok: false, error: "That email address doesn't look right." };
+  if (!email)                   return { ok: false, error: "Please enter your email address." };
+  if (email.length > MAX.email) return { ok: false, error: "That email address is too long." };
+  if (!EMAIL_RE.test(email))    return { ok: false, error: "That email address doesn't look right." };
 
   const topics = pickIds(r.topics, TOPIC_IDS);
   if (topics.length === 0) {
@@ -237,34 +372,31 @@ export function validateSignup(raw: unknown): ValidationResult {
     return { ok: false, error: "Please confirm we can email you about the seminar." };
   }
 
-  const country = str(r.country).slice(0, MAX.country) || null;
-
+  const rawCountry = str(r.country);
   const rawContext = str(r.context);
-  const context = CONTEXT_IDS.includes(rawContext) ? rawContext : null;
-
-  const rawFormat = str(r.formatPref);
-  const formatPref = FORMAT_IDS.includes(rawFormat) ? rawFormat : null;
-
-  const materials = pickIds(r.materials, MATERIAL_IDS);
-  const question  = str(r.question).slice(0, MAX.question) || null;
 
   return {
     ok: true,
-    value: { fullName, email, country, context, topics, formatPref, materials, question },
+    value: {
+      fullName,
+      email,
+      country:  COUNTRY_IDS.includes(rawCountry) ? rawCountry : null,
+      context:  CONTEXT_IDS.includes(rawContext) ? rawContext : null,
+      topics,
+      question: str(r.question).slice(0, MAX.question) || null,
+    },
   };
 }
 
 /** The subset a registrant may change later from the manage page. */
-export type SeminarSelections = Pick<
-  SeminarSignup, "topics" | "formatPref" | "materials" | "question"
->;
+export type SeminarSelections = Pick<SeminarSignup, "topics" | "question">;
 
 /**
  * Validates an edit from the manage page. Name and email are deliberately not
  * editable there: the link is emailed to one address, so allowing the address
  * to be changed would turn a leaked link into account takeover.
  */
-export function validateSelections(raw: unknown): 
+export function validateSelections(raw: unknown):
   | { ok: true; value: SeminarSelections }
   | { ok: false; error: string } {
   if (!raw || typeof raw !== "object") return { ok: false, error: "Invalid submission." };
@@ -275,15 +407,9 @@ export function validateSelections(raw: unknown):
     return { ok: false, error: "Keep at least one topic selected." };
   }
 
-  const rawFormat = str(r.formatPref);
   return {
     ok: true,
-    value: {
-      topics,
-      formatPref: FORMAT_IDS.includes(rawFormat) ? rawFormat : null,
-      materials:  pickIds(r.materials, MATERIAL_IDS),
-      question:   str(r.question).slice(0, MAX.question) || null,
-    },
+    value: { topics, question: str(r.question).slice(0, MAX.question) || null },
   };
 }
 
@@ -307,11 +433,6 @@ export function topicLabel(id: string): string {
 export function contextLabel(id: string | null): string {
   if (!id) return "—";
   return COACHING_CONTEXTS.find((c) => c.id === id)?.label ?? id;
-}
-
-export function formatLabel(id: string | null): string {
-  if (!id) return "—";
-  return FORMAT_OPTIONS.find((f) => f.id === id)?.label ?? id;
 }
 
 /** Topic ids ranked by how many people picked them. Ties keep display order. */

@@ -17,7 +17,7 @@ import Link from "next/link";
 import type { SatRow, AcsiRow, CsaiRow, DasRow } from "@/app/api/admin/test-results/route";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { findDuplicateGroups, indexDuplicates } from "@/lib/duplicates";
-import { contextLabel, formatLabel, topicLabel } from "@/lib/seminar";
+import { contextLabel, countryLabel, topicLabel } from "@/lib/seminar";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -3623,8 +3623,7 @@ const COACH_Q_LABELS: Record<string, string> = {
 function SeminarTab() {
   type Row = {
     id: string; full_name: string; email: string; country: string | null;
-    context: string | null; topics: string[]; format_pref: string | null;
-    materials: string[]; question: string | null;
+    context: string | null; topics: string[]; question: string | null;
     status: "registered" | "waitlist" | "cancelled"; created_at: string;
   };
   type Payload = {
@@ -3781,11 +3780,9 @@ function SeminarTab() {
                   <div className="px-4 pb-4 pt-1 border-t border-white/5 space-y-3">
                     <dl className="font-saira text-xs space-y-1.5">
                       {s.country && (
-                        <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Country</dt><dd className="text-zinc-300">{s.country}</dd></div>
+                        <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Country</dt><dd className="text-zinc-300">{countryLabel(s.country)}</dd></div>
                       )}
                       <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Coaches</dt><dd className="text-zinc-300">{contextLabel(s.context)}</dd></div>
-                      <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Format</dt><dd className="text-zinc-300">{formatLabel(s.format_pref)}</dd></div>
-                      <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Wants</dt><dd className="text-zinc-300">{s.materials?.length ? s.materials.join(", ") : "—"}</dd></div>
                       <div className="flex gap-2">
                         <dt className="text-zinc-500 w-20 flex-shrink-0">Topics</dt>
                         <dd className="text-zinc-300 flex flex-wrap gap-1">

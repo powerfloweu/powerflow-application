@@ -12,15 +12,13 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { SEMINAR_TOPICS, FORMAT_OPTIONS, MATERIAL_OPTIONS } from "@/lib/seminar";
-
-function tc(d: boolean, dark: string, light: string) { return d ? dark : light; }
+import { SEMINAR_TOPICS } from "@/lib/seminar";
+import { tc, Check, Eyebrow } from "../../ui";
 
 type Status = "registered" | "waitlist" | "cancelled";
 type Signup = {
   fullName: string; email: string; topics: string[];
-  formatPref: string | null; materials: string[]; question: string | null;
-  status: Status;
+  question: string | null; status: Status;
 };
 type Loaded = { signup: Signup; seminar: { title: string; startsAt: string; hostTime: string; duration: string } };
 
@@ -33,10 +31,8 @@ export default function ManageSignupPage() {
   const [data,    setData]    = React.useState<Loaded | null>(null);
   const [loadErr, setLoadErr] = React.useState<string | null>(null);
 
-  const [topics,     setTopics]     = React.useState<string[]>([]);
-  const [formatPref, setFormatPref] = React.useState("");
-  const [materials,  setMaterials]  = React.useState<string[]>([]);
-  const [question,   setQuestion]   = React.useState("");
+  const [topics,   setTopics]   = React.useState<string[]>([]);
+  const [question, setQuestion] = React.useState("");
 
   const [saving,    setSaving]    = React.useState(false);
   const [saved,     setSaved]     = React.useState(false);
@@ -51,8 +47,6 @@ export default function ManageSignupPage() {
         if (!r.ok) { setLoadErr(j.error ?? "That link isn't valid any more."); return; }
         setData(j);
         setTopics(j.signup.topics ?? []);
-        setFormatPref(j.signup.formatPref ?? "");
-        setMaterials(j.signup.materials ?? []);
         setQuestion(j.signup.question ?? "");
         if (j.signup.status === "cancelled") setCancelled(true);
       })
@@ -62,9 +56,9 @@ export default function ManageSignupPage() {
       });
   }, [token]);
 
-  function toggle(list: string[], set: (v: string[]) => void, id: string) {
+  function toggleTopic(id: string) {
     setSaved(false);
-    set(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
+    setTopics((t) => (t.includes(id) ? t.filter((x) => x !== id) : [...t, id]));
   }
 
   async function save() {
@@ -75,7 +69,7 @@ export default function ManageSignupPage() {
       const res = await fetch(`/api/seminar/manage/${token}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topics, formatPref, materials, question }),
+        body: JSON.stringify({ topics, question }),
       });
       const j = await res.json();
       if (!res.ok) { setSaveErr(j.error ?? "We couldn't save that."); return; }
@@ -108,7 +102,9 @@ export default function ManageSignupPage() {
   const panel   = tc(d, "border-white/[0.10] bg-white/[0.03]", "border-gray-200 bg-white");
   const muted   = tc(d, "text-zinc-400", "text-gray-500");
   const heading = tc(d, "text-white", "text-gray-900");
-  const chosen  = tc(d, "border-violet-500/40 bg-violet-500/[0.08]", "border-violet-400 bg-violet-50");
+  const chosen  = tc(d,
+    "border-violet-500/50 bg-violet-500/[0.10] shadow-[0_0_0_1px_rgba(139,92,246,0.25)]",
+    "border-violet-400 bg-violet-50 shadow-[0_0_0_1px_rgba(139,92,246,0.25)]");
   const input   = `w-full rounded-xl border px-4 py-3 text-base outline-none transition ${tc(d,
     "border-white/10 bg-white/[0.04] text-white placeholder-zinc-600 focus:border-violet-500/60",
     "border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:border-violet-500")}`;
@@ -210,71 +206,23 @@ export default function ManageSignupPage() {
 
             {/* ── Topics ── */}
             <fieldset className="w-full mb-8">
-              <legend className={`text-[10px] font-bold uppercase tracking-[0.22em] mb-2 ${tc(d, "text-violet-400", "text-violet-600")}`}>
-                What you&rsquo;d like covered
-              </legend>
+              <legend className="w-full"><Eyebrow dark={d}>What you&rsquo;d like covered</Eyebrow></legend>
               <p className={`text-xs mb-4 ${muted}`}>Change these as often as you like before the day.</p>
               <div className="space-y-2">
                 {SEMINAR_TOPICS.map((topic) => {
                   const on = topics.includes(topic.id);
                   return (
-                    <label key={topic.id} className={`flex gap-3 rounded-2xl border p-4 cursor-pointer transition ${on ? chosen : panel}`}>
+                    <label key={topic.id} className={`flex gap-3.5 rounded-2xl border p-4 cursor-pointer transition-all duration-150 ${on ? chosen : panel}`}>
                       <input
                         type="checkbox" checked={on}
-                        onChange={() => toggle(topics, setTopics, topic.id)}
-                        className="mt-0.5 h-5 w-5 flex-shrink-0 accent-violet-500"
+                        onChange={() => toggleTopic(topic.id)}
+                        className="peer sr-only"
                       />
+                      <Check on={on} dark={d} />
                       <span className="min-w-0">
                         <span className={`block text-sm font-bold leading-snug ${heading}`}>{topic.label}</span>
                         <span className={`block text-xs leading-relaxed mt-1 ${muted}`}>{topic.blurb}</span>
                       </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
-
-            {/* ── Format ── */}
-            <fieldset className="w-full mb-8">
-              <legend className={`text-[10px] font-bold uppercase tracking-[0.22em] mb-4 ${tc(d, "text-violet-400", "text-violet-600")}`}>
-                Format you&rsquo;d prefer
-              </legend>
-              <div className="space-y-2">
-                {FORMAT_OPTIONS.map((opt) => {
-                  const on = formatPref === opt.id;
-                  return (
-                    <label key={opt.id} className={`flex gap-3 rounded-2xl border p-4 cursor-pointer transition ${on ? chosen : panel}`}>
-                      <input
-                        type="radio" name="formatPref" value={opt.id} checked={on}
-                        onChange={() => { setSaved(false); setFormatPref(opt.id); }}
-                        className="mt-0.5 h-5 w-5 flex-shrink-0 accent-violet-500"
-                      />
-                      <span className="min-w-0">
-                        <span className={`block text-sm font-bold ${heading}`}>{opt.label}</span>
-                        <span className={`block text-xs mt-0.5 ${muted}`}>{opt.hint}</span>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
-
-            {/* ── Follow-up material ── */}
-            <fieldset className="w-full mb-8">
-              <legend className={`text-[10px] font-bold uppercase tracking-[0.22em] mb-4 ${tc(d, "text-violet-400", "text-violet-600")}`}>
-                Afterwards
-              </legend>
-              <div className="flex flex-wrap gap-2">
-                {MATERIAL_OPTIONS.map((opt) => {
-                  const on = materials.includes(opt.id);
-                  return (
-                    <label key={opt.id} className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 cursor-pointer transition ${on ? chosen : panel}`}>
-                      <input
-                        type="checkbox" checked={on}
-                        onChange={() => toggle(materials, setMaterials, opt.id)}
-                        className="h-5 w-5 accent-violet-500"
-                      />
-                      <span className={`text-sm font-semibold ${heading}`}>{opt.label}</span>
                     </label>
                   );
                 })}

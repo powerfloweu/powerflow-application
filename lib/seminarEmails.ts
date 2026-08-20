@@ -11,7 +11,6 @@ import {
   SEMINAR,
   topicLabel,
   contextLabel,
-  formatLabel,
   manageUrl,
   hostNamesSentence,
   type SeminarSignup,
@@ -258,8 +257,6 @@ export function ownerNotificationHtml(signup: SeminarSignup, status: SignupStatu
     ${signup.country ? row("Country", esc(signup.country)) : ""}
     ${row("Coaches", esc(contextLabel(signup.context)))}
     ${row("Topics", signup.topics.map((t) => esc(topicLabel(t))).join("<br>"))}
-    ${row("Format", esc(formatLabel(signup.formatPref)))}
-    ${signup.materials.length ? row("Wants", esc(signup.materials.join(", "))) : ""}
   </table>
   ${signup.question ? `<p style="font-size:14px;margin:16px 0 0"><strong>Their question:</strong><br>${esc(signup.question)}</p>` : ""}
   <p style="font-size:12px;color:#a1a1aa;margin:20px 0 0">

@@ -102,10 +102,8 @@ export async function POST(req: NextRequest) {
       const ok = await dbPatch("seminar_signups", { id: row.id }, {
         status,
         // Take the fresh answers too — their interests may have changed.
-        topics:      signup.topics,
-        format_pref: signup.formatPref,
-        materials:   signup.materials,
-        question:    signup.question,
+        topics:   signup.topics,
+        question: signup.question,
       });
       if (!ok) {
         console.error("[seminar] reactivate failed for", signup.email);
@@ -138,8 +136,6 @@ export async function POST(req: NextRequest) {
     country:      signup.country,
     context:      signup.context,
     topics:       signup.topics,
-    format_pref:  signup.formatPref,
-    materials:    signup.materials,
     question:     signup.question,
     status,
   });

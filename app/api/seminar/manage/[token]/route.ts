@@ -65,11 +65,9 @@ function present(row: Row) {
   return {
     fullName:   row.full_name,
     email:      row.email,
-    topics:     row.topics ?? [],
-    formatPref: row.format_pref,
-    materials:  row.materials ?? [],
-    question:   row.question,
-    status:     row.status,
+    topics:   row.topics ?? [],
+    question: row.question,
+    status:   row.status,
   };
 }
 
@@ -79,10 +77,8 @@ function toSignup(row: Row): SeminarSignup {
     email:      row.email,
     country:    row.country,
     context:    row.context,
-    topics:     row.topics ?? [],
-    formatPref: row.format_pref,
-    materials:  row.materials ?? [],
-    question:   row.question,
+    topics:   row.topics ?? [],
+    question: row.question,
   };
 }
 
@@ -140,10 +136,8 @@ export async function PATCH(
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
   const ok = await dbPatch("seminar_signups", { id: row.id }, {
-    topics:      parsed.value.topics,
-    format_pref: parsed.value.formatPref,
-    materials:   parsed.value.materials,
-    question:    parsed.value.question,
+    topics:   parsed.value.topics,
+    question: parsed.value.question,
   });
   if (!ok) {
     console.error("[seminar/manage] update failed for", row.id);
