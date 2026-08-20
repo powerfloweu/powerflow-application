@@ -47,6 +47,7 @@ heading structure without updating the parser.
 - [x] Demo pages — guided auto-play presentations for athlete and coach demos
 - [x] Coach demo — callout arrows, phone glow, interactive pricing calculator
 - [x] Seminar sign-up form (`/seminar`) — public, topic picks, 20-person cap + waitlist, admin Seminar tab (◐)
+- [x] Seminar confirmation email + self-service `/seminar/manage/[token]` (change topics, cancel, auto-promote waitlist)
 
 ### Localization
 - [x] Hide languages that are not translated yet (ES, FR hidden until complete — use READY_LOCALES)
@@ -121,8 +122,14 @@ These are the next meaningful features after quick wins are done.
 - Open with Dávid: it's a **Saturday at 10:00**, not the "Wed evening ≤6pm" in his notes;
   and "App / upgraded coach's guide / testimonials" from the brief are not on the page yet
   — unclear whether they're attendee perks, agenda items or separate marketing work.
-- Not built: no confirmation email to the registrant (he chose owner-email + admin tab);
-  page is English-only.
+- **2026-08-20 follow-up**: confirmation email to the registrant now sent (waitlist gets
+  different wording), carrying a personal `/seminar/manage/<token>` link where they can
+  change topics/format or cancel. Cancelling a booked place auto-promotes the
+  longest-waiting person and emails them. A cancelled person who signs up again
+  reactivates their row. `manage_token` is separate from `id`; name/email are not
+  editable there (a leaked link must not become account takeover). Email bodies live in
+  `lib/seminarEmails.ts` with 13 tests.
+- Still not built: page and emails are English-only.
 
 ### 2026-07-06 — main (lifestyle guide beta)
 - **/life section (beta)** — Dávid's personal operating system prototype, gated by `profiles.lifestyle_beta` (true only for his two accounts). Tabs: Today (values strip, due check-in quick-taps, workout logger, weight + one-tap meal macros), Plan (week stepper, structure editor, history), Check-in, Trends, Setup.
