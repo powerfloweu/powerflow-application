@@ -76,6 +76,62 @@ export const SEMINAR_TOPICS: readonly SeminarTopic[] = [
 
 export const TOPIC_IDS: readonly string[] = SEMINAR_TOPICS.map((t) => t.id);
 
+// ── Hosts ────────────────────────────────────────────────────────────────────
+
+export interface SeminarHost {
+  slug: string;
+  name: string;
+  /** Fallback when there is no photo — see `photo`. */
+  initials: string;
+  title: string;
+  /** Why this person is worth an hour of a coach's Saturday morning. */
+  intro: string;
+  /** Path under /public, or null to render initials instead. */
+  photo: string | null;
+  instagram: string | null;
+}
+
+/**
+ * Facts here mirror app/coaches/page.tsx — same people, same credentials, said
+ * in the register of "who is teaching this" rather than "hire me 1:1". If a
+ * coach's bio changes there, change it here too.
+ */
+export const SEMINAR_HOSTS: readonly SeminarHost[] = [
+  {
+    slug: "david",
+    name: "David Sipos",
+    initials: "DS",
+    title: "Sport Psychologist (MSc) · PowerFlow founder",
+    intro: "Built PowerFlow out of 600+ hours of practice with powerlifters, turning sport psychology into things coaches can actually use on the day — pre-meet routines, competition anxiety, attention under load. Works with athletes across IPF, USAPL and EPF.",
+    photo: "/coaches/david.jpg",
+    instagram: "powerfloweu",
+  },
+  {
+    slug: "jay",
+    name: "Jacqueline Ulrich",
+    initials: "JU",
+    title: "Mental Performance Coach",
+    intro: "Competed internationally in powerlifting and coaches it, which is how she found the ceiling: past a point, development stops being about the training plan. She works on what athletes believe about themselves, and on the coach's side of that conversation.",
+    photo: null,
+    instagram: "omgitsjacqueline",
+  },
+  {
+    slug: "clarice",
+    name: "Clarice Tighe",
+    initials: "CT",
+    title: "Sport Psychologist (MSc) · Odyssey Strength",
+    intro: "Full-time performance mentality coach in Ireland and a competing powerlifter who has kept coming back to the platform through genuinely hard conditions. Her specialism is self-talk — the habits that hold an athlete together when the day is going badly.",
+    photo: "/coaches/clarice.jpg",
+    instagram: "clarice_odyssey",
+  },
+] as const;
+
+/** "David, Jay and Clarice" — for running text and email sign-offs. */
+export function hostNamesSentence(): string {
+  const firsts = SEMINAR_HOSTS.map((h) => (h.slug === "jay" ? "Jay" : h.name.split(" ")[0]));
+  return `${firsts.slice(0, -1).join(", ")} and ${firsts[firsts.length - 1]}`;
+}
+
 // ── Other form options ───────────────────────────────────────────────────────
 
 export const COACHING_CONTEXTS = [

@@ -204,7 +204,7 @@ export default function ManageSignupPage() {
               <p className={`text-sm font-bold ${heading}`}>{data.signup.fullName}</p>
               <p className={`text-xs ${muted}`}>{data.signup.email}</p>
               <p className={`text-[11px] mt-2 ${muted}`}>
-                To change your name or email, reply to the confirmation email.
+                To change your name or email, email david@power-flow.eu.
               </p>
             </div>
 

@@ -16,6 +16,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   SEMINAR,
+  SEMINAR_HOSTS,
   SEMINAR_TOPICS,
   COACHING_CONTEXTS,
   FORMAT_OPTIONS,
@@ -208,6 +209,54 @@ export default function SeminarPage() {
                     : `${avail.spotsLeft} ${avail.spotsLeft === 1 ? "spot" : "spots"} left`}
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* ── Who's running it ── */}
+        <div className="w-full mb-10">
+          <p className={`text-[10px] font-bold uppercase tracking-[0.22em] mb-2 ${tc(d, "text-violet-400", "text-violet-600")}`}>
+            Run by three of us
+          </p>
+          <p className={`text-xs mb-5 ${muted}`}>
+            All three coach powerlifters, and all three have stood in the warm-up room
+            trying to get it right.
+          </p>
+
+          <div className="space-y-3">
+            {SEMINAR_HOSTS.map((host) => (
+              <div key={host.slug} className={`rounded-2xl border p-5 ${panel}`}>
+                <div className="flex items-start gap-4 mb-3">
+                  <div className="w-14 h-14 rounded-full flex-shrink-0 overflow-hidden relative">
+                    {host.photo ? (
+                      <Image
+                        src={host.photo} alt={host.name} fill
+                        className="object-cover object-top" sizes="56px"
+                      />
+                    ) : (
+                      <div className={`w-full h-full flex items-center justify-center font-extrabold text-sm ${tc(d, "bg-violet-500/15 text-violet-300", "bg-violet-100 text-violet-700")}`}>
+                        {host.initials}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-extrabold text-base leading-tight ${heading}`}>{host.name}</p>
+                    <p className={`text-xs mt-0.5 ${muted}`}>{host.title}</p>
+                    {host.instagram && (
+                      <a
+                        href={`https://www.instagram.com/${host.instagram}/`}
+                        target="_blank" rel="noopener noreferrer"
+                        className={`text-[11px] transition mt-0.5 inline-block ${tc(d, "text-violet-400 hover:text-violet-300", "text-violet-600 hover:text-violet-700")}`}
+                      >
+                        @{host.instagram}
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <p className={`text-xs leading-relaxed ${tc(d, "text-zinc-300", "text-gray-600")}`}>
+                  {host.intro}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 

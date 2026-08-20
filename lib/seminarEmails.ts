@@ -13,6 +13,7 @@ import {
   contextLabel,
   formatLabel,
   manageUrl,
+  hostNamesSentence,
   type SeminarSignup,
   type SignupStatus,
 } from "@/lib/seminar";
@@ -82,6 +83,9 @@ export function confirmationHtml(
 
   <p style="font-size:15px;margin:0 0 20px">Hi ${esc(firstName)},</p>
   <p style="font-size:15px;margin:0 0 24px">${opening}</p>
+  <p style="font-size:14px;color:#52525b;margin:0 0 24px">
+    It's run by ${esc(hostNamesSentence())} — three coaches who work with powerlifters.
+  </p>
 
   <table style="width:100%;border-collapse:collapse;background:#f4f4f5;border-radius:12px;margin:0 0 24px">
     <tr>
@@ -117,11 +121,12 @@ export function confirmationHtml(
     whoever is next in line, so please use it rather than just not turning up.
   </p>
   <p style="font-size:13px;color:#71717a;margin:0 0 28px">
-    Want your details deleted entirely? Reply to this email and we'll remove them.
+    Want your details deleted entirely? Email
+    <a href="mailto:${CONTACT}" style="color:#7c3aed">${CONTACT}</a> and we'll remove them.
   </p>
   <p style="font-size:14px;color:#52525b;margin:0 0 28px">
     ${waitlisted ? `Hoping to see you on ${esc(seminarShortDate())}.` : `See you on ${esc(seminarShortDate())}.`}<br>
-    David — PowerFlow
+    ${esc(hostNamesSentence())} — PowerFlow
   </p>
 
   <p style="font-size:12px;color:#a1a1aa;border-top:1px solid #e4e4e7;padding-top:14px;margin:0">
@@ -148,6 +153,8 @@ export function confirmationText(
     ``,
     opening,
     ``,
+    `It's run by ${hostNamesSentence()} — three coaches who work with powerlifters.`,
+    ``,
     `WHEN: ${seminarDateLabel()}, ${SEMINAR.hostTimeLabel} (${SEMINAR.durationLabel}, online)`,
     `That's Central European Summer Time — please check it against your own timezone.`,
     ``,
@@ -160,12 +167,12 @@ export function confirmationText(
     `  ${manageUrl(manageToken)}`,
     `That link is personal to you. Cancelling frees your place for whoever is next in line.`,
     ``,
-    `Want your details deleted entirely? Reply to this email and we'll remove them.`,
+    `Want your details deleted entirely? Email ${CONTACT} and we'll remove them.`,
     ``,
     status === "waitlist"
       ? `Hoping to see you on ${seminarShortDate()}.`
       : `See you on ${seminarShortDate()}.`,
-    `David — PowerFlow`,
+    `${hostNamesSentence()} — PowerFlow`,
     CONTACT,
   ].join("\n");
 }
@@ -218,7 +225,7 @@ export function promotedHtml(signup: SeminarSignup, manageToken: string): string
   </p>
   <p style="font-size:14px;color:#52525b;margin:0 0 28px">
     See you on ${esc(seminarShortDate())}.<br>
-    David — PowerFlow
+    ${esc(hostNamesSentence())} — PowerFlow
   </p>
 </div>`.trim();
 }

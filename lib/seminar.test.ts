@@ -8,6 +8,8 @@ import {
   meetsMinimum,
   validateSignup,
   tallyTopics,
+  SEMINAR_HOSTS,
+  hostNamesSentence,
   contextLabel,
   formatLabel,
 } from "./seminar";
@@ -298,5 +300,57 @@ describe("manage link", () => {
     expect(html).toContain("off the waitlist");
     expect(html).toContain(TOKEN);
     expect(html).toContain("Saturday, 3 October 2026");
+  });
+});
+
+describe("hosts", () => {
+  it("lists three named hosts with a title and an intro", () => {
+    expect(SEMINAR_HOSTS).toHaveLength(3);
+    for (const h of SEMINAR_HOSTS) {
+      expect(h.name.length).toBeGreaterThan(0);
+      expect(h.title.length).toBeGreaterThan(0);
+      expect(h.intro.length).toBeGreaterThan(40);
+      // Every host needs a face or a fallback — one of the two, never neither.
+      expect(h.photo || h.initials).toBeTruthy();
+    }
+  });
+
+  it("uses the name people actually call her", () => {
+    // Jacqueline goes by Jay everywhere else in the app.
+    expect(hostNamesSentence()).toBe("David, Jay and Clarice");
+  });
+
+  it("signs the emails from all three", () => {
+    const signup = {
+      fullName: "Marthe Henry", email: "m@example.com", country: null,
+      context: null, topics: ["arousal"], formatPref: null, materials: [], question: null,
+    };
+    for (const body of [
+      confirmationHtml(signup, "registered", TOKEN),
+      confirmationText(signup, "registered", TOKEN),
+      promotedHtml(signup, TOKEN),
+    ]) {
+      expect(body).toContain("David, Jay and Clarice");
+    }
+  });
+});
+
+describe("reply-to safety", () => {
+  const signup = {
+    fullName: "Marthe Henry", email: "m@example.com", country: null,
+    context: null, topics: ["arousal"], formatPref: null, materials: [], question: null,
+  };
+
+  it("never tells anyone to reply, because the sender is noreply@", () => {
+    // Regression: the first draft said "reply to this email" for both
+    // cancellation and erasure. RESEND_FROM is noreply@power-flow.eu, so those
+    // replies would have gone nowhere.
+    for (const body of [
+      confirmationHtml(signup, "registered", TOKEN),
+      confirmationText(signup, "registered", TOKEN),
+    ]) {
+      expect(body.toLowerCase()).not.toContain("reply to this email");
+      expect(body).toContain("david@power-flow.eu");
+    }
   });
 });
