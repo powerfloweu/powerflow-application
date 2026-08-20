@@ -12,6 +12,7 @@ import {
   topicLabel,
   contextLabel,
   formatLabel,
+  manageUrl,
   type SeminarSignup,
   type SignupStatus,
 } from "@/lib/seminar";
@@ -50,7 +51,11 @@ export function confirmationSubject(status: SignupStatus): string {
     : `You're in — ${SEMINAR.title}, ${seminarDateLabel()}`;
 }
 
-export function confirmationHtml(signup: SeminarSignup, status: SignupStatus): string {
+export function confirmationHtml(
+  signup: SeminarSignup,
+  status: SignupStatus,
+  manageToken: string,
+): string {
   const waitlisted = status === "waitlist";
   const firstName  = signup.fullName.trim().split(/\s+/)[0];
 
@@ -99,8 +104,20 @@ export function confirmationHtml(signup: SeminarSignup, status: SignupStatus): s
     These genuinely shape the session — the most-requested topics get the most time.
   </p>
 
-  <p style="font-size:14px;color:#52525b;margin:0 0 6px">
-    Can't make it after all, or want your details removed? Just reply to this email.
+  <table style="border-collapse:collapse;margin:0 0 20px">
+    <tr><td style="border-radius:10px;background:#7c3aed">
+      <a href="${manageUrl(manageToken)}"
+         style="display:inline-block;padding:12px 20px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none">
+        Change your topics or cancel
+      </a>
+    </td></tr>
+  </table>
+  <p style="font-size:13px;color:#71717a;margin:0 0 6px">
+    That link is personal to you — no password needed. Cancelling frees your place for
+    whoever is next in line, so please use it rather than just not turning up.
+  </p>
+  <p style="font-size:13px;color:#71717a;margin:0 0 28px">
+    Want your details deleted entirely? Reply to this email and we'll remove them.
   </p>
   <p style="font-size:14px;color:#52525b;margin:0 0 28px">
     ${waitlisted ? `Hoping to see you on ${esc(seminarShortDate())}.` : `See you on ${esc(seminarShortDate())}.`}<br>
@@ -114,7 +131,11 @@ export function confirmationHtml(signup: SeminarSignup, status: SignupStatus): s
 </div>`.trim();
 }
 
-export function confirmationText(signup: SeminarSignup, status: SignupStatus): string {
+export function confirmationText(
+  signup: SeminarSignup,
+  status: SignupStatus,
+  manageToken: string,
+): string {
   const firstName = signup.fullName.trim().split(/\s+/)[0];
   const opening = status === "waitlist"
     ? `All ${SEMINAR.maxParticipants} spots were taken by the time you signed up, so you're first in line if someone drops out. We'll email you the moment a place opens.`
@@ -135,7 +156,11 @@ export function confirmationText(signup: SeminarSignup, status: SignupStatus): s
     ``,
     `These genuinely shape the session — the most-requested topics get the most time.`,
     ``,
-    `Can't make it after all, or want your details removed? Just reply to this email.`,
+    `Change your topics or cancel:`,
+    `  ${manageUrl(manageToken)}`,
+    `That link is personal to you. Cancelling frees your place for whoever is next in line.`,
+    ``,
+    `Want your details deleted entirely? Reply to this email and we'll remove them.`,
     ``,
     status === "waitlist"
       ? `Hoping to see you on ${seminarShortDate()}.`
@@ -149,16 +174,63 @@ export function confirmationText(signup: SeminarSignup, status: SignupStatus): s
 export async function sendConfirmation(
   signup: SeminarSignup,
   status: SignupStatus,
+  manageToken: string,
 ): Promise<void> {
   const ok = await sendEmail({
     to:      signup.email,
     subject: confirmationSubject(status),
-    html:    confirmationHtml(signup, status),
-    text:    confirmationText(signup, status),
+    html:    confirmationHtml(signup, status, manageToken),
+    text:    confirmationText(signup, status, manageToken),
   });
   // They are registered either way — the row is already written. Log loudly so
   // the owner can follow up from the admin tab's Email button.
   if (!ok) console.error("[seminar] confirmation email failed for", signup.email);
+}
+
+// ── "A place opened up" — waitlist promotion ─────────────────────────────────
+
+export function promotedHtml(signup: SeminarSignup, manageToken: string): string {
+  const firstName = signup.fullName.trim().split(/\s+/)[0];
+  return `
+<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:8px 0;color:#18181b;line-height:1.6">
+  <p style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#7c3aed;margin:0 0 6px">
+    A place opened up
+  </p>
+  <h1 style="font-size:24px;font-weight:800;margin:0 0 18px;line-height:1.25">
+    ${esc(SEMINAR.title)}
+  </h1>
+  <p style="font-size:15px;margin:0 0 20px">Hi ${esc(firstName)},</p>
+  <p style="font-size:15px;margin:0 0 24px">
+    Someone dropped out, so you're off the waitlist and in. Nothing to do —
+    the joining link follows closer to the date.
+  </p>
+  <table style="width:100%;border-collapse:collapse;background:#f4f4f5;border-radius:12px;margin:0 0 24px">
+    <tr><td style="padding:16px 18px">
+      <p style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#71717a;margin:0 0 4px">When</p>
+      <p style="font-size:15px;font-weight:700;margin:0">${esc(seminarDateLabel())}</p>
+      <p style="font-size:13px;color:#52525b;margin:2px 0 0">${esc(SEMINAR.hostTimeLabel)} · ${esc(SEMINAR.durationLabel)} · online</p>
+    </td></tr>
+  </table>
+  <p style="font-size:14px;color:#52525b;margin:0 0 20px">
+    If it no longer suits you, please
+    <a href="${manageUrl(manageToken)}" style="color:#7c3aed">cancel here</a>
+    so the place goes to the next person.
+  </p>
+  <p style="font-size:14px;color:#52525b;margin:0 0 28px">
+    See you on ${esc(seminarShortDate())}.<br>
+    David — PowerFlow
+  </p>
+</div>`.trim();
+}
+
+/** Never throws — a failed email must not roll back a promotion. */
+export async function sendPromoted(signup: SeminarSignup, manageToken: string): Promise<void> {
+  const ok = await sendEmail({
+    to:      signup.email,
+    subject: `A place opened up — ${SEMINAR.title}`,
+    html:    promotedHtml(signup, manageToken),
+  });
+  if (!ok) console.error("[seminar] promotion email failed for", signup.email);
 }
 
 // ── Notification to the owner ────────────────────────────────────────────────

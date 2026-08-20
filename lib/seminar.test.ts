@@ -16,6 +16,7 @@ import {
   confirmationText,
   confirmationSubject,
   ownerNotificationHtml,
+  promotedHtml,
 } from "./seminarEmails";
 
 /** A submission that passes, so each test can vary one field at a time. */
@@ -177,6 +178,9 @@ describe("labels", () => {
 
 // ── Email bodies ─────────────────────────────────────────────────────────────
 
+/** Stand-in for the per-signup capability token in the manage link. */
+const TOKEN = "11111111-2222-3333-4444-555555555555";
+
 describe("seminar emails", () => {
   const signup = {
     fullName: "Marthe Henry",
@@ -190,12 +194,12 @@ describe("seminar emails", () => {
   };
 
   it("greets by first name only", () => {
-    expect(confirmationHtml(signup, "registered")).toContain("Hi Marthe,");
-    expect(confirmationText(signup, "registered")).toContain("Hi Marthe,");
+    expect(confirmationHtml(signup, "registered", TOKEN)).toContain("Hi Marthe,");
+    expect(confirmationText(signup, "registered", TOKEN)).toContain("Hi Marthe,");
   });
 
   it("echoes back every topic they picked, by label", () => {
-    const html = confirmationHtml(signup, "registered");
+    const html = confirmationHtml(signup, "registered", TOKEN);
     expect(html).toContain("Managing arousal");
     expect(html).toContain("burnout prevention");
     // A topic they did not pick must not appear.
@@ -203,15 +207,15 @@ describe("seminar emails", () => {
   });
 
   it("states the date and timezone", () => {
-    const html = confirmationHtml(signup, "registered");
+    const html = confirmationHtml(signup, "registered", TOKEN);
     expect(html).toContain("Saturday, 3 October 2026");
     expect(html).toContain("10:00 CEST");
     expect(html).toContain("Central European Summer Time");
   });
 
   it("says something different on the waitlist", () => {
-    const reg  = confirmationHtml(signup, "registered");
-    const wait = confirmationHtml(signup, "waitlist");
+    const reg  = confirmationHtml(signup, "registered", TOKEN);
+    const wait = confirmationHtml(signup, "waitlist", TOKEN);
     expect(reg).toContain("Your spot is saved");
     expect(wait).toContain("first in line");
     expect(wait).not.toContain("Your spot is saved");
@@ -220,8 +224,13 @@ describe("seminar emails", () => {
   });
 
   it("tells them how to cancel or be forgotten", () => {
-    expect(confirmationHtml(signup, "registered")).toContain("removed");
-    expect(confirmationText(signup, "registered")).toContain("removed");
+    for (const body of [
+      confirmationHtml(signup, "registered", TOKEN),
+      confirmationText(signup, "registered", TOKEN),
+    ]) {
+      expect(body).toContain("cancel");         // self-service, via the link
+      expect(body).toContain("deleted entirely"); // erasure, by replying
+    }
   });
 
   it("escapes free text from the public form", () => {
@@ -231,7 +240,7 @@ describe("seminar emails", () => {
     expect(owner).toContain("&lt;script&gt;");
     expect(owner).toContain("a &amp; b &lt; c");
     // The confirmation interpolates the name too.
-    expect(confirmationHtml(nasty, "registered")).not.toContain("<script>");
+    expect(confirmationHtml(nasty, "registered", TOKEN)).not.toContain("<script>");
   });
 
   it("omits optional rows the owner didn't get", () => {
@@ -251,13 +260,43 @@ describe("sign-off", () => {
 
   it("names the day rather than a bare number", () => {
     // Regression: this used to render "See you on the 3."
-    expect(confirmationHtml(signup, "registered")).toContain("See you on 3 October.");
-    expect(confirmationText(signup, "registered")).toContain("See you on 3 October.");
+    expect(confirmationHtml(signup, "registered", TOKEN)).toContain("See you on 3 October.");
+    expect(confirmationText(signup, "registered", TOKEN)).toContain("See you on 3 October.");
   });
 
   it("doesn't promise a waitlisted person they'll be there", () => {
-    const wait = confirmationHtml(signup, "waitlist");
+    const wait = confirmationHtml(signup, "waitlist", TOKEN);
     expect(wait).toContain("Hoping to see you on 3 October.");
     expect(wait).not.toContain("See you on 3 October.");
+  });
+});
+
+describe("manage link", () => {
+  const signup = {
+    fullName: "Marthe Henry", email: "m@example.com", country: null,
+    context: null, topics: ["arousal"], formatPref: null, materials: [], question: null,
+  };
+
+  it("puts an absolute manage URL in both parts of the confirmation", () => {
+    const url = `/seminar/manage/${TOKEN}`;
+    expect(confirmationHtml(signup, "registered", TOKEN)).toContain(url);
+    expect(confirmationText(signup, "registered", TOKEN)).toContain(url);
+    // Absolute — a relative path is meaningless inside an email client.
+    expect(confirmationText(signup, "registered", TOKEN)).toMatch(/https?:\/\/[^\s]+\/seminar\/manage\//);
+  });
+
+  it("explains that cancelling frees the place", () => {
+    expect(confirmationHtml(signup, "registered", TOKEN)).toContain("next in line");
+  });
+
+  it("offers the waitlist the same link", () => {
+    expect(confirmationHtml(signup, "waitlist", TOKEN)).toContain(TOKEN);
+  });
+
+  it("tells a promoted person they are in, and how to give the place back", () => {
+    const html = promotedHtml(signup, TOKEN);
+    expect(html).toContain("off the waitlist");
+    expect(html).toContain(TOKEN);
+    expect(html).toContain("Saturday, 3 October 2026");
   });
 });

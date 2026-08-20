@@ -198,6 +198,50 @@ export function validateSignup(raw: unknown): ValidationResult {
   };
 }
 
+/** The subset a registrant may change later from the manage page. */
+export type SeminarSelections = Pick<
+  SeminarSignup, "topics" | "formatPref" | "materials" | "question"
+>;
+
+/**
+ * Validates an edit from the manage page. Name and email are deliberately not
+ * editable there: the link is emailed to one address, so allowing the address
+ * to be changed would turn a leaked link into account takeover.
+ */
+export function validateSelections(raw: unknown): 
+  | { ok: true; value: SeminarSelections }
+  | { ok: false; error: string } {
+  if (!raw || typeof raw !== "object") return { ok: false, error: "Invalid submission." };
+  const r = raw as Record<string, unknown>;
+
+  const topics = pickIds(r.topics, TOPIC_IDS);
+  if (topics.length === 0) {
+    return { ok: false, error: "Keep at least one topic selected." };
+  }
+
+  const rawFormat = str(r.formatPref);
+  return {
+    ok: true,
+    value: {
+      topics,
+      formatPref: FORMAT_IDS.includes(rawFormat) ? rawFormat : null,
+      materials:  pickIds(r.materials, MATERIAL_IDS),
+      question:   str(r.question).slice(0, MAX.question) || null,
+    },
+  };
+}
+
+// ── Self-service management link ─────────────────────────────────────────────
+
+/**
+ * Absolute URL of the manage page for one sign-up. Absolute because it goes in
+ * an email, where a relative path is meaningless.
+ */
+export function manageUrl(token: string): string {
+  const base = (process.env.NEXT_PUBLIC_APP_URL || "https://app.power-flow.eu").replace(/\/+$/, "");
+  return `${base}/seminar/manage/${token}`;
+}
+
 // ── Display helpers (shared by the public page and the admin tab) ────────────
 
 export function topicLabel(id: string): string {

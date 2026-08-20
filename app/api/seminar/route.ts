@@ -14,7 +14,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
-import { dbSelect, dbInsert } from "@/lib/supabaseAdmin";
+import { randomUUID } from "crypto";
+import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
 import { notifyOwner, sendConfirmation } from "@/lib/seminarEmails";
 import {
   SEMINAR,
@@ -27,7 +28,7 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type SignupRow = { id: string; status: SignupStatus };
+type SignupRow = { id: string; status: SignupStatus; manage_token: string };
 
 /** Sign-ups close once the seminar has started. */
 function isClosed(): boolean {
@@ -85,18 +86,52 @@ export async function POST(req: NextRequest) {
   // Already signed up? Report their existing status rather than failing on the
   // unique index — people re-submit when they aren't sure it went through.
   const existing = await dbSelect<SignupRow>("seminar_signups", {
-    select:       "id,status",
+    select:       "id,status,manage_token",
     seminar_slug: `eq.${SEMINAR.slug}`,
     email:        `eq.${signup.email}`,
     limit:        "1",
   });
+
   if (existing.length > 0) {
-    return NextResponse.json({ ok: true, status: existing[0].status, already: true });
+    const row = existing[0];
+
+    // Someone who cancelled and came back is signing up again, not duplicating.
+    // Reactivate their row — the unique index means they cannot get a new one.
+    if (row.status === "cancelled") {
+      const status = statusForNextSignup(await countRegistered());
+      const ok = await dbPatch("seminar_signups", { id: row.id }, {
+        status,
+        // Take the fresh answers too — their interests may have changed.
+        topics:      signup.topics,
+        format_pref: signup.formatPref,
+        materials:   signup.materials,
+        question:    signup.question,
+      });
+      if (!ok) {
+        console.error("[seminar] reactivate failed for", signup.email);
+        return NextResponse.json(
+          { error: "We couldn't save your sign-up. Please try again." },
+          { status: 500 },
+        );
+      }
+      await Promise.all([
+        sendConfirmation(signup, status, row.manage_token),
+        notifyOwner(signup, status),
+      ]);
+      return NextResponse.json({ ok: true, status });
+    }
+
+    return NextResponse.json({ ok: true, status: row.status, already: true });
   }
 
   const status = statusForNextSignup(await countRegistered());
 
+  // Generated here rather than read back from the insert, so the confirmation
+  // email can be sent without a second round-trip.
+  const manageToken = randomUUID();
+
   const inserted = await dbInsert("seminar_signups", {
+    manage_token: manageToken,
     seminar_slug: SEMINAR.slug,
     full_name:    signup.fullName,
     email:        signup.email,
@@ -123,7 +158,7 @@ export async function POST(req: NextRequest) {
   // Both are best-effort and log their own failures — the row is already
   // written, so a mail outage must not turn a successful sign-up into an error.
   await Promise.all([
-    sendConfirmation(signup, status),
+    sendConfirmation(signup, status, manageToken),
     notifyOwner(signup, status),
   ]);
 
