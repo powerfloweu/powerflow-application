@@ -3,6 +3,9 @@ import fs from "fs";
 import path from "path";
 import {
   COACHES,
+  VISIBLE_COACHES,
+  FOUNDER,
+  AFFILIATE_COACHES,
   coachBySlug,
   coachBioParagraphs,
   coachFirstName,
@@ -81,8 +84,10 @@ describe("display helpers", () => {
   it("uses the name each coach actually goes by", () => {
     expect(coachFirstName(coachBySlug("jay")!)).toBe("Jay");
     expect(coachFirstName(coachBySlug("david")!)).toBe("David");
-    // Titles are not first names.
-    expect(coachFirstName(coachBySlug("kate")!)).toBe("Kate");
+    // Titles are not first names. Read from COACHES, not the public lookup —
+    // Kate is currently hidden.
+    const kate = COACHES.find((c) => c.slug === "kate")!;
+    expect(coachFirstName(kate)).toBe("Kate");
   });
 
   it("falls back to the short bio when there is no long one", () => {
@@ -94,5 +99,31 @@ describe("display helpers", () => {
     const jay = coachBySlug("jay")!;
     expect(coachBioParagraphs(jay).length).toBeGreaterThan(1);
     expect(coachBioParagraphs(jay).every((p) => p.trim().length > 0)).toBe(true);
+  });
+});
+
+describe("visibility", () => {
+  it("keeps hidden coaches out of everything public", () => {
+    const hidden = COACHES.filter((c) => c.hidden);
+    expect(hidden.length, "expected at least one hidden coach to exercise this").toBeGreaterThan(0);
+    for (const c of hidden) {
+      expect(VISIBLE_COACHES.some((v) => v.slug === c.slug), c.slug).toBe(false);
+      expect(AFFILIATE_COACHES.some((v) => v.slug === c.slug), c.slug).toBe(false);
+      // The landing page must 404 rather than staying reachable by URL.
+      expect(coachBySlug(c.slug), c.slug).toBeUndefined();
+    }
+  });
+
+  it("keeps the hidden coach's record intact so bringing them back is one line", () => {
+    const kate = COACHES.find((c) => c.slug === "kate");
+    expect(kate).toBeDefined();
+    expect(kate!.bio.length).toBeGreaterThan(80);
+  });
+
+  it("splits the visible roster into the founder and the affiliates", () => {
+    expect(FOUNDER?.slug).toBe("david");
+    expect(AFFILIATE_COACHES.map((c) => c.slug)).toEqual(["jay", "clarice"]);
+    // Together they account for everyone shown — nobody falls between roles.
+    expect(AFFILIATE_COACHES.length + 1).toBe(VISIBLE_COACHES.length);
   });
 });

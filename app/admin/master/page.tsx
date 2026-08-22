@@ -17,7 +17,12 @@ import Link from "next/link";
 import type { SatRow, AcsiRow, CsaiRow, DasRow } from "@/app/api/admin/test-results/route";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { findDuplicateGroups, indexDuplicates } from "@/lib/duplicates";
-import { contextLabel, countryLabel, topicLabel } from "@/lib/seminar";
+import { contextLabel, topicLabel } from "@/lib/seminar";
+import { countryLabel } from "@/lib/countries";
+import {
+  APPLICATION_STATUSES, qualificationLabel, experienceLabel, languageLabels,
+  type ApplicationStatus,
+} from "@/lib/coachApply";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -3620,6 +3625,198 @@ const COACH_Q_LABELS: Record<string, string> = {
   nps:                 "How likely to keep using (1–10)",
 };
 
+function CoachApplicationsTab() {
+  type Row = {
+    id: string; full_name: string; email: string; country: string | null;
+    instagram: string | null; website: string | null; qualification: string | null;
+    experience: string | null; languages: string[]; athletes: string | null;
+    motivation: string; status: ApplicationStatus; notes: string | null; created_at: string;
+  };
+  type Payload = { applications: Row[]; counts: Record<string, number> };
+
+  const [data, setData]         = React.useState<Payload | null>(null);
+  const [loading, setLoading]   = React.useState(true);
+  const [expanded, setExpanded] = React.useState<string | null>(null);
+  const [busy, setBusy]         = React.useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = React.useState<Record<string, string>>({});
+
+  const load = React.useCallback(() => {
+    return fetch("/api/admin/coach-applications")
+      .then((r) => r.json())
+      .then((d: Payload) => setData(d))
+      .catch((err) => console.error("[page] coach applications fetch failed", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  async function patch(id: string, body: Record<string, unknown>) {
+    setBusy(id);
+    try {
+      const res = await fetch("/api/admin/coach-applications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...body }),
+      });
+      if (!res.ok) { alert("Couldn't update that application."); return; }
+      await load();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-5 h-5 rounded-full border-2 border-purple-400/40 border-t-purple-400 animate-spin" />
+    </div>
+  );
+  if (!data) return null;
+
+  const { applications, counts } = data;
+
+  const STATUS_STYLE: Record<ApplicationStatus, string> = {
+    new:       "border-purple-500/25 bg-purple-500/10 text-purple-300",
+    reviewing: "border-amber-500/25 bg-amber-500/10 text-amber-300",
+    accepted:  "border-emerald-500/25 bg-emerald-500/10 text-emerald-300",
+    declined:  "border-white/10 bg-white/5 text-zinc-500",
+  };
+
+  return (
+    <div className="p-6 max-w-4xl space-y-6">
+      <div>
+        <h2 className="font-saira text-lg font-extrabold uppercase tracking-tight text-white mb-1">
+          Coach applications
+        </h2>
+        <p className="font-saira text-xs text-zinc-400">
+          People applying to become affiliated coaches at{" "}
+          <a href="/coaches/apply" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300">
+            /coaches/apply
+          </a>
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {APPLICATION_STATUSES.map((s) => (
+          <div key={s} className="rounded-2xl border border-white/8 bg-surface-panel p-4">
+            <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1">{s}</p>
+            <p className="font-saira text-xl font-extrabold text-white tabular-nums">{counts[s] ?? 0}</p>
+          </div>
+        ))}
+      </div>
+
+      {applications.length === 0 ? (
+        <div className="rounded-2xl border border-white/8 bg-surface-panel p-10 text-center">
+          <p className="font-saira text-sm text-zinc-400">No applications yet.</p>
+          <p className="font-saira text-xs text-zinc-600 mt-1">They&rsquo;ll appear here as coaches apply.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {applications.map((a) => {
+            const isOpen = expanded === a.id;
+            const date = new Date(a.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" });
+            return (
+              <div key={a.id} className="rounded-2xl border border-white/8 bg-surface-panel overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setExpanded(isOpen ? null : a.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-saira text-sm font-bold text-white truncate">{a.full_name}</p>
+                    <p className="font-saira text-[11px] text-zinc-500 truncate">
+                      {qualificationLabel(a.qualification)} · {experienceLabel(a.experience)}
+                    </p>
+                  </div>
+                  <span className={`font-saira text-[9px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 border flex-shrink-0 ${STATUS_STYLE[a.status]}`}>
+                    {a.status}
+                  </span>
+                  <span className="font-saira text-[10px] text-zinc-600 tabular-nums flex-shrink-0">{date}</span>
+                  <span className="text-zinc-600 text-xs flex-shrink-0">{isOpen ? "▲" : "▼"}</span>
+                </button>
+
+                {isOpen && (
+                  <div className="px-4 pb-4 pt-1 border-t border-white/5 space-y-3">
+                    <dl className="font-saira text-xs space-y-1.5">
+                      <div className="flex gap-2"><dt className="text-zinc-500 w-24 flex-shrink-0">Email</dt><dd className="text-zinc-300 break-all">{a.email}</dd></div>
+                      {a.country && (
+                        <div className="flex gap-2"><dt className="text-zinc-500 w-24 flex-shrink-0">Country</dt><dd className="text-zinc-300">{countryLabel(a.country)}</dd></div>
+                      )}
+                      <div className="flex gap-2"><dt className="text-zinc-500 w-24 flex-shrink-0">Coaches in</dt><dd className="text-zinc-300">{languageLabels(a.languages)}</dd></div>
+                      {a.instagram && (
+                        <div className="flex gap-2">
+                          <dt className="text-zinc-500 w-24 flex-shrink-0">Instagram</dt>
+                          <dd><a href={`https://www.instagram.com/${a.instagram}/`} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300">@{a.instagram}</a></dd>
+                        </div>
+                      )}
+                      {a.website && (
+                        <div className="flex gap-2">
+                          <dt className="text-zinc-500 w-24 flex-shrink-0">Website</dt>
+                          <dd><a href={a.website} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 break-all">{a.website}</a></dd>
+                        </div>
+                      )}
+                    </dl>
+
+                    {a.athletes && (
+                      <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+                        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5">Who they work with</p>
+                        <p className="font-saira text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap break-words">{a.athletes}</p>
+                      </div>
+                    )}
+
+                    <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
+                      <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5">Why PowerFlow</p>
+                      <p className="font-saira text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap break-words">{a.motivation}</p>
+                    </div>
+
+                    {/* Owner-only working notes — never shown to the applicant. */}
+                    <div>
+                      <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5">Your notes</p>
+                      <textarea
+                        rows={2}
+                        defaultValue={a.notes ?? ""}
+                        onChange={(e) => setNoteDraft((n) => ({ ...n, [a.id]: e.target.value }))}
+                        onBlur={(e) => {
+                          const next = e.target.value;
+                          if (next !== (a.notes ?? "")) patch(a.id, { notes: next });
+                        }}
+                        placeholder="Only you can see this."
+                        className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 font-saira text-xs text-zinc-200 outline-none focus:border-purple-500/60 resize-y"
+                      />
+                      {noteDraft[a.id] !== undefined && (
+                        <p className="font-saira text-[10px] text-zinc-600 mt-1">Saves when you click away.</p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {APPLICATION_STATUSES.filter((s) => s !== a.status).map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          disabled={busy === a.id}
+                          onClick={() => patch(a.id, { status: s })}
+                          className="font-saira text-[10px] font-bold uppercase tracking-wider rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-zinc-300 hover:bg-white/[0.08] transition disabled:opacity-40"
+                        >
+                          {busy === a.id ? "…" : `Mark ${s}`}
+                        </button>
+                      ))}
+                      <a
+                        href={`mailto:${a.email}?subject=${encodeURIComponent("Your PowerFlow coaching application")}`}
+                        className="font-saira text-[10px] font-bold uppercase tracking-wider rounded-lg border border-purple-500/25 bg-purple-500/10 px-3 py-2 text-purple-300 hover:bg-purple-500/20 transition"
+                      >
+                        Email
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SeminarTab() {
   type Row = {
     id: string; full_name: string; email: string; country: string | null;
@@ -3985,7 +4182,7 @@ function SurveysTab() {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "tools" | "surveys" | "seminar" | "roadmap" | "devtools" | "demo";
+type Tab = "overview" | "users" | "coaches" | "results" | "broadcast" | "conversations" | "ai-insights" | "tools" | "surveys" | "seminar" | "coach-apps" | "roadmap" | "devtools" | "demo";
 
 export default function MasterAdminPage() {
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -4160,6 +4357,7 @@ export default function MasterAdminPage() {
     ["tools",          "Tool Usage",      "◈"],
     ["surveys",        "Surveys",         "◉"],
     ["seminar",        "Seminar",         "◐"],
+    ["coach-apps",     "Coach Applications", "✍"],
     ["roadmap",        "Roadmap",         "▸"],
     ["devtools",       "Dev Tools",       "⚙"],
     ["demo",           "Demo Setup",      "▶"],
@@ -4261,6 +4459,7 @@ export default function MasterAdminPage() {
               {activeTab === "tools" && <ToolsTab />}
               {activeTab === "surveys" && <SurveysTab />}
               {activeTab === "seminar" && <SeminarTab />}
+              {activeTab === "coach-apps" && <CoachApplicationsTab />}
               {activeTab === "roadmap" && <RoadmapTab />}
               {activeTab === "devtools" && <DevToolsTab users={users} />}
               {activeTab === "demo" && <DemoTab />}

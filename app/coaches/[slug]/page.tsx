@@ -12,11 +12,13 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { COACHES, coachBySlug } from "@/lib/coaches";
+import { VISIBLE_COACHES, coachBySlug } from "@/lib/coaches";
 import CoachLanding from "./CoachLanding";
 
 export function generateStaticParams() {
-  return COACHES.map((c) => ({ slug: c.slug }));
+  // Hidden coaches get no page at all — coachBySlug also refuses them, so an
+  // old URL 404s rather than staying quietly reachable.
+  return VISIBLE_COACHES.map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata(

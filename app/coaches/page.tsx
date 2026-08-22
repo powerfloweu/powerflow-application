@@ -1,11 +1,123 @@
 "use client";
 
+/**
+ * /coaches — the public roster.
+ *
+ * Split into the founder and the affiliated coaches, because those are two
+ * different propositions: David built the system, the affiliates chose to work
+ * inside it. Hidden coaches never appear here (see lib/coaches.ts).
+ */
+
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { COACHES, coachFirstName } from "@/lib/coaches";
-import { tc } from "@/lib/publicUi";
+import { FOUNDER, AFFILIATE_COACHES, coachFirstName, type Coach } from "@/lib/coaches";
+import { tc, Eyebrow } from "@/lib/publicUi";
+
+function CoachCard({ coach, dark: d }: { coach: Coach; dark: boolean }) {
+  return (
+    <div
+      className={`rounded-2xl border p-5 ${tc(d,
+        coach.external
+          ? "border-amber-500/20 bg-amber-500/[0.04]"
+          : "border-white/[0.10] bg-white/[0.03]",
+        coach.external
+          ? "border-amber-200 bg-amber-50"
+          : "border-gray-200 bg-white"
+      )}`}
+    >
+      {/* Top row */}
+      <div className="flex items-start gap-4 mb-4">
+        {/* Avatar — photo or initials fallback */}
+        <div className="w-16 h-16 rounded-full flex-shrink-0 overflow-hidden relative">
+          {coach.photo ? (
+            <Image src={coach.photo} alt={coach.name} fill className="object-cover object-top" sizes="64px" />
+          ) : (
+            <div className={`w-full h-full flex items-center justify-center font-extrabold text-sm ${tc(d, "bg-violet-500/15 text-violet-300", "bg-violet-100 text-violet-700")}`}>
+              {coach.initials}
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <p className={`font-extrabold text-base leading-tight ${tc(d, "text-white", "text-gray-900")}`}>
+              {coach.name}
+            </p>
+            {coach.external && (
+              <span className={`text-[9px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 border ${tc(d, "border-amber-500/30 bg-amber-500/10 text-amber-400", "border-amber-300 bg-amber-100 text-amber-700")}`}>
+                External
+              </span>
+            )}
+          </div>
+          <p className={`text-xs ${tc(d, "text-zinc-400", "text-gray-500")}`}>{coach.title}</p>
+          {coach.instagram && (
+            <a
+              href={`https://www.instagram.com/${coach.instagram}/`}
+              target="_blank" rel="noopener noreferrer"
+              className={`text-[11px] transition mt-0.5 inline-block ${tc(d, "text-violet-400 hover:text-violet-300", "text-violet-600 hover:text-violet-700")}`}
+            >
+              @{coach.instagram}
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Tags */}
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {coach.tags.map((tag) => (
+          <span
+            key={tag}
+            className={`text-[10px] font-semibold rounded-full px-2.5 py-1 border ${tc(d, "border-white/8 bg-white/[0.04] text-zinc-400", "border-gray-200 bg-gray-50 text-gray-500")}`}
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+
+      {/* Bio */}
+      <p className={`text-xs leading-relaxed mb-4 ${tc(d, "text-zinc-300", "text-gray-600")}`}>
+        {coach.bio}
+      </p>
+
+      {/* Straight to the coach's own page — the athlete deciding whether to
+          apply wants photos and testimonials, not a longer card. */}
+      <Link
+        href={`/coaches/${coach.slug}`}
+        className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 mb-2 text-[11px] font-bold uppercase tracking-wider transition ${tc(d,
+          "border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]",
+          "border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100"
+        )}`}
+      >
+        More about {coachFirstName(coach)} →
+      </Link>
+
+      {/* CTA */}
+      {coach.applyUrl ? (
+        <a
+          href={coach.applyUrl}
+          target="_blank" rel="noopener noreferrer"
+          className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold uppercase tracking-wider transition ${tc(d,
+            "bg-violet-500/15 border-violet-500/30 text-violet-200 hover:bg-violet-500/25",
+            "bg-violet-600 border-violet-600 text-white hover:bg-violet-500"
+          )}`}
+        >
+          Apply for 1:1 coaching with {coachFirstName(coach)} →
+        </a>
+      ) : (
+        <Link
+          href={`/onboarding?coach=${coach.slug}`}
+          className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold uppercase tracking-wider transition ${tc(d,
+            "bg-violet-500/15 border-violet-500/30 text-violet-200 hover:bg-violet-500/25",
+            "bg-violet-600 border-violet-600 text-white hover:bg-violet-500"
+          )}`}
+        >
+          Apply for 1:1 coaching with {coachFirstName(coach)} →
+        </Link>
+      )}
+    </div>
+  );
+}
 
 export default function CoachesPage() {
   const [isDark, setIsDark] = React.useState(true);
@@ -26,9 +138,7 @@ export default function CoachesPage() {
           <Link href="/demo" className="flex items-center gap-3">
             <Image
               src="/fm_powerflow_logo_verziok_01_negative.png"
-              alt="PowerFlow"
-              width={52} height={52}
-              className="h-13 w-13"
+              alt="PowerFlow" width={52} height={52} className="h-13 w-13"
               style={d ? {} : { filter: "invert(1)", opacity: 0.75 }}
             />
             <div>
@@ -41,8 +151,8 @@ export default function CoachesPage() {
             </div>
           </Link>
           <button
-            onClick={() => setIsDark(x => !x)}
-            title={d ? "Light mode" : "Dark mode"}
+            onClick={() => setIsDark((x) => !x)}
+            aria-label={d ? "Switch to light mode" : "Switch to dark mode"}
             className={`text-base leading-none px-2 py-1 rounded-lg transition ${tc(d, "text-zinc-400 hover:text-zinc-100", "text-gray-400 hover:text-gray-700")}`}
           >
             {d ? "☀️" : "🌙"}
@@ -58,138 +168,57 @@ export default function CoachesPage() {
             Work with a<br />coach directly.
           </h1>
           <p className={`text-sm leading-relaxed max-w-sm ${tc(d, "text-zinc-400", "text-gray-500")}`}>
-            Every PowerFlow coach works inside the same system your athletes use — journals, check-ins, tests, and AI tools. Your data is always in one place.
+            Every PowerFlow coach works inside the same system your athletes use — journals,
+            check-ins, tests, and AI tools. Your data is always in one place.
           </p>
         </div>
 
-        {/* ── Coach cards ── */}
-        <div className="w-full space-y-4 mb-12">
-          {COACHES.map((coach) => (
-            <div
-              key={coach.slug}
-              className={`rounded-2xl border p-5 ${tc(d,
-                coach.external
-                  ? "border-amber-500/20 bg-amber-500/[0.04]"
-                  : "border-white/[0.10] bg-white/[0.03]",
-                coach.external
-                  ? "border-amber-200 bg-amber-50"
-                  : "border-gray-200 bg-white"
-              )}`}
-            >
-              {/* Top row */}
-              <div className="flex items-start gap-4 mb-4">
-                {/* Avatar — photo or initials fallback */}
-                <div className="w-16 h-16 rounded-full flex-shrink-0 overflow-hidden relative">
-                  {coach.photo ? (
-                    <Image
-                      src={coach.photo}
-                      alt={coach.name}
-                      fill
-                      className="object-cover object-top"
-                      sizes="64px"
-                    />
-                  ) : (
-                    <div className={`w-full h-full flex items-center justify-center font-extrabold text-sm ${tc(d, "bg-violet-500/15 text-violet-300", "bg-violet-100 text-violet-700")}`}>
-                      {coach.initials}
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <p className={`font-extrabold text-base leading-tight ${tc(d, "text-white", "text-gray-900")}`}>
-                      {coach.name}
-                    </p>
-                    {coach.external && (
-                      <span className={`text-[9px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 border ${tc(d, "border-amber-500/30 bg-amber-500/10 text-amber-400", "border-amber-300 bg-amber-100 text-amber-700")}`}>
-                        External
-                      </span>
-                    )}
-                  </div>
-                  <p className={`text-xs ${tc(d, "text-zinc-400", "text-gray-500")}`}>{coach.title}</p>
-                  {coach.instagram && (
-                    <a
-                      href={`https://www.instagram.com/${coach.instagram}/`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`text-[11px] transition mt-0.5 inline-block ${tc(d, "text-violet-400 hover:text-violet-300", "text-violet-600 hover:text-violet-700")}`}
-                    >
-                      @{coach.instagram}
-                    </a>
-                  )}
-                </div>
-              </div>
+        {/* ── Founder ── */}
+        {FOUNDER && (
+          <div className="w-full mb-12">
+            <Eyebrow dark={d}>Founder</Eyebrow>
+            <CoachCard coach={FOUNDER} dark={d} />
+          </div>
+        )}
 
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {coach.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className={`text-[10px] font-semibold rounded-full px-2.5 py-1 border ${tc(d, "border-white/8 bg-white/[0.04] text-zinc-400", "border-gray-200 bg-gray-50 text-gray-500")}`}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              {/* Bio */}
-              <p className={`text-xs leading-relaxed mb-4 ${tc(d, "text-zinc-300", "text-gray-600")}`}>
-                {coach.bio}
-              </p>
-
-              {/* Straight to the coach's own page — the athlete deciding whether to
-                  apply wants photos and testimonials, not a longer card. */}
-              <Link
-                href={`/coaches/${coach.slug}`}
-                className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 mb-2 text-[11px] font-bold uppercase tracking-wider transition ${tc(d,
-                  "border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]",
-                  "border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100"
-                )}`}
-              >
-                More about {coachFirstName(coach)} →
-              </Link>
-
-              {/* CTA */}
-              {coach.applyUrl ? (
-                <a
-                  href={coach.applyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold uppercase tracking-wider transition ${tc(d,
-                    "bg-violet-500/15 border-violet-500/30 text-violet-200 hover:bg-violet-500/25",
-                    "bg-violet-600 border-violet-600 text-white hover:bg-violet-500"
-                  )}`}
-                >
-                  Apply for 1:1 coaching with {coachFirstName(coach)} →
-                </a>
-              ) : coach.external ? (
-                <a
-                  href={`https://www.instagram.com/${coach.instagram}/`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold uppercase tracking-wider transition ${tc(d,
-                    "bg-amber-500/10 border-amber-500/25 text-amber-300 hover:bg-amber-500/20",
-                    "bg-amber-500 border-amber-500 text-white hover:bg-amber-600"
-                  )}`}
-                >
-                  Follow {coachFirstName(coach)} on Instagram →
-                </a>
-              ) : (
-                <Link
-                  href={`/onboarding?coach=${coach.slug}`}
-                  className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold uppercase tracking-wider transition ${tc(d,
-                    "bg-violet-500/15 border-violet-500/30 text-violet-200 hover:bg-violet-500/25",
-                    "bg-violet-600 border-violet-600 text-white hover:bg-violet-500"
-                  )}`}
-                >
-                  Apply for 1:1 coaching with {coachFirstName(coach)} →
-                </Link>
-              )}
+        {/* ── Affiliated coaches ── */}
+        {AFFILIATE_COACHES.length > 0 && (
+          <div className="w-full mb-12">
+            <Eyebrow dark={d}>Affiliated coaches</Eyebrow>
+            <p className={`text-xs mb-5 ${tc(d, "text-zinc-400", "text-gray-500")}`}>
+              Independent coaches who work inside PowerFlow. They run their own practice —
+              the system, the tools and your data are shared.
+            </p>
+            <div className="space-y-4">
+              {AFFILIATE_COACHES.map((coach) => (
+                <CoachCard key={coach.slug} coach={coach} dark={d} />
+              ))}
             </div>
-          ))}
+          </div>
+        )}
+
+        {/* ── Coach recruitment ── */}
+        <div className={`w-full rounded-2xl border p-5 ${tc(d, "border-violet-500/25 bg-violet-500/[0.06]", "border-violet-200 bg-violet-50")}`}>
+          <p className={`text-[10px] font-bold uppercase tracking-[0.22em] mb-2 ${tc(d, "text-violet-400", "text-violet-600")}`}>
+            For coaches
+          </p>
+          <p className={`text-base font-extrabold mb-2 ${tc(d, "text-white", "text-gray-900")}`}>
+            Become a PowerFlow affiliated coach
+          </p>
+          <p className={`text-xs leading-relaxed mb-4 ${tc(d, "text-zinc-300", "text-gray-600")}`}>
+            Bring your own athletes into a system built for the mental side of the sport —
+            journals, check-ins, psychological tests and AI tools, all in one place.
+          </p>
+          <Link
+            href="/coaches/apply"
+            className="flex items-center justify-center rounded-xl py-3.5 text-xs font-extrabold uppercase tracking-[0.12em] bg-violet-600 text-white hover:bg-violet-500 transition"
+          >
+            Apply to coach with PowerFlow
+          </Link>
         </div>
 
         {/* ── Footer ── */}
-        <div className="mt-2 text-center space-y-1.5">
+        <div className="mt-12 text-center space-y-1.5">
           <a
             href="mailto:david@power-flow.eu?subject=PowerFlow%20coaching%20enquiry"
             className={`block text-[11px] transition ${tc(d, "text-violet-400 hover:text-violet-300", "text-violet-600 hover:text-violet-700")}`}
@@ -198,8 +227,7 @@ export default function CoachesPage() {
           </a>
           <a
             href="https://www.instagram.com/powerfloweu/"
-            target="_blank"
-            rel="noopener noreferrer"
+            target="_blank" rel="noopener noreferrer"
             className={`block text-[11px] transition ${tc(d, "text-zinc-500 hover:text-zinc-300", "text-gray-400 hover:text-gray-600")}`}
           >
             @powerfloweu

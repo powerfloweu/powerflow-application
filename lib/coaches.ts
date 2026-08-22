@@ -30,6 +30,17 @@ export interface CoachPhoto {
 
 export interface Coach {
   slug: string;
+  /**
+   * "founder" is David and is shown on its own; "affiliate" coaches are the
+   * ones an athlete picks between. Drives the sections on /coaches.
+   */
+  role: "founder" | "affiliate";
+  /**
+   * Kept in the roster but not shown anywhere and not routable. Use this
+   * rather than deleting a coach — the record, photo and copy survive, and
+   * bringing them back is one line.
+   */
+  hidden?: boolean;
   name: string;
   /** Fallback when `photo` is null. */
   initials: string;
@@ -56,6 +67,7 @@ export interface Coach {
 export const COACHES: readonly Coach[] = [
   {
     slug: "david",
+    role: "founder",
     name: "David Sipos",
     initials: "DS",
     title: "Sport Psychologist (MSc) · Founder",
@@ -72,6 +84,7 @@ export const COACHES: readonly Coach[] = [
   },
   {
     slug: "jay",
+    role: "affiliate",
     name: "Jacqueline Ulrich",
     initials: "JU",
     title: "Mental Performance Coach",
@@ -93,6 +106,7 @@ export const COACHES: readonly Coach[] = [
   },
   {
     slug: "clarice",
+    role: "affiliate",
     name: "Clarice Tighe",
     initials: "CT",
     title: "Sport Psychologist (MSc)",
@@ -115,6 +129,9 @@ export const COACHES: readonly Coach[] = [
   },
   {
     slug: "kate",
+    role: "affiliate",
+    // Hidden until the affiliate roster is ready to include her.
+    hidden: true,
     name: "Dr. Kate Cohen-Maher",
     initials: "KC",
     title: "Sport Psychologist (PhD)",
@@ -133,8 +150,20 @@ export const COACHES: readonly Coach[] = [
   },
 ] as const;
 
+/** Everyone shown to the public. Hidden coaches are excluded everywhere. */
+export const VISIBLE_COACHES: readonly Coach[] = COACHES.filter((c) => !c.hidden);
+
+export const FOUNDER: Coach | undefined = VISIBLE_COACHES.find((c) => c.role === "founder");
+
+export const AFFILIATE_COACHES: readonly Coach[] =
+  VISIBLE_COACHES.filter((c) => c.role === "affiliate");
+
+/**
+ * Public lookup — never returns a hidden coach, so their landing page 404s
+ * rather than staying reachable by URL once they are taken off the roster.
+ */
 export function coachBySlug(slug: string): Coach | undefined {
-  return COACHES.find((c) => c.slug === slug);
+  return VISIBLE_COACHES.find((c) => c.slug === slug);
 }
 
 /** Paragraphs for the landing page — the long version when there is one. */
