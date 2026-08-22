@@ -115,7 +115,7 @@ export const SEMINAR_HOSTS: readonly SeminarHost[] = [
     initials: "JU",
     title: "Mental Performance Coach",
     intro: "Competed internationally in powerlifting and coaches it, which is how she found the ceiling: past a point, development stops being about the training plan. She works on what athletes believe about themselves, and on the coach's side of that conversation.",
-    photo: null,
+    photo: "/coaches/jay.jpg",
     instagram: "omgitsjacqueline",
   },
   {

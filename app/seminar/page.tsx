@@ -25,7 +25,7 @@ import {
   startTimeIn,
   startDateIn,
 } from "@/lib/seminar";
-import { tc, Check, Eyebrow } from "./ui";
+import { tc, Check, Eyebrow } from "@/lib/publicUi";
 
 type Availability = { spotsLeft: number; isFull: boolean; closed: boolean };
 type Submitted    = { status: "registered" | "waitlist"; already: boolean };

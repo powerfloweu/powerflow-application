@@ -4,66 +4,8 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-function tc(d: boolean, dark: string, light: string) { return d ? dark : light; }
-
-type Coach = {
-  slug: string;
-  name: string;
-  initials: string;
-  title: string;
-  bio: string;
-  instagram: string | null;
-  photo: string | null;
-  tags: string[];
-  external?: boolean;
-  applyUrl?: string;
-};
-
-const COACHES: Coach[] = [
-  {
-    slug: "david",
-    name: "David Sipos",
-    initials: "DS",
-    title: "Sport Psychologist (MSc) · Founder",
-    bio: "David built PowerFlow after 600+ hours of practice with powerlifters, distilling sport psychology into tools any athlete can apply: visualization scripts, pre-meet routines, competition anxiety work and individualized mental skill sets. Works with athletes across IPF, USAPL and EPF.",
-    instagram: "powerfloweu",
-    photo: "/coaches/david.jpg",
-    tags: ["Visualization", "Competition anxiety", "Goal setting", "Meet-day prep"],
-  },
-  {
-    slug: "jay",
-    name: "Jacqueline Ulrich",
-    initials: "JU",
-    title: "Mental Performance Coach",
-    bio: "Having participated in international-level powerlifting competitions, Jay knows what it feels like to deal with pressure, doubt, and expectations. As a powerlifting coach she realised long-term development takes more than training plans — and went deeper into the mental side. She helps athletes understand their own thoughts and experiences and find their way toward more clarity and confidence in themselves.",
-    instagram: "omgitsjacqueline",
-    photo: null,
-    tags: ["Mental resilience", "Confidence", "Performance routines", "Consistency"],
-  },
-  {
-    slug: "clarice",
-    name: "Clarice Tighe",
-    initials: "CT",
-    title: "Sport Psychologist (MSc)",
-    bio: "Full-time performance mentality coach at Odyssey Strength and competing powerlifter based in Ireland. Having navigated life with Multiple Sclerosis while continuing to compete — returning to the platform at the 2024 IrishPF Open after what she describes as her lowest points — Clarice brings a depth of lived resilience to her coaching. She specialises in the self-talk and mental habits that keep athletes together when conditions are hardest.",
-    instagram: "clarice_odyssey",
-    photo: "/coaches/clarice.jpg",
-    tags: ["Self-talk", "Cognitive patterns", "Pressure performance", "Mindset"],
-    applyUrl: "https://docs.google.com/forms/d/e/1FAIpQLSdeIVKKhkAn5SZgBuJZWm2SigpHBeCR__RwyWaQPcKrkJO20Q/viewform",
-  },
-  {
-    slug: "kate",
-    name: "Dr. Kate Cohen-Maher",
-    initials: "KC",
-    title: "Sport Psychologist (PhD)",
-    bio: "Sport psychologist (PhD, Florida State University), 48 kg pro powerlifter and 2× USAPL National Champion. Former Raw American junior and collegiate record holder in squat, bench and deadlift. Works with D1 and elite athletes on confidence, attention control, anxiety regulation and performing under pressure. Affiliated with The Strength Guys.",
-    instagram: "kateco220",
-    photo: "/coaches/kate.jpg",
-    tags: ["Confidence", "Anxiety regulation", "Focus & attention", "Elite performance"],
-    external: true,
-    applyUrl: "https://docs.google.com/forms/d/e/1FAIpQLSepNr4SC7zIy40wUV_nTohd06a8bXEXD8dJsYJ03BUzIxhVgw/viewform",
-  },
-];
+import { COACHES, coachFirstName } from "@/lib/coaches";
+import { tc } from "@/lib/publicUi";
 
 export default function CoachesPage() {
   const [isDark, setIsDark] = React.useState(true);
@@ -77,7 +19,7 @@ export default function CoachesPage() {
         </div>
       )}
 
-      <div className="relative z-10 flex flex-col items-center px-5 py-12 sm:py-16 max-w-xl mx-auto w-full">
+      <div className="relative z-10 flex flex-col items-center px-5 pt-24 pb-12 sm:pt-28 sm:pb-16 max-w-xl mx-auto w-full">
 
         {/* ── Header ── */}
         <div className="w-full flex items-center justify-between mb-12">
@@ -194,6 +136,18 @@ export default function CoachesPage() {
                 {coach.bio}
               </p>
 
+              {/* Straight to the coach's own page — the athlete deciding whether to
+                  apply wants photos and testimonials, not a longer card. */}
+              <Link
+                href={`/coaches/${coach.slug}`}
+                className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 mb-2 text-[11px] font-bold uppercase tracking-wider transition ${tc(d,
+                  "border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]",
+                  "border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100"
+                )}`}
+              >
+                More about {coachFirstName(coach)} →
+              </Link>
+
               {/* CTA */}
               {coach.applyUrl ? (
                 <a
@@ -205,7 +159,7 @@ export default function CoachesPage() {
                     "bg-violet-600 border-violet-600 text-white hover:bg-violet-500"
                   )}`}
                 >
-                  Apply for 1:1 coaching with {coach.name.split(" ")[0]} →
+                  Apply for 1:1 coaching with {coachFirstName(coach)} →
                 </a>
               ) : coach.external ? (
                 <a
@@ -217,7 +171,7 @@ export default function CoachesPage() {
                     "bg-amber-500 border-amber-500 text-white hover:bg-amber-600"
                   )}`}
                 >
-                  Follow {coach.name.split(" ")[0]} on Instagram →
+                  Follow {coachFirstName(coach)} on Instagram →
                 </a>
               ) : (
                 <Link
@@ -227,7 +181,7 @@ export default function CoachesPage() {
                     "bg-violet-600 border-violet-600 text-white hover:bg-violet-500"
                   )}`}
                 >
-                  Apply for 1:1 coaching with {coach.name.split(" ")[0]} →
+                  Apply for 1:1 coaching with {coachFirstName(coach)} →
                 </Link>
               )}
             </div>

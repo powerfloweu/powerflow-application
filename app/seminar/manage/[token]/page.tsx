@@ -13,7 +13,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { SEMINAR_TOPICS } from "@/lib/seminar";
-import { tc, Check, Eyebrow } from "../../ui";
+import { tc, Check, Eyebrow } from "@/lib/publicUi";
 
 type Status = "registered" | "waitlist" | "cancelled";
 type Signup = {

@@ -1,9 +1,11 @@
 "use client";
 
 /**
- * Shared presentational bits for the seminar pages. Both /seminar and
- * /seminar/manage/[token] show the same topic list, so the selection indicator
- * and section headings live here rather than being duplicated and drifting.
+ * Shared presentational bits for the public, unauthenticated pages — /seminar,
+ * /seminar/manage/[token] and the coach landing pages. These all sit outside
+ * the app shell and share one visual language, so the selection indicator,
+ * section headings and the light/dark helper live here rather than being
+ * copied per page and drifting apart.
  */
 
 import React from "react";
