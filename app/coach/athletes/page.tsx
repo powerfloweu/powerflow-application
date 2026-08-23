@@ -261,22 +261,33 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
 
   // ── Data prep ──────────────────────────────────────────────────────────────
 
+  // The feed opens on the last two weeks — enough for "what's going on right
+  // now" without a wall of history — but everything already loaded stays one
+  // tap away. Nothing is hidden permanently.
+  const [showAllActivity, setShowAllActivity] = React.useState(false);
+
   const cutoff14 = new Date(); cutoff14.setDate(cutoff14.getDate() - 14);
 
-  const recentJournal = athlete.entries
-    .filter((e) => new Date(e.created_at) >= cutoff14)
-    .slice(0, 15);
+  const allJournal = athlete.entries;
+  // Training entries that have at least one written answer — a day marked as
+  // training with nothing typed has nothing to read.
+  const allTraining = athlete.all_training_entries.filter((e) =>
+    e.thoughts_before || e.thoughts_after || e.what_went_well ||
+    e.frustrations || e.next_session,
+  );
 
-  // Training entries in last 14d that have at least one written answer
-  const recentTraining = athlete.all_training_entries
-    .filter((e) => {
-      const d = new Date(e.entry_date + "T12:00:00");
-      return d >= cutoff14 && (
-        e.thoughts_before || e.thoughts_after || e.what_went_well ||
-        e.frustrations || e.next_session
-      );
-    })
-    .slice(0, 8);
+  const recentJournal = showAllActivity
+    ? allJournal
+    : allJournal.filter((e) => new Date(e.created_at) >= cutoff14).slice(0, 15);
+
+  const recentTraining = showAllActivity
+    ? allTraining
+    : allTraining
+        .filter((e) => new Date(e.entry_date + "T12:00:00") >= cutoff14)
+        .slice(0, 8);
+
+  const hiddenActivityCount =
+    (allJournal.length + allTraining.length) - (recentJournal.length + recentTraining.length);
 
   // Interleave journal + training by date descending
   type ActivityItem =
@@ -439,7 +450,9 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
       {tab === "activity" && (
         <div className="space-y-2">
           {activityItems.length === 0 && (
-            <p className="font-saira text-sm text-zinc-400 text-center py-4">No activity in the last 14 days</p>
+            <p className="font-saira text-sm text-zinc-400 text-center py-4">
+              {showAllActivity ? "No written activity yet" : "No activity in the last 14 days"}
+            </p>
           )}
           {activityItems.map((item) =>
             item.kind === "journal" ? (
@@ -477,6 +490,18 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                 ))}
               </div>
             )
+          )}
+
+          {(hiddenActivityCount > 0 || showAllActivity) && (
+            <button
+              type="button"
+              onClick={() => setShowAllActivity((v) => !v)}
+              className="w-full rounded-xl border border-white/8 bg-white/[0.03] py-3 font-saira text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-300 hover:bg-white/[0.06] transition"
+            >
+              {showAllActivity
+                ? "Show last 14 days only"
+                : `Show ${hiddenActivityCount} older ${hiddenActivityCount === 1 ? "entry" : "entries"}`}
+            </button>
           )}
         </div>
       )}

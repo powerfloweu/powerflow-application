@@ -69,14 +69,31 @@ describe("testimonials", () => {
    * are happy to be quoted on. This test exists to make the rule visible: if
    * you are adding entries here, they must be real and attributed.
    */
-  it("are attributed whenever they exist", () => {
+  it("are attributed and actually say something", () => {
     for (const c of COACHES) {
       for (const t of c.testimonials) {
-        expect(t.quote.trim().length, c.slug).toBeGreaterThan(20);
         expect(t.author.trim().length, c.slug).toBeGreaterThan(0);
         expect(t.author.toLowerCase(), c.slug).not.toMatch(/anonymous|placeholder|lorem|athlete name/);
+        // One shape or the other, never an empty card.
+        const body = t.quote ?? "";
+        const answers = t.answers ?? [];
+        expect(body.trim().length > 20 || answers.length > 0, `${c.slug}: ${t.author}`).toBe(true);
+        for (const a of answers) {
+          expect(a.question.trim().length, t.author).toBeGreaterThan(0);
+          expect(a.answer.trim().length, t.author).toBeGreaterThan(20);
+        }
       }
     }
+  });
+
+  it("keeps long-form answers verbatim rather than trimmed to a pull quote", () => {
+    // Regression guard for the temptation to "tidy" someone's words: an
+    // interview-style testimonial must carry its answers, not a summary.
+    const clarice = coachBySlug("clarice")!;
+    const aaron = clarice.testimonials.find((t) => t.author === "Aaron");
+    expect(aaron, "Aaron's testimonial should be on Clarice's page").toBeDefined();
+    expect(aaron!.answers!.length).toBeGreaterThanOrEqual(6);
+    expect(aaron!.quote, "a long-form testimonial should not be reduced to a quote").toBeUndefined();
   });
 });
 

@@ -13,13 +13,31 @@
  *      indistinguishable from a real one to a reader.
  */
 
+export interface TestimonialAnswer {
+  question: string;
+  /** Verbatim. Never tidied, shortened or paraphrased. */
+  answer: string;
+}
+
 export interface Testimonial {
-  /** The athlete's own words. */
-  quote: string;
   /** How they want to be credited, e.g. "Marthe H." or a full name. */
   author: string;
   /** Optional context line: "IPF Worlds 2025", "coached since 2023". */
   context?: string;
+  /**
+   * A short standalone quote, in the athlete's own words.
+   * Use for testimonials that arrived as a paragraph.
+   */
+  quote?: string;
+  /**
+   * Long-form interview answers, verbatim and in order.
+   *
+   * Exists so a long testimonial does not have to be cut down to a pull quote.
+   * Choosing which sentence to feature is an editorial act, and doing it badly
+   * puts words in someone's mouth — so where the athlete answered questions,
+   * their answers are published as they wrote them.
+   */
+  answers?: TestimonialAnswer[];
 }
 
 export interface CoachPhoto {
@@ -125,7 +143,41 @@ export const COACHES: readonly Coach[] = [
       { src: "/coaches/clarice/warmup-room.jpg",   alt: "Clarice in the warm-up room during a meet" },
       { src: "/coaches/clarice/platform-side.jpg", alt: "Clarice watching from the side of the platform" },
     ],
-    testimonials: [],
+    testimonials: [
+      {
+        author: "Carole",
+        quote: "Clarice has an amazing ability to identify patterns in my thinking, how these inform my behaviours, and how this impacts performance. She strikes exactly the right balance between support and challenge, and asks great questions, which help me reflect on my own strengths (keep doing) and development areas (stop doing, start doing, or change). Adding her expertise to my coaching team has increased self awareness, and contributed massively to my enjoyment of training and to my performance in the gym and on the platform.",
+      },
+      {
+        author: "Aaron",
+        answers: [
+          {
+            question: "What were you struggling with before that made you sign up for the service?",
+            answer: "Coming off the back of 2025 nationals I was really struggling both with my enjoyment and confidence in my training. I was really having a hard time showing up as it felt like there was no pay off to all of the hard work I was putting in and it was seriously impacting my intent and desire going into every session. My coach had suggested speaking to a sports psychologist and after seeing that as part of the national team I could enlist the help of Clarice, it felt like a no brainer to give the service a try and see if it could bring my enjoyment of training and competing back to how I felt when I first started powerlifting.",
+          },
+          {
+            question: "As a high level lifter, what was the most beneficial thing you got from the service?",
+            answer: "I'd say there were 2 things that I would hold to equal importance, the first being the ability to take my wins in training and actually celebrate them as opposed to instantly disregarding them because I felt like I needed to focus on the next goal/step towards a goal. In doing so, it really helped me to feel some pride in the work I was doing which in turn improved my confidence and helped me to execute better.\n\nThe second thing was being able to take the negatives and process them quickly and effectively so that I wouldn't dwell on them. I feel like I can be quite a perfectionist when it comes to my training so when things weren't 100%, it would seriously mess with me and cause the quality of my session to drop. But now I'm able to take it for what it is and not let one small mishap define an otherwise excellent session/block of training.",
+          },
+          {
+            question: "Is there anything that surprised you about it?",
+            answer: "I wasn't entirely a big believer in affirmations but I found that whenever I was really struggling to get into the right headspace prior to a session, particularly as life started to get very messy heading into my peak for worlds, that going through the list provided for me within my check in sheet made a noticeable difference to my performance within those sessions.",
+          },
+          {
+            question: "What tools, if any, will you take going forward into your training?",
+            answer: "The affirmations will 100% be staying in the back pocket for the hard sessions going forward, with how theyve already made a difference to my confidence I cant see why I wouldnt dip back into them time and time again.",
+          },
+          {
+            question: "Has this service changed how you handle mishaps in training or comp day?",
+            answer: "I'd talked a little bit already about my attitude to training but with regards to comp, even though I had a day I wasnt wholly satisfied with in Lithuania, I've been able to bounce back extremely well and feel incredibly confident heading into nationals this year",
+          },
+          {
+            question: "What was it like actually working with me? Anything in particular stand out about my approach or communication?",
+            answer: "It was honestly a great experience working with Clarice, she was super responsive and adaptable to my needs especially when I had my injury in euros prep and had to majorly repivot my training and goals as I dealt with coming back to properly training again.",
+          },
+        ],
+      },
+    ],
   },
   {
     slug: "kate",

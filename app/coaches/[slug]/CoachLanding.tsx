@@ -13,9 +13,74 @@ import Link from "next/link";
 import { tc, Eyebrow } from "@/lib/publicUi";
 import {
   type Coach,
+  type Testimonial,
   coachBioParagraphs,
   coachFirstName,
 } from "@/lib/coaches";
+
+/**
+ * One testimonial. Two shapes: a paragraph someone sent, or an interview they
+ * answered. Interview answers are shown in full rather than cut to a pull
+ * quote — the first answer is always visible and the rest are one tap away,
+ * so the card stays scannable without anyone's words being trimmed.
+ */
+function TestimonialCard({
+  testimonial: t,
+  dark: d,
+}: {
+  testimonial: Testimonial;
+  dark: boolean;
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  const panel   = tc(d, "border-white/[0.10] bg-white/[0.03]", "border-gray-200 bg-white");
+  const muted   = tc(d, "text-zinc-400", "text-gray-500");
+  const heading = tc(d, "text-white", "text-gray-900");
+  const body    = tc(d, "text-zinc-300", "text-gray-600");
+
+  const answers = t.answers ?? [];
+  const shown   = open ? answers : answers.slice(0, 1);
+
+  return (
+    <figure className={`rounded-2xl border p-5 ${panel}`}>
+      {t.quote && (
+        <blockquote className={`text-sm leading-relaxed ${body}`}>
+          &ldquo;{t.quote}&rdquo;
+        </blockquote>
+      )}
+
+      {shown.length > 0 && (
+        <div className="space-y-4">
+          {shown.map((a) => (
+            <div key={a.question}>
+              <p className={`text-[11px] font-bold uppercase tracking-[0.14em] mb-1.5 ${tc(d, "text-violet-400", "text-violet-600")}`}>
+                {a.question}
+              </p>
+              <p className={`text-sm leading-relaxed whitespace-pre-line ${body}`}>
+                {a.answer}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {answers.length > 1 && (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className={`mt-3 text-[11px] font-bold uppercase tracking-[0.14em] transition ${tc(d, "text-violet-400 hover:text-violet-300", "text-violet-600 hover:text-violet-700")}`}
+        >
+          {open ? "Show less" : `Read all ${answers.length} answers`}
+        </button>
+      )}
+
+      <figcaption className={`text-[11px] mt-4 ${muted}`}>
+        <span className={`font-bold ${heading}`}>{t.author}</span>
+        {t.context && <> · {t.context}</>}
+      </figcaption>
+    </figure>
+  );
+}
 
 export default function CoachLanding({ coach }: { coach: Coach }) {
   const [isDark, setIsDark] = React.useState(true);
@@ -170,16 +235,8 @@ export default function CoachLanding({ coach }: { coach: Coach }) {
           <div className="w-full mb-12">
             <Eyebrow dark={d}>What their athletes say</Eyebrow>
             <div className="space-y-3">
-              {coach.testimonials.map((t, i) => (
-                <figure key={i} className={`rounded-2xl border p-5 ${panel}`}>
-                  <blockquote className={`text-sm leading-relaxed ${body}`}>
-                    &ldquo;{t.quote}&rdquo;
-                  </blockquote>
-                  <figcaption className={`text-[11px] mt-3 ${muted}`}>
-                    <span className={`font-bold ${heading}`}>{t.author}</span>
-                    {t.context && <> · {t.context}</>}
-                  </figcaption>
-                </figure>
+              {coach.testimonials.map((t) => (
+                <TestimonialCard key={t.author} testimonial={t} dark={d} />
               ))}
             </div>
           </div>
