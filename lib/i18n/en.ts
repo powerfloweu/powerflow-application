@@ -220,6 +220,9 @@ export const en = {
     customizePromptsReset: "Reset to defaults",
     customizePromptsSaved: "Saved ✓",
     customizePromptsCoachNote: "Your coach has set custom questions for your training log.",
+    // Athletes must know their coach reads this before they write, not after.
+    coachCanSeeEntries: "{coach} can read everything you write here.",
+    coachCanSeeEntriesGeneric: "Your coach can read everything you write here.",
     customizePromptsPlaceholder: "Question {n}…",
   },
 

@@ -221,6 +221,8 @@ export const de: Dict = {
     customizePromptsReset: "Zurücksetzen",
     customizePromptsSaved: "Gespeichert ✓",
     customizePromptsCoachNote: "Dein Coach hat eigene Fragen für dein Trainingslog festgelegt.",
+    coachCanSeeEntries: "{coach} kann alles lesen, was du hier schreibst.",
+    coachCanSeeEntriesGeneric: "Dein Coach kann alles lesen, was du hier schreibst.",
     customizePromptsPlaceholder: "Frage {n}…",
   },
 

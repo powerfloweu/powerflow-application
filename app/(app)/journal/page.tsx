@@ -238,16 +238,42 @@ function WeekBar({ entries }: { entries: JournalEntry[] }) {
   );
 }
 
+/**
+ * Tells an athlete their coach reads this — before they write, not after.
+ *
+ * Journal entries and training logs are visible to a linked coach by default.
+ * Nothing in the composer said so, and the @mention picker ("Notify your
+ * coach") actively implied the opposite: that a coach only sees what you
+ * deliberately send them. Someone writing about drinking, guilt or sleep
+ * deserves to know who is going to read it.
+ *
+ * Renders nothing for athletes with no coach.
+ */
+function CoachVisibilityNotice({ coachName }: { coachName?: string | null }) {
+  const { t } = useT();
+  if (!coachName) return null;
+
+  const firstName = coachName.trim().split(/\s+/)[0];
+  return (
+    <p className="mb-3 flex items-start gap-2 font-saira text-[11px] leading-relaxed text-zinc-400">
+      <span aria-hidden="true" className="mt-px flex-shrink-0">👁</span>
+      <span>{t("journal.coachCanSeeEntries").replace("{coach}", firstName)}</span>
+    </p>
+  );
+}
+
 // ── Training journal form (shown when today is a training day) ────────────────
 
 function TrainingJournalForm({
   entry,
   onSave,
   promptLabels,
+  coachName,
 }: {
   entry: TrainingEntry;
   onSave: (updated: TrainingEntry) => void;
   promptLabels: string[];
+  coachName?: string | null;
 }) {
   const { t } = useT();
   const [answers, setAnswers] = React.useState<Record<string, string>>(() => {
@@ -323,6 +349,8 @@ function TrainingJournalForm({
           onProcessingChange={setAiProcessing}
         />
       </div>
+
+      <CoachVisibilityNotice coachName={coachName} />
 
       {aiFilled && (
         <div className="mb-3 rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-3 py-2 font-saira text-[10px] text-emerald-300">
@@ -595,6 +623,8 @@ function QuickEntry({ onAdd, coachName }: { onAdd: (e: JournalEntry) => void; co
 
   return (
     <div className="relative rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-600/10 via-fuchsia-500/5 to-transparent p-5 sm:p-6 shadow-[0_16px_40px_rgba(126,34,206,0.15)]">
+      <CoachVisibilityNotice coachName={coachName} />
+
       <textarea
         ref={textareaRef}
         value={text}
@@ -878,7 +908,7 @@ function PastDateForm({
       <p className="font-saira text-[10px] font-semibold uppercase tracking-[0.28em] text-zinc-300 mb-3">
         {t("journal.logForDate").replace("{date}", dateLabel.toLowerCase())}
       </p>
-      <TrainingJournalForm entry={entry} onSave={onSave} promptLabels={promptLabels} />
+      <TrainingJournalForm entry={entry} onSave={onSave} promptLabels={promptLabels} coachName={coachName} />
     </div>
   );
 }
@@ -1206,6 +1236,7 @@ export default function JournalPage() {
                   <TrainingJournalForm
                     entry={todayTraining}
                     promptLabels={effectivePromptLabels}
+                    coachName={profile?.coach_display_name}
                     onSave={(updated) => {
                       setTodayTraining(updated);
                       setAllTraining((prev) =>

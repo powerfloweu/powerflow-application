@@ -219,6 +219,8 @@ export const hu: Dict = {
     customizePromptsReset: "Visszaállítás alapértelmezettre",
     customizePromptsSaved: "Mentve ✓",
     customizePromptsCoachNote: "Az edző egyéni kérdéseket állított be az edzésnaplódhoz.",
+    coachCanSeeEntries: "{coach} mindent elolvashat, amit ide írsz.",
+    coachCanSeeEntriesGeneric: "Az edződ mindent elolvashat, amit ide írsz.",
     customizePromptsPlaceholder: "{n}. kérdés…",
   },
 

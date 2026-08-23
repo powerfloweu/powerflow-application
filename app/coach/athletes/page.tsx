@@ -197,6 +197,63 @@ function AthleteListRow({ athlete, onClick }: { athlete: Athlete; onClick: () =>
   );
 }
 
+/**
+ * Athlete-written text that can be read in full.
+ *
+ * Collapsed it clamps to `lines`, but the whole string is always in the DOM —
+ * no hard slice. A coach opening an entry from the activity feed has to be able
+ * to reach every word of it; a preview that silently drops the end of a journal
+ * entry is worse than useless, because it reads as if that is all there was.
+ *
+ * The toggle only appears when the clamp is genuinely hiding something, which
+ * is measured rather than guessed from a character count.
+ */
+function ExpandableText({
+  text,
+  lines = 3,
+  className = "font-saira text-xs text-zinc-300 leading-relaxed",
+}: {
+  text: string;
+  lines?: 2 | 3;
+  className?: string;
+}) {
+  const ref = React.useRef<HTMLParagraphElement>(null);
+  const [open, setOpen] = React.useState(false);
+  const [overflows, setOverflows] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Runs while collapsed, so scrollHeight is the full height and clientHeight
+    // is the clamped one. The +1 absorbs sub-pixel rounding.
+    setOverflows(el.scrollHeight > el.clientHeight + 1);
+  }, [text, lines]);
+
+  return (
+    <>
+      <p
+        ref={ref}
+        className={`${className} break-words whitespace-pre-wrap ${
+          open ? "" : lines === 2 ? "line-clamp-2" : "line-clamp-3"
+        }`}
+      >
+        {text}
+      </p>
+      {/* `|| open` keeps the collapse control alive: once expanded there is no
+          overflow left to measure. */}
+      {(overflows || open) && (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="mt-1 font-saira text-[10px] font-semibold uppercase tracking-[0.14em] text-purple-300 hover:text-purple-200 transition"
+        >
+          {open ? "Show less" : "Show more"}
+        </button>
+      )}
+    </>
+  );
+}
+
 // ── Athlete bottom-sheet detail ───────────────────────────────────────────────
 
 function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
@@ -393,7 +450,7 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                   {item.entry.sentiment === "positive" && <span className="ml-auto text-emerald-400 text-xs">+</span>}
                   {item.entry.sentiment === "negative" && <span className="ml-auto text-rose-400 text-xs">–</span>}
                 </div>
-                <p className="font-saira text-xs text-zinc-300 line-clamp-3 leading-relaxed break-words">{item.entry.content.slice(0, 160)}</p>
+                <ExpandableText text={item.entry.content} />
               </div>
             ) : (
               <div key={"t" + item.entry.id} className="rounded-xl border border-sky-500/20 bg-sky-500/[0.05] p-3">
@@ -410,10 +467,12 @@ function AthleteQuickSheet({ athlete }: { athlete: Athlete }) {
                   { label: "Issue", value: item.entry.frustrations },
                   { label: "Before",value: item.entry.thoughts_before },
                   { label: "Next",  value: item.entry.next_session },
-                ].filter((f) => f.value).slice(0, 2).map((f) => (
-                  <div key={f.label} className="mb-1 last:mb-0">
-                    <span className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-500">{f.label}: </span>
-                    <span className="font-saira text-xs text-zinc-300 leading-relaxed line-clamp-2 break-words">{f.value}</span>
+                // Every answered field, not the first two — the athlete wrote
+                // five and the coach was only ever shown two of them.
+                ].filter((f) => f.value).map((f) => (
+                  <div key={f.label} className="mb-2 last:mb-0">
+                    <span className="font-saira text-[9px] uppercase tracking-[0.14em] text-zinc-500">{f.label}</span>
+                    <ExpandableText text={f.value as string} lines={2} />
                   </div>
                 ))}
               </div>
