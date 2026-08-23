@@ -98,7 +98,16 @@ export const COACHES: readonly Coach[] = [
     photo: "/coaches/david.jpg",
     tags: ["Visualization", "Competition anxiety", "Goal setting", "Meet-day prep"],
     gallery: [],
-    testimonials: [],
+    testimonials: [
+      // Transcribed verbatim from the Testimonials highlight on @powerfloweu.
+      // The rest of that highlight is video, which cannot be transcribed from a
+      // still — those need pasting in by hand.
+      {
+        author: "Leah",
+        context: "@leah_fitnuss",
+        quote: "It turned out to be one of the best competition experiences I have ever had – because I learned to shift my mindset, accept my fear and still believe I could do it.",
+      },
+    ],
   },
   {
     slug: "jay",
