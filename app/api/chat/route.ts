@@ -9,6 +9,8 @@ import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import Anthropic from "@anthropic-ai/sdk";
+import { classifyAiError, offlineReply, type AiOutage } from "@/lib/aiFallback";
+import { effectiveTier } from "@/lib/plan";
 import type { AthleteProfile } from "@/lib/athlete";
 // canAccessPR no longer used for AI gate — ai_access field is the authoritative check
 
@@ -445,7 +447,7 @@ export async function POST(req: NextRequest) {
       "mental_goals", "main_barrier",
       "self_confidence_reg", "self_focus_fatigue", "self_handling_pressure",
       "self_competition_anxiety", "self_emotional_recovery",
-      "viz_keywords", "affirmations", "ai_access", "plan_tier", "role", "coach_notes",
+      "viz_keywords", "affirmations", "ai_access", "plan_tier", "role", "coach_notes", "coach_id",
     ].join(","),
   });
 
@@ -555,34 +557,96 @@ export async function POST(req: NextRequest) {
     content: m.content,
   }));
 
-  // Stream from Anthropic
-  const stream = await anthropic.messages.stream({
-    model: "claude-sonnet-4-5",
-    max_tokens: 1500,
-    system: systemPrompt,
-    messages,
-  });
+  // The athlete's own last line — used only for keyword routing if the model
+  // turns out to be unavailable.
+  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+
+  /**
+   * Look up the coach's first name, but only when we actually need it. The
+   * happy path must not pay for a query that exists solely for an outage.
+   */
+  async function coachFirstName(): Promise<string | null> {
+    if (!profile?.coach_id) return null;
+    const rows = await dbSelect<{ display_name: string | null }>("profiles", {
+      id: `eq.${profile.coach_id}`,
+      select: "display_name",
+      limit: "1",
+    }).catch(() => []);
+    const name = rows[0]?.display_name?.trim();
+    return name ? name.split(/\s+/)[0] : null;
+  }
+
+  async function offlineText(): Promise<string> {
+    return offlineReply({
+      message: lastUserMessage,
+      tier: effectiveTier(profile ?? {}),
+      coachName: await coachFirstName(),
+    });
+  }
+
+  function offlineHeaders(outage: AiOutage) {
+    return {
+      "Content-Type": "text/plain; charset=utf-8",
+      // Lets the client render this visibly as a system notice rather than as
+      // something the coach said.
+      "X-Coach-AI-Mode": outage,
+    };
+  }
+
+  // Stream from Anthropic. The SDK can reject here (request refused outright)
+  // or partway through iteration below — both are handled, because an athlete
+  // who has just typed something difficult should never get a bare 500.
+  let stream: ReturnType<typeof anthropic.messages.stream>;
+  try {
+    stream = anthropic.messages.stream({
+      model: "claude-sonnet-4-5",
+      max_tokens: 1500,
+      system: systemPrompt,
+      messages,
+    });
+  } catch (err) {
+    const outage = classifyAiError(err);
+    console.error(`[api/chat] model unavailable before streaming (${outage})`, err);
+    return new Response(await offlineText(), { status: 200, headers: offlineHeaders(outage) });
+  }
 
   return new Response(
     new ReadableStream({
       async start(controller) {
+        let sentAnything = false;
         try {
           for await (const chunk of stream) {
             if (
               chunk.type === "content_block_delta" &&
               chunk.delta.type === "text_delta"
             ) {
+              sentAnything = true;
               controller.enqueue(new TextEncoder().encode(chunk.delta.text));
             }
           }
           controller.close();
         } catch (err) {
-          // Anthropic stream errored mid-response (rate limit, network drop,
-          // etc). Without this, the controller was left neither closed nor
-          // errored — the client's reader.read() could resolve as if the
-          // response ended normally, and a truncated reply would get
-          // persisted as if it were complete. Erroring the controller makes
-          // the client's fetch/reader reject instead.
+          const outage = classifyAiError(err);
+
+          if (!sentAnything) {
+            // Nothing has reached the athlete yet, so we can still deliver a
+            // clean, honest fallback instead of a broken stream. This is the
+            // common case when the account is out of credit: the request is
+            // refused on the first chunk.
+            console.error(`[api/chat] model unavailable (${outage})`, err);
+            try {
+              controller.enqueue(new TextEncoder().encode(await offlineText()));
+              controller.close();
+            } catch (fallbackErr) {
+              console.error("[api/chat] offline fallback failed", fallbackErr);
+              controller.error(fallbackErr instanceof Error ? fallbackErr : new Error(String(fallbackErr)));
+            }
+            return;
+          }
+
+          // A partial reply is already on the wire. Erroring the controller
+          // makes the client's reader reject, so a truncated answer is not
+          // persisted as if it were complete.
           console.error("[api/chat] stream failed mid-response", err);
           controller.error(err instanceof Error ? err : new Error(String(err)));
         }
