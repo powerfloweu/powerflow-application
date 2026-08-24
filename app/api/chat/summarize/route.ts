@@ -7,6 +7,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { classifyAiError } from "@/lib/aiFallback";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
@@ -106,8 +107,16 @@ Respond with JSON only — no other text:
     // Strip any markdown fences if present
     const jsonStr = raw.replace(/^```json?\n?/i, "").replace(/```$/i, "").trim();
     parsed = JSON.parse(jsonStr);
-  } catch {
-    return NextResponse.json({ error: "Summary generation failed" }, { status: 500 });
+  } catch (err) {
+    // Background job — the client fires it and ignores the result. Log the
+    // distinction so an out-of-credit account is not mistaken for a bug, and
+    // return 200 for quota so it does not read as a broken endpoint.
+    const outage = classifyAiError(err);
+    console.error(`[chat/summarize] summary generation failed (${outage})`, err);
+    return NextResponse.json(
+      { ok: false, outage },
+      { status: outage === "quota" ? 200 : 500 },
+    );
   }
 
   // Store (UNIQUE(user_id, session_date) → safe to upsert)

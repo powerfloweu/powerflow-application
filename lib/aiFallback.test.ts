@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { classifyAiError, suggestTool, offlineReply } from "./aiFallback";
+import { classifyAiError, suggestTool, offlineReply, outageMessage, isRetryable } from "./aiFallback";
 
 /** Shaped like a real Anthropic SDK error. */
 function apiError(status: number, message: string) {
@@ -89,5 +89,24 @@ describe("offlineReply", () => {
     const text = offlineReply({ message: "I want to quit powerlifting", tier: "pr" });
     expect(text).toMatch(/unavailable/i);
     expect(text.length).toBeLessThan(700);
+  });
+});
+
+describe("outageMessage / isRetryable", () => {
+  it("does not tell someone to retry when retrying cannot work", () => {
+    expect(isRetryable("quota")).toBe(false);
+    expect(outageMessage("quota")).not.toMatch(/try again/i);
+    expect(outageMessage("quota")).toMatch(/out of API credit/i);
+  });
+
+  it("does invite a retry when the outage is transient", () => {
+    expect(isRetryable("busy")).toBe(true);
+    expect(isRetryable("error")).toBe(true);
+    expect(outageMessage("busy")).toMatch(/try again/i);
+    expect(outageMessage("error")).toMatch(/try again/i);
+  });
+
+  it("reassures that nothing was lost", () => {
+    expect(outageMessage("quota")).toMatch(/nothing you entered has been lost/i);
   });
 });

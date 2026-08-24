@@ -9,6 +9,7 @@
 
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
+import { classifyAiError } from "@/lib/aiFallback";
 import { dbSelect } from "@/lib/supabaseAdmin";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -158,7 +159,14 @@ Respond with JSON only — no other text:
         results.push({ userId, date, status: "ok", techniques: parsed.techniques_used });
       }
     } catch (e) {
+      const kind = classifyAiError(e);
       results.push({ userId, date, status: "error", error: String(e) });
+      if (kind === "quota") {
+        // Account-wide, not per-session. Batches are long; without this the
+        // run burns a request and 300ms per remaining session for nothing.
+        console.error("[summarize-batch] stopping early — out of API credit");
+        break;
+      }
     }
 
     // Throttle: 300ms between Claude calls to stay within rate limits

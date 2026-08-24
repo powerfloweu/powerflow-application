@@ -17,6 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { classifyAiError, outageMessage, isRetryable } from "@/lib/aiFallback";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
@@ -183,8 +184,14 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ type: "training", ...parsed, rawText: text });
       }
     } catch (err) {
-      console.error("[parse-entry] Parse error:", err);
-      return NextResponse.json({ error: "Parsing failed — please try again" }, { status: 500 });
+      // "Please try again" was untrue when the account is out of credit —
+      // retrying cannot work, and the athlete just spoke a whole entry.
+      const outage = classifyAiError(err);
+      console.error(`[parse-entry] parse failed (${outage})`, err);
+      return NextResponse.json(
+        { error: outageMessage(outage), outage, retryable: isRetryable(outage) },
+        { status: outage === "quota" ? 503 : 500 },
+      );
     }
   }
 
@@ -220,8 +227,12 @@ export async function POST(req: NextRequest) {
   try {
     rawText = await ocrImage(file);
   } catch (err) {
-    console.error("[parse-entry] OCR error:", err);
-    return NextResponse.json({ error: "OCR failed — please try again" }, { status: 500 });
+    const outage = classifyAiError(err);
+    console.error(`[parse-entry] OCR failed (${outage})`, err);
+    return NextResponse.json(
+      { error: outageMessage(outage), outage, retryable: isRetryable(outage) },
+      { status: outage === "quota" ? 503 : 500 },
+    );
   }
 
   if (!rawText.trim()) {
@@ -237,10 +248,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ type: "training", ...parsed, rawText });
     }
   } catch (err) {
-    console.error("[parse-entry] Parse error:", err);
+    // Never hand the raw provider error to the client — it carries billing
+    // and account detail that has no business on an athlete's screen.
+    const outage = classifyAiError(err);
+    console.error(`[parse-entry] parse failed (${outage})`, err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Parsing failed" },
-      { status: 500 },
+      { error: outageMessage(outage), outage, retryable: isRetryable(outage) },
+      { status: outage === "quota" ? 503 : 500 },
     );
   }
 }

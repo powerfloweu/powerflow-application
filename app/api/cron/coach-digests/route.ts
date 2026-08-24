@@ -11,6 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { classifyAiError, type AiOutage } from "@/lib/aiFallback";
 import { dbSelect, dbInsert } from "@/lib/supabaseAdmin";
 import { sendPushToUser } from "@/lib/push";
 import Anthropic from "@anthropic-ai/sdk";
@@ -72,6 +73,9 @@ export async function GET(req: NextRequest) {
 
   let considered = 0, generated = 0, skipped = 0, failed = 0, capped = 0;
 
+  /** Set when the run stops early because the account is out of credit. */
+  let outage: AiOutage | null = null;
+
   for (const a of athletes) {
     if (!a.coach_id) continue;
 
@@ -130,8 +134,17 @@ export async function GET(req: NextRequest) {
       const text = resp.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("");
       out = parseDigest(text);
     } catch (err) {
-      console.error(`[coach-digests] AI call failed for athlete ${a.id}`, err);
+      const kind = classifyAiError(err);
+      console.error(`[coach-digests] AI call failed for athlete ${a.id} (${kind})`, err);
       failed++;
+      if (kind === "quota") {
+        // Out of credit is an account-wide condition, not a per-athlete one.
+        // Without this the run makes one doomed request per athlete on every
+        // scheduled fire. Nothing has been written or pushed, so stopping
+        // early loses nothing and the next run picks up where this left off.
+        outage = kind;
+        break;
+      }
       continue;
     }
     if (!out) { failed++; continue; }
@@ -159,7 +172,12 @@ export async function GET(req: NextRequest) {
     }).catch((err) => console.error("[coach-digests] push failed", err));
   }
 
+  if (outage) console.error(`[coach-digests] run stopped early — ${outage}`);
+
   return NextResponse.json({
     athletes: athletes.length, considered, generated, skipped, failed, capped,
+    // Surfaced so a run that did nothing is distinguishable from one that had
+    // nothing to do.
+    outage,
   });
 }

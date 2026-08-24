@@ -52,6 +52,30 @@ export function classifyAiError(err: unknown): AiOutage {
   return "error";
 }
 
+/**
+ * Whether trying again could plausibly work. Out of credit: no amount of
+ * retrying helps, and telling someone to "try again" is simply false.
+ */
+export function isRetryable(outage: AiOutage): boolean {
+  return outage !== "quota";
+}
+
+/**
+ * One line for any AI-backed feature that is not the chat — voice parsing,
+ * summaries, digests. Says what is actually true, including that retrying
+ * will not help when the account is out of credit.
+ */
+export function outageMessage(outage: AiOutage): string {
+  switch (outage) {
+    case "quota":
+      return "AI features are paused right now — the PowerFlow account is out of API credit. Everything else in the app still works, and nothing you entered has been lost.";
+    case "busy":
+      return "The AI is busy at the moment. Give it a minute and try again.";
+    default:
+      return "Couldn't reach the AI just now. Please try again shortly.";
+  }
+}
+
 // ── Routing to something that still works ────────────────────────────────────
 
 interface ToolSuggestion {

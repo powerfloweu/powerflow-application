@@ -25,6 +25,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { classifyAiError } from "@/lib/aiFallback";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
 import Anthropic from "@anthropic-ai/sdk";
@@ -308,8 +309,11 @@ Plan covers: ${selectedTitles}.`;
       messages: [{ role: "user", content: rationalePrompt }],
     });
     rationale = res.content[0].type === "text" ? res.content[0].text.trim() : "";
-  } catch {
-    // Non-critical — plan is still valid without rationale
+  } catch (err) {
+    // Non-critical: the plan itself is generated deterministically and is
+    // complete without this. Logged rather than swallowed so a missing
+    // rationale is traceable to the AI outage that caused it.
+    console.warn(`[generate-plan] rationale unavailable (${classifyAiError(err)})`);
   }
 
   // Anchors are always highlighted; add the first week of each triggered block
