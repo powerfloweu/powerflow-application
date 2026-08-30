@@ -20,6 +20,8 @@ import {
   SEMINAR_TOPICS,
   COACHING_CONTEXTS,
   COUNTRIES,
+  SEMINAR_LANGUAGES,
+  MIN_PER_LANGUAGE,
   countryForZone,
   zoneForCountry,
   startTimeIn,
@@ -41,6 +43,7 @@ export default function SeminarPage() {
   const [email,    setEmail]    = React.useState("");
   const [country,  setCountry]  = React.useState("");
   const [context,  setContext]  = React.useState("");
+  const [language, setLanguage] = React.useState("en");
   const [topics,   setTopics]   = React.useState<string[]>([]);
   const [question, setQuestion] = React.useState("");
   const [consent,  setConsent]  = React.useState(false);
@@ -97,7 +100,10 @@ export default function SeminarPage() {
       const res = await fetch("/api/seminar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, email, country, context, topics, question, consent, website }),
+        body: JSON.stringify({
+          fullName, email, country, context, topics, question, consent, website,
+          preferredLanguage: language,
+        }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Something went wrong. Please try again."); return; }
@@ -217,6 +223,23 @@ export default function SeminarPage() {
           </div>
         </div>
 
+        {/* ── What you get ── */}
+        <div className="w-full mb-12">
+          <Eyebrow dark={d}>What you get</Eyebrow>
+          <div className={`rounded-2xl border p-5 ${panel}`}>
+            <p className={`text-sm font-bold mb-1 ${heading}`}>The session — free</p>
+            <p className={`text-xs leading-relaxed mb-4 ${muted}`}>
+              No charge, nothing to pay later. {SEMINAR.durationLabel} with the three of us,
+              built around the topics this group picks.
+            </p>
+            <p className={`text-sm font-bold mb-1 ${heading}`}>A free PowerFlow account</p>
+            <p className={`text-xs leading-relaxed ${muted}`}>
+              Your athletes&rsquo; journals, training logs and weekly check-ins in one place,
+              so you can see how they&rsquo;re actually doing between sessions.
+            </p>
+          </div>
+        </div>
+
         {/* ── Who's running it ── */}
         <div className="w-full mb-12">
           <Eyebrow dark={d}>Run by three of us</Eyebrow>
@@ -333,6 +356,24 @@ export default function SeminarPage() {
                     {country && localTime
                       ? `The seminar starts at ${localTime} where you are — ${localDate}.`
                       : "So we can show you what time the seminar starts for you."}
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="sem-language" className={label}>Which language would you prefer?</label>
+                  <select
+                    id="sem-language" value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className={input}
+                  >
+                    {SEMINAR_LANGUAGES.map((l) => (
+                      <option key={l.id} value={l.id}>{l.label}</option>
+                    ))}
+                  </select>
+                  <p className={`text-xs mt-2 leading-relaxed ${muted}`}>
+                    A language runs as its own session only if at least {MIN_PER_LANGUAGE} people
+                    choose it. Below that, you&rsquo;ll be in the English session — we&rsquo;ll
+                    confirm which before the day.
                   </p>
                 </div>
 

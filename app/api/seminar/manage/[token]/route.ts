@@ -37,6 +37,7 @@ type Row = {
   format_pref: string | null;
   materials: string[];
   question: string | null;
+  preferred_language: string | null;
   status: SignupStatus;
   manage_token: string;
   created_at: string;
@@ -79,6 +80,7 @@ function toSignup(row: Row): SeminarSignup {
     context:    row.context,
     topics:   row.topics ?? [],
     question: row.question,
+    preferredLanguage: row.preferred_language ?? "en",
   };
 }
 

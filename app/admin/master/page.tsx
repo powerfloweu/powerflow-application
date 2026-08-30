@@ -17,7 +17,7 @@ import Link from "next/link";
 import type { SatRow, AcsiRow, CsaiRow, DasRow } from "@/app/api/admin/test-results/route";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import { findDuplicateGroups, indexDuplicates } from "@/lib/duplicates";
-import { contextLabel, topicLabel } from "@/lib/seminar";
+import { contextLabel, topicLabel, languageLabel } from "@/lib/seminar";
 import { countryLabel } from "@/lib/countries";
 import {
   APPLICATION_STATUSES, qualificationLabel, experienceLabel, languageLabels,
@@ -3821,6 +3821,7 @@ function SeminarTab() {
   type Row = {
     id: string; full_name: string; email: string; country: string | null;
     context: string | null; topics: string[]; question: string | null;
+    preferred_language: string | null;
     status: "registered" | "waitlist" | "cancelled"; created_at: string;
   };
   type Payload = {
@@ -3828,6 +3829,8 @@ function SeminarTab() {
     seminar: { title: string; startsAt: string; hostTime: string; min: number; max: number };
     stats: { registered: number; waitlist: number; cancelled: number; spotsLeft: number; meetsMinimum: boolean };
     topics: { id: string; label: string; count: number }[];
+    languages: { id: string; label: string; count: number; runs: boolean }[];
+    minPerLanguage: number;
   };
 
   const [data, setData]         = React.useState<Payload | null>(null);
@@ -3867,7 +3870,7 @@ function SeminarTab() {
   );
   if (!data) return null;
 
-  const { signups, seminar, stats, topics } = data;
+  const { signups, seminar, stats, topics, languages, minPerLanguage } = data;
   const maxCount = Math.max(1, ...topics.map((t) => t.count));
   const dateLabel = new Date(seminar.startsAt).toLocaleDateString("en-GB", {
     weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Budapest",
@@ -3926,6 +3929,31 @@ function SeminarTab() {
         ))}
       </div>
 
+      {/* Language split — decides whether a group runs in its own language */}
+      <div className="rounded-2xl border border-white/8 bg-surface-panel p-5">
+        <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1">
+          Language — registered attendees only
+        </p>
+        <p className="font-saira text-[11px] text-zinc-500 mb-4">
+          A language runs on its own at {minPerLanguage}+. Below that those people join the English session.
+        </p>
+        <div className="space-y-2.5">
+          {languages.map((l) => (
+            <div key={l.id} className="flex items-center gap-3">
+              <p className="font-saira text-xs text-zinc-300 flex-1 min-w-0 truncate">{l.label}</p>
+              <span className={`font-saira text-[9px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 border flex-shrink-0 ${
+                l.runs
+                  ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
+                  : "border-white/10 bg-white/5 text-zinc-500"
+              }`}>
+                {l.runs ? (l.id === "en" ? "always runs" : "runs") : `needs ${minPerLanguage - l.count} more`}
+              </span>
+              <p className="font-saira text-xs font-bold text-white tabular-nums w-6 text-right flex-shrink-0">{l.count}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Topic demand — what to actually build the session around */}
       <div className="rounded-2xl border border-white/8 bg-surface-panel p-5">
         <p className="font-saira text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-4">
@@ -3980,6 +4008,7 @@ function SeminarTab() {
                         <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Country</dt><dd className="text-zinc-300">{countryLabel(s.country)}</dd></div>
                       )}
                       <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Coaches</dt><dd className="text-zinc-300">{contextLabel(s.context)}</dd></div>
+                      <div className="flex gap-2"><dt className="text-zinc-500 w-20 flex-shrink-0">Language</dt><dd className="text-zinc-300">{languageLabel(s.preferred_language)}</dd></div>
                       <div className="flex gap-2">
                         <dt className="text-zinc-500 w-20 flex-shrink-0">Topics</dt>
                         <dd className="text-zinc-300 flex flex-wrap gap-1">

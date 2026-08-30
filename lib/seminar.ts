@@ -30,7 +30,57 @@ export const SEMINAR = {
   minParticipants: 10,
   /** Sign-ups past this land on the waitlist. */
   maxParticipants: 20,
+  /** It costs nothing. Stated on the page, so it must stay true here. */
+  isFree: true,
 } as const;
+
+/**
+ * The Google Meet link, once it exists. Read from the environment so a live
+ * meeting URL never sits in git, and so it can be set without a deploy.
+ * Empty until then — the reminder email adapts rather than promising a link
+ * it does not have.
+ */
+export function joinUrl(): string | null {
+  return process.env.SEMINAR_JOIN_URL?.trim() || null;
+}
+
+// ── Language ─────────────────────────────────────────────────────────────────
+
+export const SEMINAR_LANGUAGES = [
+  { id: "en", label: "English" },
+  { id: "de", label: "German / Deutsch" },
+  { id: "hu", label: "Hungarian / Magyar" },
+] as const;
+
+const LANGUAGE_IDS = SEMINAR_LANGUAGES.map((l) => l.id) as readonly string[];
+
+/**
+ * A language only runs as its own session if at least this many people choose
+ * it. Below the threshold those registrants join the English session — which
+ * the form states plainly, because finding out on the day would be worse.
+ */
+export const MIN_PER_LANGUAGE = 7;
+
+export function languageLabel(id: string | null): string {
+  if (!id) return "—";
+  return SEMINAR_LANGUAGES.find((l) => l.id === id)?.label ?? id;
+}
+
+/** How many picked each language, and whether that language clears the bar. */
+export function tallyLanguages(
+  rows: { preferred_language?: string | null }[],
+): { id: string; label: string; count: number; runs: boolean }[] {
+  return SEMINAR_LANGUAGES.map((l) => {
+    const count = rows.filter((r) => r.preferred_language === l.id).length;
+    return {
+      id: l.id,
+      label: l.label,
+      count,
+      // English always runs — it is the fallback everyone else joins.
+      runs: l.id === "en" || count >= MIN_PER_LANGUAGE,
+    };
+  });
+}
 
 // ── Topics ───────────────────────────────────────────────────────────────────
 
@@ -196,6 +246,8 @@ export interface SeminarSignup {
   context: string | null;
   topics: string[];
   question: string | null;
+  /** Preference, not a guarantee — see MIN_PER_LANGUAGE. */
+  preferredLanguage: string | null;
 }
 
 export type ValidationResult =
@@ -244,8 +296,9 @@ export function validateSignup(raw: unknown): ValidationResult {
     return { ok: false, error: "Please confirm we can email you about the seminar." };
   }
 
-  const rawCountry = str(r.country);
-  const rawContext = str(r.context);
+  const rawCountry  = str(r.country);
+  const rawContext  = str(r.context);
+  const rawLanguage = str(r.preferredLanguage);
 
   return {
     ok: true,
@@ -256,6 +309,9 @@ export function validateSignup(raw: unknown): ValidationResult {
       context:  CONTEXT_IDS.includes(rawContext) ? rawContext : null,
       topics,
       question: str(r.question).slice(0, MAX.question) || null,
+      // Default to English rather than null: everyone is in the English
+      // session unless their language clears the threshold.
+      preferredLanguage: LANGUAGE_IDS.includes(rawLanguage) ? rawLanguage : "en",
     },
   };
 }

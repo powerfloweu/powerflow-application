@@ -104,6 +104,7 @@ export async function POST(req: NextRequest) {
         // Take the fresh answers too — their interests may have changed.
         topics:   signup.topics,
         question: signup.question,
+        preferred_language: signup.preferredLanguage,
       });
       if (!ok) {
         console.error("[seminar] reactivate failed for", signup.email);
@@ -137,6 +138,7 @@ export async function POST(req: NextRequest) {
     context:      signup.context,
     topics:       signup.topics,
     question:     signup.question,
+    preferred_language: signup.preferredLanguage,
     status,
   });
 

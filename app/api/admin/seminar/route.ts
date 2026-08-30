@@ -10,7 +10,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
-import { SEMINAR, spotsLeft, meetsMinimum, tallyTopics, type SignupStatus } from "@/lib/seminar";
+import {
+  SEMINAR, spotsLeft, meetsMinimum, tallyTopics, tallyLanguages, MIN_PER_LANGUAGE,
+  type SignupStatus,
+} from "@/lib/seminar";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +24,8 @@ export type SeminarSignupRow = {
   country: string | null;
   context: string | null;
   topics: string[];
-  format_pref: string | null;
-  materials: string[];
   question: string | null;
+  preferred_language: string | null;
   status: SignupStatus;
   created_at: string;
 };
@@ -36,7 +38,7 @@ export async function GET() {
   }
 
   const signups = await dbSelect<SeminarSignupRow>("seminar_signups", {
-    select:       "id,full_name,email,country,context,topics,format_pref,materials,question,status,created_at",
+    select:       "id,full_name,email,country,context,topics,question,preferred_language,status,created_at",
     seminar_slug: `eq.${SEMINAR.slug}`,
     order:        "created_at.desc",
     limit:        "500",
@@ -62,6 +64,8 @@ export async function GET() {
     },
     // Tallied over people actually attending, not cancellations.
     topics: tallyTopics(registered),
+    languages: tallyLanguages(registered),
+    minPerLanguage: MIN_PER_LANGUAGE,
   });
 }
 

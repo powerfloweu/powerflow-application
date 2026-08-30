@@ -10,6 +10,8 @@ import {
   tallyTopics,
   SEMINAR_HOSTS,
   COUNTRIES,
+  tallyLanguages,
+  MIN_PER_LANGUAGE,
   hostNamesSentence,
   contextLabel,
   countryLabel,
@@ -23,6 +25,9 @@ import {
   confirmationSubject,
   ownerNotificationHtml,
   promotedHtml,
+  reminderHtml,
+  reminderText,
+  reminderSubject,
 } from "./seminarEmails";
 
 /** A submission that passes, so each test can vary one field at a time. */
@@ -192,6 +197,7 @@ describe("seminar emails", () => {
     country: "Ireland",
     context: "powerlifting",
     topics: ["arousal", "burnout"],
+    preferredLanguage: "en",
     question: "How do I stay calm when my athlete isn't?",
   };
 
@@ -256,7 +262,7 @@ describe("seminar emails", () => {
 describe("sign-off", () => {
   const signup = {
     fullName: "Marthe Henry", email: "m@example.com", country: null,
-    context: null, topics: ["arousal"], formatPref: null, materials: [], question: null,
+    context: null, topics: ["arousal"], question: null, preferredLanguage: "en",
   };
 
   it("names the day rather than a bare number", () => {
@@ -275,7 +281,7 @@ describe("sign-off", () => {
 describe("manage link", () => {
   const signup = {
     fullName: "Marthe Henry", email: "m@example.com", country: null,
-    context: null, topics: ["arousal"], formatPref: null, materials: [], question: null,
+    context: null, topics: ["arousal"], question: null, preferredLanguage: "en",
   };
 
   it("puts an absolute manage URL in both parts of the confirmation", () => {
@@ -322,7 +328,7 @@ describe("hosts", () => {
   it("signs the emails from all three", () => {
     const signup = {
       fullName: "Marthe Henry", email: "m@example.com", country: null,
-      context: null, topics: ["arousal"], formatPref: null, materials: [], question: null,
+      context: null, topics: ["arousal"], question: null, preferredLanguage: "en",
     };
     for (const body of [
       confirmationHtml(signup, "registered", TOKEN),
@@ -337,7 +343,7 @@ describe("hosts", () => {
 describe("reply-to safety", () => {
   const signup = {
     fullName: "Marthe Henry", email: "m@example.com", country: null,
-    context: null, topics: ["arousal"], formatPref: null, materials: [], question: null,
+    context: null, topics: ["arousal"], question: null, preferredLanguage: "en",
   };
 
   it("never tells anyone to reply, because the sender is noreply@", () => {
@@ -396,5 +402,100 @@ describe("country → local start time", () => {
 describe("format", () => {
   it("is settled, not a question", () => {
     expect(SEMINAR.format).toBe("Seminar with Q&A");
+  });
+});
+
+describe("language groups", () => {
+  const rows = (langs: (string | null)[]) => langs.map((preferred_language) => ({ preferred_language }));
+
+  it("always runs English, whatever the count", () => {
+    const tally = tallyLanguages(rows([]));
+    expect(tally.find((l) => l.id === "en")).toMatchObject({ count: 0, runs: true });
+  });
+
+  it("only runs another language once it clears the threshold", () => {
+    const justUnder = tallyLanguages(rows(Array(MIN_PER_LANGUAGE - 1).fill("de")));
+    expect(justUnder.find((l) => l.id === "de")).toMatchObject({ count: MIN_PER_LANGUAGE - 1, runs: false });
+
+    const atThreshold = tallyLanguages(rows(Array(MIN_PER_LANGUAGE).fill("de")));
+    expect(atThreshold.find((l) => l.id === "de")).toMatchObject({ count: MIN_PER_LANGUAGE, runs: true });
+  });
+
+  it("counts each language independently", () => {
+    const tally = tallyLanguages(rows(["de", "de", "hu", "en", null]));
+    expect(tally.find((l) => l.id === "de")!.count).toBe(2);
+    expect(tally.find((l) => l.id === "hu")!.count).toBe(1);
+    expect(tally.find((l) => l.id === "en")!.count).toBe(1);
+  });
+
+  it("defaults an unknown or missing choice to English", () => {
+    // Everyone is in the English session unless they clear the bar, so the
+    // stored value must never be null — the reminder and the tally rely on it.
+    const res = validateSignup({
+      fullName: "A", email: "a@b.com", topics: ["arousal"], consent: true,
+      preferredLanguage: "klingon",
+    });
+    expect(res.ok && res.value.preferredLanguage).toBe("en");
+
+    const missing = validateSignup({
+      fullName: "A", email: "a@b.com", topics: ["arousal"], consent: true,
+    });
+    expect(missing.ok && missing.value.preferredLanguage).toBe("en");
+  });
+
+  it("keeps a valid choice", () => {
+    const res = validateSignup({
+      fullName: "A", email: "a@b.com", topics: ["arousal"], consent: true,
+      preferredLanguage: "hu",
+    });
+    expect(res.ok && res.value.preferredLanguage).toBe("hu");
+  });
+});
+
+describe("reminder email", () => {
+  const signup = {
+    fullName: "Marthe Henry", email: "m@example.com", country: null,
+    context: null, topics: ["arousal"], question: null, preferredLanguage: "en",
+  };
+
+  it("says when it is and how to drop out", () => {
+    const html = reminderHtml(signup, TOKEN);
+    expect(html).toContain("Saturday, 3 October 2026");
+    expect(html).toContain("10:00 CEST");
+    expect(html).toContain(TOKEN);
+    expect(reminderSubject()).toMatch(/tomorrow/i);
+  });
+
+  it("does not promise a joining link it does not have", () => {
+    // SEMINAR_JOIN_URL is unset in tests, which is the state before David
+    // pastes the Meet link — the email must adapt rather than link nowhere.
+    const html = reminderHtml(signup, TOKEN);
+    expect(html).not.toContain("Join the session");
+    expect(html).toMatch(/follows in a separate email/i);
+    expect(reminderText(signup, TOKEN)).toMatch(/follows in a separate email/i);
+  });
+});
+
+describe("what the confirmation promises", () => {
+  const signup = {
+    fullName: "Marthe Henry", email: "m@example.com", country: null,
+    context: null, topics: ["arousal"], question: null, preferredLanguage: "de",
+  };
+
+  it("states it is free and what the account gives them", () => {
+    const html = confirmationHtml(signup, "registered", TOKEN);
+    expect(html).toMatch(/free/i);
+    expect(html).toMatch(/journals, training logs and weekly\s+check-ins/i);
+  });
+
+  it("warns a non-English choice that it may not run", () => {
+    const html = confirmationHtml(signup, "registered", TOKEN);
+    expect(html).toContain("German");
+    expect(html).toContain(String(MIN_PER_LANGUAGE));
+  });
+
+  it("says nothing about language when they picked English", () => {
+    const html = confirmationHtml({ ...signup, preferredLanguage: "en" }, "registered", TOKEN);
+    expect(html).not.toMatch(/runs in its own language/i);
   });
 });

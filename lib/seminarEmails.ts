@@ -13,6 +13,9 @@ import {
   contextLabel,
   manageUrl,
   hostNamesSentence,
+  languageLabel,
+  joinUrl,
+  MIN_PER_LANGUAGE,
   type SeminarSignup,
   type SignupStatus,
 } from "@/lib/seminar";
@@ -98,6 +101,26 @@ export function confirmationHtml(
       </td>
     </tr>
   </table>
+
+  <table style="width:100%;border-collapse:collapse;background:#f4f4f5;border-radius:12px;margin:0 0 24px">
+    <tr>
+      <td style="padding:16px 18px">
+        <p style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#71717a;margin:0 0 6px">What you get</p>
+        <p style="font-size:14px;margin:0 0 6px;color:#3f3f46">The session itself — free, nothing to pay.</p>
+        <p style="font-size:14px;margin:0;color:#3f3f46">
+          Plus a free PowerFlow account: your athletes' journals, training logs and weekly
+          check-ins in one place, so you can see how they're doing between sessions.
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  ${signup.preferredLanguage && signup.preferredLanguage !== "en" ? `
+  <p style="font-size:13px;color:#52525b;margin:0 0 24px">
+    You asked for <strong>${esc(languageLabel(signup.preferredLanguage))}</strong>. That group
+    runs in its own language only if at least ${MIN_PER_LANGUAGE} people choose it — otherwise
+    you'll be in the English session. We'll confirm which before the day.
+  </p>` : ""}
 
   <p style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#71717a;margin:0 0 8px">
     The topics you picked
@@ -237,6 +260,100 @@ export async function sendPromoted(signup: SeminarSignup, manageToken: string): 
     html:    promotedHtml(signup, manageToken),
   });
   if (!ok) console.error("[seminar] promotion email failed for", signup.email);
+}
+
+// ── Reminder, sent shortly before the day ────────────────────────────────────
+
+export function reminderSubject(): string {
+  return `Tomorrow: ${SEMINAR.title}`;
+}
+
+export function reminderHtml(signup: SeminarSignup, manageToken: string): string {
+  const firstName = signup.fullName.trim().split(/\s+/)[0];
+  const link = joinUrl();
+
+  return `
+<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:8px 0;color:#18181b;line-height:1.6">
+  <p style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#7c3aed;margin:0 0 6px">
+    Tomorrow
+  </p>
+  <h1 style="font-size:24px;font-weight:800;margin:0 0 18px;line-height:1.25">
+    ${esc(SEMINAR.title)}
+  </h1>
+
+  <p style="font-size:15px;margin:0 0 20px">Hi ${esc(firstName)},</p>
+  <p style="font-size:15px;margin:0 0 24px">
+    Quick reminder that we're on tomorrow. Nothing to prepare — just turn up.
+  </p>
+
+  <table style="width:100%;border-collapse:collapse;background:#f4f4f5;border-radius:12px;margin:0 0 24px">
+    <tr><td style="padding:16px 18px">
+      <p style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#71717a;margin:0 0 4px">When</p>
+      <p style="font-size:15px;font-weight:700;margin:0">${esc(seminarDateLabel())}</p>
+      <p style="font-size:13px;color:#52525b;margin:2px 0 0">${esc(SEMINAR.hostTimeLabel)} · ${esc(SEMINAR.durationLabel)}</p>
+      <p style="font-size:12px;color:#71717a;margin:8px 0 0">
+        That's Central European Summer Time — please check it against your own timezone.
+      </p>
+    </td></tr>
+  </table>
+
+  ${link ? `
+  <table style="border-collapse:collapse;margin:0 0 24px">
+    <tr><td style="border-radius:10px;background:#7c3aed">
+      <a href="${esc(link)}" style="display:inline-block;padding:12px 20px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none">
+        Join the session
+      </a>
+    </td></tr>
+  </table>
+  <p style="font-size:12px;color:#71717a;margin:0 0 24px;word-break:break-all">${esc(link)}</p>`
+  : `
+  <p style="font-size:14px;color:#52525b;margin:0 0 24px">
+    The joining link follows in a separate email shortly — keep an eye on your inbox.
+  </p>`}
+
+  <p style="font-size:14px;color:#52525b;margin:0 0 6px">
+    Can't make it after all? <a href="${manageUrl(manageToken)}" style="color:#7c3aed">Let us know here</a> —
+    it frees your place for whoever is next in line.
+  </p>
+
+  <p style="font-size:14px;color:#52525b;margin:24px 0 0">
+    See you tomorrow.<br>
+    ${esc(hostNamesSentence())} — PowerFlow
+  </p>
+</div>`.trim();
+}
+
+export function reminderText(signup: SeminarSignup, manageToken: string): string {
+  const firstName = signup.fullName.trim().split(/\s+/)[0];
+  const link = joinUrl();
+  return [
+    `${SEMINAR.title} — tomorrow`,
+    ``,
+    `Hi ${firstName},`,
+    ``,
+    `Quick reminder that we're on tomorrow. Nothing to prepare — just turn up.`,
+    ``,
+    `WHEN: ${seminarDateLabel()}, ${SEMINAR.hostTimeLabel} (${SEMINAR.durationLabel})`,
+    `That's Central European Summer Time — please check it against your own timezone.`,
+    ``,
+    link ? `JOIN: ${link}` : `The joining link follows in a separate email shortly.`,
+    ``,
+    `Can't make it after all? ${manageUrl(manageToken)} — it frees your place for the next person.`,
+    ``,
+    `${hostNamesSentence()} — PowerFlow`,
+  ].join("\n");
+}
+
+/** Never throws — a failed reminder must not stop the rest of the run. */
+export async function sendReminder(signup: SeminarSignup, manageToken: string): Promise<boolean> {
+  const ok = await sendEmail({
+    to:      signup.email,
+    subject: reminderSubject(),
+    html:    reminderHtml(signup, manageToken),
+    text:    reminderText(signup, manageToken),
+  });
+  if (!ok) console.error("[seminar] reminder email failed for", signup.email);
+  return ok;
 }
 
 // ── Notification to the owner ────────────────────────────────────────────────
