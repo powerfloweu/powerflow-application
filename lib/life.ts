@@ -193,6 +193,7 @@ export interface LifeConfig {
   dimensions: LifeDimension[];
   meals: Meal[];
   macro_targets: MacroTargets;
+  nutrition_config: import("@/lib/nutrition").NutritionConfig;
 }
 
 export function todayYmd(): string {

@@ -6,7 +6,9 @@ import {
   type LifeConfig, type LifePlan, type CheckinRow, type BodyLogRow,
   type WorkoutRow, type WorkoutEntry, type SetEntry, type PlanStructure,
 } from "@/lib/life";
+import type { MealRow } from "@/lib/nutrition";
 import { Card, RatingSlider, NumInput, PrimaryButton, GhostButton, ModeBadge } from "./shared";
+import NutritionCard from "./NutritionCard";
 
 interface Props {
   config: LifeConfig;
@@ -14,6 +16,8 @@ interface Props {
   checkins: CheckinRow[];
   body: BodyLogRow[];
   workouts: WorkoutRow[];
+  meals: MealRow[];
+  reloadMeals: () => Promise<void>;
   saveCheckin: (scores: Record<string, number>) => Promise<boolean>;
   saveBody: (patch: { weight_kg?: number | null; meal_ids?: string[] }, date?: string) => Promise<boolean>;
   saveWorkout: (w: {
@@ -44,7 +48,8 @@ function buildEntries(plan: LifePlan, dayKey: string, week: number): WorkoutEntr
 }
 
 export default function TodayTab({
-  config, plan, checkins, body, workouts, saveCheckin, saveBody, saveWorkout, patchPlan,
+  config, plan, checkins, body, workouts, meals, reloadMeals,
+  saveCheckin, saveBody, saveWorkout, patchPlan,
 }: Props) {
   const today = todayYmd();
   // Workout + body can be backfilled to an earlier day; the check-in below
@@ -521,6 +526,15 @@ export default function TodayTab({
           {savingBody ? "Saving…" : "Save body log"}
         </PrimaryButton>
       </Card>
+
+      {/* Nutrition — AI-powered food tracking */}
+      <NutritionCard
+        meals={meals}
+        currentWeightKg={body.find((b) => b.weight_kg !== null)?.weight_kg ?? null}
+        nutritionConfig={config.nutrition_config ?? {}}
+        onMealSaved={reloadMeals}
+        onMealDeleted={reloadMeals}
+      />
     </div>
   );
 }

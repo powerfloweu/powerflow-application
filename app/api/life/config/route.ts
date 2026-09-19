@@ -18,6 +18,7 @@ const DEFAULTS: LifeConfig = {
   dimensions: [],
   meals: [],
   macro_targets: {},
+  nutrition_config: {},
 };
 
 export async function GET() {
@@ -26,7 +27,7 @@ export async function GET() {
 
   const rows = await dbSelect<ConfigRow>("lifestyle_config", {
     user_id: `eq.${userId}`,
-    select: "user_id,values_list,dimensions,meals,macro_targets",
+    select: "user_id,values_list,dimensions,meals,macro_targets,nutrition_config",
   });
   if (rows.length) return NextResponse.json(rows[0]);
 
@@ -49,6 +50,9 @@ export async function PATCH(req: NextRequest) {
   if (Array.isArray(body.meals))       patch.meals       = body.meals;
   if (body.macro_targets && typeof body.macro_targets === "object") {
     patch.macro_targets = body.macro_targets;
+  }
+  if (body.nutrition_config && typeof body.nutrition_config === "object") {
+    patch.nutrition_config = body.nutrition_config;
   }
   if (Object.keys(patch).length === 1) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });

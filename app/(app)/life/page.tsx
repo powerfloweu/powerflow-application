@@ -13,6 +13,7 @@ import {
   type LifeConfig, type LifePlan, type CheckinRow, type BodyLogRow,
   type WorkoutRow, type WorkoutEntry, type PlanStructure,
 } from "@/lib/life";
+import type { MealRow } from "@/lib/nutrition";
 import TodayTab from "./TodayTab";
 import PlanTab from "./PlanTab";
 import CheckinTab from "./CheckinTab";
@@ -40,6 +41,7 @@ export default function LifePage() {
   const [checkins, setCheckins] = React.useState<CheckinRow[]>([]);
   const [body, setBody] = React.useState<BodyLogRow[]>([]);
   const [workouts, setWorkouts] = React.useState<WorkoutRow[]>([]);
+  const [meals, setMeals] = React.useState<MealRow[]>([]);
 
   const showError = (msg: string) => {
     setFlash(msg);
@@ -47,18 +49,21 @@ export default function LifePage() {
   };
 
   const loadAll = React.useCallback(async () => {
-    const [cfg, pl, ci, bd, wo] = await Promise.all([
+    const today = todayYmd();
+    const [cfg, pl, ci, bd, wo, ml] = await Promise.all([
       fetch("/api/life/config").then((r) => r.ok ? r.json() : null),
       fetch("/api/life/plan").then((r) => r.ok ? r.json() : null),
       fetch("/api/life/checkins").then((r) => r.ok ? r.json() : []),
       fetch("/api/life/body").then((r) => r.ok ? r.json() : []),
       fetch("/api/life/workouts").then((r) => r.ok ? r.json() : []),
+      fetch(`/api/life/meals?date=${today}`).then((r) => r.ok ? r.json() : []),
     ]);
     if (cfg) setConfig(cfg);
     setPlan(pl);
     if (Array.isArray(ci)) setCheckins(ci);
     if (Array.isArray(bd)) setBody(bd);
     if (Array.isArray(wo)) setWorkouts(wo);
+    if (Array.isArray(ml)) setMeals(ml);
   }, []);
 
   React.useEffect(() => {
@@ -90,6 +95,12 @@ export default function LifePage() {
     if (Array.isArray(rows)) setCheckins(rows);
     return true;
   };
+
+  const reloadMeals = React.useCallback(async () => {
+    const today = todayYmd();
+    const ml = await fetch(`/api/life/meals?date=${today}`).then((r) => r.ok ? r.json() : []).catch(() => []);
+    if (Array.isArray(ml)) setMeals(ml);
+  }, []);
 
   const saveBody = async (patch: { weight_kg?: number | null; meal_ids?: string[] }, date = todayYmd()): Promise<boolean> => {
     const res = await fetch("/api/life/body", {
@@ -204,6 +215,7 @@ export default function LifePage() {
       {tab === "today" && (
         <TodayTab
           config={config} plan={plan} checkins={checkins} body={body} workouts={workouts}
+          meals={meals} reloadMeals={reloadMeals}
           saveCheckin={saveCheckin} saveBody={saveBody} saveWorkout={saveWorkout} patchPlan={patchPlan}
         />
       )}
