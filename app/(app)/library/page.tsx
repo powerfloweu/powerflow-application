@@ -7,6 +7,10 @@ import { hasAccess, effectiveTier, type PlanTier } from "@/lib/plan";
 import { useT, type Locale } from "@/lib/i18n";
 import VizLiveSession from "@/app/components/VizLiveSession";
 import VizUpload from "@/app/components/VizUpload";
+import { cardFor } from "@/lib/vizCards";
+
+/** Content modes on a visualization tool. "card" only appears when one is assigned. */
+type VizMode = "card" | "audio" | "live" | "upload";
 
 const SECTION_KEY: Record<string, string> = {
   Relaxation: "library.sectionRelaxation",
@@ -757,13 +761,14 @@ function ToolsPageInner() {
 
   const [vizKeywordsMap, setVizKeywordsMap]   = React.useState<Record<string, string[]>>({});
   const [vizRecordingsMap, setVizRecordingsMap] = React.useState<Record<string, string>>({});
+  const [vizCardsMap, setVizCardsMap]           = React.useState<Record<string, string>>({});
   const [affirmations, setAffirmations]       = React.useState<string[]>([]);
   const [profileLoaded, setProfileLoaded]     = React.useState(false);
   const [aiAccess, setAiAccess]               = React.useState(false);
   const [planTier, setPlanTier]               = React.useState<PlanTier>("opener"); // conservative until loaded
-  // "audio" | "live" | "upload" — selected mode per viz tool
+  // "card" | "audio" | "live" | "upload" — selected mode per viz tool
   // Default comp-day-viz to "audio" so the player is visible without a click-through.
-  const [vizModes, setVizModes] = React.useState<Record<string, "audio" | "live" | "upload">>({ "comp-day-viz": "audio" });
+  const [vizModes, setVizModes] = React.useState<Record<string, VizMode>>({ "comp-day-viz": "audio" });
 
   React.useEffect(() => {
     const stored = localStorage.getItem("relax-favorite");
@@ -792,6 +797,16 @@ function ToolsPageInner() {
       .then((p) => {
         setVizKeywordsMap(p.viz_keywords ?? {});
         setVizRecordingsMap(p.viz_recordings ?? {});
+        const cards: Record<string, string> = p.viz_cards ?? {};
+        setVizCardsMap(cards);
+        // A card was put there deliberately for this athlete — open the tool on
+        // it rather than making them hunt through the tabs for it.
+        const cardDefaults = Object.fromEntries(
+          Object.keys(cards).filter((id) => cardFor(cards, id)).map((id) => [id, "card" as const]),
+        );
+        if (Object.keys(cardDefaults).length) {
+          setVizModes((prev) => ({ ...cardDefaults, ...prev }));
+        }
         setAffirmations(Array.isArray(p.affirmations) ? p.affirmations : []);
         setAiAccess(!!p.ai_access);
         // Per-user access grants (test_access / course_access / ai_access)
@@ -1102,8 +1117,9 @@ function ToolsPageInner() {
                                 : tool.id === "viz-bench" ? "bench"
                                 : "deadlift";
                               const mode = vizModes[tool.id];
-                              const setMode = (m: "audio" | "live" | "upload") =>
+                              const setMode = (m: VizMode) =>
                                 setVizModes((prev) => ({ ...prev, [tool.id]: m }));
+                              const card = cardFor(vizCardsMap, tool.id);
 
                               return (
                                 <>
@@ -1130,8 +1146,8 @@ function ToolsPageInner() {
                                     <>
                                       {/* Mode tab strip */}
                                       <div className="flex gap-1.5 mb-4">
-                                        {(["audio", "live", "upload"] as const).map((m) => {
-                                          const labels = { audio: t("library.vizModeAudio"), live: t("library.vizModeLive"), upload: t("library.vizModeUpload") };
+                                        {((card ? ["card", "audio", "live", "upload"] : ["audio", "live", "upload"]) as VizMode[]).map((m) => {
+                                          const labels = { card: card?.tabLabel ?? "Card", audio: t("library.vizModeAudio"), live: t("library.vizModeLive"), upload: t("library.vizModeUpload") };
                                           return (
                                             <button
                                               key={m}
@@ -1150,6 +1166,7 @@ function ToolsPageInner() {
                                       </div>
 
                                       {/* Active mode content */}
+                                      {mode === "card" && card && card.render()}
                                       {mode === "audio" && (
                                         <AudioPlayer fileKey={tool.fileKey} color={tool.color as ToolColor} />
                                       )}

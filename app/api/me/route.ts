@@ -44,6 +44,8 @@ const SELECT_COLS = [
   "preferred_voice_id",
   // v13 — lifestyle guide beta flag
   "lifestyle_beta",
+  // v14 — per-athlete visualization reference cards
+  "viz_cards",
 ].join(",");
 
 export async function GET() {
