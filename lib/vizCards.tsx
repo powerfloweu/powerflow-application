@@ -23,10 +23,19 @@ export interface VizCard {
 
 // ── Shared pieces ────────────────────────────────────────────────────────────
 
+// Every colour here is applied inline, never through a Tailwind utility.
+// The app's light theme rewrites utilities like .text-white and .bg-white/20
+// with !important (globals.css) — correct for surfaces that flip with the
+// theme, wrong for this card, whose black block and violet footer stay dark in
+// both themes and need light text on them regardless.
 const INK = "#141118";
 const VIOLET = "#8E3FBE";
 const CREAM = "#F7F4EF";
 const BODY = "#4A4550";
+/** Text sitting on INK or VIOLET — must stay light in either theme. */
+const ON_DARK = "#FFFFFF";
+const ON_DARK_MUTED = "#A8A2B0";
+const RULE_ON_DARK = "rgba(255,255,255,0.22)";
 
 function Wordmark() {
   return (
@@ -115,7 +124,10 @@ function SquatStackDepthDrive() {
             style={{ background: INK }}
           >
             {/* nowrap: "15–30" splitting across lines reads as two numbers */}
-            <p className="font-saira font-extrabold leading-none text-white tabular-nums whitespace-nowrap">
+            <p
+              className="font-saira font-extrabold leading-none tabular-nums whitespace-nowrap"
+              style={{ color: ON_DARK }}
+            >
               <span className="text-[clamp(22px,8.2cqw,34px)]">15–30</span>
               <span
                 className="text-[clamp(8px,2.8cqw,11px)] ml-1.5 tracking-[0.2em]"
@@ -124,12 +136,18 @@ function SquatStackDepthDrive() {
                 SEC
               </span>
             </p>
-            <div className="h-9 w-px bg-white/20 flex-shrink-0" />
+            <div className="h-9 w-px flex-shrink-0" style={{ background: RULE_ON_DARK }} />
             <div className="min-w-0">
-              <p className="font-saira text-[clamp(7px,2.2cqw,8.5px)] font-semibold uppercase tracking-[0.2em] text-zinc-400">
+              <p
+                className="font-saira text-[clamp(7px,2.2cqw,8.5px)] font-semibold uppercase tracking-[0.2em]"
+                style={{ color: ON_DARK_MUTED }}
+              >
                 Eyes closed / first person
               </p>
-              <p className="font-saira text-[clamp(11px,3.4cqw,13px)] font-bold text-white leading-tight">
+              <p
+                className="font-saira text-[clamp(11px,3.4cqw,13px)] font-bold leading-tight"
+                style={{ color: ON_DARK }}
+              >
                 Up to 3 reps
               </p>
             </div>
@@ -149,7 +167,10 @@ function SquatStackDepthDrive() {
 
       {/* Closing line */}
       <div className="px-6 py-[7cqw] text-center" style={{ background: VIOLET }}>
-        <p className="font-saira text-[clamp(16px,5.6cqw,21px)] font-extrabold text-white leading-none">
+        <p
+          className="font-saira text-[clamp(16px,5.6cqw,21px)] font-extrabold leading-none"
+          style={{ color: ON_DARK }}
+        >
           &ldquo;I know what to do.&rdquo;
         </p>
       </div>
