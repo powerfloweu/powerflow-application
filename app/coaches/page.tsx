@@ -9,7 +9,6 @@
  */
 
 import React from "react";
-import SeminarBanner from "@/app/components/SeminarBanner";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -132,9 +131,7 @@ export default function CoachesPage() {
         </div>
       )}
 
-      <SeminarBanner />
-
-      <div className="relative z-10 flex flex-col items-center px-5 pt-24 pb-28 sm:pt-28 sm:pb-32 max-w-xl mx-auto w-full">
+      <div className="relative z-10 flex flex-col items-center px-5 pt-24 pb-12 sm:pt-28 sm:pb-16 max-w-xl mx-auto w-full">
 
         {/* ── Header ── */}
         <div className="w-full flex items-center justify-between mb-12">

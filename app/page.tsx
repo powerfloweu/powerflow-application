@@ -3,7 +3,6 @@
 
 import Image from "next/image";
 import React from "react";
-import SeminarBanner from "@/app/components/SeminarBanner";
 
 type Lang = "en" | "de" | "hu";
 
@@ -494,10 +493,7 @@ export default function PowerFlowApplicationPage() {
   ];
 
   return (
-    // pb-28 keeps the floating seminar pill clear of the form's own controls —
-    // without it the pill sits over the NEXT button at the bottom of each step.
-    <div className="min-h-screen text-white pb-28">
-      <SeminarBanner />
+    <div className="min-h-screen text-white">
 
       {/* Fixed athlete photo slideshow — full page background */}
       <div className="fixed inset-0 -z-10" aria-hidden>
