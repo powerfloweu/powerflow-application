@@ -31,6 +31,20 @@ const AUDIO_MIME_TYPES = new Set([
   "audio/quicktime",
 ]);
 
+/**
+ * Turn a signed path from Supabase Storage into an absolute URL.
+ *
+ * Storage returns paths relative to its own API root ("/object/sign/…"), not
+ * to the project root, so the "/storage/v1" segment has to be put back. Without
+ * it every signed URL answers 404 "requested path is invalid".
+ */
+function storageUrl(signedPath: string): string {
+  const path = signedPath.startsWith("/storage/v1")
+    ? signedPath
+    : `/storage/v1${signedPath.startsWith("/") ? "" : "/"}${signedPath}`;
+  return `${SUPABASE_URL}${path}`;
+}
+
 function extFromFilename(filename: string): string {
   const parts = filename.split(".");
   return parts.length > 1 ? `.${parts[parts.length - 1].toLowerCase()}` : "";
@@ -96,11 +110,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Could not create upload URL" }, { status: 502 });
   }
 
-  const { signedURL } = (await signRes.json()) as { signedURL: string };
-  // signedURL is a path like /storage/v1/object/upload/sign/viz-recordings/...?token=...
-  const signedUrl = `${SUPABASE_URL}${signedURL}`;
+  // The upload-sign endpoint answers with `url`; the read-sign endpoint below
+  // answers with `signedURL`. Accept either so a Supabase change to one shape
+  // can't silently leave us appending "undefined" to the base URL.
+  const signed = (await signRes.json()) as { url?: string; signedURL?: string };
+  const signedPath = signed.url ?? signed.signedURL;
+  if (!signedPath) {
+    console.error("[viz-recording] sign upload returned no url", signed);
+    return NextResponse.json({ error: "Could not create upload URL" }, { status: 502 });
+  }
 
-  return NextResponse.json({ signedUrl, storagePath });
+  return NextResponse.json({ signedUrl: storageUrl(signedPath), storagePath });
 }
 
 // ── GET — signed read URL for existing recording ──────────────────────────────
@@ -135,8 +155,13 @@ export async function GET(req: NextRequest) {
 
   if (!signRes.ok) return NextResponse.json({ error: "Could not sign URL" }, { status: 502 });
 
-  const { signedURL } = (await signRes.json()) as { signedURL: string };
-  return NextResponse.json({ url: `${SUPABASE_URL}${signedURL}` });
+  const signed = (await signRes.json()) as { url?: string; signedURL?: string };
+  const signedPath = signed.signedURL ?? signed.url;
+  if (!signedPath) {
+    console.error("[viz-recording] sign read returned no url", signed);
+    return NextResponse.json({ error: "Could not sign URL" }, { status: 502 });
+  }
+  return NextResponse.json({ url: storageUrl(signedPath) });
 }
 
 // ── DELETE — remove recording ─────────────────────────────────────────────────
