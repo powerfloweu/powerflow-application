@@ -330,6 +330,11 @@ function CheckinFeedbackPanel({
   const [audioUrl, setAudioUrl] = React.useState(existing?.audio_url ?? "");
   // What gets written to the database — the stable object path.
   const [storedAudio, setStoredAudio] = React.useState(existing?.audio_url ?? "");
+  // A successful save used to change nothing on screen — the button simply
+  // stopped saying "Saving…" — so a coach could not tell whether it had
+  // worked. Clarice asked whether nothing happening was what it should look
+  // like. It saved; it just never said so.
+  const [saved, setSaved] = React.useState(false);
   const [reviewed, setReviewed] = React.useState(existing?.reviewed ?? false);
   const [saving, setSaving] = React.useState(false);
   const [recording, setRecording] = React.useState(false);
@@ -425,6 +430,7 @@ function CheckinFeedbackPanel({
   async function save() {
     setSaving(true);
     setError(null);
+    setSaved(false);
     try {
       // A voice note recorded seconds ago may still be uploading. Read the URL
       // from the upload itself rather than from state, which the round-trip
@@ -460,6 +466,7 @@ function CheckinFeedbackPanel({
       }
       const { id } = await res.json() as { id: string };
       uploadRef.current = null;
+      setSaved(true);
       onSaved({ id, checkin_id: checkinId, checkin_type: checkinType, content: text || null, audio_url: url || null, reviewed });
     } catch {
       setError("Save failed — check your connection and try again.");
@@ -473,7 +480,7 @@ function CheckinFeedbackPanel({
       {/* Written message */}
       <textarea
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => { setText(e.target.value); setSaved(false); }}
         placeholder="Leave a written note for this athlete…"
         rows={3}
         className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-saira text-base lg:text-xs text-white placeholder-zinc-500 outline-none focus:border-purple-400/40 transition resize-none"
@@ -507,17 +514,26 @@ function CheckinFeedbackPanel({
       )}
 
       {/* Reviewed tick + save */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)}
+          <input type="checkbox" checked={reviewed} onChange={(e) => { setReviewed(e.target.checked); setSaved(false); }}
             className="w-4 h-4 rounded border-white/20 bg-white/5 accent-purple-500 cursor-pointer" />
           <span className="font-saira text-[11px] text-zinc-400">Mark as reviewed</span>
         </label>
-        <button type="button" onClick={save} disabled={saving || recording}
-          title={recording ? "Stop the recording first" : undefined}
-          className="rounded-lg border border-purple-400/30 bg-purple-500/15 px-4 py-1.5 font-saira text-[11px] font-bold text-purple-300 hover:bg-purple-500/25 transition disabled:opacity-50">
-          {saving ? (uploading ? "Waiting for voice note…" : "Saving…") : "Save feedback"}
-        </button>
+
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Say so when it worked — the save used to be invisible. */}
+          {saved && !saving && (
+            <span className="font-saira text-[11px] font-semibold text-emerald-400 text-right">
+              Saved &mdash; your athlete can see this
+            </span>
+          )}
+          <button type="button" onClick={save} disabled={saving || recording}
+            title={recording ? "Stop the recording first" : undefined}
+            className="flex-shrink-0 rounded-lg border border-purple-400/30 bg-purple-500/15 px-4 py-1.5 font-saira text-[11px] font-bold text-purple-300 hover:bg-purple-500/25 transition disabled:opacity-50">
+            {saving ? (uploading ? "Waiting for voice note…" : "Saving…") : "Save feedback"}
+          </button>
+        </div>
       </div>
     </div>
   );
