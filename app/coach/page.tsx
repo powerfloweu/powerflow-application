@@ -330,10 +330,16 @@ function CheckinFeedbackPanel({
   const [reviewed, setReviewed] = React.useState(existing?.reviewed ?? false);
   const [saving, setSaving] = React.useState(false);
   const [recording, setRecording] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const [mediaRec, setMediaRec] = React.useState<MediaRecorder | null>(null);
   const chunksRef = React.useRef<Blob[]>([]);
   const mediaRecRef = React.useRef<MediaRecorder | null>(null);
   const streamRef = React.useRef<MediaStream | null>(null);
+  // The upload starts in MediaRecorder's `onstop` and finishes some time after
+  // the UI has stopped looking busy. save() awaits this so a coach who hits
+  // "Save feedback" straight after stopping doesn't silently lose the note.
+  const uploadRef = React.useRef<Promise<string | null> | null>(null);
 
   // Release the mic + recorder on unmount even if the coach closes the
   // feedback editor (or the athlete card re-renders it away) mid-recording.
@@ -364,22 +370,43 @@ function CheckinFeedbackPanel({
       mediaRecRef.current = mr;
       chunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      mr.onstop = async () => {
+      mr.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        if (!blob.size) {
+          setError("Nothing was recorded — try again.");
+          return;
+        }
         const fd = new FormData();
         fd.append("audio", blob, "voice.webm");
-        const res = await fetch("/api/coach/checkin-audio", { method: "POST", body: fd });
-        if (res.ok) {
-          const { url } = await res.json() as { url: string };
-          setAudioUrl(url);
-        }
+
+        uploadRef.current = (async (): Promise<string | null> => {
+          setUploading(true);
+          setError(null);
+          try {
+            const res = await fetch("/api/coach/checkin-audio", { method: "POST", body: fd });
+            if (!res.ok) {
+              const { error: msg } = await res.json().catch(() => ({ error: "" })) as { error?: string };
+              setError(msg || `Voice note upload failed (${res.status}).`);
+              return null;
+            }
+            const { url } = await res.json() as { url: string };
+            setAudioUrl(url);
+            return url;
+          } catch {
+            setError("Voice note upload failed — check your connection and re-record.");
+            return null;
+          } finally {
+            setUploading(false);
+          }
+        })();
       };
       mr.start();
       setMediaRec(mr);
       setRecording(true);
-    } catch { alert("Microphone access denied"); }
+      setError(null);
+    } catch { setError("Microphone access denied."); }
   }
 
   function stopRecording() {
@@ -390,7 +417,23 @@ function CheckinFeedbackPanel({
 
   async function save() {
     setSaving(true);
+    setError(null);
     try {
+      // A voice note recorded seconds ago may still be uploading. Read the URL
+      // from the upload itself rather than from state, which the round-trip
+      // may not have populated yet.
+      let url = audioUrl;
+      if (uploadRef.current) {
+        const uploaded = await uploadRef.current;
+        if (uploaded) url = uploaded;
+        else if (!url) {
+          // The recording never made it to storage. Saving now would quietly
+          // drop it, so stop and let the coach re-record.
+          setError("The voice note didn't upload, so nothing was saved. Re-record and try again.");
+          return;
+        }
+      }
+
       const res = await fetch("/api/coach/checkin-feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -399,14 +442,20 @@ function CheckinFeedbackPanel({
           checkin_type: checkinType,
           athlete_id: athleteId,
           content: text || undefined,
-          audio_url: audioUrl || undefined,
+          audio_url: url || undefined,
           reviewed,
         }),
       });
-      if (res.ok) {
-        const { id } = await res.json() as { id: string };
-        onSaved({ id, checkin_id: checkinId, checkin_type: checkinType, content: text || null, audio_url: audioUrl || null, reviewed });
+      if (!res.ok) {
+        const { error: msg } = await res.json().catch(() => ({ error: "" })) as { error?: string };
+        setError(msg || `Save failed (${res.status}). Nothing was stored — try again.`);
+        return;
       }
+      const { id } = await res.json() as { id: string };
+      uploadRef.current = null;
+      onSaved({ id, checkin_id: checkinId, checkin_type: checkinType, content: text || null, audio_url: url || null, reviewed });
+    } catch {
+      setError("Save failed — check your connection and try again.");
     } finally { setSaving(false); }
   }
 
@@ -438,10 +487,17 @@ function CheckinFeedbackPanel({
             Stop recording
           </button>
         )}
-        {audioUrl && !recording && (
+        {uploading && (
+          <span className="font-saira text-[11px] text-zinc-400">Uploading voice note…</span>
+        )}
+        {audioUrl && !recording && !uploading && (
           <audio src={audioUrl} controls className="h-8 flex-1 min-w-0" />
         )}
       </div>
+
+      {error && (
+        <p className="font-saira text-[11px] text-rose-300 leading-relaxed">{error}</p>
+      )}
 
       {/* Reviewed tick + save */}
       <div className="flex items-center justify-between gap-3">
@@ -450,9 +506,10 @@ function CheckinFeedbackPanel({
             className="w-4 h-4 rounded border-white/20 bg-white/5 accent-purple-500 cursor-pointer" />
           <span className="font-saira text-[11px] text-zinc-400">Mark as reviewed</span>
         </label>
-        <button type="button" onClick={save} disabled={saving}
+        <button type="button" onClick={save} disabled={saving || recording}
+          title={recording ? "Stop the recording first" : undefined}
           className="rounded-lg border border-purple-400/30 bg-purple-500/15 px-4 py-1.5 font-saira text-[11px] font-bold text-purple-300 hover:bg-purple-500/25 transition disabled:opacity-50">
-          {saving ? "Saving…" : "Save feedback"}
+          {saving ? (uploading ? "Waiting for voice note…" : "Saving…") : "Save feedback"}
         </button>
       </div>
     </div>
