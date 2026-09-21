@@ -326,7 +326,10 @@ function CheckinFeedbackPanel({
   onSaved: (fb: CheckinFeedback) => void;
 }) {
   const [text, setText] = React.useState(existing?.content ?? "");
+  // What the <audio> element plays — a signed, expiring URL.
   const [audioUrl, setAudioUrl] = React.useState(existing?.audio_url ?? "");
+  // What gets written to the database — the stable object path.
+  const [storedAudio, setStoredAudio] = React.useState(existing?.audio_url ?? "");
   const [reviewed, setReviewed] = React.useState(existing?.reviewed ?? false);
   const [saving, setSaving] = React.useState(false);
   const [recording, setRecording] = React.useState(false);
@@ -391,9 +394,13 @@ function CheckinFeedbackPanel({
               setError(msg || `Voice note upload failed (${res.status}).`);
               return null;
             }
-            const { url } = await res.json() as { url: string };
+            // `url` is signed and expiring (for playing it back right now);
+            // `path` is the stable object path that belongs in the database.
+            const { url, path } = await res.json() as { url: string; path?: string };
             setAudioUrl(url);
-            return url;
+            const stored = path ?? url;
+            setStoredAudio(stored);
+            return stored;
           } catch {
             setError("Voice note upload failed — check your connection and re-record.");
             return null;
@@ -422,7 +429,7 @@ function CheckinFeedbackPanel({
       // A voice note recorded seconds ago may still be uploading. Read the URL
       // from the upload itself rather than from state, which the round-trip
       // may not have populated yet.
-      let url = audioUrl;
+      let url = storedAudio;
       if (uploadRef.current) {
         const uploaded = await uploadRef.current;
         if (uploaded) url = uploaded;

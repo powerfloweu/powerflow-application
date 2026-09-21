@@ -1,4 +1,5 @@
 /**
+ * GET  /api/monthly-checkin — this athlete's own past monthly check-ins.
  * POST /api/monthly-checkin — submit (or overwrite) this week's monthly check-in.
  * Only accepted on ISO weeks where week % 4 === 0 (or when force_checkin is set).
  */
@@ -9,6 +10,33 @@ import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
 import { checkinTargetWeek, isoWeekYear, isMonthlyWeek } from "@/lib/weeklyCheckin";
 import { mondayOfWeek } from "@/lib/date";
 import { notifyCoachOfCheckin } from "@/lib/coachNotify";
+
+const MONTHLY_SELECT =
+  "id,user_id,week_number,year,week_start,mood_rating,training_quality,readiness_rating," +
+  "energy_rating,sleep_rating,biggest_win,biggest_challenge,focus_next_week," +
+  "overall_progress,biggest_breakthrough,key_lesson,next_month_intention,created_at,updated_at";
+
+/**
+ * Monthly check-ins the athlete has already submitted. The weekly route has
+ * always had this; the monthly one did not, so an athlete could answer the
+ * longer monthly questions and never see them — or any coach reply to them —
+ * again.
+ */
+export async function GET() {
+  if (!isConfigured) return NextResponse.json({ checkins: [] });
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const checkins = await dbSelect("monthly_checkins", {
+    user_id: `eq.${user.id}`,
+    select: MONTHLY_SELECT,
+    order: "week_start.desc",
+  });
+
+  return NextResponse.json({ checkins });
+}
 
 export async function POST(req: NextRequest) {
   if (!isConfigured) return NextResponse.json({ error: "Not configured" }, { status: 503 });

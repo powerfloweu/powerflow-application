@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect } from "@/lib/supabaseAdmin";
+import { signCoachAudio } from "@/lib/coachAudio";
 import type { ReflectionSetRow, ReflectionAnswerRow, ReflectionNoteRow } from "@/lib/reflections";
 
 export const runtime = "nodejs";
@@ -50,9 +51,15 @@ export async function GET(_req: NextRequest, { params }: Params) {
     }),
   ]);
 
+  // The coach-audio bucket is private, so voice notes go out as signed,
+  // expiring URLs rather than paths the player could not load.
+  const signedNotes = await Promise.all(
+    notes.map(async (n) => ({ ...n, audio_url: await signCoachAudio(n.audio_url) })),
+  );
+
   return NextResponse.json({
     set,
     answers: answerRows[0]?.answers ?? null,
-    notes,
+    notes: signedNotes,
   });
 }

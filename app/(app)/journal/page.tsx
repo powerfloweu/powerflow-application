@@ -21,7 +21,7 @@ import {
 import { ymdLocal } from "@/lib/date";
 import { DateTabs, offsetDate } from "@/app/components/DateTabs";
 import { useT } from "@/lib/i18n";
-import { weekLabel, type WeeklyCheckin } from "@/lib/weeklyCheckin";
+import { weekLabel, type WeeklyCheckin, type MonthlyCheckin } from "@/lib/weeklyCheckin";
 import VoicePhotoCapture, { type ParsedResult } from "@/app/components/VoicePhotoCapture";
 import { useWeeklyCheckin } from "@/app/components/WeeklyCheckinContext";
 import { effectiveTier, canAccessPR } from "@/lib/plan";
@@ -60,6 +60,14 @@ type UserProfile = {
 
 type CoachFeedbackItem = {
   content: string;
+  created_at: string;
+  coach_name: string;
+};
+
+/** Coach feedback on a weekly check-in. `audio_url` is a signed, expiring URL. */
+type CheckinFeedbackItem = {
+  content: string | null;
+  audio_url: string | null;
   created_at: string;
   coach_name: string;
 };
@@ -954,6 +962,9 @@ export default function JournalPage() {
   const [reloadKey, setReloadKey]         = React.useState(0);
   const [coachPromptDismissed, setCoachPromptDismissed] = React.useState(false);
   const [coachFeedback, setCoachFeedback] = React.useState<Record<string, CoachFeedbackItem>>({});
+  // Coach notes left on check-ins, keyed by check-in id.
+  const [checkinFeedback, setCheckinFeedback] = React.useState<Record<string, CheckinFeedbackItem>>({});
+  const [monthlyCheckins, setMonthlyCheckins] = React.useState<MonthlyCheckin[]>([]);
   // Custom journal prompt labels — updated locally after PromptCustomizer saves
   const [customPromptLabels, setCustomPromptLabels] = React.useState<string[] | null>(null);
 
@@ -1034,12 +1045,14 @@ export default function JournalPage() {
     (async () => {
       setLoadError(false);
       try {
-        const [profileRes, entriesRes, trainingRes, feedbackRes, checkinRes] = await Promise.all([
+        const [profileRes, entriesRes, trainingRes, feedbackRes, checkinRes, ciFeedbackRes, monthlyRes] = await Promise.all([
           fetch("/api/me"),
           fetch("/api/journal/entries"),
           fetch("/api/training/entries?all=true"),
           fetch("/api/journal/entry-feedback"),
           fetch("/api/weekly-checkin"),
+          fetch("/api/me/checkin-feedback"),
+          fetch("/api/monthly-checkin"),
         ]);
         if (cancelled) return;
         if (profileRes.ok) {
@@ -1064,6 +1077,13 @@ export default function JournalPage() {
           const data = await checkinRes.json();
           setWeeklyCheckins(data.checkins ?? []);
           setCheckinWindowOpen(data.windowOpen ?? false);
+        }
+        if (ciFeedbackRes.ok) {
+          setCheckinFeedback(await ciFeedbackRes.json());
+        }
+        if (monthlyRes.ok) {
+          const data = await monthlyRes.json();
+          setMonthlyCheckins(data.checkins ?? []);
         }
       } catch (err) {
         console.error("[journal] failed to load page data", err);
@@ -1339,8 +1359,13 @@ export default function JournalPage() {
 
                 {/* Past check-ins list */}
                 <div className="space-y-2">
-                  {weeklyCheckins.map((ci) => {
-                    const key = `${ci.year}-${ci.week_number}`;
+                  {[
+                    ...weeklyCheckins.map((d) => ({ monthly: false, ci: d as WeeklyCheckin & Partial<MonthlyCheckin> })),
+                    ...monthlyCheckins.map((d) => ({ monthly: true, ci: d as WeeklyCheckin & Partial<MonthlyCheckin> })),
+                  ].sort((a, b) =>
+                    b.ci.year !== a.ci.year ? b.ci.year - a.ci.year : b.ci.week_number - a.ci.week_number,
+                  ).map(({ monthly: isMonthly, ci }) => {
+                    const key = `${isMonthly ? "m" : "w"}-${ci.year}-${ci.week_number}`;
                     const isExpanded = expandedWeeks.has(key);
                     const label = weekLabel(ci.week_number, ci.week_start);
                     const avg = Math.round(
@@ -1348,7 +1373,7 @@ export default function JournalPage() {
                     ) / 10;
                     const avgColor = avg >= 7.5 ? "text-emerald-400" : avg >= 5 ? "text-purple-300" : "text-rose-400";
                     return (
-                      <div key={key} className="rounded-2xl border border-white/6 bg-surface-alt overflow-hidden">
+                      <div key={key} className={`rounded-2xl border overflow-hidden ${isMonthly ? "border-amber-500/25 bg-amber-500/[0.04]" : "border-white/6 bg-surface-alt"}`}>
                         <button
                           type="button"
                           onClick={() => setExpandedWeeks((prev) => {
@@ -1358,8 +1383,22 @@ export default function JournalPage() {
                           })}
                           className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/3 transition"
                         >
-                          <span className="font-saira text-[11px] font-semibold text-zinc-300">{label}</span>
+                          <span className="flex items-center gap-2 min-w-0">
+                            {isMonthly && (
+                              <span className="flex-shrink-0 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-saira text-[9px] font-bold uppercase tracking-[0.14em] text-amber-400">
+                                Monthly
+                              </span>
+                            )}
+                            <span className="font-saira text-[11px] font-semibold text-zinc-300 truncate">{label}</span>
+                          </span>
                           <div className="flex items-center gap-3">
+                            {/* Without this the only way to find a coach's reply
+                                is to open every week one at a time. */}
+                            {checkinFeedback[ci.id] && (
+                              <span className="rounded-full border border-purple-400/30 bg-purple-500/15 px-2 py-0.5 font-saira text-[9px] font-bold uppercase tracking-[0.14em] text-purple-300">
+                                {checkinFeedback[ci.id].audio_url ? "Coach ♪" : "Coach"}
+                              </span>
+                            )}
                             <span className={`font-saira text-sm font-bold tabular-nums ${avgColor}`}>{avg.toFixed(1)}</span>
                             <svg viewBox="0 0 16 16" className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none">
                               <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1400,6 +1439,58 @@ export default function JournalPage() {
                               <div>
                                 <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Focus next week</p>
                                 <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.focus_next_week}</p>
+                              </div>
+                            )}
+
+                            {/* Monthly-only answers */}
+                            {isMonthly && (
+                              <>
+                                {typeof ci.overall_progress === "number" && (
+                                  <div>
+                                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">Overall progress</p>
+                                    <p className="font-saira text-lg font-extrabold tabular-nums text-amber-300">{ci.overall_progress}</p>
+                                  </div>
+                                )}
+                                {ci.biggest_breakthrough && (
+                                  <div>
+                                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">Biggest breakthrough</p>
+                                    <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.biggest_breakthrough}</p>
+                                  </div>
+                                )}
+                                {ci.key_lesson && (
+                                  <div>
+                                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">Key lesson</p>
+                                    <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.key_lesson}</p>
+                                  </div>
+                                )}
+                                {ci.next_month_intention && (
+                                  <div>
+                                    <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-amber-400/70 mb-1">Next month&rsquo;s intention</p>
+                                    <p className="font-saira text-xs text-zinc-300 leading-relaxed">{ci.next_month_intention}</p>
+                                  </div>
+                                )}
+                              </>
+                            )}
+
+                            {/* What the coach wrote back about this check-in */}
+                            {checkinFeedback[ci.id] && (
+                              <div className="rounded-xl border border-purple-500/20 bg-purple-500/[0.06] p-3 space-y-2">
+                                <p className="font-saira text-[9px] uppercase tracking-[0.18em] text-purple-300">
+                                  {checkinFeedback[ci.id].coach_name}
+                                </p>
+                                {checkinFeedback[ci.id].content && (
+                                  <p className="font-saira text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap break-words">
+                                    {checkinFeedback[ci.id].content}
+                                  </p>
+                                )}
+                                {checkinFeedback[ci.id].audio_url && (
+                                  <audio
+                                    src={checkinFeedback[ci.id].audio_url!}
+                                    controls
+                                    preload="none"
+                                    className="h-8 w-full"
+                                  />
+                                )}
                               </div>
                             )}
                           </div>

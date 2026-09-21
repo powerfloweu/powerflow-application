@@ -1,0 +1,12 @@
+-- Make the coach voice-note bucket private.
+--
+-- It was public, so every note a coach recorded on a check-in or a reflection
+-- was fetchable by anyone holding the URL, with no expiry — and those URLs sit
+-- in the database, in push payloads and in browser history. The recordings are
+-- a coach talking candidly to one athlete about their week.
+--
+-- Safe to flip because every reader now signs: /api/me/checkin-feedback,
+-- /api/coach/checkin-feedback and both reflection routes resolve the stored
+-- value through signCoachAudio() (lib/coachAudio.ts), which accepts both the
+-- old public-URL rows and bare paths, so no data migration is needed.
+update storage.buckets set public = false where id = 'coach-audio';

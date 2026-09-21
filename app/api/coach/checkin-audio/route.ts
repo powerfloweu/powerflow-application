@@ -5,6 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { signCoachAudio } from "@/lib/coachAudio";
 
 export const runtime = "nodejs";
 
@@ -83,6 +84,12 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
-  return NextResponse.json({ url: publicUrl });
+  // The bucket is private. `url` is a signed link so the coach can play the
+  // note back straight away; `path` is what gets stored, because a signed URL
+  // would be a dead link in the database once its token expired.
+  const url = await signCoachAudio(path);
+  if (!url) {
+    return NextResponse.json({ error: "Uploaded, but could not create a playback link" }, { status: 500 });
+  }
+  return NextResponse.json({ url, path });
 }

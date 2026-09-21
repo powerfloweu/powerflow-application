@@ -18,6 +18,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, isConfigured } from "@/lib/supabase/server";
 import { dbSelect, dbPatch } from "@/lib/supabaseAdmin";
+import { encodeStoragePath } from "@/lib/storagePath";
 
 const SUPABASE_URL  = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -86,14 +87,14 @@ export async function POST(req: NextRequest) {
   const existing = await getVizRecordings(user.id);
   if (existing[toolId]) {
     await fetch(
-      `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(existing[toolId])}`,
+      `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeStoragePath(existing[toolId])}`,
       { method: "DELETE", headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } },
     ).catch((err) => console.error("[api/tools/viz-recording] async operation failed", err)); // non-fatal
   }
 
   // Ask Supabase Storage for a signed upload URL
   const signRes = await fetch(
-    `${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${encodeURIComponent(storagePath)}`,
+    `${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${encodeStoragePath(storagePath)}`,
     {
       method: "POST",
       headers: {
@@ -141,7 +142,7 @@ export async function GET(req: NextRequest) {
 
   // Create a short-lived signed read URL
   const signRes = await fetch(
-    `${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${encodeURIComponent(path)}`,
+    `${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${encodeStoragePath(path)}`,
     {
       method: "POST",
       headers: {
@@ -181,7 +182,7 @@ export async function DELETE(req: NextRequest) {
 
   if (path) {
     await fetch(
-      `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(path)}`,
+      `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeStoragePath(path)}`,
       { method: "DELETE", headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } },
     ).catch((err) => console.error("[api/tools/viz-recording] async operation failed", err));
   }

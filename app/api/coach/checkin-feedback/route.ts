@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { dbSelect, dbInsert, dbPatch } from "@/lib/supabaseAdmin";
 import { sendPushToUser } from "@/lib/push";
+import { signCoachAudio } from "@/lib/coachAudio";
 
 export const runtime = "nodejs";
 
@@ -62,7 +63,10 @@ export async function GET(req: NextRequest) {
     order: "created_at.desc",
   });
 
-  return NextResponse.json(rows);
+  // The bucket is private, so hand back signed URLs the player can actually
+  // load rather than the stored path.
+  const signed = await Promise.all(rows.map((r) => signCoachAudio(r.audio_url)));
+  return NextResponse.json(rows.map((r, i) => ({ ...r, audio_url: signed[i] })));
 }
 
 // ── POST ───────────────────────────────────────────────────────────────────────
@@ -134,7 +138,9 @@ export async function POST(req: NextRequest) {
     await sendPushToUser(athlete_id, {
       title: "Coach feedback",
       body: `${coachName} left feedback on your check-in`,
-      url: "/today",
+      // Check-ins and their coach replies live on the journal page; this
+      // pointed at /today, which has never rendered either.
+      url: "/journal",
       tag: `coach-feedback-${checkin_id}`,
     }).catch((err) => console.error("[api/coach/checkin-feedback] async operation failed", err));
   }
