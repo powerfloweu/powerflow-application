@@ -7,10 +7,13 @@ import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 // scenario (regenerate its webhook URL) and set the new one as
 // APPLY_WEBHOOK_URL before this route will accept submissions again.
 const WEBHOOK_URL = process.env.APPLY_WEBHOOK_URL ?? "";
+// Must match what the form on / actually submits. "countryTimezone" was in
+// this list long after the field was removed from the form (c313055), which
+// would have rejected every application the moment anything started calling
+// this route.
 const REQUIRED_FIELDS = [
   "fullName",
   "email",
-  "countryTimezone",
   "language",
   "mentalGoals",
   "expectations",

@@ -302,7 +302,12 @@ export default function PowerFlowApplicationPage() {
     setSubmitError(null);
     setSubmitting(true);
     try {
-      const res = await fetch("https://hook.eu1.make.com/afdi7p5rw9trr6242r4d52cllvzsmksm", {
+      // Posts to our own route, not straight to Make. This file is a client
+      // component, so a webhook URL written here ships in the JS bundle to
+      // every visitor — anyone could read it and post into the scenario.
+      // /api/apply keeps the URL server-side and adds rate limiting and
+      // field validation.
+      const res = await fetch("/api/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
