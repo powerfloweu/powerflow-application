@@ -25,6 +25,20 @@ export const RESULT_TABLE: Record<TestType, string> = {
   sat: "sat_results",
 };
 
+/**
+ * URL segment under /tests for each type. Three of them happen to match the
+ * type name, which is why building the link by interpolating the type went
+ * unnoticed — "sat" lives at /tests/self-awareness, so every SAT result email
+ * since April carried a link to a page that 404s. Keep this in step with the
+ * directories under app/tests; lib/tests/resultLink.test.ts enforces it.
+ */
+export const RESULT_ROUTE: Record<TestType, string> = {
+  acsi: "acsi",
+  csai: "csai",
+  das: "das",
+  sat: "self-awareness",
+};
+
 export const RESULT_SELECT: Record<TestType, string> = {
   acsi: "id,user_id,paid,result_ref,score_coping,score_peaking,score_goal_setting,score_concentration,score_freedom,score_confidence,score_coachability,total_score,first_name,email,gender,lang,submitted_at",
   csai: "id,user_id,paid,result_ref,score_cognitive,score_somatic,score_confidence,first_name,email,gender,lang,submitted_at",

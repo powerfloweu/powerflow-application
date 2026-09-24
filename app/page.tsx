@@ -46,6 +46,7 @@ type CopyEntry = {
     back: string;
   };
   disclaimer: string;
+  submitFailed: string;
 };
 
 const copy: Record<Lang, CopyEntry> = {
@@ -103,6 +104,8 @@ const copy: Record<Lang, CopyEntry> = {
     },
     disclaimer:
       "By submitting, you apply for 1:1 mental coaching with David Sipos (PowerFlow). Submitting does not guarantee acceptance.",
+    submitFailed:
+      "Something went wrong sending your application — nothing was submitted. Please check your connection and press the button again.",
   },
   de: {
     heroTagline: "PowerFlow • Mentale Vorbereitung für Powerlifter",
@@ -158,6 +161,8 @@ const copy: Record<Lang, CopyEntry> = {
     },
     disclaimer:
       "Mit dem Absenden bewirbst du dich für 1:1 Mentalcoaching mit David Sipos (PowerFlow). Eine Annahme ist nicht garantiert.",
+    submitFailed:
+      "Beim Senden deiner Bewerbung ist etwas schiefgelaufen — es wurde nichts übermittelt. Prüfe deine Verbindung und klicke erneut.",
   },
   hu: {
     heroTagline: "PowerFlow • Mentális felkészítés erőemelőknek",
@@ -213,6 +218,8 @@ const copy: Record<Lang, CopyEntry> = {
     },
     disclaimer:
       "Az űrlap beküldésével 1:1 mentáltréningre jelentkezel David Siposhoz (PowerFlow). A felvétel nem garantált.",
+    submitFailed:
+      "Valami hiba történt a jelentkezés elküldésekor — semmi nem került elküldésre. Ellenőrizd a kapcsolatot, és nyomd meg újra a gombot.",
   },
 };
 
@@ -245,6 +252,8 @@ export default function PowerFlowApplicationPage() {
   const [step, setStep] = React.useState(0);
   const [nextCompDate, setNextCompDate] = React.useState<string>("");
   const [submitted, setSubmitted] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const id = setInterval(() => {
@@ -290,14 +299,28 @@ export default function PowerFlowApplicationPage() {
       submittedAt: new Date().toISOString(),
     };
 
+    setSubmitError(null);
+    setSubmitting(true);
     try {
-      await fetch("https://hook.eu1.make.com/afdi7p5rw9trr6242r4d52cllvzsmksm", {
+      const res = await fetch("https://hook.eu1.make.com/afdi7p5rw9trr6242r4d52cllvzsmksm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      // This used to show the thank-you screen whatever happened — a failed
+      // POST looked exactly like a successful one, so an application could be
+      // lost with the applicant believing it had been sent.
+      if (!res.ok) {
+        console.error("[apply] webhook rejected submission", res.status);
+        setSubmitError(t.submitFailed);
+        return;
+      }
     } catch (err) {
-      console.error("Failed to submit to webhook", err);
+      console.error("[apply] failed to reach webhook", err);
+      setSubmitError(t.submitFailed);
+      return;
+    } finally {
+      setSubmitting(false);
     }
 
     setSubmitted(true);
@@ -653,12 +676,25 @@ export default function PowerFlowApplicationPage() {
                   <button
                     type="button"
                     onClick={handleFinalSubmit}
-                    className="rounded-full bg-purple-500 px-8 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-purple-400"
+                    disabled={submitting}
+                    className="rounded-full bg-purple-500 px-8 py-3 font-saira text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-purple-400 disabled:opacity-60"
                   >
                     {t.labels.submit}
                   </button>
                 )}
               </div>
+
+              {/* A failed send used to be indistinguishable from a successful
+                  one, so an application could vanish while the applicant was
+                  shown the thank-you screen. */}
+              {submitError && (
+                <p
+                  role="alert"
+                  className="mt-4 rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 font-saira text-sm text-rose-100"
+                >
+                  {submitError}
+                </p>
+              )}
             </form>
           </>
         )}

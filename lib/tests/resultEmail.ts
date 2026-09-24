@@ -6,7 +6,7 @@
  * Never throws — returns false on any failure.
  */
 import { sendEmail } from "@/lib/email";
-import type { TestType } from "@/lib/tests/resultPayload";
+import { RESULT_ROUTE, type TestType } from "@/lib/tests/resultPayload";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.power-flow.eu";
 
@@ -91,7 +91,8 @@ const COPY: Record<Lang, {
 };
 
 export function resultLink(type: TestType, resultRef: string): string {
-  return `${APP_URL}/tests/${type}/results?ref=${encodeURIComponent(resultRef)}`;
+  // Route segment, not the type name — they differ for "sat".
+  return `${APP_URL}/tests/${RESULT_ROUTE[type]}/results?ref=${encodeURIComponent(resultRef)}`;
 }
 
 function shell(bodyHtml: string, footer: string): string {
