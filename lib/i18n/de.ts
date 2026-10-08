@@ -1096,6 +1096,7 @@ export const de: Dict = {
     lastActiveDaysAgo: "Vor {n} Tagen",
 
     // Athlete detail tabs
+    tabPrepare: "Vorbereiten",
     tabAnalysis: "Analyse",
     tabActivity: "Aktivität",
     tabScores: "Testergebnisse",

@@ -1136,6 +1136,7 @@ export const en = {
     lastActiveDaysAgo: "{n} days ago",
 
     // Athlete detail tabs
+    tabPrepare: "Prepare",
     tabAnalysis: "Analysis",
     tabActivity: "Activity",
     tabScores: "Test scores",

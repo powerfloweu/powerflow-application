@@ -87,6 +87,34 @@ export async function dbInsert<T extends Record<string, unknown>>(
 }
 
 /**
+ * INSERT multiple rows into `table`.
+ * Returns inserted rows or an empty array on failure.
+ */
+export async function dbInsertMany<T extends Record<string, unknown>>(
+  table: string,
+  data: T[],
+): Promise<Array<{ id: string }>> {
+  if (data.length === 0) return [];
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: "POST",
+    headers: {
+      ...headers(),
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    console.error(`[supabaseAdmin] dbInsertMany ${table} failed ${res.status}`, text);
+    return [];
+  }
+
+  return (await res.json()) as Array<{ id: string }>;
+}
+
+/**
  * SELECT rows from `table` with optional query params.
  * Params are raw PostgREST syntax — include operators in values:
  * Example params: { id: "eq.<uuid>", order: "submitted_at.desc", limit: "500" }

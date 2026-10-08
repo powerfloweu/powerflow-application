@@ -22,6 +22,7 @@ import {
   type ReflectionQuestion, type QuestionKind,
   type ReflectionSetRow as ReflectionSet, type ReflectionSetStatus,
 } from "@/lib/reflections";
+import type { WhatsAppAnalysis } from "@/lib/whatsapp";
 
 import {
   type Flag, type Trend, type EntryRow, type AthleteRaw, type CoachProfile, type Client,
@@ -1706,6 +1707,263 @@ function NotesTab({
   );
 }
 
+// ── Prepare Session tab ───────────────────────────────────────────────────────
+
+type SessionPrep = {
+  athlete: {
+    id: string;
+    display_name: string;
+    meet_date: string | null;
+    mental_goals: string[];
+    main_barrier: string | null;
+    confidence_break: string | null;
+    overthinking_focus: string | null;
+    expectations: string | null;
+  };
+  coach_note: { content: string; updated_at: string } | null;
+  focus: {
+    key_themes: string[];
+    risk_flags: string[];
+    suggested_interventions: string[];
+    session_questions: string[];
+  };
+  whatsapp: {
+    imports: WhatsAppImport[];
+    latest_import: WhatsAppImport | null;
+    recent_messages: WhatsAppMessagePreview[];
+  };
+  recent_journal: { id: string; content: string; sentiment: string; context: string; themes: string[]; created_at: string }[];
+  recent_training: { id: string; entry_date: string; mood_rating: number | null; summary: string; coach_note: string | null }[];
+  recent_checkins: {
+    id: string;
+    week_start: string;
+    mood_rating: number;
+    training_quality: number;
+    readiness_rating: number;
+    energy_rating: number;
+    sleep_rating: number;
+    biggest_win: string | null;
+    biggest_challenge: string | null;
+    focus_next_week: string | null;
+  }[];
+  training_patterns: string[];
+};
+
+type WhatsAppImport = {
+  id: string;
+  file_name: string | null;
+  message_count: number;
+  period_start: string | null;
+  period_end: string | null;
+  participant_names: string[];
+  analysis: WhatsAppAnalysis;
+  model: string | null;
+  created_at: string;
+};
+
+type WhatsAppMessagePreview = {
+  id: string;
+  sent_at: string | null;
+  sender_name: string;
+  sender_role: string;
+  content: string;
+};
+
+function SmallPrepList({ items, empty }: { items: string[]; empty: string }) {
+  if (!items.length) return <p className="font-saira text-xs text-zinc-500">{empty}</p>;
+  return (
+    <ul className="space-y-2">
+      {items.map((item, index) => (
+        <li key={`${item}-${index}`} className="flex gap-2 font-saira text-xs text-zinc-300 leading-relaxed">
+          <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-purple-400/70" />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PrepareSessionTab({ athleteId }: { athleteId: string }) {
+  const [prep, setPrep] = React.useState<SessionPrep | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [uploading, setUploading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
+
+  const loadPrep = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/coach/session-prep?athlete_id=${encodeURIComponent(athleteId)}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(data.error ?? "Could not load session prep");
+      }
+      setPrep(await res.json() as SessionPrep);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load session prep");
+    } finally {
+      setLoading(false);
+    }
+  }, [athleteId]);
+
+  React.useEffect(() => {
+    loadPrep();
+  }, [loadPrep]);
+
+  async function importFile(file: File) {
+    setUploading(true);
+    setError(null);
+    try {
+      const content = await file.text();
+      const res = await fetch("/api/coach/whatsapp-imports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ athlete_id: athleteId, file_name: file.name, content }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(data.error ?? "Import failed");
+      }
+      await loadPrep();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  const latest = prep?.whatsapp.latest_import ?? null;
+  const analysis = latest?.analysis ?? null;
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-saira text-[10px] font-bold uppercase tracking-[0.2em] text-purple-300">Prepare Session</p>
+            <p className="mt-1 font-saira text-xs text-zinc-400">
+              Import a WhatsApp .txt export for this athlete. Analysis stays local to PowerFlow and is attached to the coach view.
+            </p>
+          </div>
+          <label className={`inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2 font-saira text-xs font-semibold uppercase tracking-[0.14em] transition ${
+            uploading ? "border-zinc-700 text-zinc-500" : "border-purple-500/30 text-purple-200 hover:bg-purple-500/10"
+          }`}>
+            {uploading ? "Importing..." : "Import WhatsApp"}
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".txt,text/plain"
+              className="hidden"
+              disabled={uploading}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) importFile(file);
+              }}
+            />
+          </label>
+        </div>
+        {error && (
+          <p className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 font-saira text-xs text-rose-200">{error}</p>
+        )}
+      </div>
+
+      {loading ? (
+        <p className="font-saira text-sm text-zinc-400">Loading session prep...</p>
+      ) : !prep ? (
+        <p className="font-saira text-sm text-zinc-400">No session prep available.</p>
+      ) : (
+        <>
+          <div className="grid gap-4 xl:grid-cols-3">
+            <div className="rounded-2xl border border-white/8 bg-surface-section p-4 xl:col-span-2">
+              <p className="font-saira text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2">Coach Brief</p>
+              <p className="font-saira text-sm text-zinc-200 leading-relaxed">
+                {analysis?.summary ?? "No WhatsApp import yet. This prep view is currently based on notes, journal entries, training logs, and check-ins."}
+              </p>
+              {latest && (
+                <p className="mt-3 font-saira text-[11px] text-zinc-500">
+                  Latest import: {latest.message_count} messages
+                  {latest.period_start ? ` · ${new Date(latest.period_start).toLocaleDateString("en-GB")}` : ""}
+                  {latest.period_end ? ` to ${new Date(latest.period_end).toLocaleDateString("en-GB")}` : ""}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/8 bg-surface-section p-4">
+              <p className="font-saira text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Key Themes</p>
+              <div className="flex flex-wrap gap-2">
+                {prep.focus.key_themes.length ? prep.focus.key_themes.map((theme) => (
+                  <span key={theme} className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2.5 py-1 font-saira text-[11px] text-purple-200">
+                    {theme}
+                  </span>
+                )) : <span className="font-saira text-xs text-zinc-500">No clear themes yet.</span>}
+              </div>
+            </div>
+          </div>
+
+          {prep.focus.risk_flags.length > 0 && (
+            <div className="rounded-2xl border border-rose-500/25 bg-rose-500/[0.06] p-4">
+              <p className="font-saira text-[10px] font-bold uppercase tracking-[0.2em] text-rose-300 mb-2">Review Carefully</p>
+              <SmallPrepList items={prep.focus.risk_flags} empty="" />
+            </div>
+          )}
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div className="rounded-2xl border border-white/8 bg-surface-section p-4">
+              <p className="font-saira text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Session Questions</p>
+              <SmallPrepList items={prep.focus.session_questions} empty="No suggested questions yet." />
+            </div>
+            <div className="rounded-2xl border border-white/8 bg-surface-section p-4">
+              <p className="font-saira text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Interventions</p>
+              <SmallPrepList items={prep.focus.suggested_interventions} empty="No intervention suggestions yet." />
+            </div>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-3">
+            <div className="rounded-2xl border border-white/8 bg-surface-section p-4">
+              <p className="font-saira text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Coach Notes</p>
+              <p className="font-saira text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                {prep.coach_note?.content || "No coach note yet."}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/8 bg-surface-section p-4">
+              <p className="font-saira text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Recent Training</p>
+              <SmallPrepList
+                items={prep.recent_training.slice(0, 4).map((t) => `${t.entry_date}${t.mood_rating != null ? ` · mood ${t.mood_rating}/10` : ""}: ${t.summary || "No written reflection"}`)}
+                empty="No recent training logs."
+              />
+            </div>
+            <div className="rounded-2xl border border-white/8 bg-surface-section p-4">
+              <p className="font-saira text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Recent Check-ins</p>
+              <SmallPrepList
+                items={prep.recent_checkins.slice(0, 3).map((c) => `${c.week_start}: mood ${c.mood_rating}/10, readiness ${c.readiness_rating}/10${c.focus_next_week ? ` · ${c.focus_next_week}` : ""}`)}
+                empty="No recent check-ins."
+              />
+            </div>
+          </div>
+
+          {prep.whatsapp.recent_messages.length > 0 && (
+            <div className="rounded-2xl border border-white/8 bg-surface-section p-4">
+              <p className="font-saira text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 mb-3">Recent WhatsApp Messages</p>
+              <div className="space-y-2">
+                {prep.whatsapp.recent_messages.slice(0, 6).map((m) => (
+                  <div key={m.id} className="rounded-xl border border-white/6 bg-white/[0.025] px-3 py-2">
+                    <p className="font-saira text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+                      {m.sender_name}{m.sent_at ? ` · ${new Date(m.sent_at).toLocaleDateString("en-GB")}` : ""}
+                    </p>
+                    <p className="mt-1 font-saira text-xs text-zinc-300 leading-relaxed">{m.content}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Training day card (coach activity feed) ───────────────────────────────────
 
 function CoachTrainingCard({ entry }: { entry: TrainingEntry }) {
@@ -2427,7 +2685,7 @@ function TrainingTabBody({ client }: { client: Client }) {
 
 // ── Client card ────────────────────────────────────────────────────────────────
 
-type ActiveTab = "analysis" | "entries" | "scores" | "training" | "checkins" | "profile" | "notes" | "prompts";
+type ActiveTab = "prepare" | "analysis" | "entries" | "scores" | "training" | "checkins" | "profile" | "notes" | "prompts";
 
 function ClientCard({
   client,
@@ -2543,6 +2801,7 @@ function ClientCard({
           {/* Tab bar */}
           <div className="flex gap-0 border-b border-white/5 px-5 sm:px-6 overflow-x-auto">
             {([
+              { key: "prepare",   labelKey: "coach.tabPrepare" },
               { key: "analysis",  labelKey: "coach.tabAnalysis" },
               { key: "entries",   labelKey: "coach.tabActivity" },
               { key: "scores",    labelKey: "coach.tabScores" },
@@ -2569,6 +2828,11 @@ function ClientCard({
           </div>
 
           <div className="p-5 sm:p-6">
+            {/* ── Tab: Prepare Session ── */}
+            {activeTab === "prepare" && (
+              <PrepareSessionTab athleteId={client.id} />
+            )}
+
             {/* ── Tab: Analysis ── */}
             {activeTab === "analysis" && (
               <AnalysisTabBody client={client} sentimentWindow={sentimentWindow} onSentimentWindowChange={onSentimentWindowChange} />
@@ -3064,6 +3328,7 @@ function MobileAthleteRow({ client, onClick }: { client: Client; onClick: () => 
 // used) — behind a horizontally scrollable tab strip sized for a phone.
 
 const MOBILE_SHEET_TABS: { key: ActiveTab; labelKey: string }[] = [
+  { key: "prepare",  labelKey: "coach.tabPrepare" },
   { key: "analysis", labelKey: "coach.tabAnalysis" },
   { key: "entries",  labelKey: "coach.tabActivity" },
   { key: "scores",   labelKey: "coach.tabScores" },
@@ -3147,6 +3412,7 @@ function MobileAthleteSheet({
       </div>
 
       {/* Tab bodies — identical components to the desktop ClientCard tabs */}
+      {tab === "prepare" && <PrepareSessionTab athleteId={client.id} />}
       {tab === "analysis" && (
         <AnalysisTabBody client={client} sentimentWindow={sentimentWindow} onSentimentWindowChange={onSentimentWindowChange} />
       )}

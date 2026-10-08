@@ -1094,6 +1094,7 @@ export const hu: Dict = {
     lastActiveDaysAgo: "{n} napja",
 
     // Athlete detail tabs
+    tabPrepare: "Felkészülés",
     tabAnalysis: "Elemzés",
     tabActivity: "Aktivitás",
     tabScores: "Teszteredmények",

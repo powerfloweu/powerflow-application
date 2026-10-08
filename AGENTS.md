@@ -1,0 +1,178 @@
+# PowerFlow — Project Memory
+
+This file is read by Codex at the start of every session and rendered on
+the **Roadmap** tab of the master admin page (`/admin/master`). Update it as
+work progresses to keep both Codex and the dashboard in sync.
+
+## Status legend
+
+- `[ ]` — Todo
+- `[~]` — In progress
+- `[x]` — Done
+
+The parser at `app/api/admin/roadmap/route.ts` reads `### Section` headers and
+`- [x|~| ] item` lines under the `## Roadmap` heading. Don't change the
+heading structure without updating the parser.
+
+## Roadmap
+
+### Payments & Tiers
+- [x] Stripe payment for all three tiers (opener / second / pr) with upgrade options
+
+### Coach AI
+- [x] Clarice voice install
+- [x] Voice selector for Coach AI
+- [x] Coach dashboard (replace "just select an athlete" with a real dashboard)
+- [x] Monthly check-in simulation
+
+### Coach features
+- [x] Coach can suggest a library tool to an athlete (`tool_suggestions` table, POST /api/coach/suggest-tool)
+- [x] Athlete sees coach tool suggestion as a card on Today page, tapping opens the tool directly
+- [x] Mobile bottom sheet drag-to-expand (handle is live drag target, snaps to 90vh or closes)
+- [x] Mobile check-in rows tappable — expands to show all 5 scores + Biggest Win / Challenge / Focus
+- [x] Coach athletes sheet shows full check-in text answers (no truncation)
+
+### Athlete experience
+- [x] Coach AI one-time nudge cron — PR-tier athletes who haven't used Coach AI after 7 days get a push notification (fires once only, marks `coach_ai_nudge_sent_at`)
+
+### Analytics & feedback
+- [x] Tool usage tracking — `tool_usage` table, POST /api/tools/track fires on library tool open
+- [x] Admin Tool Usage tab (◈) — per-tool open counts, last 30d, last used
+- [x] In-app feedback survey — fires at day 30 (everyone), then 30d after each submission (rounds 2 & 3); role-specific questions; WTP + NPS; results in admin Surveys tab (◉)
+
+### Public-facing / marketing
+- [x] Coaches page — Clarice and Kate have individual Google Form apply links
+- [x] `/coaches` accessible to unauthenticated users (proxy.ts exact-match fix)
+- [x] Onboarding `?coach=` URL param survives Google OAuth and pre-selects the right coach
+- [x] Demo pages — guided auto-play presentations for athlete and coach demos
+- [x] Coach demo — callout arrows, phone glow, interactive pricing calculator
+
+### Localization
+- [x] Hide languages that are not translated yet (ES, FR hidden until complete — use READY_LOCALES)
+- [ ] Ask someone for Hungarian translation
+- [x] Fix national flags on coach language selector (fixed by hiding incomplete locales)
+
+### Admin / Tools
+- [x] Move AI Insights to Dev Tools
+- [x] Admin Surveys tab — all survey responses with summary stats, collapsible per-response detail
+
+### Guides
+- [x] Athlete & coach printable guides updated with monthly check-ins, tool suggestions, push notifications
+- [x] Interactive guide updated with same + demo CTA card linking to /demo/athlete or /demo/coach
+
+### Suggested fixes & cleanup
+- [ ] Replace the create-next-app boilerplate README with real project docs
+- [x] Consolidate duplicate `next.config.js` and `next.config.ts` into one file
+- [ ] Refresh the docstring at the top of `app/admin/master/page.tsx` (lists only 5 tabs; we now have 11+)
+- [ ] Split `app/admin/master/page.tsx` (3000+ lines) into per-tab files under `app/admin/master/tabs/`
+- [x] Add a basic test setup (vitest + unit tests + GitHub Actions CI)
+
+### Security & hardening
+- [x] Stop accepting `ADMIN_PASSWORD` via URL query param in `app/api/admin/all-results` and `app/api/admin/results` (leaks into logs)
+- [x] Add TOTP 2FA gate to `/admin/master` (Google Authenticator, RFC 6238, 4 h HttpOnly session cookie)
+- [x] Consolidate inconsistent admin auth in `/api/admin/*` into one shared `requireAdmin()` helper
+- [x] Add per-user rate limiting on AI endpoints (`lib/rateLimit.ts` on `/api/chat`, `/api/tts`, `/api/chat/summarize`)
+
+### Code quality
+- [x] Remove `PowerFlow course _ AI.zip` from repo root
+- [ ] Audit `/scripts/` and `/handoff/` folders — archive or delete unused files
+- [x] Strip stray `console.log` calls — down to 5 (was ~19)
+- [x] Audit `as any` / unchecked casts — down to 1 (was ~59)
+
+### Dev experience
+- [x] Add `"typecheck": "tsc --noEmit"` script to `package.json`
+- [ ] Add Husky + lint-staged for pre-commit lint/typecheck
+
+### Accessibility
+- [ ] Add `aria-label`s to icon-only buttons across `app/components/`
+
+### Push notifications
+- [x] Create `public/manifest.webmanifest` (referenced in `app/layout.tsx` but missing — 404 in prod)
+- [x] Add a service worker (`public/sw.js`) and register it on app load
+- [x] Generate VAPID keys and add `NEXT_PUBLIC_VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` env vars
+- [x] Install `web-push`, add `push_subscriptions` table in Supabase, create `/api/push/subscribe` endpoint
+- [x] Build a sender (e.g. `/api/push/send` or cron) that calls `webpush.sendNotification` for check-in reminders and broadcasts
+
+## Medium-term tasks
+These are the next meaningful features after quick wins are done.
+
+- **Monthly check-in simulation** — let coaches trigger/preview a monthly check-in for an athlete without waiting for the real date
+- **Per-user rate limiting on AI endpoints** — sliding-window limiter (Vercel KV or in-memory) on `/api/chat`, `/api/tts`, `/api/coach/*`
+- **Split `admin/master/page.tsx`** — 3000+ lines; move each tab into `app/admin/master/tabs/<tab>.tsx`
+- **Clarice voice install** — add Clarice as a selectable Coach AI voice (ElevenLabs voice ID needed)
+- **Hungarian translation** — find someone to translate remaining i18n keys
+
+## Session log
+
+### 2026-09-11 — main (WhatsApp session prep)
+- Added local WhatsApp .txt import for coach-owned athlete context: parser, heuristic theme extraction, Supabase import/message tables with RLS, coach APIs, and a Prepare tab in the coach dashboard.
+- Next: apply the migration in Supabase and test an actual Jaana export in the coach UI; optional AI analysis should require explicit consent before sending chat contents to a model.
+
+### 2026-07-06 — main (lifestyle guide beta)
+- **/life section (beta)** — Dávid's personal operating system prototype, gated by `profiles.lifestyle_beta` (true only for his two accounts). Tabs: Today (values strip, due check-in quick-taps, workout logger, weight + one-tap meal macros), Plan (week stepper, structure editor, history), Check-in, Trends, Setup.
+- **Adaptive check-in cadence** (`lib/life.ts`, 14 tests): daily items daily; weekly items every 7d, but two consecutive below-threshold scores → focus mode (every 3d) until one good score recovers it.
+- **Data**: `lifestyle_config/plans/workouts/checkins/body_log` tables (migration 20260706, applied + seeded — his 3-week 7/5/3 wave block loaded). Owner-only RLS.
+- **API**: `/api/life/{config,plan,workouts,checkins,body}`, all flag-gated and write-checked. `lifestyle_beta` exposed via /api/me; Life card on You page links to /life.
+- Earlier same session: coach notified of journal entries + post-comp reflections (`notifyCoachOfActivity`); coach variant of the notification-permission banner.
+- Next: Dávid fills in values + meals in Setup, uses it for a week; then consider a push reminder for due check-in items and a "kcal vs target" trend.
+
+### 2026-07-02 — main (professionalism hardening)
+- **Data layer honesty**: `dbPatch` now uses `return=representation` and returns false on zero-row matches; `dbPatch`/`dbDelete` strip a redundant `eq.` prefix and log loudly (root cause of the meet-reflections silent data loss — `id=eq.eq.<uuid>`). ~20 API routes now check write results and return HTTP 500 instead of a fake `{ ok: true }`. Stripe webhook handlers throw on failed patches so Stripe retries.
+- **No more silent failures**: replaced all 68 empty `.catch(() => {})` with logged catches (per-file context label); awaited previously fire-and-forget `sendEmail`/`sendPushToUser` calls in serverless routes; PostCompReflection shows "Save failed — tap to retry".
+- **Security**: Make.com webhook URL → `APPLY_WEBHOOK_URL` env; `/api/coach/suggest-tool` now verifies the athlete belongs to the coach; new `lib/rateLimit.ts` (Upstash Redis REST or in-memory fallback) applied to `/api/chat` (20/min), `/api/tts` (60/min), `/api/chat/summarize` (10/min); enabled RLS on all 33 tables earlier in the session.
+- **Tests + CI**: added vitest with tests for `buildMatchQuery` (covers the eq.eq. bug) and the rate limiter; `.github/workflows/ci.yml` gates typecheck + tests on push/PR (lint reported non-blocking until ~19 pre-existing errors are burned down); eslint now ignores `.Codex/`, `supabase/`, `public/`.
+- **Reproducible schema**: `supabase/migrations/00000000000000_baseline_schema.sql` reconstructs the full production schema (33 tables, 41 FKs, 34 indexes, RLS + 74 policies) via the Management API + `pg_get_constraintdef`; verified against a clean Postgres 16 (builds clean + idempotent). Adds migrations/README.
+- **Coach page split (started)**: extracted `app/coach/model.ts` (types, computeClient, flag constants) and `app/coach/helpers.ts` (pure helpers); page.tsx 4,252 → 3,915 lines. Follow-up: extract ClientCard, MobileAthleteSheet, CoachHomePanel.
+- Next: burn down the ~19 lint errors so CI lint can become a hard gate; continue coach-page component extraction; split `admin/master/page.tsx`.
+
+### 2026-06-24 — main
+- Fixed mental tests bug: logged-in athletes were auto-skipped past the intro page (setPage(1) in /api/me effect), leaving gender=null and causing submit to silently do nothing. Fixed in ACSI, CSAI, and Self-Awareness tests by removing setPage(1) — name/email still auto-fill but user must pick gender before starting.
+- NavBar Sign In link now passes ?next= pointing to current path, so clicking it from a test page returns the user to the test after auth.
+- Post-competition reflection: new meet_reflections table (athlete_id, meet_date, answers JSONB). Athletes see a 5-question reflection card on Today page for 7 days after their meet (questions from w16-post-meet course module). Coach sees all past reflections in the athlete's Profile tab under "Competition Reflections". API at /api/meet-reflections (GET single/list, POST upsert-merge).
+- Next: deploy migration (already ran via Management API), have athletes test the reflection card, confirm coach view works.
+
+Append a short note at the end of each working session: date, branch, what
+changed, and what's next. Newest entries on top.
+
+### 2026-06-02 — main
+- Coaches page: Clarice & Kate apply links; /coaches open to unauthenticated users (proxy.ts fix); ?coach= param survives OAuth.
+- Tool usage tracking: tool_usage table, /api/tools/track, admin Tool Usage tab.
+- Coach AI nudge: one-time push to PR-tier athletes who haven't used AI after 7 days.
+- Coach tool suggestions: tool_suggestions table, POST /api/coach/suggest-tool, GET/PATCH /api/me/tool-suggestions, SuggestToolSection in coach ProfileTab, violet card on athlete Today page.
+- In-app feedback survey: survey_responses table, /api/survey, SurveyModal (fires on next login for everyone, then 30d apart for rounds 2–3), role-specific open-ended questions, WTP + NPS.
+- Admin Surveys tab with summary stats and collapsible response cards.
+- Demo pages: guided auto-play presentation for coach demo (12 steps, callout arrows, phone glow, interactive pricing calculator with team size slider).
+- Mobile fixes: BottomSheet drag-to-expand, tappable check-in rows with full text, athletes/page.tsx check-in text no longer truncated.
+- Guides: athlete & coach printable + interactive guides updated with monthly check-ins, tool suggestions, push notifications, demo CTA.
+- Next: monthly check-in simulation, per-user AI rate limiting, Clarice voice, Hungarian translation.
+
+### 2026-05-13 — main (continued)
+- Coach dashboard revamp: mobile home (greeting, 3-tile strip, priority/stable sections, MobileAthleteSheet), desktop home (CoachHomePanel with stats + attention list + activity feed), sticky athlete header, sidebar sparklines + grouped Priority/Stable sections.
+- 4-tab coach bottom nav (Home/Athletes/Activity/You) + new /coach/athletes and /coach/activity pages.
+- Broadcast push notifications on publish (fire-and-forget, tag dedup).
+- AI voice selector on You page (Clarice/David/Jacqueline, play preview, auto-save via preferred_voice_id).
+- Quick wins: hide incomplete locales (ES/FR) via READY_LOCALES, typecheck script, merged next.config, roadmap search.
+- Next: monthly check-in simulation or per-user AI rate limiting.
+
+### 2026-05-13 — main
+- Stripe integration: checkout sessions, billing portal, webhook handler syncing plan_tier + access flags, admin migrate-stripe endpoint, setup script for products.
+- Upgrade page: real Stripe CTAs (replaces mailto), manage-subscription link, success/cancel toasts.
+- stripe_customer_id + stripe_subscription_id + stripe_price_id added to profiles table (migration + /api/me exposure).
+- Next: run `node scripts/stripe-setup.mjs` (with sk_live_ key) to create products, add env vars (STRIPE_SECOND_PRICE_ID, STRIPE_PR_PRICE_ID, STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_APP_URL), apply DB migration via /api/admin/migrate-stripe.
+
+### 2026-05-12 — main (continued)
+- Security: `ADMIN_PASSWORD` moved from URL query param to `Authorization: Bearer` header in `all-results` and `results` routes.
+- Security: TOTP 2FA added to `/admin/master` — RFC 6238 implementation using Node built-in crypto, HttpOnly 4 h session cookie, Google Authenticator compatible. Env vars (`TOTP_SECRET`, `TOTP_SESSION_SECRET`) added via Vercel CLI and deployed.
+- Push notifications: completed — Vercel cron at 17:00 UTC sends web-push to all subscribers via `web-push`; service worker handles delivery even when browser is closed.
+- Admin auth: consolidated 13 routes from 5 different local copies into one shared `lib/adminAuth.ts` `requireAdmin()` helper (−144 lines).
+- Next: Stripe tiers (needs product decisions on what's included per tier).
+
+### 2026-05-12 — main
+- Push notification UX: 7-day snooze on banner (was permanent dismiss), push subscription status (bell colour) in admin Users tab, Notifications card in You tab.
+- Guide refresh: both printable (`content.ts`) and interactive (i18n keys) coach guide updated with accurate approval flow; athlete guide gained "Enable notifications" step.
+- Roadmap tab fixes: optimistic updates, all-buttons-disabled-during-patch (prevents concurrent GitHub SHA conflicts), done-item hover cue.
+- Roadmap production bug fixed: GET and PATCH now read from GitHub API (`cache: no-store`) when `GITHUB_TOKEN` is set, so sequential clicks accumulate instead of overwriting each other (Vercel filesystem is a frozen build snapshot).
+
+### 2026-05-11 — Codex/review-context-Wu0t5
+- Added `AGENTS.md` and `/admin/master` Roadmap tab so progress is visible from the admin dashboard.
+- Next: pick a roadmap item to start on — Stripe tiers and Coach AI voice selector are the highest-impact items currently listed.
