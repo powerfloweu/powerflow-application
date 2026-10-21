@@ -1,7 +1,8 @@
 /**
  * Coach billing helpers.
  *
- * Coaches pay €5/athlete/month as a per-seat Stripe subscription.
+ * Coaches pay €5/athlete/month (1–19 athletes, max €95) as a per-seat Stripe
+ * subscription, then a flat €99/month from 20 athletes up, however many.
  * Call syncCoachQuantity whenever an athlete links or unlinks from a coach.
  */
 
@@ -16,6 +17,29 @@ type CoachRow = {
 
 type AthleteRow = { id: string };
 
+/** At this many athletes and above, billing switches to the flat-rate price. */
+export const FLAT_RATE_THRESHOLD = 20;
+
+function perAthletePriceId(): string {
+  const id = process.env.STRIPE_COACH_PRICE_ID ?? "";
+  if (!id) throw new Error("STRIPE_COACH_PRICE_ID env var is not set");
+  return id;
+}
+
+function flatRatePriceId(): string {
+  const id = process.env.STRIPE_PRICE_COACH_FLAT_99 ?? "";
+  if (!id) throw new Error("STRIPE_PRICE_COACH_FLAT_99 env var is not set");
+  return id;
+}
+
+/** Which Stripe price + quantity a coach with this many athletes should be on. */
+export function coachPlanFor(athleteCount: number): { priceId: string; quantity: number } {
+  if (athleteCount >= FLAT_RATE_THRESHOLD) {
+    return { priceId: flatRatePriceId(), quantity: 1 };
+  }
+  return { priceId: perAthletePriceId(), quantity: Math.max(athleteCount, 1) };
+}
+
 /** Returns the number of athletes currently linked to a coach. */
 export async function countAthletes(coachId: string): Promise<number> {
   const rows = await dbSelect<AthleteRow>("profiles", {
@@ -28,9 +52,10 @@ export async function countAthletes(coachId: string): Promise<number> {
 }
 
 /**
- * Syncs the coach's Stripe subscription quantity to their current athlete count.
+ * Syncs the coach's Stripe subscription price + quantity to their current
+ * athlete count.
  *
- * - If count > 0 and subscription exists   → update quantity
+ * - If count > 0 and subscription exists   → update price/quantity (per-athlete or flat)
  * - If count = 0 and subscription exists   → cancel subscription
  * - If count > 0 and no subscription       → do nothing (coach hasn't set up billing yet)
  * - If count = 0 and no subscription       → do nothing
@@ -51,12 +76,13 @@ export async function syncCoachQuantity(coachId: string): Promise<void> {
       await stripe.subscriptions.cancel(coach.stripe_coach_sub_id);
       await dbPatch("profiles", { id: coachId }, { stripe_coach_sub_id: null });
     } else {
-      // Update quantity on existing subscription
+      // Update price/quantity on existing subscription
+      const { priceId, quantity } = coachPlanFor(count);
       const sub = await stripe.subscriptions.retrieve(coach.stripe_coach_sub_id);
       const itemId = sub.items.data[0]?.id;
       if (itemId) {
         await stripe.subscriptions.update(coach.stripe_coach_sub_id, {
-          items: [{ id: itemId, quantity: count }],
+          items: [{ id: itemId, price: priceId, quantity }],
           proration_behavior: "always_invoice",
         });
       }
@@ -68,15 +94,17 @@ export async function syncCoachQuantity(coachId: string): Promise<void> {
 
 /**
  * Creates a Stripe Checkout Session for a coach to set up their billing plan.
- * Quantity is set to their current athlete count (minimum 1).
+ * Price + quantity are set from their current athlete count (minimum 1).
  * Returns the Checkout URL.
  */
 export async function createCoachCheckoutSession(
   coachId: string,
   coachEmail: string,
 ): Promise<string> {
-  const priceId = process.env.STRIPE_COACH_PRICE_ID ?? "";
-  if (!priceId) throw new Error("STRIPE_COACH_PRICE_ID env var is not set");
+  // Resolve price + quantity first — must throw before any side effect
+  // (Stripe customer creation, stripe_customer_id write) if env vars are missing.
+  const athleteCount = await countAthletes(coachId);
+  const { priceId, quantity } = coachPlanFor(athleteCount);
 
   const rows = await dbSelect<CoachRow>("profiles", {
     id: `eq.${coachId}`,
@@ -94,9 +122,6 @@ export async function createCoachCheckoutSession(
     customerId = customer.id;
     await dbPatch("profiles", { id: coachId }, { stripe_customer_id: customerId });
   }
-
-  const athleteCount = await countAthletes(coachId);
-  const quantity = Math.max(athleteCount, 1); // minimum 1 for checkout
 
   const base = appUrl();
   const session = await stripe.checkout.sessions.create({
