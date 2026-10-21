@@ -76,15 +76,15 @@ function Step({ n, title, lines }: { n: string; title: string; lines: string[] }
   );
 }
 
-// ── squat-stack-depth-drive ──────────────────────────────────────────────────
+// ── Card shell ──────────────────────────────────────────────────
 
-function SquatStackDepthDrive() {
-  const steps = [
-    { n: "01", title: "Stack", lines: ["Unrack. Walk out. Stack + brace.", "Focus on your setup — not the weight."] },
-    { n: "02", title: "Depth", lines: ["Descend with control.", "Elbows toward the sides of your thighs."] },
-    { n: "03", title: "Drive", lines: ["Drive with glutes + thighs.", "Elbows slightly forward. Chest + gaze up."] },
-  ];
+interface CueCard {
+  /** First word of the title, in ink: "Squat", "Bench press", "Deadlift". */
+  lift: string;
+  steps: { n: string; title: string; lines: string[] }[];
+}
 
+function CueSheet({ lift, steps }: CueCard) {
   return (
     // containerType lets every size below scale off the card's own width, so
     // the card reads the same in a narrow phone column as in a wide panel.
@@ -106,7 +106,7 @@ function SquatStackDepthDrive() {
 
         {/* Title */}
         <h2 className="font-saira text-[clamp(20px,8.1cqw,36px)] font-extrabold uppercase leading-[1.04] tracking-[0.05em] mb-3">
-          <span style={{ color: INK }}>Squat </span>
+          <span style={{ color: INK }}>{lift} </span>
           <span style={{ color: VIOLET }}>Visualization</span>
         </h2>
         <p
@@ -178,15 +178,43 @@ function SquatStackDepthDrive() {
   );
 }
 
-// ── Registry ─────────────────────────────────────────────────────────────────
+// ── Designs ─────────────────────────────────────────────────────
 
-export const VIZ_CARDS: Record<string, VizCard> = {
+const CARDS: Record<string, CueCard> = {
   "squat-stack-depth-drive": {
-    id: "squat-stack-depth-drive",
-    tabLabel: "Card",
-    render: () => <SquatStackDepthDrive />,
+    lift: "Squat",
+    steps: [
+      { n: "01", title: "Stack", lines: ["Unrack. Walk out. Stack + brace.", "Focus on your setup — not the weight."] },
+      { n: "02", title: "Depth", lines: ["Descend with control.", "Elbows toward the sides of your thighs."] },
+      { n: "03", title: "Drive", lines: ["Drive with glutes + thighs.", "Elbows slightly forward. Chest + gaze up."] },
+    ],
+  },
+  "bench-anchor-still-drive": {
+    lift: "Bench press",
+    steps: [
+      { n: "01", title: "Anchor", lines: ["Grip set. Shoulder blades down and in.", "Feet planted — anchor yourself to the bench."] },
+      { n: "02", title: "Still", lines: ["Lower under control to your touch point.", "Upper back stays still. No bounce, no drift."] },
+      { n: "03", title: "Drive", lines: ["Drive the floor away, press through the bar.", "Bar path back over the shoulders. Lock it."] },
+    ],
+  },
+  "deadlift-root-tension-lock": {
+    lift: "Deadlift",
+    steps: [
+      { n: "01", title: "Root", lines: ["Feet set. Grip the bar, root into the floor.", "Hips set, air in, eyes on your line."] },
+      { n: "02", title: "Tension", lines: ["Pull the slack out — bar against the shins.", "Chest up, lats tight before anything moves."] },
+      { n: "03", title: "Lock", lines: ["Push the floor away, bar close to the body.", "Hips and knees finish together. Stand tall."] },
+    ],
   },
 };
+
+// ── Registry ───────────────────────────────────────────────────
+
+export const VIZ_CARDS: Record<string, VizCard> = Object.fromEntries(
+  Object.entries(CARDS).map(([id, card]) => [
+    id,
+    { id, tabLabel: "Card", render: () => <CueSheet {...card} /> },
+  ]),
+);
 
 /** The card assigned to `toolId` for this athlete, or null. */
 export function cardFor(
