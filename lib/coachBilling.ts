@@ -16,6 +16,9 @@ type CoachRow = {
 
 type AthleteRow = { id: string };
 
+/** Coaches never pay for more than this many seats — €5 × 20 = €99/month cap. */
+export const MAX_BILLABLE_ATHLETES = 20;
+
 /** Returns the number of athletes currently linked to a coach. */
 export async function countAthletes(coachId: string): Promise<number> {
   const rows = await dbSelect<AthleteRow>("profiles", {
@@ -44,9 +47,10 @@ export async function syncCoachQuantity(coachId: string): Promise<void> {
   if (!coach?.stripe_coach_sub_id) return; // no subscription yet — nothing to sync
 
   const count = await countAthletes(coachId);
+  const quantity = Math.min(count, MAX_BILLABLE_ATHLETES);
 
   try {
-    if (count === 0) {
+    if (quantity === 0) {
       // Cancel subscription — no athletes left
       await stripe.subscriptions.cancel(coach.stripe_coach_sub_id);
       await dbPatch("profiles", { id: coachId }, { stripe_coach_sub_id: null });
@@ -56,7 +60,7 @@ export async function syncCoachQuantity(coachId: string): Promise<void> {
       const itemId = sub.items.data[0]?.id;
       if (itemId) {
         await stripe.subscriptions.update(coach.stripe_coach_sub_id, {
-          items: [{ id: itemId, quantity: count }],
+          items: [{ id: itemId, quantity }],
           proration_behavior: "always_invoice",
         });
       }
@@ -96,7 +100,7 @@ export async function createCoachCheckoutSession(
   }
 
   const athleteCount = await countAthletes(coachId);
-  const quantity = Math.max(athleteCount, 1); // minimum 1 for checkout
+  const quantity = Math.min(Math.max(athleteCount, 1), MAX_BILLABLE_ATHLETES); // 1..MAX for checkout
 
   const base = appUrl();
   const session = await stripe.checkout.sessions.create({
