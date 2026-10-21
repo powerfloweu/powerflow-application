@@ -1,9 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { subscriptionsUpdate, subscriptionsRetrieve, subscriptionsCancel, dbSelect, dbPatch } = vi.hoisted(() => ({
+const {
+  subscriptionsUpdate,
+  subscriptionsRetrieve,
+  subscriptionsCancel,
+  customersCreate,
+  checkoutSessionsCreate,
+  dbSelect,
+  dbPatch,
+} = vi.hoisted(() => ({
   subscriptionsUpdate: vi.fn(),
   subscriptionsRetrieve: vi.fn().mockResolvedValue({ items: { data: [{ id: "si_1" }] } }),
   subscriptionsCancel: vi.fn(),
+  customersCreate: vi.fn().mockResolvedValue({ id: "cus_1" }),
+  checkoutSessionsCreate: vi.fn().mockResolvedValue({ url: "https://checkout.stripe.com/x" }),
   dbSelect: vi.fn(),
   dbPatch: vi.fn(),
 }));
@@ -15,8 +25,8 @@ vi.mock("@/lib/stripe", () => ({
       retrieve: subscriptionsRetrieve,
       cancel: subscriptionsCancel,
     },
-    customers: { create: vi.fn() },
-    checkout: { sessions: { create: vi.fn() } },
+    customers: { create: customersCreate },
+    checkout: { sessions: { create: checkoutSessionsCreate } },
   },
   appUrl: () => "https://app.power-flow.eu",
 }));
@@ -26,7 +36,7 @@ vi.mock("@/lib/supabaseAdmin", () => ({
   dbPatch,
 }));
 
-import { syncCoachQuantity, coachPlanFor, FLAT_RATE_THRESHOLD } from "./coachBilling";
+import { syncCoachQuantity, createCoachCheckoutSession, coachPlanFor, FLAT_RATE_THRESHOLD } from "./coachBilling";
 
 const PER_ATHLETE_PRICE = "price_per_athlete";
 const FLAT_PRICE = "price_flat_99";
@@ -94,5 +104,40 @@ describe("syncCoachQuantity", () => {
       "sub_1",
       expect.objectContaining({ items: [{ id: "si_1", price: PER_ATHLETE_PRICE, quantity: 18 }] }),
     );
+  });
+});
+
+describe("createCoachCheckoutSession", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.STRIPE_COACH_PRICE_ID = PER_ATHLETE_PRICE;
+    delete process.env.STRIPE_PRICE_COACH_FLAT_99;
+  });
+
+  it("still works under 20 athletes when the flat price env var is unset", async () => {
+    // countAthletes runs first now (plan resolved before any Stripe/DB write).
+    dbSelect
+      .mockResolvedValueOnce(Array.from({ length: 5 }, (_, i) => ({ id: `a${i}` })))
+      .mockResolvedValueOnce([{ id: "coach1", stripe_customer_id: null }]);
+
+    const url = await createCoachCheckoutSession("coach1", "coach@example.com");
+
+    expect(url).toBe("https://checkout.stripe.com/x");
+    expect(checkoutSessionsCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ line_items: [{ price: PER_ATHLETE_PRICE, quantity: 5 }] }),
+    );
+  });
+
+  it("resolves the plan before creating a Stripe customer or writing stripe_customer_id", async () => {
+    // 20+ athletes with no flat price configured → coachPlanFor throws.
+    dbSelect.mockResolvedValueOnce(Array.from({ length: 20 }, (_, i) => ({ id: `a${i}` })));
+
+    await expect(createCoachCheckoutSession("coach1", "coach@example.com")).rejects.toThrow(
+      "STRIPE_PRICE_COACH_FLAT_99",
+    );
+
+    expect(customersCreate).not.toHaveBeenCalled();
+    expect(dbPatch).not.toHaveBeenCalled();
+    expect(checkoutSessionsCreate).not.toHaveBeenCalled();
   });
 });

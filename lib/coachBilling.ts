@@ -101,6 +101,11 @@ export async function createCoachCheckoutSession(
   coachId: string,
   coachEmail: string,
 ): Promise<string> {
+  // Resolve price + quantity first — must throw before any side effect
+  // (Stripe customer creation, stripe_customer_id write) if env vars are missing.
+  const athleteCount = await countAthletes(coachId);
+  const { priceId, quantity } = coachPlanFor(athleteCount);
+
   const rows = await dbSelect<CoachRow>("profiles", {
     id: `eq.${coachId}`,
     select: "id,stripe_customer_id,stripe_coach_sub_id",
@@ -117,9 +122,6 @@ export async function createCoachCheckoutSession(
     customerId = customer.id;
     await dbPatch("profiles", { id: coachId }, { stripe_customer_id: customerId });
   }
-
-  const athleteCount = await countAthletes(coachId);
-  const { priceId, quantity } = coachPlanFor(athleteCount);
 
   const base = appUrl();
   const session = await stripe.checkout.sessions.create({

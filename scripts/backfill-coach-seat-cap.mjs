@@ -21,6 +21,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import Stripe from "stripe";
 
+// Keep in sync with FLAT_RATE_THRESHOLD in lib/coachBilling.ts — not imported
+// here because this is a plain Node script, not a Next.js module.
 const FLAT_RATE_THRESHOLD = 20;
 const FLAT_RATE_EUR_CENTS = 9900; // €99/month
 const APPLY = process.argv.includes("--apply");
