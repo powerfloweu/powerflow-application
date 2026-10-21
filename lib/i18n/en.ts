@@ -1153,6 +1153,14 @@ export const en = {
     manageRoster: "Manage roster →",
 
     // Suggest a tool (coach → athlete)
+    waTitle: "Message on WhatsApp",
+    waBody: "Save this athlete's number once, then open a chat with your text ready to send.",
+    waPhoneLabel: "Number (with country code)",
+    waMessageLabel: "Message (optional)",
+    waOpen: "Open in WhatsApp",
+    waSave: "Save number",
+    waSaved: "Saved",
+    waInvalid: "Add the country code — e.g. +358 40 123 4567.",
     suggestToolTitle: "Suggest a tool",
     suggestToolBody: "Recommend a specific library tool to this athlete. They'll see it as a card on their Today page.",
     suggestToolMessagePlaceholder: "Optional note to the athlete… (e.g. 'Try this before your next heavy squat session')",

@@ -2,10 +2,12 @@
  * GET  /api/coach/athlete-settings?athlete_id=<id>  — Returns settings for a specific athlete.
  * PATCH /api/coach/athlete-settings                  — Upserts settings for a specific athlete.
  *
- * PATCH body:
- *   { athlete_id: string; journal_prompt_labels: string[] | null }
+ * PATCH body (every field optional besides athlete_id):
+ *   { athlete_id: string; journal_prompt_labels?: string[] | null; whatsapp_phone?: string | null }
  *
- * Passing null or an empty array resets the athlete to defaults.
+ * Only the fields present in the body are written, so saving a phone number
+ * does not wipe the athlete's journal prompts. For journal_prompt_labels,
+ * passing null or an empty array resets the athlete to defaults.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -38,17 +40,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "athlete_id required" }, { status: 400 });
   }
 
-  const rows = await dbSelect<{ journal_prompt_labels: string[] | null }>(
+  const rows = await dbSelect<{ journal_prompt_labels: string[] | null; whatsapp_phone: string | null }>(
     "coach_athlete_settings",
     {
       coach_id: `eq.${user.id}`,
       athlete_id: `eq.${athlete_id}`,
-      select: "journal_prompt_labels",
+      select: "journal_prompt_labels,whatsapp_phone",
     },
   );
 
   return NextResponse.json({
     journal_prompt_labels: rows[0]?.journal_prompt_labels ?? null,
+    whatsapp_phone: rows[0]?.whatsapp_phone ?? null,
   });
 }
 
@@ -57,6 +60,7 @@ type SettingsRow = {
   coach_id: string;
   athlete_id: string;
   journal_prompt_labels: string[] | null;
+  whatsapp_phone: string | null;
 };
 
 export async function PATCH(req: NextRequest) {
@@ -77,11 +81,11 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  let body: { athlete_id?: string; journal_prompt_labels?: string[] | null };
+  let body: { athlete_id?: string; journal_prompt_labels?: string[] | null; whatsapp_phone?: string | null };
   try { body = await req.json(); }
   catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
 
-  const { athlete_id, journal_prompt_labels } = body;
+  const { athlete_id } = body;
   if (!athlete_id) {
     return NextResponse.json({ error: "athlete_id required" }, { status: 400 });
   }
@@ -96,14 +100,32 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Athlete not found or not under this coach" }, { status: 404 });
   }
 
-  // Sanitise labels: max MAX_JOURNAL_PROMPTS, trim whitespace, null if empty
-  let sanitised: string[] | null = null;
-  if (Array.isArray(journal_prompt_labels)) {
-    const cleaned = journal_prompt_labels
-      .map((v) => (typeof v === "string" ? v.trim() : ""))
-      .filter(Boolean)
-      .slice(0, MAX_JOURNAL_PROMPTS);
-    sanitised = cleaned.length ? cleaned : null;
+  // Build the patch from the keys actually sent — a body carrying only a phone
+  // number must leave the journal prompts alone.
+  const patch: { journal_prompt_labels?: string[] | null; whatsapp_phone?: string | null } = {};
+
+  if ("journal_prompt_labels" in body) {
+    // Sanitise labels: max MAX_JOURNAL_PROMPTS, trim whitespace, null if empty
+    let sanitised: string[] | null = null;
+    if (Array.isArray(body.journal_prompt_labels)) {
+      const cleaned = body.journal_prompt_labels
+        .map((v) => (typeof v === "string" ? v.trim() : ""))
+        .filter(Boolean)
+        .slice(0, MAX_JOURNAL_PROMPTS);
+      sanitised = cleaned.length ? cleaned : null;
+    }
+    patch.journal_prompt_labels = sanitised;
+  }
+
+  if ("whatsapp_phone" in body) {
+    const raw = typeof body.whatsapp_phone === "string" ? body.whatsapp_phone.trim() : "";
+    // Store what the coach typed (so they can read it back in their own
+    // format); waLink() is what strips it down to wa.me's digits.
+    patch.whatsapp_phone = raw ? raw.slice(0, 32) : null;
+  }
+
+  if (!Object.keys(patch).length) {
+    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
 
   // Upsert into coach_athlete_settings
@@ -118,13 +140,13 @@ export async function PATCH(req: NextRequest) {
     ok = await dbPatch(
       "coach_athlete_settings",
       { id: existing[0].id },
-      { journal_prompt_labels: sanitised, updated_at: new Date().toISOString() },
+      { ...patch, updated_at: new Date().toISOString() },
     );
   } else {
     const inserted = await dbInsert("coach_athlete_settings", {
       coach_id: user.id,
       athlete_id,
-      journal_prompt_labels: sanitised,
+      ...patch,
     });
     ok = !!inserted;
   }
@@ -136,5 +158,5 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ ok: true, journal_prompt_labels: sanitised });
+  return NextResponse.json({ ok: true, ...patch });
 }

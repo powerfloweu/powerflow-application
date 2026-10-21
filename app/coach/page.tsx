@@ -22,7 +22,7 @@ import {
   type ReflectionQuestion, type QuestionKind,
   type ReflectionSetRow as ReflectionSet, type ReflectionSetStatus,
 } from "@/lib/reflections";
-import type { WhatsAppAnalysis } from "@/lib/whatsapp";
+import { waLink, type WhatsAppAnalysis } from "@/lib/whatsapp";
 
 import {
   type Flag, type Trend, type EntryRow, type AthleteRaw, type CoachProfile, type Client,
@@ -824,6 +824,112 @@ function SuggestToolSection({ athleteId, athleteTier }: { athleteId: string; ath
 }
 
 // ── Coach-authored reflection sets ──────────────────────────────────────────
+// ── WhatsApp deep link ────────────────────────────────────────────────────────
+// A wa.me link, not an API send: the coach taps, WhatsApp opens with the chat
+// and the text already in the box, and they press send themselves. That keeps
+// the whole feature free of Meta business verification, approved templates and
+// a dedicated API number. The number is the coach's contact detail for this
+// athlete, so it lives on coach_athlete_settings.
+
+function WhatsAppSection({ athleteId }: { athleteId: string }) {
+  const { t } = useT();
+  const [phone, setPhone]     = React.useState("");
+  const [stored, setStored]   = React.useState("");
+  const [message, setMessage] = React.useState("");
+  const [saving, setSaving]   = React.useState(false);
+  const [saved, setSaved]     = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await fetch(`/api/coach/athlete-settings?athlete_id=${athleteId}`);
+      if (!res.ok || cancelled) return;
+      const data: { whatsapp_phone: string | null } = await res.json();
+      if (cancelled) return;
+      setPhone(data.whatsapp_phone ?? "");
+      setStored(data.whatsapp_phone ?? "");
+    })().catch((err) => console.error("[coach] load whatsapp phone", err));
+    return () => { cancelled = true; };
+  }, [athleteId]);
+
+  const link = waLink(phone, message);
+
+  const savePhone = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/coach/athlete-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ athlete_id: athleteId, whatsapp_phone: phone }),
+      });
+      if (!res.ok) throw new Error(`PATCH failed: ${res.status}`);
+      setStored(phone);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error("[coach] save whatsapp phone", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4 space-y-3">
+      <div>
+        <p className="font-saira text-xs font-semibold text-emerald-200">{t("coach.waTitle")}</p>
+        <p className="mt-1 font-saira text-[11px] text-zinc-400">{t("coach.waBody")}</p>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="tel"
+          inputMode="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="+358 40 123 4567"
+          aria-label={t("coach.waPhoneLabel")}
+          className="flex-1 min-w-0 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-saira text-base lg:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-emerald-400/50 focus:ring-1 focus:ring-emerald-500/30"
+        />
+        {phone !== stored && (
+          <button
+            type="button"
+            onClick={savePhone}
+            disabled={saving}
+            className={`flex-shrink-0 rounded-full px-4 py-2 font-saira text-[10px] font-semibold uppercase tracking-[0.18em] transition ${
+              saved ? "bg-emerald-500 text-white" : "bg-white/10 text-zinc-200 hover:bg-white/15 disabled:opacity-40"
+            }`}
+          >
+            {saved ? t("coach.waSaved") : t("coach.waSave")}
+          </button>
+        )}
+      </div>
+
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        rows={3}
+        placeholder={t("coach.waMessageLabel")}
+        aria-label={t("coach.waMessageLabel")}
+        className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-saira text-base lg:text-sm text-zinc-100 placeholder-zinc-600 outline-none transition focus:border-emerald-400/50 focus:ring-1 focus:ring-emerald-500/30"
+      />
+
+      {link ? (
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-full bg-emerald-500 px-6 py-2.5 text-center font-saira text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-400"
+        >
+          {t("coach.waOpen")}
+        </a>
+      ) : (
+        <p className="font-saira text-[11px] text-zinc-500">{t("coach.waInvalid")}</p>
+      )}
+    </div>
+  );
+}
+
 // New section for the athlete Profile tab, beside SuggestToolSection — the
 // established home for coach→athlete actions (rendered on both mobile and
 // desktop, see the two ProfileTab call sites below). Lets a coach write a
@@ -1346,6 +1452,9 @@ function ProfileTab({ profile, athleteName }: { profile: ReturnType<typeof compu
 
   return (
     <div className="space-y-6">
+
+      {/* Message on WhatsApp */}
+      <WhatsAppSection athleteId={profile.athleteId} />
 
       {/* Suggest a tool */}
       <SuggestToolSection athleteId={profile.athleteId} athleteTier={profile.effectiveTier} />

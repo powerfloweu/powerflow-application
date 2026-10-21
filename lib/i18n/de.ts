@@ -1113,6 +1113,14 @@ export const de: Dict = {
     manageRoster: "Athleten verwalten →",
 
     // Suggest a tool (coach → athlete)
+    waTitle: "Per WhatsApp schreiben",
+    waBody: "Nummer einmal speichern, dann Chat mit fertigem Text öffnen.",
+    waPhoneLabel: "Nummer (mit Ländervorwahl)",
+    waMessageLabel: "Nachricht (optional)",
+    waOpen: "In WhatsApp öffnen",
+    waSave: "Nummer speichern",
+    waSaved: "Gespeichert",
+    waInvalid: "Ländervorwahl ergänzen — z. B. +358 40 123 4567.",
     suggestToolTitle: "Tool vorschlagen",
     suggestToolBody: "Empfiehl diesem Athleten ein bestimmtes Tool aus der Bibliothek. Es erscheint als Karte auf seiner Heute-Seite.",
     suggestToolMessagePlaceholder: "Optionale Notiz an den Athleten… (z. B. „Probier das vor deiner nächsten schweren Kniebeugen-Einheit“)",

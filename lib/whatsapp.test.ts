@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyseWhatsAppHeuristically, parseWhatsAppExport } from "./whatsapp";
+import { analyseWhatsAppHeuristically, parseWhatsAppExport, waLink } from "./whatsapp";
 
 describe("parseWhatsAppExport", () => {
   it("parses dash-style WhatsApp exports with multiline messages", () => {
@@ -50,5 +50,28 @@ describe("analyseWhatsAppHeuristically", () => {
     expect(analysis.themes.map((t) => t.label)).toContain("Pre-comp anxiety");
     expect(analysis.recurring_beliefs.length).toBeGreaterThan(0);
     expect(analysis.session_questions.length).toBeGreaterThan(0);
+  });
+});
+
+describe("waLink", () => {
+  it("strips +, spaces and dashes", () => {
+    expect(waLink("+358 40 123-4567")).toBe("https://wa.me/358401234567");
+  });
+
+  it("encodes the message", () => {
+    expect(waLink("+358401234567", "Hey Katja! Cards are live.")).toBe(
+      "https://wa.me/358401234567?text=Hey%20Katja!%20Cards%20are%20live.",
+    );
+  });
+
+  it("omits ?text for an empty or whitespace message", () => {
+    expect(waLink("+358401234567", "   ")).toBe("https://wa.me/358401234567");
+  });
+
+  it("rejects numbers that cannot be dialled internationally", () => {
+    expect(waLink("040 1234")).toBeNull();   // too short
+    expect(waLink("")).toBeNull();
+    expect(waLink(null)).toBeNull();
+    expect(waLink("1".repeat(16))).toBeNull(); // past the E.164 maximum
   });
 });

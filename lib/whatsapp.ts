@@ -245,3 +245,24 @@ export function parseWhatsAppAnalysis(raw: string): WhatsAppAnalysis | null {
 function stringArray(value: unknown, limit: number): string[] {
   return Array.isArray(value) ? value.filter((item) => typeof item === "string").map((item) => item.trim()).filter(Boolean).slice(0, limit) : [];
 }
+
+/**
+ * A wa.me deep link for `phone`, or null when the number can't be one.
+ *
+ * This is the no-infrastructure half of "message an athlete from the app": the
+ * coach taps, WhatsApp opens with the chat and the text already in the box,
+ * and they press send themselves. Nothing is sent on their behalf, so it needs
+ * no Meta business verification, no approved templates and no dedicated API
+ * number.
+ *
+ * wa.me wants a bare international number — digits only, no "+", spaces,
+ * brackets or dashes. Anything shorter than 8 digits is a local or short
+ * number wa.me cannot route, so we return null rather than opening WhatsApp on
+ * a chat that does not exist.
+ */
+export function waLink(phone: string | null | undefined, text?: string | null): string | null {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  if (digits.length < 8 || digits.length > 15) return null; // E.164 bounds
+  const body = (text ?? "").trim();
+  return `https://wa.me/${digits}${body ? `?text=${encodeURIComponent(body)}` : ""}`;
+}

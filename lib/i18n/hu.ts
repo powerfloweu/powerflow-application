@@ -1111,6 +1111,14 @@ export const hu: Dict = {
     manageRoster: "Sportolók kezelése →",
 
     // Suggest a tool (coach → athlete)
+    waTitle: "Üzenet WhatsAppon",
+    waBody: "Mentsd el egyszer a számot, utána kész szöveggel nyílik a beszélgetés.",
+    waPhoneLabel: "Telefonszám (országhívóval)",
+    waMessageLabel: "Üzenet (nem kötelező)",
+    waOpen: "Megnyitás WhatsAppban",
+    waSave: "Szám mentése",
+    waSaved: "Mentve",
+    waInvalid: "Add meg az országhívót — pl. +358 40 123 4567.",
     suggestToolTitle: "Eszköz ajánlása",
     suggestToolBody: "Ajánlj egy konkrét eszközt a könyvtárból ennek a sportolónak. Kártyaként fog megjelenni a Ma oldalán.",
     suggestToolMessagePlaceholder: "Opcionális üzenet a sportolónak… (pl. „Próbáld ki a következő nehéz guggolás edzés előtt”)",
